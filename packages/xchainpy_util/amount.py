@@ -1,5 +1,8 @@
+from decimal import Decimal, Context
 from enum import Enum
 from typing import NamedTuple, Union
+
+DECIMAL_CONTEXT = Context(prec=100)
 
 
 class Denomination(Enum):
@@ -74,8 +77,9 @@ class Amount(NamedTuple):
         return cls(base_amount, decimals, Denomination.BASE)
 
     @classmethod
-    def from_asset(cls, asset_amount: float, decimals=ASSET_DECIMAL):
-        return cls(int(asset_amount * 10 ** decimals), decimals)
+    def from_asset(cls, asset_amount: Union[float, str, int], decimals=ASSET_DECIMAL):
+        v = int(Decimal(asset_amount, context=DECIMAL_CONTEXT) * 10 ** decimals)
+        return cls(v, decimals)
 
     @classmethod
     def automatic(cls, x, decimals=ASSET_DECIMAL):
@@ -83,10 +87,8 @@ class Amount(NamedTuple):
             return x if x.decimal == decimals else cls(x.internal_amount, decimals, x.denom)
         elif isinstance(x, int):
             return cls.from_base(x, decimals)
-        elif isinstance(x, float):
+        elif isinstance(x, (float, str)):
             return cls.from_asset(x, decimals)
-        elif isinstance(x, str):
-            return cls.from_base(int(x), decimals)
         else:
             raise ValueError(f'Cannot convert {x} to Amount')
 
