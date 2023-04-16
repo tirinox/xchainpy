@@ -1,6 +1,6 @@
 from enum import Enum
 
-from packages.xchainpy_util.src.asset import Asset
+from asset import Asset
 
 
 class Chain(Enum):
@@ -25,6 +25,6 @@ AssetBCH = Asset('BCH', 'BCH', 'BCH', False)
 AssetLTC = Asset('LTC', 'LTC', 'LTC', False)
 AssetDOGE = Asset('DOGE', 'DOGE', 'DOGE', False)
 AssetAVAX = Asset('AVAX', 'AVAX', 'AVAX', False)
-AssetRuneNative = Asset('THOR', 'RUNE', 'RUNE', False)
+AssetRune = Asset('THOR', 'RUNE', 'RUNE', False)
 AssetATOM = Asset('GAIA', 'ATOM', 'ATOM', False)
 AssetMaya = Asset('MAYA', 'CACAO', 'CACAO', False)
