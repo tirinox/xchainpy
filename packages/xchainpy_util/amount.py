@@ -12,7 +12,7 @@ ASSET_DECIMAL = 8
 
 class Amount(NamedTuple):
     internal_amount: int
-    decimal: int
+    decimal: int = ASSET_DECIMAL
     denom: Denomination = Denomination.ASSET
 
     @property
@@ -27,7 +27,7 @@ class Amount(NamedTuple):
             return self.internal_amount / self.ten_power
 
     def __str__(self):
-        return f'{self.internal_amount} [{self.denom.name}]'
+        return f'Amount({self.internal_amount} [{self.denom.name}])'
 
     def __add__(self, other):
         if self.denom != other.denom:
@@ -78,15 +78,15 @@ class Amount(NamedTuple):
         return cls(int(asset_amount * 10 ** decimals), decimals)
 
     @classmethod
-    def automatic(cls, x):
+    def automatic(cls, x, decimals=ASSET_DECIMAL):
         if isinstance(x, Amount):
-            return x
+            return x if x.decimal == decimals else cls(x.internal_amount, decimals, x.denom)
         elif isinstance(x, int):
-            return cls.from_base(x)
+            return cls.from_base(x, decimals)
         elif isinstance(x, float):
-            return cls.from_asset(x)
+            return cls.from_asset(x, decimals)
         elif isinstance(x, str):
-            return cls.from_base(int(x))
+            return cls.from_base(int(x), decimals)
         else:
             raise ValueError(f'Cannot convert {x} to Amount')
 
@@ -106,12 +106,18 @@ class Amount(NamedTuple):
     def decimal_part(self):
         return self.internal_amount % self.ten_power
 
+    @property
+    def decimal_part_str(self):
+        return f'{self.decimal_part:0>{self.decimal}}'
+
     def format(self, trailing_zeros=False):
-        if trailing_zeros:
-            decimal_part = f'{self.decimal_part:0>{self.decimal}}'
-        else:
-            decimal_part = f'{self.decimal_part}'.rstrip('0')
+        decimal_part = self.decimal_part_str
+        if not trailing_zeros:
+            decimal_part = decimal_part.rstrip('0')
         return f'{self.integer_part}.{decimal_part}'
+
+    def __int__(self):
+        return self.internal_amount
 
 
 def amount(x) -> Amount:
