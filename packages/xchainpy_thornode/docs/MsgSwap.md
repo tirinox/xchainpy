@@ -1,0 +1,19 @@
+# MsgSwap
+
+## Properties
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**tx** | [**Tx**](Tx.md) |  | 
+**target_asset** | **str** | the asset to be swapped to | 
+**destination** | **str** | the destination address to receive the swap output | [optional] 
+**trade_target** | **str** | the minimum amount of output asset to receive (else cancelling and refunding the swap) | 
+**affiliate_address** | **str** | the affiliate address which will receive any affiliate fee | [optional] 
+**affiliate_basis_points** | **str** | the affiliate fee in basis points | 
+**signer** | **str** | the signer (sender) of the transaction | [optional] 
+**aggregator** | **str** | the contract address if an aggregator is specified for a non-THORChain SwapOut | [optional] 
+**aggregator_target_address** | **str** | the desired output asset of the aggregator SwapOut | [optional] 
+**aggregator_target_limit** | **str** | the minimum amount of SwapOut asset to receive (else cancelling the SwapOut and receiving THORChain&#x27;s output) | [optional] 
+**order_type** | **int** | 0 if a market order (immediately completed or refunded), 1 if a limit order (held until fulfillable) | [optional] 
+
+[[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
+
