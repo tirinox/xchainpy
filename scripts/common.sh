@@ -1,5 +1,7 @@
 #!/bin/bash
 
+VERSION=1.0.1
+
 function check_output_dir() {
   read -p "Do you want to clear ${OUTPUT_DIR}? (y/n) " yn
   case $yn in
@@ -25,7 +27,7 @@ function codegen_client() {
     -l python \
     -o ${OUTPUT_DIR} \
     --library asyncio \
-    --additional-properties packageName=${PACKAGE_NAME},aiohttp=true,snake-case-methods=true,python36=true
+    --additional-properties packageName=${PACKAGE_NAME},aiohttp=true,snake-case-methods=true,python36=true,packageVersion=${VERSION}
 }
 
 function install_develop() {
