@@ -8,11 +8,13 @@ readme = "README.md"
 packages = [{include = "xchainpy_dev"}]
 
 [tool.poetry.dependencies]
-python = "3.7"
+python = "3.9.6"
+aiohttp = "^3.8.4"
 
 [tool.poetry.group.dev.dependencies]
-twine = "setuptools"
-wheel = "pytest"
+wheel = "^0.40.0"
+twine = "^4.0.2"
+setuptools = "^67.6.1"
 
 [build-system]
 requires = ["poetry-core"]
