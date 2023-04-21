@@ -10,6 +10,8 @@ packages = [{include = "xchainpy_dev"}]
 [tool.poetry.dependencies]
 python = "3.9.6"
 aiohttp = "^3.8.4"
+bip-utils = "^2.7.0"
+pycrypto = "^2.6.1"
 
 [tool.poetry.group.dev.dependencies]
 wheel = "^0.40.0"
