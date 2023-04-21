@@ -21,7 +21,7 @@ function check_output_dir() {
 }
 
 function codegen_client() {
-#  swagger-codegen generate \
+  #  swagger-codegen generate \
   java -jar swagger-codegen-cli.jar generate \
     -i ${SWAGGER_FILE} \
     -l python \
@@ -52,6 +52,20 @@ SWAGGER_CODEGEN="https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-co
 
 function download_swagger_codegen() {
   if [ ! -f "${SWAGGER_LOCAL}" ]; then
-     wget ${SWAGGER_CODEGEN} -O swagger-codegen-cli.jar
+    wget ${SWAGGER_CODEGEN} -O swagger-codegen-cli.jar
   fi
+}
+
+function add_license() {
+  cp "../LICENSE" "${OUTPUT_DIR}/LICENSE"
+}
+
+function run_codegen() {
+  download_swagger_codegen
+  # Check if output directory is empty
+  check_output_dir
+  # Do job
+  codegen_client "$OUTPUT_DIR" "$PACKAGE_NAME" "$SWAGGER_FILE"
+  add_license
+  install_develop
 }
