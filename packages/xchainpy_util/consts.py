@@ -28,3 +28,6 @@ AssetAVAX = Asset('AVAX', 'AVAX', 'AVAX', False)
 AssetRune = Asset('THOR', 'RUNE', 'RUNE', False)
 AssetATOM = Asset('GAIA', 'ATOM', 'ATOM', False)
 AssetMaya = Asset('MAYA', 'CACAO', 'CACAO', False)
+
+XCHAINPY_IDENTIFIER = 'xchainpy-client'
+NINE_REALMS_CLIENT_HEADER = 'x-client-id'
