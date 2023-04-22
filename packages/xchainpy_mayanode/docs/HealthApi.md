@@ -1,4 +1,4 @@
-# mayanode_client.HealthApi
+# xchainpy2_mayanode.HealthApi
 
 All URIs are relative to */*
 
@@ -15,12 +15,12 @@ Method | HTTP request | Description
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.HealthApi()
+api_instance = xchainpy2_mayanode.HealthApi()
 
 try:
     api_response = api_instance.ping()

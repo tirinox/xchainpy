@@ -1,7 +1,7 @@
 #!/bin/sh
 
 OUTPUT_DIR="../packages/xchainpy_midgard/"
-PACKAGE_NAME="midgard_client"
+PACKAGE_NAME="xchainpy2_midgard"
 SWAGGER_FILE="https://midgard.mayachain.info/v2/swagger.json"
 
 source "common.sh"

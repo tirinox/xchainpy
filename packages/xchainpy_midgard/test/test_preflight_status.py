@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import midgard_client
-from midgard_client.models.preflight_status import PreflightStatus  # noqa: E501
-from midgard_client.rest import ApiException
+import xchainpy2_midgard
+from xchainpy2_midgard.models.preflight_status import PreflightStatus  # noqa: E501
+from xchainpy2_midgard.rest import ApiException
 
 
 class TestPreflightStatus(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestPreflightStatus(unittest.TestCase):
     def testPreflightStatus(self):
         """Test PreflightStatus"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = midgard_client.models.preflight_status.PreflightStatus()  # noqa: E501
+        # model = xchainpy2_midgard.models.preflight_status.PreflightStatus()  # noqa: E501
         pass
 
 

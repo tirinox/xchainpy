@@ -1,4 +1,4 @@
-# mayanode_client.LiquidityProvidersApi
+# xchainpy2_mayanode.LiquidityProvidersApi
 
 All URIs are relative to */*
 
@@ -18,12 +18,12 @@ Returns the liquidity provider information for an address and asset.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.LiquidityProvidersApi()
+api_instance = xchainpy2_mayanode.LiquidityProvidersApi()
 asset = 'asset_example' # str | 
 address = 'address_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
@@ -69,12 +69,12 @@ Returns all liquidity provider information for an asset.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.LiquidityProvidersApi()
+api_instance = xchainpy2_mayanode.LiquidityProvidersApi()
 asset = 'asset_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 

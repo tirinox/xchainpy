@@ -1,4 +1,4 @@
-# mayanode_client.NodesApi
+# xchainpy2_mayanode.NodesApi
 
 All URIs are relative to */*
 
@@ -18,12 +18,12 @@ Returns node information for the provided node address.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.NodesApi()
+api_instance = xchainpy2_mayanode.NodesApi()
 address = 'address_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
@@ -67,12 +67,12 @@ Returns node information for all registered validators.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.NodesApi()
+api_instance = xchainpy2_mayanode.NodesApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:

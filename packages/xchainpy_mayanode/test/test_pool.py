@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import mayanode_client
-from mayanode_client.models.pool import Pool  # noqa: E501
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.models.pool import Pool  # noqa: E501
+from xchainpy2_mayanode.rest import ApiException
 
 
 class TestPool(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestPool(unittest.TestCase):
     def testPool(self):
         """Test Pool"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = mayanode_client.models.pool.Pool()  # noqa: E501
+        # model = xchainpy2_mayanode.models.pool.Pool()  # noqa: E501
         pass
 
 

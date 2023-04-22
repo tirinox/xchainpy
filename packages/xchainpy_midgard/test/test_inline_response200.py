@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import midgard_client
-from midgard_client.models.inline_response200 import InlineResponse200  # noqa: E501
-from midgard_client.rest import ApiException
+import xchainpy2_midgard
+from xchainpy2_midgard.models.inline_response200 import InlineResponse200  # noqa: E501
+from xchainpy2_midgard.rest import ApiException
 
 
 class TestInlineResponse200(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestInlineResponse200(unittest.TestCase):
     def testInlineResponse200(self):
         """Test InlineResponse200"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = midgard_client.models.inline_response200.InlineResponse200()  # noqa: E501
+        # model = xchainpy2_midgard.models.inline_response200.InlineResponse200()  # noqa: E501
         pass
 
 

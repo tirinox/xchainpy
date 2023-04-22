@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import midgard_client
-from midgard_client.models.coin import Coin  # noqa: E501
-from midgard_client.rest import ApiException
+import xchainpy2_midgard
+from xchainpy2_midgard.models.coin import Coin  # noqa: E501
+from xchainpy2_midgard.rest import ApiException
 
 
 class TestCoin(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestCoin(unittest.TestCase):
     def testCoin(self):
         """Test Coin"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = midgard_client.models.coin.Coin()  # noqa: E501
+        # model = xchainpy2_midgard.models.coin.Coin()  # noqa: E501
         pass
 
 

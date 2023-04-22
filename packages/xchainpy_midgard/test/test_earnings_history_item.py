@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import midgard_client
-from midgard_client.models.earnings_history_item import EarningsHistoryItem  # noqa: E501
-from midgard_client.rest import ApiException
+import xchainpy2_midgard
+from xchainpy2_midgard.models.earnings_history_item import EarningsHistoryItem  # noqa: E501
+from xchainpy2_midgard.rest import ApiException
 
 
 class TestEarningsHistoryItem(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestEarningsHistoryItem(unittest.TestCase):
     def testEarningsHistoryItem(self):
         """Test EarningsHistoryItem"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = midgard_client.models.earnings_history_item.EarningsHistoryItem()  # noqa: E501
+        # model = xchainpy2_midgard.models.earnings_history_item.EarningsHistoryItem()  # noqa: E501
         pass
 
 

@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import thornode_client
-from thornode_client.models.mimir_response import MimirResponse  # noqa: E501
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.models.mimir_response import MimirResponse  # noqa: E501
+from xchainpy2_thornode.rest import ApiException
 
 
 class TestMimirResponse(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestMimirResponse(unittest.TestCase):
     def testMimirResponse(self):
         """Test MimirResponse"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = thornode_client.models.mimir_response.MimirResponse()  # noqa: E501
+        # model = xchainpy2_thornode.models.mimir_response.MimirResponse()  # noqa: E501
         pass
 
 

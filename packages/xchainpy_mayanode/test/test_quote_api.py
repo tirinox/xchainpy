@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import mayanode_client
-from mayanode_client.api.quote_api import QuoteApi  # noqa: E501
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.api.quote_api import QuoteApi  # noqa: E501
+from xchainpy2_mayanode.rest import ApiException
 
 
 class TestQuoteApi(unittest.TestCase):

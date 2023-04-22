@@ -1,4 +1,4 @@
-# mayanode_client.TSSApi
+# xchainpy2_mayanode.TSSApi
 
 All URIs are relative to */*
 
@@ -20,12 +20,12 @@ Returns keysign information for the provided height - the height being the first
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.TSSApi()
+api_instance = xchainpy2_mayanode.TSSApi()
 height = 789 # int | 
 
 try:
@@ -67,12 +67,12 @@ Returns keysign information for the provided height and pubkey - the height bein
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.TSSApi()
+api_instance = xchainpy2_mayanode.TSSApi()
 height = 789 # int | 
 pubkey = 'pubkey_example' # str | 
 
@@ -116,12 +116,12 @@ Returns keygen and keysign metrics for current vaults.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.TSSApi()
+api_instance = xchainpy2_mayanode.TSSApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
@@ -163,12 +163,12 @@ Returns keygen metrics for the provided vault pubkey.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.TSSApi()
+api_instance = xchainpy2_mayanode.TSSApi()
 pubkey = 'pubkey_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 

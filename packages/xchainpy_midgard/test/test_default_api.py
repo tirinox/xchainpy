@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import midgard_client
-from midgard_client.api.default_api import DefaultApi  # noqa: E501
-from midgard_client.rest import ApiException
+import xchainpy2_midgard
+from xchainpy2_midgard.api.default_api import DefaultApi  # noqa: E501
+from xchainpy2_midgard.rest import ApiException
 
 
 class TestDefaultApi(unittest.TestCase):

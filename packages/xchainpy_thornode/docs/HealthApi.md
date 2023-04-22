@@ -1,4 +1,4 @@
-# thornode_client.HealthApi
+# xchainpy2_thornode.HealthApi
 
 All URIs are relative to */*
 
@@ -15,12 +15,12 @@ Method | HTTP request | Description
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.HealthApi()
+api_instance = xchainpy2_thornode.HealthApi()
 
 try:
     api_response = api_instance.ping()

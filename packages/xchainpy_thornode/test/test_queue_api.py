@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import thornode_client
-from thornode_client.api.queue_api import QueueApi  # noqa: E501
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.api.queue_api import QueueApi  # noqa: E501
+from xchainpy2_thornode.rest import ApiException
 
 
 class TestQueueApi(unittest.TestCase):

@@ -1,4 +1,4 @@
-# mayanode_client.QueueApi
+# xchainpy2_mayanode.QueueApi
 
 All URIs are relative to */*
 
@@ -19,12 +19,12 @@ Returns queue statistics.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.QueueApi()
+api_instance = xchainpy2_mayanode.QueueApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
@@ -66,12 +66,12 @@ Returns the outbound queue including estimated RUNE values.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.QueueApi()
+api_instance = xchainpy2_mayanode.QueueApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
@@ -113,12 +113,12 @@ Returns the scheduled queue.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.QueueApi()
+api_instance = xchainpy2_mayanode.QueueApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:

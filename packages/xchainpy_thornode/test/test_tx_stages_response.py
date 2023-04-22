@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import thornode_client
-from thornode_client.models.tx_stages_response import TxStagesResponse  # noqa: E501
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.models.tx_stages_response import TxStagesResponse  # noqa: E501
+from xchainpy2_thornode.rest import ApiException
 
 
 class TestTxStagesResponse(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestTxStagesResponse(unittest.TestCase):
     def testTxStagesResponse(self):
         """Test TxStagesResponse"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = thornode_client.models.tx_stages_response.TxStagesResponse()  # noqa: E501
+        # model = xchainpy2_thornode.models.tx_stages_response.TxStagesResponse()  # noqa: E501
         pass
 
 

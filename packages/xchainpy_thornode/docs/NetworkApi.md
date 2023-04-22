@@ -1,4 +1,4 @@
-# thornode_client.NetworkApi
+# xchainpy2_thornode.NetworkApi
 
 All URIs are relative to */*
 
@@ -24,12 +24,12 @@ Returns the ban status for the provided node address.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.NetworkApi()
+api_instance = xchainpy2_thornode.NetworkApi()
 address = 'address_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
@@ -73,12 +73,12 @@ Returns constant configuration, can be overridden by mimir.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.NetworkApi()
+api_instance = xchainpy2_thornode.NetworkApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
@@ -120,12 +120,12 @@ Returns the set of asgard addresses that should be used for inbound transactions
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.NetworkApi()
+api_instance = xchainpy2_thornode.NetworkApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
@@ -167,12 +167,12 @@ Returns the last block information for all chains.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.NetworkApi()
+api_instance = xchainpy2_thornode.NetworkApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
@@ -214,12 +214,12 @@ Returns the last block information for the provided chain.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.NetworkApi()
+api_instance = xchainpy2_thornode.NetworkApi()
 chain = 'chain_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
@@ -263,12 +263,12 @@ Returns network overview statistics.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.NetworkApi()
+api_instance = xchainpy2_thornode.NetworkApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
@@ -310,12 +310,12 @@ Returns a boolean indicating whether the chain is in ragnarok.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.NetworkApi()
+api_instance = xchainpy2_thornode.NetworkApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
@@ -357,12 +357,12 @@ Returns the network's current THORNode version, the network's next THORNode vers
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.NetworkApi()
+api_instance = xchainpy2_thornode.NetworkApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:

@@ -1,4 +1,4 @@
-# thornode_client.PoolsApi
+# xchainpy2_thornode.PoolsApi
 
 All URIs are relative to */*
 
@@ -18,12 +18,12 @@ Returns the pool information for the provided asset.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.PoolsApi()
+api_instance = xchainpy2_thornode.PoolsApi()
 asset = 'asset_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
@@ -67,12 +67,12 @@ Returns the pool information for all assets.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.PoolsApi()
+api_instance = xchainpy2_thornode.PoolsApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:

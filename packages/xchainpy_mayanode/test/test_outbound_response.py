@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import mayanode_client
-from mayanode_client.models.outbound_response import OutboundResponse  # noqa: E501
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.models.outbound_response import OutboundResponse  # noqa: E501
+from xchainpy2_mayanode.rest import ApiException
 
 
 class TestOutboundResponse(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestOutboundResponse(unittest.TestCase):
     def testOutboundResponse(self):
         """Test OutboundResponse"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = mayanode_client.models.outbound_response.OutboundResponse()  # noqa: E501
+        # model = xchainpy2_mayanode.models.outbound_response.OutboundResponse()  # noqa: E501
         pass
 
 

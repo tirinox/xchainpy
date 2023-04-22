@@ -1,17 +1,17 @@
 import asyncio
 
-import mayanode_client
-import thornode_client
+import xchainpy2_thornode as thor
+import xchainpy2_mayanode as maya
 
 
 async def try_thornode():
-    api_client = thornode_client.ApiClient()
+    api_client = thor.ApiClient()
     api_client.configuration.host = 'https://thornode.ninerealms.com'
-    pol = thornode_client.POLApi(api_client)
+    pol = thor.POLApi(api_client)
     r = await pol.pol()
     print(r)
 
-    mimir = thornode_client.MimirApi(api_client)
+    mimir = thor.MimirApi(api_client)
     r = await mimir.mimir()
     print(r)
 
@@ -19,13 +19,13 @@ async def try_thornode():
 
 
 async def try_mayanode():
-    api_client = mayanode_client.ApiClient()
+    api_client = maya.ApiClient()
     api_client.configuration.host = 'https://mayanode.mayachain.info/'
-    mimir = mayanode_client.MimirApi(api_client)
+    mimir = maya.MimirApi(api_client)
     r = await mimir.mimir()
     print(r)
 
-    buckets = mayanode_client.BucketsApi(api_client)
+    buckets = maya.BucketsApi(api_client)
     r = await buckets.buckets()
     print(r)
 
@@ -33,6 +33,7 @@ async def try_mayanode():
 
 
 async def main():
+    await try_thornode()
     await try_mayanode()
 
 

@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import mayanode_client
-from mayanode_client.models.bucket import Bucket  # noqa: E501
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.models.bucket import Bucket  # noqa: E501
+from xchainpy2_mayanode.rest import ApiException
 
 
 class TestBucket(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestBucket(unittest.TestCase):
     def testBucket(self):
         """Test Bucket"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = mayanode_client.models.bucket.Bucket()  # noqa: E501
+        # model = xchainpy2_mayanode.models.bucket.Bucket()  # noqa: E501
         pass
 
 

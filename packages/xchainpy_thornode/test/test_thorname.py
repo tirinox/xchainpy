@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import thornode_client
-from thornode_client.models.thorname import Thorname  # noqa: E501
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.models.thorname import Thorname  # noqa: E501
+from xchainpy2_thornode.rest import ApiException
 
 
 class TestThorname(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestThorname(unittest.TestCase):
     def testThorname(self):
         """Test Thorname"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = thornode_client.models.thorname.Thorname()  # noqa: E501
+        # model = xchainpy2_thornode.models.thorname.Thorname()  # noqa: E501
         pass
 
 

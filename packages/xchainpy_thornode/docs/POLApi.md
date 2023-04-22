@@ -1,4 +1,4 @@
-# thornode_client.POLApi
+# xchainpy2_thornode.POLApi
 
 All URIs are relative to */*
 
@@ -17,12 +17,12 @@ Returns protocol owned liquidity overview statistics.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.POLApi()
+api_instance = xchainpy2_thornode.POLApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:

@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import mayanode_client
-from mayanode_client.models.keygen_metric1 import KeygenMetric1  # noqa: E501
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.models.keygen_metric1 import KeygenMetric1  # noqa: E501
+from xchainpy2_mayanode.rest import ApiException
 
 
 class TestKeygenMetric1(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestKeygenMetric1(unittest.TestCase):
     def testKeygenMetric1(self):
         """Test KeygenMetric1"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = mayanode_client.models.keygen_metric1.KeygenMetric1()  # noqa: E501
+        # model = xchainpy2_mayanode.models.keygen_metric1.KeygenMetric1()  # noqa: E501
         pass
 
 

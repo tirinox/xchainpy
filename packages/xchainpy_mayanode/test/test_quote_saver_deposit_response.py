@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import mayanode_client
-from mayanode_client.models.quote_saver_deposit_response import QuoteSaverDepositResponse  # noqa: E501
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.models.quote_saver_deposit_response import QuoteSaverDepositResponse  # noqa: E501
+from xchainpy2_mayanode.rest import ApiException
 
 
 class TestQuoteSaverDepositResponse(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestQuoteSaverDepositResponse(unittest.TestCase):
     def testQuoteSaverDepositResponse(self):
         """Test QuoteSaverDepositResponse"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = mayanode_client.models.quote_saver_deposit_response.QuoteSaverDepositResponse()  # noqa: E501
+        # model = xchainpy2_mayanode.models.quote_saver_deposit_response.QuoteSaverDepositResponse()  # noqa: E501
         pass
 
 

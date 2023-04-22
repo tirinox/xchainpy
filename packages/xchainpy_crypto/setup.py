@@ -2,8 +2,8 @@ from pathlib import Path
 
 from setuptools import setup, find_packages  # noqa: H301
 
-NAME = "xchainpy_util"
-VERSION = "0.0.1"
+NAME = "xchainpy2_crypto"
+VERSION = "0.0.2"
 
 # To install the library, run the following
 #
@@ -23,9 +23,9 @@ CWD = Path(__file__).resolve().parent
 setup(
     name=NAME,
     version=VERSION,
-    description="XChainPy Crypto",
+    description="XChainPy2 Crypto",
     author_email="developer@tirinox.ru",
-    url="",
+    url="https://github.com/tirinox/xchainpy/tree/develop/packages/xchainpy_crypto",
     keywords=["Crypto", "XChain"],
     install_requires=REQUIRES,
     packages=find_packages(),

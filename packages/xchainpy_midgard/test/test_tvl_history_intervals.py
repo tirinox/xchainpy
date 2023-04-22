@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import midgard_client
-from midgard_client.models.tvl_history_intervals import TVLHistoryIntervals  # noqa: E501
-from midgard_client.rest import ApiException
+import xchainpy2_midgard
+from xchainpy2_midgard.models.tvl_history_intervals import TVLHistoryIntervals  # noqa: E501
+from xchainpy2_midgard.rest import ApiException
 
 
 class TestTVLHistoryIntervals(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestTVLHistoryIntervals(unittest.TestCase):
     def testTVLHistoryIntervals(self):
         """Test TVLHistoryIntervals"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = midgard_client.models.tvl_history_intervals.TVLHistoryIntervals()  # noqa: E501
+        # model = xchainpy2_midgard.models.tvl_history_intervals.TVLHistoryIntervals()  # noqa: E501
         pass
 
 

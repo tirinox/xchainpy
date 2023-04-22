@@ -1,4 +1,4 @@
-# mayanode_client.MimirApi
+# xchainpy2_mayanode.MimirApi
 
 All URIs are relative to */*
 
@@ -21,12 +21,12 @@ Returns current active mimir configuration.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.MimirApi()
+api_instance = xchainpy2_mayanode.MimirApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
@@ -68,12 +68,12 @@ Returns current admin mimir configuration.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.MimirApi()
+api_instance = xchainpy2_mayanode.MimirApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
@@ -115,12 +115,12 @@ Returns current active mimir configuration for the provided key.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.MimirApi()
+api_instance = xchainpy2_mayanode.MimirApi()
 key = 'key_example' # str | the mimir key to lookup
 height = 789 # int | optional block height, defaults to current tip (optional)
 
@@ -164,12 +164,12 @@ Returns current node mimir configuration for the provided node address.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.MimirApi()
+api_instance = xchainpy2_mayanode.MimirApi()
 address = 'address_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
@@ -213,12 +213,12 @@ Returns current node mimir votes.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.MimirApi()
+api_instance = xchainpy2_mayanode.MimirApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:

@@ -1,4 +1,4 @@
-# midgard_client.SpecificationApi
+# xchainpy2_midgard.SpecificationApi
 
 All URIs are relative to */*
 
@@ -18,12 +18,12 @@ Swagger/OpenAPI 3.0 specification generated documents.
 ```python
 from __future__ import print_function
 import time
-import midgard_client
-from midgard_client.rest import ApiException
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = midgard_client.SpecificationApi()
+api_instance = xchainpy2_midgard.SpecificationApi()
 
 try:
     # Documentation
@@ -61,12 +61,12 @@ Returns human and machine readable swagger/openapi specification
 ```python
 from __future__ import print_function
 import time
-import midgard_client
-from midgard_client.rest import ApiException
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = midgard_client.SpecificationApi()
+api_instance = xchainpy2_midgard.SpecificationApi()
 
 try:
     # Swagger File

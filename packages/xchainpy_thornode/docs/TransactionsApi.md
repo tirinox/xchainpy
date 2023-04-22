@@ -1,4 +1,4 @@
-# thornode_client.TransactionsApi
+# xchainpy2_thornode.TransactionsApi
 
 All URIs are relative to */*
 
@@ -21,12 +21,12 @@ Returns the observed transaction for a provided inbound or outbound hash.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.TransactionsApi()
+api_instance = xchainpy2_thornode.TransactionsApi()
 hash = 'hash_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
@@ -70,12 +70,12 @@ Returns the signers for a provided inbound or outbound hash.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.TransactionsApi()
+api_instance = xchainpy2_thornode.TransactionsApi()
 hash = 'hash_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
@@ -119,12 +119,12 @@ Deprecated - migrate to /thorchain/tx/details.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.TransactionsApi()
+api_instance = xchainpy2_thornode.TransactionsApi()
 hash = 'hash_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
@@ -168,12 +168,12 @@ Returns the processing stages of a provided inbound hash.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.TransactionsApi()
+api_instance = xchainpy2_thornode.TransactionsApi()
 hash = 'hash_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
@@ -217,12 +217,12 @@ Returns the status of a provided inbound hash.
 ```python
 from __future__ import print_function
 import time
-import thornode_client
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = thornode_client.TransactionsApi()
+api_instance = xchainpy2_thornode.TransactionsApi()
 hash = 'hash_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 

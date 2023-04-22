@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import midgard_client
-from midgard_client.models.depth_history_meta import DepthHistoryMeta  # noqa: E501
-from midgard_client.rest import ApiException
+import xchainpy2_midgard
+from xchainpy2_midgard.models.depth_history_meta import DepthHistoryMeta  # noqa: E501
+from xchainpy2_midgard.rest import ApiException
 
 
 class TestDepthHistoryMeta(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestDepthHistoryMeta(unittest.TestCase):
     def testDepthHistoryMeta(self):
         """Test DepthHistoryMeta"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = midgard_client.models.depth_history_meta.DepthHistoryMeta()  # noqa: E501
+        # model = xchainpy2_midgard.models.depth_history_meta.DepthHistoryMeta()  # noqa: E501
         pass
 
 

@@ -12,7 +12,7 @@
 
 from setuptools import setup, find_packages  # noqa: H301
 
-NAME = "mayanode-client"
+NAME = "xchainpy2-mayanode"
 VERSION = "1.0.1"
 # To install the library, run the following
 #

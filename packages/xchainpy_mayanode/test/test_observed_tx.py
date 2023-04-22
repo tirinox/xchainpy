@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import mayanode_client
-from mayanode_client.models.observed_tx import ObservedTx  # noqa: E501
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.models.observed_tx import ObservedTx  # noqa: E501
+from xchainpy2_mayanode.rest import ApiException
 
 
 class TestObservedTx(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestObservedTx(unittest.TestCase):
     def testObservedTx(self):
         """Test ObservedTx"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = mayanode_client.models.observed_tx.ObservedTx()  # noqa: E501
+        # model = xchainpy2_mayanode.models.observed_tx.ObservedTx()  # noqa: E501
         pass
 
 

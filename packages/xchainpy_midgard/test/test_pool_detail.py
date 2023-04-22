@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import midgard_client
-from midgard_client.models.pool_detail import PoolDetail  # noqa: E501
-from midgard_client.rest import ApiException
+import xchainpy2_midgard
+from xchainpy2_midgard.models.pool_detail import PoolDetail  # noqa: E501
+from xchainpy2_midgard.rest import ApiException
 
 
 class TestPoolDetail(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestPoolDetail(unittest.TestCase):
     def testPoolDetail(self):
         """Test PoolDetail"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = midgard_client.models.pool_detail.PoolDetail()  # noqa: E501
+        # model = xchainpy2_midgard.models.pool_detail.PoolDetail()  # noqa: E501
         pass
 
 

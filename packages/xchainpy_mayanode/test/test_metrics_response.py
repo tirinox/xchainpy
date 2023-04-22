@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import mayanode_client
-from mayanode_client.models.metrics_response import MetricsResponse  # noqa: E501
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.models.metrics_response import MetricsResponse  # noqa: E501
+from xchainpy2_mayanode.rest import ApiException
 
 
 class TestMetricsResponse(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestMetricsResponse(unittest.TestCase):
     def testMetricsResponse(self):
         """Test MetricsResponse"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = mayanode_client.models.metrics_response.MetricsResponse()  # noqa: E501
+        # model = xchainpy2_mayanode.models.metrics_response.MetricsResponse()  # noqa: E501
         pass
 
 

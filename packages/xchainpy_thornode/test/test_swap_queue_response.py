@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import thornode_client
-from thornode_client.models.swap_queue_response import SwapQueueResponse  # noqa: E501
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.models.swap_queue_response import SwapQueueResponse  # noqa: E501
+from xchainpy2_thornode.rest import ApiException
 
 
 class TestSwapQueueResponse(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestSwapQueueResponse(unittest.TestCase):
     def testSwapQueueResponse(self):
         """Test SwapQueueResponse"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = thornode_client.models.swap_queue_response.SwapQueueResponse()  # noqa: E501
+        # model = xchainpy2_thornode.models.swap_queue_response.SwapQueueResponse()  # noqa: E501
         pass
 
 

@@ -1,4 +1,4 @@
-# mayanode_client.VaultsApi
+# xchainpy2_mayanode.VaultsApi
 
 All URIs are relative to */*
 
@@ -20,12 +20,12 @@ Returns current asgard vaults.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.VaultsApi()
+api_instance = xchainpy2_mayanode.VaultsApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
@@ -67,12 +67,12 @@ Returns the vault for the provided pubkey.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.VaultsApi()
+api_instance = xchainpy2_mayanode.VaultsApi()
 pubkey = 'pubkey_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
@@ -116,12 +116,12 @@ Returns all pubkeys for current vaults.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.VaultsApi()
+api_instance = xchainpy2_mayanode.VaultsApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
@@ -163,12 +163,12 @@ Returns current yggdrasil vaults.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.VaultsApi()
+api_instance = xchainpy2_mayanode.VaultsApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:

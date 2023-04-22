@@ -1,4 +1,4 @@
-# mayanode_client.MayanamesApi
+# xchainpy2_mayanode.MayanamesApi
 
 All URIs are relative to */*
 
@@ -17,12 +17,12 @@ Returns addresses registered to the provided mayaname.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.MayanamesApi()
+api_instance = xchainpy2_mayanode.MayanamesApi()
 name = 'name_example' # str | the mayanode to lookup
 height = 789 # int | optional block height, defaults to current tip (optional)
 

@@ -14,9 +14,9 @@ from __future__ import absolute_import
 
 import unittest
 
-import thornode_client
-from thornode_client.models.quote_saver_deposit_response import QuoteSaverDepositResponse  # noqa: E501
-from thornode_client.rest import ApiException
+import xchainpy2_thornode
+from xchainpy2_thornode.models.quote_saver_deposit_response import QuoteSaverDepositResponse  # noqa: E501
+from xchainpy2_thornode.rest import ApiException
 
 
 class TestQuoteSaverDepositResponse(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestQuoteSaverDepositResponse(unittest.TestCase):
     def testQuoteSaverDepositResponse(self):
         """Test QuoteSaverDepositResponse"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = thornode_client.models.quote_saver_deposit_response.QuoteSaverDepositResponse()  # noqa: E501
+        # model = xchainpy2_thornode.models.quote_saver_deposit_response.QuoteSaverDepositResponse()  # noqa: E501
         pass
 
 

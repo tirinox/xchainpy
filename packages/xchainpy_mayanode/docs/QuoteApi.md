@@ -1,4 +1,4 @@
-# mayanode_client.QuoteApi
+# xchainpy2_mayanode.QuoteApi
 
 All URIs are relative to */*
 
@@ -19,12 +19,12 @@ Provide a quote estimate for the provided saver deposit.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.QuoteApi()
+api_instance = xchainpy2_mayanode.QuoteApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 asset = 'asset_example' # str | the asset to deposit (optional)
 amount = 789 # int | the source asset amount in 1e8 decimals (optional)
@@ -70,12 +70,12 @@ Provide a quote estimate for the provided saver withdraw.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.QuoteApi()
+api_instance = xchainpy2_mayanode.QuoteApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 asset = 'asset_example' # str | the asset to withdraw (optional)
 address = 'address_example' # str | the address for the position (optional)
@@ -123,12 +123,12 @@ Provide a quote estimate for the provided swap.
 ```python
 from __future__ import print_function
 import time
-import mayanode_client
-from mayanode_client.rest import ApiException
+import xchainpy2_mayanode
+from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = mayanode_client.QuoteApi()
+api_instance = xchainpy2_mayanode.QuoteApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 from_asset = 'from_asset_example' # str | the source asset (optional)
 to_asset = 'to_asset_example' # str | the target asset (optional)
