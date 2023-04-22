@@ -38,19 +38,21 @@ class KeyStore(NamedTuple):
     @property
     def to_dict(self):
         return {
-            'cipher': self.cipher,
-            'ciphertext': self.ciphertext,
-            'cipherparams': {
-                'iv': self.cipherparams_iv
+            'crypto': {
+                'cipher': self.cipher,
+                'ciphertext': self.ciphertext,
+                'cipherparams': {
+                    'iv': self.cipherparams_iv
+                },
+                'kdf': self.kdf,
+                'kdfparams': {
+                    'prf': self.kdfparams_prf,
+                    'dklen': self.kdfparams_dklen,
+                    'salt': self.kdfparams_salt,
+                    'c': self.kdfparams_c
+                },
+                'mac': self.mac,
             },
-            'kdf': self.kdf,
-            'kdfparams': {
-                'prf': self.kdfparams_prf,
-                'dklen': self.kdfparams_dklen,
-                'salt': self.kdfparams_salt,
-                'c': self.kdfparams_c
-            },
-            'mac': self.mac,
             'id': self.id,
             'version': self.version,
             'meta': self.meta

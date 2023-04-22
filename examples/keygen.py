@@ -1,5 +1,5 @@
 
-from xchainpy2_crypto import generate_mnemonic, validate_mnemonic
+from xchainpy2_crypto import generate_mnemonic, validate_mnemonic, KeyStore
 from bip_utils import Bip39Languages
 
 
@@ -21,7 +21,11 @@ def demo_generate_mnemonics():
 
 
 def demo_keystore():
-    pass
+    mnemonic = generate_mnemonic()
+    print(f"{mnemonic = }")
+    ks = KeyStore.from_mnemonic_and_password(mnemonic, 'password')
+    print(ks)
+    ks.save('data/example_keystore.json')
 
 
 if __name__ == '__main__':
