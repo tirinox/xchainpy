@@ -28,6 +28,8 @@ def validate_mnemonic(mnemonic: str, lang: str = None) -> bool:
     :param lang: Bip39Languages or None
     :return: bool: True if valid, False otherwise
     """
+    if not mnemonic:
+        return False
     mnemonic = _normalize_mnemonic_type(mnemonic)
     return Bip39MnemonicValidator(lang).IsValid(mnemonic)
 

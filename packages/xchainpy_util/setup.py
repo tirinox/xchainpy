@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from setuptools import setup, find_packages  # noqa: H301
 
 NAME = "xchainpy2_util"
@@ -10,6 +12,7 @@ VERSION = "0.0.2"
 # http://pypi.python.org/pypi/setuptools
 
 REQUIRES = []
+CWD = Path(__file__).resolve().parent
 
 setup(
     name=NAME,
@@ -21,7 +24,12 @@ setup(
     install_requires=REQUIRES,
     packages=find_packages(''),
     include_package_data=True,
-    long_description="""XChainPy 2 Utils""",
+    long_description="\n".join(
+        (
+            (CWD / "README.md").read_text(),
+            # (CWD / "CHANGELOG.rst").read_text(),
+        )
+    ),
     classifiers=[
         'Development Status :: 3 - Alpha',
         # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
