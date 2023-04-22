@@ -19,6 +19,11 @@ C = 262144
 HASH_FUNCTION = 'sha256'
 META = 'xchain-keystore'
 VERSION = 1
+ENCODING = 'utf-8'
+
+
+class InvalidPasswordException(Exception):
+    pass
 
 
 class KeyStore(NamedTuple):
@@ -89,7 +94,13 @@ class KeyStore(NamedTuple):
             json.dump(self.to_dict, f, indent=indent)
 
     @classmethod
-    def from_mnemonic_and_password(cls, mnemonic: str, password: str):
+    def encrypt_to_keystore(cls, mnemonic: str, password: str):
+        """
+        Encrypts a mnemonic to a keystore with a password
+        :param str mnemonic: BIP39 mnemonic
+        :param str password: Password
+        :return: KeyStore
+        """
         if not validate_mnemonic(mnemonic):
             raise Exception("Invalid BIP39 Phrase")
 
@@ -99,7 +110,7 @@ class KeyStore(NamedTuple):
 
         derived_key = hashlib.pbkdf2_hmac(
             HASH_FUNCTION,
-            password.encode('utf-8'),
+            password.encode(ENCODING),
             salt,
             C,
             DKLEN
@@ -127,3 +138,30 @@ class KeyStore(NamedTuple):
             version=VERSION,
             meta=META
         )
+
+    def decrypt_from_keystore(self, password: str):
+        """
+        Derives a mnemonic from a keystore with a password
+        :param str password: password
+        :return: str Mnemonic phrase
+        """
+        derived_key = hashlib.pbkdf2_hmac(
+            HASH_FUNCTION,
+            password.encode(ENCODING),
+            bytes.fromhex(self.kdfparams_salt),
+            self.kdfparams_c,
+            self.kdfparams_dklen
+        )
+
+        cipher_bytes = bytes.fromhex(self.ciphertext)
+
+        blake256 = BLAKE2b.new(digest_bits=256)
+        blake256.update((derived_key[16:32] + cipher_bytes))
+        mac = blake256.hexdigest()
+        if mac != self.mac:
+            raise InvalidPasswordException("Invalid password")
+
+        ctr = Counter.new(NBITS, initial_value=int(self.cipherparams_iv, 16))
+        aes_cipher = AES.new(derived_key[0:16], AES.MODE_CTR, counter=ctr)
+        phrase = aes_cipher.decrypt(cipher_bytes)
+        return phrase.decode("utf8")
