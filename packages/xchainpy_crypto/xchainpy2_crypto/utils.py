@@ -1,5 +1,3 @@
-from ctypes import Union
-
 from bip_utils import Bip39MnemonicGenerator, Bip39WordsNum, Bip39Languages, Bip39MnemonicValidator
 
 
@@ -14,7 +12,7 @@ def generate_mnemonic(words_number=Bip39WordsNum.WORDS_NUM_12, lang=Bip39Languag
     return str(mnemonic)
 
 
-def validate_mnemonic(mnemonic: Union[str, list, tuple], lang: str = None) -> bool:
+def validate_mnemonic(mnemonic: str, lang: str = None) -> bool:
     """
     :param mnemonic: Mnemonic phrase or list of words
     :param lang: Bip39Languages or None

@@ -1,4 +1,4 @@
-from amount import Amount, Denomination, amount, ASSET_DECIMAL
+from xchainpy2_utils import *
 
 
 def test_amount_general():

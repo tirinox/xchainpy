@@ -1,6 +1,6 @@
 from enum import Enum
 
-from asset import Asset
+from .asset import Asset
 
 
 class Chain(Enum):

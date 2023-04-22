@@ -1,6 +1,4 @@
-from asset import Asset
-from consts import AssetBNB, AssetETH, AssetRune, Chain
-
+from xchainpy2_utils import *
 
 def test_asset_rune():
     assert AssetRune.chain == Chain.THORChain.value

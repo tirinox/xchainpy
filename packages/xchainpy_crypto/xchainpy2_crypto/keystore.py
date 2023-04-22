@@ -8,7 +8,7 @@ from Crypto.Cipher import AES
 from Crypto.Hash import BLAKE2b
 from Crypto.Util import Counter
 
-from utils import validate_mnemonic
+from .utils import validate_mnemonic
 
 CIPHER = 'aes-128-ctr'
 NBITS = 128

@@ -14,7 +14,7 @@ VERSION = "0.0.2"
 
 REQUIRES = [
     "bip-utils>=2.7.0,<3.0.0",
-    "pycrypto>=2.6.1,<3.0.0",
+    "pycryptodome>=3.17,<4.0",
 ]
 
 

@@ -19,7 +19,7 @@ setup(
     url="https://github.com/tirinox/xchainpy/tree/develop/packages/xchainpy_util",
     keywords=["Crypto", "XChain"],
     install_requires=REQUIRES,
-    packages=find_packages('src'),
+    packages=find_packages(''),
     include_package_data=True,
     long_description="""XChainPy 2 Utils""",
     classifiers=[

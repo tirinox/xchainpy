@@ -1,6 +1,6 @@
-from bip_utils import Bip39Languages
 
-from xchainpy_crypto.keys import generate_mnemonic, validate_mnemonic
+from xchainpy2_crypto import generate_mnemonic, validate_mnemonic
+from bip_utils import Bip39Languages
 
 
 def demo_generate_mnemonics():
