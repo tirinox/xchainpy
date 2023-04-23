@@ -72,10 +72,6 @@ def short_money(x, prefix='', postfix='', localization=None, signed=False, integ
         zero = '0' if integer else '0.0'
         return f'{prefix}{zero}{postfix}'
 
-    if hasattr(localization, 'SHORT_MONEY_LOC'):
-        localization = localization.SHORT_MONEY_LOC
-    localization = localization or {}
-
     if x < 0:
         sign = '-'
         x = -x
@@ -112,3 +108,25 @@ def short_money(x, prefix='', postfix='', localization=None, signed=False, integ
 
     result = f'{x}{letter}'
     return f'{sign}{prefix}{result}{postfix}'
+
+
+def short_dollar(x, localization=None, signed=False):
+    return short_money(x, prefix=DOLLAR_SIGN, localization=localization, signed=signed)
+
+
+MULT_NOTATION = {
+    'k': 10 ** 3,
+    'm': 10 ** 6,
+    'b': 10 ** 9,
+    'q': 10 ** 12
+}
+
+
+def parse_short_number(n: str):
+    n = str(n).strip().lower()
+    if not n:
+        return 0.0
+    mult = MULT_NOTATION.get(n[-1], 1)
+    if mult > 1:
+        n = n[:-1]
+    return float(n) * mult
