@@ -2,6 +2,8 @@ from decimal import Decimal, Context
 from enum import Enum
 from typing import NamedTuple, Union
 
+from .asset import Asset
+
 DECIMAL_CONTEXT = Context(prec=100)
 
 
@@ -129,3 +131,52 @@ def amount(x) -> Amount:
 def format_big_int(x: int, decimals: int, trailing_zeros=False, prefix='$', postfix='') -> str:
     s = Amount.from_base(x, decimals).format(trailing_zeros)
     return f'{prefix}{s}{postfix}'
+
+
+class CryptoAmount(NamedTuple):
+    amount: Amount
+    asset: Asset
+
+    def __add__(self, other):
+        self.check(other)
+        return CryptoAmount(self.amount + other.amount, self.asset)
+
+    def __sub__(self, other):
+        self.check(other)
+        return CryptoAmount(self.amount - other.amount, self.asset)
+
+    def __mul__(self, other):
+        self.check(other)
+        return CryptoAmount(self.amount * other.amount, self.asset)
+
+    def __truediv__(self, other):
+        self.check(other)
+        return CryptoAmount(self.amount / other.amount, self.asset)
+
+    def __eq__(self, other):
+        self.check(other)
+        return self.amount == other.amount
+
+    def __lt__(self, other):
+        self.check(other)
+        return self.amount < other.amount
+
+    def __le__(self, other):
+        self.check(other)
+        return self.amount <= other.amount
+
+    def __gt__(self, other):
+        self.check(other)
+        return self.amount > other.amount
+
+    def __ge__(self, other):
+        self.check(other)
+        return self.amount >= other.amount
+
+    def __str__(self):
+        return f'{self.amount.format()} {self.asset}'
+
+    def check(self, a: 'CryptoAmount'):
+        if isinstance(a, CryptoAmount):
+            if a.asset != self.asset:
+                raise ValueError(f"Cannot perform math on 2 different assets: {self.asset} and {a.asset}")

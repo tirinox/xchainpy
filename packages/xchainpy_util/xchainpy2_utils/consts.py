@@ -31,3 +31,7 @@ AssetMaya = Asset('MAYA', 'CACAO', 'CACAO', False)
 
 XCHAINPY_IDENTIFIER = 'xchainpy-client'
 NINE_REALMS_CLIENT_HEADER = 'x-client-id'
+
+RAIDO_GLYPH = 'ᚱ'
+DOLLAR_SIGN = '$'
+
