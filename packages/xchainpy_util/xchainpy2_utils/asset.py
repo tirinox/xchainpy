@@ -57,3 +57,7 @@ class Asset(NamedTuple):
     @property
     def as_synth(self):
         return self._replace(synth=True)
+
+    @property
+    def is_rune_native(self):
+        return self.chain == 'THOR' and self.symbol == 'RUNE'

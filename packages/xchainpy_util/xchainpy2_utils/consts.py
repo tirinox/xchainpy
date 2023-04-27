@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import NamedTuple
 
 from .asset import Asset
 
@@ -14,6 +15,7 @@ class Chain(Enum):
     Doge = "DOGE"
     Avax = "AVAX"
     Maya = "MAYA"
+    BinanceSmartChain = "BSC"
 
 
 RUNE_TICKER = 'RUNE'
@@ -39,3 +41,20 @@ RUNE_DECIMAL = 8
 CACAO_DECIMAL = 10
 
 
+class ChainAttributes(NamedTuple):
+    block_reward: float
+    avg_block_time: float
+
+DEFAULT_CHAIN_ATTRS = {
+    Chain.BitcoinCash: ChainAttributes(6.25, 600),
+    Chain.Bitcoin: ChainAttributes(6.25, 600),
+    Chain.Ethereum: ChainAttributes(2, 13),
+    Chain.Avax: ChainAttributes(2, 3),
+    Chain.Litecoin: ChainAttributes(12.5, 150),
+    Chain.Doge: ChainAttributes(10000, 60),
+    Chain.Cosmos: ChainAttributes(0, 6),
+    Chain.Binance: ChainAttributes(0, 6),
+    Chain.THORChain: ChainAttributes(0, 6),
+    Chain.BinanceSmartChain: ChainAttributes(0, 3),
+    Chain.Maya: ChainAttributes(0, 6),
+}
