@@ -11,7 +11,10 @@ VERSION = "0.0.1"
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
 
-REQUIRES = []
+REQUIRES = [
+    'aiohttp-retry>=2.3.0,<3.0.0',
+]  # todo: add here real dependencies for THORNode and Midgard
+
 CWD = Path(__file__).resolve().parent
 
 setup(
