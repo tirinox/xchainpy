@@ -75,7 +75,8 @@ class Amount(NamedTuple):
         return cls(0, decimals, denom)
 
     @classmethod
-    def from_base(cls, base_amount: int, decimals=ASSET_DECIMAL):
+    def from_base(cls, base_amount: Union[str, int], decimals=ASSET_DECIMAL):
+        base_amount = int(base_amount)
         return cls(base_amount, decimals, Denomination.BASE)
 
     @classmethod

@@ -45,6 +45,7 @@ class ChainAttributes(NamedTuple):
     block_reward: float
     avg_block_time: float
 
+
 DEFAULT_CHAIN_ATTRS = {
     Chain.BitcoinCash: ChainAttributes(6.25, 600),
     Chain.Bitcoin: ChainAttributes(6.25, 600),
@@ -58,3 +59,5 @@ DEFAULT_CHAIN_ATTRS = {
     Chain.BinanceSmartChain: ChainAttributes(0, 3),
     Chain.Maya: ChainAttributes(0, 6),
 }
+
+Address = str
