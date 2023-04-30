@@ -29,6 +29,7 @@ class RESTClientRetry(RESTClientObject):
     def __init__(self, configuration: Optional[ConfigurationEx], pools_size=4, maxsize=4):
         # We rewrite the constructor completely to add retry logic and backup hosts
         # No need to call super().__init__ here, to avoid creating a useless session
+        self.configuration = configuration
 
         # ca_certs
         if configuration.ssl_ca_cert:
@@ -94,7 +95,7 @@ class RESTClientRetry(RESTClientObject):
                             scheme=backup_url.scheme,
                             netloc=backup_url.netloc,
                         )
-                    print(f'{url=}, {backup_url=}')
+
                     return await super().request(method, url, query_params,
                                                  headers, body, post_params,
                                                  _preload_content, _request_timeout)

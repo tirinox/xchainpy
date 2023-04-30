@@ -181,3 +181,6 @@ class CryptoAmount(NamedTuple):
         if isinstance(a, CryptoAmount):
             if a.asset != self.asset:
                 raise ValueError(f"Cannot perform math on 2 different assets: {self.asset} and {a.asset}")
+
+
+MAX_BASIS_POINTS = 10_0000

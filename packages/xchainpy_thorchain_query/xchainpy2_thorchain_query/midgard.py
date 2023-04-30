@@ -2,7 +2,6 @@ from multiprocessing.pool import ThreadPool
 from typing import Optional
 
 import xchainpy2_midgard as mdg
-from xchainpy2_midgard import Configuration
 from . import DEFAULT_USER_AGENT
 from .patch_clients import RESTClientRetry, ConfigurationEx
 
@@ -33,9 +32,6 @@ class MidgardAPIClient(mdg.ApiClient):
     async def close(self):
         await self.rest_client.close()
 
-    def request(self, method, url, query_params=None, headers=None, post_params=None, body=None, _preload_content=True,
-                _request_timeout=None):
-        return super().request(method, url, query_params, headers, post_params, body, _preload_content,
-                               _request_timeout)
-
-
+    def deserialize(self, response, response_type):
+        # todo: raise
+        return super().deserialize(response, response_type)
