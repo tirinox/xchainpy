@@ -37,7 +37,9 @@ async def run_midgard_pools():
 
     api = MidgardAPI(mdg)
     pools = await request_api_with_backup_hosts(api, api.get_pools)
-    print(pools)
+    print(f"{type(pools)}: {pools}")
+    pools = await api.get_pools()
+    print(f"{type(pools)}: {pools}")
 
     await mdg.close()
 

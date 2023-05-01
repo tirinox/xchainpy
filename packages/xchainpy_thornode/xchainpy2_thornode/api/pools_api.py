@@ -142,7 +142,7 @@ class PoolsApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: PoolsResponse
+        :return: list[Pool]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -164,7 +164,7 @@ class PoolsApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: PoolsResponse
+        :return: list[Pool]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -214,7 +214,7 @@ class PoolsApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='PoolsResponse',  # noqa: E501
+            response_type='list[Pool]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),

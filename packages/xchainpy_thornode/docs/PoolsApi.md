@@ -57,7 +57,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **pools**
-> PoolsResponse pools(height=height)
+> list[Pool] pools(height=height)
 
 
 
@@ -90,7 +90,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PoolsResponse**](PoolsResponse.md)
+[**list[Pool]**](Pool.md)
 
 ### Authorization
 
