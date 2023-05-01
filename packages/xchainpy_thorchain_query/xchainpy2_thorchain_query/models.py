@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import NamedTuple, List, Dict, Optional
@@ -59,7 +60,8 @@ class LiquidityPool(NamedTuple):
         return self.pool.status.lower() == self.AVAILABLE
 
 
-class PoolCache(NamedTuple):
+@dataclass
+class PoolCache:
     last_refreshed: int
     pools: Dict[str, LiquidityPool]
 
@@ -77,12 +79,14 @@ class InboundDetail(NamedTuple):
     halted_lp: bool
 
 
-class InboundDetailCache(NamedTuple):
+@dataclass
+class InboundDetailCache:
     last_refreshed: int
     inbound_details: Dict[str, InboundDetail]
 
 
-class NetworkValuesCache(NamedTuple):
+@dataclass
+class NetworkValuesCache:
     last_refreshed: int
     network_values: Dict[str, float]
 

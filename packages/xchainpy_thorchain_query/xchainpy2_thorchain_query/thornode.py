@@ -1,23 +1,24 @@
 from multiprocessing.pool import ThreadPool
-from typing import Optional
 
-import xchainpy2_midgard as mdg
-from .const import DEFAULT_USER_AGENT, NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER
-from .patch_clients import RESTClientRetry, ConfigurationEx
+import xchainpy2_thornode as thornode
+from .patch_clients import ConfigurationEx, RESTClientRetry
+from .const import DEFAULT_USER_AGENT, XCHAINPY_IDENTIFIER, NINE_REALMS_CLIENT_HEADER
 
 
-class MidgardAPIClient(mdg.ApiClient):
+class ThornodeAPIClient(thornode.ApiClient):
     # noinspection PyMissingConstructor
-    def __init__(self, configuration: Optional[ConfigurationEx] = None,
-                 header_name=NINE_REALMS_CLIENT_HEADER,
-                 header_value=XCHAINPY_IDENTIFIER,
+    def __init__(self, configuration: ConfigurationEx = None,
+                 header_name=NINE_REALMS_CLIENT_HEADER, header_value=XCHAINPY_IDENTIFIER,
                  cookie=None):
         if configuration is None:
             configuration = ConfigurationEx()
         self.configuration = configuration
 
         self.pool = ThreadPool()
-
+        # Patch REST client with additional retry logic and backup hosts
+        self.rest_client = RESTClientRetry(
+            configuration,
+        )
         self.default_headers = {}
         if header_name is not None:
             self.default_headers[header_name] = header_value
@@ -25,11 +26,6 @@ class MidgardAPIClient(mdg.ApiClient):
 
         # Set default User-Agent.
         self.user_agent = DEFAULT_USER_AGENT
-
-        # Patch REST client with additional retry logic and backup hosts
-        self.rest_client = RESTClientRetry(
-            configuration,
-        )
 
     async def close(self):
         await self.rest_client.close()

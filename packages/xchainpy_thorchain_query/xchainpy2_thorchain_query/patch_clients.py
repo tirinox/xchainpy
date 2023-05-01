@@ -1,5 +1,5 @@
+import logging
 import ssl
-import urllib.parse
 from typing import Optional
 
 import aiohttp
@@ -18,10 +18,10 @@ DEFAULT_TIMEOUT = 300
 class ConfigurationEx(Configuration):
     def __init__(self):
         super().__init__()
-        self.backup_hosts = []
         self.timeout = DEFAULT_TIMEOUT
         self.retry_config = ExponentialRetry(attempts=DEFAULT_RETRY_ATTEMPTS)
         self.raise_for_status = False
+        self.backup_hosts = []
 
 
 class RESTClientRetry(RESTClientObject):
@@ -52,17 +52,6 @@ class RESTClientRetry(RESTClientObject):
 
         self.retry_config = configuration.retry_config
 
-        # Parse URLs and make sure that all backup hosts are valid
-        self.backup_hosts_urls = [
-            urllib.parse.urlparse(host) for host in configuration.backup_hosts
-        ] if configuration.backup_hosts else None
-
-        if self.backup_hosts_urls:
-            assert all(
-                url.netloc and url.scheme.lower() in ('http', 'https')
-                for url in self.backup_hosts_urls
-            )
-
         # Retrying client
         timeout = sentinel
         if isinstance(configuration.timeout, (float, int)):
@@ -78,34 +67,36 @@ class RESTClientRetry(RESTClientObject):
         )
         # todo: move "proxy" parameter to request method
 
-    async def request(self, method, url, query_params=None, headers=None,
-                      body=None, post_params=None,
-                      _preload_content=True, _request_timeout=None):
-        if self.backup_hosts_urls:
-            # noinspection PyTypeChecker
-            urls = [None] + self.backup_hosts_urls
-            exc = None
-            for backup_url in urls:
-                try:
-                    # if it is None, it is original url
-                    if backup_url:
-                        # replace scheme and netloc
-                        original_url = urllib.parse.urlparse(url)
-                        url = original_url._replace(
-                            scheme=backup_url.scheme,
-                            netloc=backup_url.netloc,
-                        )
-
-                    return await super().request(method, url, query_params,
-                                                 headers, body, post_params,
-                                                 _preload_content, _request_timeout)
-                except Exception as e:
-                    exc = e
-                    # todo: log exception
-            raise Exception(f'All backup hosts failed ({exc}) "{method}", {url=}')
-        else:
-            return await super().request(method, url, query_params, headers, body, post_params, _preload_content,
-                                         _request_timeout)
-
     async def close(self):
         await self.pool_manager.close()
+
+
+logger = logging.getLogger('backup_hosts')
+
+
+async def request_api_with_backup_hosts(api, method, *args, **kwargs):
+    original_host = api.api_client.configuration.host
+
+    hosts = []
+    if original_host and original_host != '/':
+        hosts.append(original_host)
+    hosts.extend(api.api_client.configuration.backup_hosts)
+
+    if not hosts:
+        raise Exception('No hosts to try')
+
+    last_exception = None
+    for host in hosts:
+        try:
+            api.api_client.configuration.host = host
+            if isinstance(method, str):
+                method = getattr(api, method)
+            return await method(*args, **kwargs)
+        except Exception as e:
+            logger.error(f'Host {host} failed for method {method}: {e}')
+            last_exception = e
+
+    if last_exception:
+        raise Exception('All backup hosts failed') from last_exception
+
+    return None

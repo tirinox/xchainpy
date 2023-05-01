@@ -1,8 +1,8 @@
 from xchainpy2_utils import *
 
 def test_asset_rune():
-    assert AssetRune.chain == Chain.THORChain.value
-    assert AssetRune.symbol == 'RUNE'
+    assert AssetRUNE.chain == Chain.THORChain.value
+    assert AssetRUNE.symbol == 'RUNE'
 
 
 def test_asset_equals():
@@ -12,7 +12,7 @@ def test_asset_equals():
 
     assert AssetBNB == asset
     assert AssetBNB != AssetETH
-    assert AssetRune == AssetRune
+    assert AssetRUNE == AssetRUNE
 
 
 def test_asset_from_string():

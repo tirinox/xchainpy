@@ -12,6 +12,7 @@ VERSION = "0.0.1"
 # http://pypi.python.org/pypi/setuptools
 
 REQUIRES = [
+    'aiohttp>=3.8.0,<4.0.0',
     'aiohttp-retry>=2.3.0,<3.0.0',
 ]  # todo: add here real dependencies for THORNode and Midgard
 

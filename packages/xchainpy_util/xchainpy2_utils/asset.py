@@ -1,5 +1,7 @@
 from typing import NamedTuple, Optional
 
+from .consts import XChainProtocol
+
 SYNTH_DELIMITER = '/'
 NON_SYNTH_DELIMITER = '.'
 
@@ -61,3 +63,21 @@ class Asset(NamedTuple):
     @property
     def is_rune_native(self):
         return self.chain == 'THOR' and self.symbol == 'RUNE'
+
+    def is_native(self, p: XChainProtocol = XChainProtocol.THORCHAIN):
+        if p == XChainProtocol.THORCHAIN:
+            return self == AssetRUNE
+        elif p == XChainProtocol.MAYA:
+            return self == AssetCACAO
+
+
+AssetBTC = Asset('BTC', 'BTC', 'BTC', False)
+AssetETH = Asset('ETH', 'ETH', 'ETH', False)
+AssetBNB = Asset('BNB', 'BNB', 'BNB', False)
+AssetBCH = Asset('BCH', 'BCH', 'BCH', False)
+AssetLTC = Asset('LTC', 'LTC', 'LTC', False)
+AssetDOGE = Asset('DOGE', 'DOGE', 'DOGE', False)
+AssetAVAX = Asset('AVAX', 'AVAX', 'AVAX', False)
+AssetRUNE = Asset('THOR', 'RUNE', 'RUNE', False)
+AssetATOM = Asset('GAIA', 'ATOM', 'ATOM', False)
+AssetCACAO = Asset('MAYA', 'CACAO', 'CACAO', False)
