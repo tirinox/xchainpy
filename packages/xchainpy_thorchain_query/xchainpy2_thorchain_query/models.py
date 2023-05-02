@@ -62,7 +62,7 @@ class LiquidityPool(NamedTuple):
 
 @dataclass
 class PoolCache:
-    last_refreshed: int
+    last_refreshed: float
     pools: Dict[str, LiquidityPool]
 
 
@@ -81,13 +81,13 @@ class InboundDetail(NamedTuple):
 
 @dataclass
 class InboundDetailCache:
-    last_refreshed: int
+    last_refreshed: float
     inbound_details: Dict[str, InboundDetail]
 
 
 @dataclass
 class NetworkValuesCache:
-    last_refreshed: int
+    last_refreshed: float
     network_values: Dict[str, float]
 
 
