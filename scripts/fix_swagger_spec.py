@@ -98,12 +98,12 @@ def fix_spec(spec):
             if schema2:
                 if is_array(schema2):
                     print(f'Detected simple array of {schema2}')
-                    result = schema2
+                    result = schema2.copy()
             if not result:
                 result = make_ref(ref2)
         elif is_array(response_schema):
             print(f'Fixing simple array of {response_schema}')
-            result = response_schema
+            result = response_schema.copy()
 
         if result:
             r200.pop('$ref', None)
