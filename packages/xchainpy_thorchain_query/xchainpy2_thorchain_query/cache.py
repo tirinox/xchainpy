@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from xchainpy2_midgard.api import DefaultApi as MidgardAPI
 from xchainpy2_thornode import PoolsApi
-from xchainpy2_utils import Asset
+from xchainpy2_utils import Asset, AssetRUNE
 from .env import Network, URLs
 from .midgard import MidgardAPIClient
 from .models import PoolCache, InboundDetailCache, NetworkValuesCache, LiquidityPool
@@ -44,7 +44,8 @@ class THORChainCache:
                  thornode_client: ThornodeAPIClient = DEFAULT_THORNODE,
                  expire_pool: float = TEN_MINUTES,
                  expire_inbound: float = TEN_MINUTES,
-                 expire_network: float = TEN_MINUTES):
+                 expire_network: float = TEN_MINUTES,
+                 native_asset: Asset = AssetRUNE):
         self.midgard_client = midgard_client
         self.thornode_client = thornode_client
         self._pool_cache = PoolCache(0, {})
@@ -56,14 +57,18 @@ class THORChainCache:
 
         self.midgard_api = MidgardAPI(midgard_client)
         self.t_pool_api = PoolsApi(thornode_client)
+        self.native_asset = native_asset
+
+    def is_native_asset(self, a: Asset):
+        return a == self.native_asset
 
     async def get_exchange_rate(self, a_from: Asset, a_to: Asset):
         if a_from == a_to:
             return SAME_ASSET_EXCHANGE_RATE
-        elif a_from.is_rune_native:
+        elif self.is_native_asset(a_from):
             lp_to = await self.get_pool_for_asset(a_to)
             return lp_to.asset_to_rune_ratio
-        elif a_to.is_rune_native:
+        elif self.is_native_asset(a_to):
             lp_from = await self.get_pool_for_asset(a_from)
             return lp_from.rune_to_asset_ratio
         else:
@@ -72,7 +77,7 @@ class THORChainCache:
             return lp_from.rune_to_asset_ratio * lp_to.asset_to_rune_ratio
 
     async def get_pool_for_asset(self, asset: Asset) -> LiquidityPool:
-        if asset.is_rune_native:
+        if self.is_native_asset(asset):
             raise Exception('Native Rune does not have a pool')
         pool = self._pool_cache.pools.get(str(asset))
         if not pool:
@@ -88,22 +93,17 @@ class THORChainCache:
         raise LookupError('Could not refresh pools')
 
     async def refresh_pool_cache(self):
-
-        # thornode_pools, midgard_pools = await asyncio.gather(
-        #     request_api_with_backup_hosts(self.t_pool_api, self.t_pool_api.pools),
-        #     request_api_with_backup_hosts(self.midgard_client, self.midgard_api.get_pools)
-        # )
-
-        midgard_pools = await request_api_with_backup_hosts(self.midgard_client, self.midgard_api.get_pools)
-        thornode_pools = await self.t_pool_api.pools()
+        thornode_pools, midgard_pools = await asyncio.gather(
+            request_api_with_backup_hosts(self.t_pool_api, self.t_pool_api.pools),
+            request_api_with_backup_hosts(self.midgard_client, self.midgard_api.get_pools)
+        )
 
         if not thornode_pools or not midgard_pools:
             raise LookupError('Could not refresh pools')
 
         midgard_pools: List[LiquidityPool]
-        for pool in midgard_pools:
-            thornode_pool = next((p for p in thornode_pools if p.asset == pool.asset), None)
-
+        # for pool in midgard_pools:
+            # thornode_pool = next((p for p in thornode_pools if p.asset == pool.asset), None)
 
     async def refresh_network_values(self):
         ...
