@@ -75,12 +75,17 @@ logger = logging.getLogger('backup_hosts')
 
 
 async def request_api_with_backup_hosts(api, method, *args, **kwargs):
-    original_host = api.api_client.configuration.host
+    configuration = getattr(api, 'configuration', None)
+    if not configuration:
+        configuration = api.api_client.configuration
+
+    original_host = configuration.host
 
     hosts = []
     if original_host and original_host != '/':
         hosts.append(original_host)
-    hosts.extend(api.api_client.configuration.backup_hosts)
+
+    hosts.extend(configuration.backup_hosts)
 
     if not hosts:
         raise Exception('No hosts to try')
@@ -88,13 +93,15 @@ async def request_api_with_backup_hosts(api, method, *args, **kwargs):
     last_exception = None
     for host in hosts:
         try:
-            api.api_client.configuration.host = host
+            configuration.host = host
             if isinstance(method, str):
                 method = getattr(api, method)
             return await method(*args, **kwargs)
         except Exception as e:
             logger.error(f'Host {host} failed for method {method}: {e}')
             last_exception = e
+        finally:
+            configuration.host = original_host
 
     if last_exception:
         raise Exception('All backup hosts failed') from last_exception
