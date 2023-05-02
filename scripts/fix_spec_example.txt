@@ -12,11 +12,12 @@ midgard:
 
 # TODO:
 #      '200':
-#         application/json:
-#           schema:
-#             type: array
-#             items:
-#               $ref: '#/components/schemas/PoolDetail'
+#         content:
+#           application/json:
+#             schema:
+#               type: array
+#               items:
+#                 $ref: '#/components/schemas/PoolDetail'
 
 
 v

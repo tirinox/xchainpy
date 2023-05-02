@@ -60,18 +60,17 @@ def is_simple_array(response_schema):
     if response_schema.get('type') == 'array':
         items_type = response_schema.get('items', {})
         if '$ref' in items_type:
-            return items_type.get('$ref')
+            return items_type.get('$ref'), 'ref'
+        else:
+            return items_type, 'content'
+
+
+def is_array(schema):
+    return schema.get('type') == 'array'
 
 
 def make_ref(ref):
     return {'$ref': ref}
-
-
-def make_array(ref):
-    return {
-        'type': 'array',
-        'items': make_ref(ref)
-    }
 
 
 def fix_spec(spec):
@@ -97,14 +96,14 @@ def fix_spec(spec):
             # maybe go deeper?
             schema2 = get_schema(spec, ref2)
             if schema2:
-                if item_type_ref := is_simple_array(schema2):
-                    print(f'Detected simple array of {item_type_ref}')
-                    result = make_array(item_type_ref)
+                if is_array(schema2):
+                    print(f'Detected simple array of {schema2}')
+                    result = schema2
             if not result:
                 result = make_ref(ref2)
-        elif item_type_ref := is_simple_array(response_schema):
-            print(f'Fixing simple array of {item_type_ref}')
-            result = make_array(item_type_ref)
+        elif is_array(response_schema):
+            print(f'Fixing simple array of {response_schema}')
+            result = response_schema
 
         if result:
             r200.pop('$ref', None)
