@@ -54,7 +54,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id004
                   $ref: '#/components/schemas/Pool'
   /thorchain/pool/{asset}/liquidity_provider/{address}:
     parameters:
@@ -89,7 +89,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id005
                   $ref: '#/components/schemas/LiquidityProviderSummary'
   /thorchain/pool/{asset}/saver/{address}:
     parameters:
@@ -124,7 +124,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id006
                   $ref: '#/components/schemas/Saver'
   /thorchain/pool/{asset}/borrower/{address}:
     parameters:
@@ -159,7 +159,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id007
                   $ref: '#/components/schemas/Borrower'
   /thorchain/tx/{hash}:
     parameters:
@@ -273,7 +273,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id009
                   $ref: '#/components/schemas/Node'
   /thorchain/vaults/asgard:
     parameters:
@@ -290,7 +290,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id001
                   $ref: '#/components/schemas/Vault'
   /thorchain/vaults/yggdrasil:
     parameters:
@@ -307,8 +307,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/Vault'
+                items: *id001
   /thorchain/vault/{pubkey}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -386,7 +385,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id010
                   $ref: '#/components/schemas/InboundAddress'
   /thorchain/lastblock:
     parameters:
@@ -403,7 +402,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id002
                   $ref: '#/components/schemas/LastBlock'
   /thorchain/lastblock/{chain}:
     parameters:
@@ -421,8 +420,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/LastBlock'
+                items: *id002
   /thorchain/version:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -516,7 +514,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id011
                   $ref: '#/components/schemas/MsgSwap'
   /thorchain/queue/scheduled:
     parameters:
@@ -533,7 +531,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id013
                   $ref: '#/components/schemas/TxOutItem'
   /thorchain/queue/outbound:
     parameters:
@@ -550,7 +548,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id012
                   $ref: '#/components/schemas/TxOutItem'
   /thorchain/keysign/{height}:
     parameters:
@@ -562,7 +560,7 @@ paths:
       operationId: keysign
       tags:
       - TSS
-      responses: &id001
+      responses: &id003
         200:
           description: OK
           content:
@@ -580,7 +578,7 @@ paths:
       operationId: keysignPubkey
       tags:
       - TSS
-      responses: *id001
+      responses: *id003
   /thorchain/metrics:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -612,7 +610,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id014
                   $ref: '#/components/schemas/KeygenMetric'
   /thorchain/thorname/{name}:
     parameters:
@@ -635,7 +633,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id015
                   $ref: '#/components/schemas/Thorname'
   /thorchain/mimir:
     parameters:
@@ -1935,26 +1933,22 @@ components:
       $ref: '#/components/schemas/Pool'
     PoolsResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/Pool'
+      items: *id004
     LiquidityProvidersResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/LiquidityProviderSummary'
+      items: *id005
     LiquidityProviderResponse:
       $ref: '#/components/schemas/LiquidityProvider'
     SaverResponse:
       $ref: '#/components/schemas/Saver'
     SaversResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/Saver'
+      items: *id006
     BorrowerResponse:
       $ref: '#/components/schemas/Borrower'
     BorrowersResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/Borrower'
+      items: *id007
     TxResponse:
       type: object
       properties:
@@ -1972,7 +1966,7 @@ components:
           description: the thorchain height for which the outbound was scheduled
         keysign_metric:
           $ref: '#/components/schemas/TssKeysignMetric'
-    TxDetailsResponse: &id002
+    TxDetailsResponse: &id008
       type: object
       required:
       - tx
@@ -2017,7 +2011,7 @@ components:
           format: int64
           example: 1234
           description: the thorchain height for which the outbound was scheduled
-    TxSignersResponse: *id002
+    TxSignersResponse: *id008
     TxStagesResponse:
       type: object
       required:
@@ -2177,12 +2171,10 @@ components:
       $ref: '#/components/schemas/Node'
     NodesResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/Node'
+      items: *id009
     VaultsResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/Vault'
+      items: *id001
     VaultResponse:
       $ref: '#/components/schemas/Vault'
     VaultPubkeysResponse:
@@ -2279,12 +2271,10 @@ components:
           description: current amount of rune deposited
     InboundAddressesResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/InboundAddress'
+      items: *id010
     LastBlockResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/LastBlock'
+      items: *id002
     VersionResponse:
       type: object
       required:
@@ -2365,16 +2355,13 @@ components:
           description: scheduled outbound value in RUNE
     SwapQueueResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/MsgSwap'
+      items: *id011
     OutboundResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/TxOutItem'
+      items: *id012
     ScheduledResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/TxOutItem'
+      items: *id013
     KeysignResponse:
       type: object
       properties:
@@ -2398,8 +2385,7 @@ components:
           type: string
     KeygenMetricsResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/KeygenMetric'
+      items: *id014
     MetricsResponse:
       type: object
       properties:
@@ -2417,8 +2403,7 @@ components:
                 $ref: '#/components/schemas/TssMetric'
     ThornameResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/Thorname'
+      items: *id015
     MimirResponse:
       type: object
       additionalProperties:
@@ -2472,54 +2457,54 @@ components:
                 type: string
     baseQuoteResponse:
       properties:
-        inbound_address: &id003
+        inbound_address: &id016
           type: string
           description: the inbound address for the transaction on the source chain
           example: bc1qjk3xzu5slu7mtmc8jc9yed3zqvkhkttm700g9a
-        inbound_confirmation_blocks: &id004
+        inbound_confirmation_blocks: &id017
           type: integer
           format: int64
           description: the approximate number of source chain blocks required before
             processing
-        inbound_confirmation_seconds: &id005
+        inbound_confirmation_seconds: &id018
           type: integer
           format: int64
           description: the approximate seconds for block confirmations required before
             processing
-        outbound_delay_blocks: &id006
+        outbound_delay_blocks: &id019
           type: integer
           format: int64
           description: the number of thorchain blocks the outbound will be delayed
-        outbound_delay_seconds: &id007
+        outbound_delay_seconds: &id020
           type: integer
           format: int64
           description: the approximate seconds for the outbound delay before it will
             be sent
-        fees: &id008
+        fees: &id021
           $ref: '#/components/schemas/QuoteFees'
-        slippage_bps: &id009
+        slippage_bps: &id022
           type: integer
           format: int64
           description: the total swap slippage in basis points
-        router: &id010
+        router: &id023
           type: string
           description: the EVM chain router contract address
           example: '0x3624525075b88B24ecc29CE226b0CEc1fFcB6976'
-        expiry: &id011
+        expiry: &id024
           type: integer
           format: int64
           description: expiration timestamp in unix seconds
           example: 1671660285
-        warning: &id012
+        warning: &id025
           type: string
           description: static warning message
           example: Do not cache this response. Do not send funds after the expiry.
-        notes: &id013
+        notes: &id026
           type: string
           description: chain specific quote notes
           example: Transfer the inbound_address the asset with the memo. Do not use
             multi-in, multi-out transactions.
-        dust_threshold: &id014
+        dust_threshold: &id027
           type: string
           example: '10000'
           description: Defines the minimum transaction size for the chain in base
@@ -2538,18 +2523,18 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id003
-        inbound_confirmation_blocks: *id004
-        inbound_confirmation_seconds: *id005
-        outbound_delay_blocks: *id006
-        outbound_delay_seconds: *id007
-        fees: *id008
-        slippage_bps: *id009
-        router: *id010
-        expiry: *id011
-        warning: *id012
-        notes: *id013
-        dust_threshold: *id014
+        inbound_address: *id016
+        inbound_confirmation_blocks: *id017
+        inbound_confirmation_seconds: *id018
+        outbound_delay_blocks: *id019
+        outbound_delay_seconds: *id020
+        fees: *id021
+        slippage_bps: *id022
+        router: *id023
+        expiry: *id024
+        warning: *id025
+        notes: *id026
+        dust_threshold: *id027
         memo:
           type: string
           description: generated memo for the swap
@@ -2571,18 +2556,18 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id003
-        inbound_confirmation_blocks: *id004
-        inbound_confirmation_seconds: *id005
-        outbound_delay_blocks: *id006
-        outbound_delay_seconds: *id007
-        fees: *id008
-        slippage_bps: *id009
-        router: *id010
-        expiry: *id011
-        warning: *id012
-        notes: *id013
-        dust_threshold: *id014
+        inbound_address: *id016
+        inbound_confirmation_blocks: *id017
+        inbound_confirmation_seconds: *id018
+        outbound_delay_blocks: *id019
+        outbound_delay_seconds: *id020
+        fees: *id021
+        slippage_bps: *id022
+        router: *id023
+        expiry: *id024
+        warning: *id025
+        notes: *id026
+        dust_threshold: *id027
         memo:
           type: string
           description: generated memo for the deposit
@@ -2611,18 +2596,18 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id003
-        inbound_confirmation_blocks: *id004
-        inbound_confirmation_seconds: *id005
-        outbound_delay_blocks: *id006
-        outbound_delay_seconds: *id007
-        fees: *id008
-        slippage_bps: *id009
-        router: *id010
-        expiry: *id011
-        warning: *id012
-        notes: *id013
-        dust_threshold: *id014
+        inbound_address: *id016
+        inbound_confirmation_blocks: *id017
+        inbound_confirmation_seconds: *id018
+        outbound_delay_blocks: *id019
+        outbound_delay_seconds: *id020
+        fees: *id021
+        slippage_bps: *id022
+        router: *id023
+        expiry: *id024
+        warning: *id025
+        notes: *id026
+        dust_threshold: *id027
         memo:
           type: string
           description: generated memo for the withdraw, the client can use this OR
@@ -2653,18 +2638,18 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id003
-        inbound_confirmation_blocks: *id004
-        inbound_confirmation_seconds: *id005
-        outbound_delay_blocks: *id006
-        outbound_delay_seconds: *id007
-        fees: *id008
-        slippage_bps: *id009
-        router: *id010
-        expiry: *id011
-        warning: *id012
-        notes: *id013
-        dust_threshold: *id014
+        inbound_address: *id016
+        inbound_confirmation_blocks: *id017
+        inbound_confirmation_seconds: *id018
+        outbound_delay_blocks: *id019
+        outbound_delay_seconds: *id020
+        fees: *id021
+        slippage_bps: *id022
+        router: *id023
+        expiry: *id024
+        warning: *id025
+        notes: *id026
+        dust_threshold: *id027
         memo:
           type: string
           description: generated memo for the loan open
@@ -2701,18 +2686,18 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id003
-        inbound_confirmation_blocks: *id004
-        inbound_confirmation_seconds: *id005
-        outbound_delay_blocks: *id006
-        outbound_delay_seconds: *id007
-        fees: *id008
-        slippage_bps: *id009
-        router: *id010
-        expiry: *id011
-        warning: *id012
-        notes: *id013
-        dust_threshold: *id014
+        inbound_address: *id016
+        inbound_confirmation_blocks: *id017
+        inbound_confirmation_seconds: *id018
+        outbound_delay_blocks: *id019
+        outbound_delay_seconds: *id020
+        fees: *id021
+        slippage_bps: *id022
+        router: *id023
+        expiry: *id024
+        warning: *id025
+        notes: *id026
+        dust_threshold: *id027
         memo:
           type: string
           description: generated memo for the loan close

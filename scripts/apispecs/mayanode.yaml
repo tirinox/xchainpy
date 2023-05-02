@@ -54,7 +54,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id005
                   $ref: '#/components/schemas/Pool'
   /mayachain/bucket/{asset}:
     parameters:
@@ -87,7 +87,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id006
                   $ref: '#/components/schemas/Bucket'
   /mayachain/pool/{asset}/liquidity_provider/{address}:
     parameters:
@@ -106,7 +106,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id001
                   $ref: '#/components/schemas/LiquidityProvider'
   /mayachain/pool/{asset}/liquidity_providers:
     parameters:
@@ -124,8 +124,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/LiquidityProvider'
+                items: *id001
   /mayachain/tx/{hash}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -190,7 +189,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id007
                   $ref: '#/components/schemas/Node'
   /mayachain/vaults/asgard:
     parameters:
@@ -207,7 +206,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id002
                   $ref: '#/components/schemas/Vault'
   /mayachain/vaults/yggdrasil:
     parameters:
@@ -224,8 +223,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/Vault'
+                items: *id002
   /mayachain/vaults/{pubkey}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -302,7 +300,30 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InboundAddressesResponse'
+                type: array
+                items: &id008
+                  type: object
+                  title: InboundAddress
+                  required:
+                  - halted
+                  properties:
+                    chain:
+                      type: string
+                      example: BTC
+                    pub_key:
+                      type: string
+                      example: mayapub1addwnpepq2jqhv5rdqlkusfxy05stfzcgslhhz5qh8pxetw5ry2aa6awgdh3shq8s82
+                    address:
+                      type: string
+                      example: bc1qn9esxuw8ca7ts8l6w66kdh800s09msvutydc46
+                    gas_rate:
+                      type: string
+                      example: '214'
+                    router:
+                      type: string
+                    halted:
+                      type: boolean
+                      example: false
   /mayachain/lastblock:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -318,7 +339,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id003
                   $ref: '#/components/schemas/LastBlock'
   /mayachain/lastblock/{chain}:
     parameters:
@@ -336,8 +357,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/LastBlock'
+                items: *id003
   /mayachain/version:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -431,7 +451,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id010
                   $ref: '#/components/schemas/TxOutItem'
   /mayachain/queue/outbound:
     parameters:
@@ -448,7 +468,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: &id009
                   $ref: '#/components/schemas/TxOutItem'
   /mayachain/keysign/{height}:
     parameters:
@@ -460,7 +480,7 @@ paths:
       operationId: keysign
       tags:
       - TSS
-      responses: &id001
+      responses: &id004
         200:
           description: OK
           content:
@@ -478,7 +498,7 @@ paths:
       operationId: keysignPubkey
       tags:
       - TSS
-      responses: *id001
+      responses: *id004
   /mayachain/metrics:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -509,7 +529,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/KeygenMetricsResponse'
+                type: array
+                items: &id011
+                  type: object
+                  title: KeygenMetric
+                  required:
+                  - node_tss_times
+                  properties:
+                    pub_key:
+                      type: string
+                    node_tss_times:
+                      type: array
+                      items:
+                        type: object
+                        title: NodeKeygenMetric
+                        properties:
+                          address:
+                            type: string
+                          tss_time:
+                            type: string
   /mayachain/mayaname/{name}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -530,7 +568,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MayanameResponse'
+                type: array
+                items: &id012
+                  type: object
+                  title: Mayaname
+                  properties:
+                    name:
+                      type: string
+                      example: maya
+                    chain:
+                      type: string
+                      example: BTC
+                    address:
+                      type: string
+                      example: bc1qd45uzetakjvdy5ynjjyp4nlnj89am88e4e5jeq
+                    expire_block_height:
+                      type: integer
+                      format: int64
+                      example: 1234
   /mayachain/mimir:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -1422,18 +1477,15 @@ components:
       $ref: '#/components/schemas/Pool'
     PoolsResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/Pool'
+      items: *id005
     BucketResponse:
       $ref: '#/components/schemas/Bucket'
     BucketsResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/Bucket'
+      items: *id006
     LiquidityProviderResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/LiquidityProvider'
+      items: *id001
     TxResponse:
       type: object
       properties:
@@ -1489,12 +1541,10 @@ components:
       $ref: '#/components/schemas/Node'
     NodesResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/Node'
+      items: *id007
     VaultsResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/Vault'
+      items: *id002
     VaultResponse:
       $ref: '#/components/schemas/Vault'
     VaultPubkeysResponse:
@@ -1566,33 +1616,10 @@ components:
           description: current amount of rune deposited
     InboundAddressesResponse:
       type: array
-      items:
-        type: object
-        title: InboundAddress
-        required:
-        - halted
-        properties:
-          chain:
-            type: string
-            example: BTC
-          pub_key:
-            type: string
-            example: mayapub1addwnpepq2jqhv5rdqlkusfxy05stfzcgslhhz5qh8pxetw5ry2aa6awgdh3shq8s82
-          address:
-            type: string
-            example: bc1qn9esxuw8ca7ts8l6w66kdh800s09msvutydc46
-          gas_rate:
-            type: string
-            example: '214'
-          router:
-            type: string
-          halted:
-            type: boolean
-            example: false
+      items: *id008
     LastBlockResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/LastBlock'
+      items: *id003
     VersionResponse:
       type: object
       required:
@@ -1674,12 +1701,10 @@ components:
           description: scheduled outbound value in RUNE
     OutboundResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/TxOutItem'
+      items: *id009
     ScheduledResponse:
       type: array
-      items:
-        $ref: '#/components/schemas/TxOutItem'
+      items: *id010
     KeysignResponse:
       type: object
       properties:
@@ -1703,24 +1728,7 @@ components:
           type: string
     KeygenMetricsResponse:
       type: array
-      items:
-        type: object
-        title: KeygenMetric
-        required:
-        - node_tss_times
-        properties:
-          pub_key:
-            type: string
-          node_tss_times:
-            type: array
-            items:
-              type: object
-              title: NodeKeygenMetric
-              properties:
-                address:
-                  type: string
-                tss_time:
-                  type: string
+      items: *id011
     MetricsResponse:
       type: object
       properties:
@@ -1738,23 +1746,7 @@ components:
                 $ref: '#/components/schemas/TssMetric'
     MayanameResponse:
       type: array
-      items:
-        type: object
-        title: Mayaname
-        properties:
-          name:
-            type: string
-            example: maya
-          chain:
-            type: string
-            example: BTC
-          address:
-            type: string
-            example: bc1qd45uzetakjvdy5ynjjyp4nlnj89am88e4e5jeq
-          expire_block_height:
-            type: integer
-            format: int64
-            example: 1234
+      items: *id012
     MimirResponse:
       type: object
       additionalProperties:
