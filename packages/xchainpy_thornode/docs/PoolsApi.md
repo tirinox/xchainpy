@@ -8,7 +8,7 @@ Method | HTTP request | Description
 [**pools**](PoolsApi.md#pools) | **GET** /thorchain/pools | 
 
 # **pool**
-> PoolResponse pool(asset, height=height)
+> Pool pool(asset, height=height)
 
 
 
@@ -43,7 +43,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PoolResponse**](PoolResponse.md)
+[**Pool**](Pool.md)
 
 ### Authorization
 

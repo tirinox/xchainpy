@@ -134,7 +134,7 @@ class QueueApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: OutboundResponse
+        :return: list[TxOutItem]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -156,7 +156,7 @@ class QueueApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: OutboundResponse
+        :return: list[TxOutItem]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -206,7 +206,7 @@ class QueueApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='OutboundResponse',  # noqa: E501
+            response_type='list[TxOutItem]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -225,7 +225,7 @@ class QueueApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: ScheduledResponse
+        :return: list[TxOutItem]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -247,7 +247,7 @@ class QueueApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: ScheduledResponse
+        :return: list[TxOutItem]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -297,7 +297,7 @@ class QueueApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='ScheduledResponse',  # noqa: E501
+            response_type='list[TxOutItem]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -316,7 +316,7 @@ class QueueApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: SwapQueueResponse
+        :return: list[MsgSwap]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -338,7 +338,7 @@ class QueueApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: SwapQueueResponse
+        :return: list[MsgSwap]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -388,7 +388,7 @@ class QueueApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='SwapQueueResponse',  # noqa: E501
+            response_type='list[MsgSwap]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),

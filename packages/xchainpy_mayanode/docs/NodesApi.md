@@ -8,7 +8,7 @@ Method | HTTP request | Description
 [**nodes**](NodesApi.md#nodes) | **GET** /mayachain/nodes | 
 
 # **node**
-> NodeResponse node(address, height=height)
+> Node node(address, height=height)
 
 
 
@@ -43,7 +43,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**NodeResponse**](NodeResponse.md)
+[**Node**](Node.md)
 
 ### Authorization
 
@@ -57,7 +57,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **nodes**
-> NodesResponse nodes(height=height)
+> list[Node] nodes(height=height)
 
 
 
@@ -90,7 +90,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**NodesResponse**](NodesResponse.md)
+[**list[Node]**](Node.md)
 
 ### Authorization
 

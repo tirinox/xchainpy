@@ -45,7 +45,7 @@ class LiquidityProvidersApi(object):
         :param str asset: (required)
         :param str address: (required)
         :param int height: optional block height, defaults to current tip
-        :return: LiquidityProviderResponse
+        :return: LiquidityProvider
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -69,7 +69,7 @@ class LiquidityProvidersApi(object):
         :param str asset: (required)
         :param str address: (required)
         :param int height: optional block height, defaults to current tip
-        :return: LiquidityProviderResponse
+        :return: LiquidityProvider
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -131,7 +131,7 @@ class LiquidityProvidersApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='LiquidityProviderResponse',  # noqa: E501
+            response_type='LiquidityProvider',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -151,7 +151,7 @@ class LiquidityProvidersApi(object):
         :param async_req bool
         :param str asset: (required)
         :param int height: optional block height, defaults to current tip
-        :return: LiquidityProvidersResponse
+        :return: list[LiquidityProviderSummary]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -174,7 +174,7 @@ class LiquidityProvidersApi(object):
         :param async_req bool
         :param str asset: (required)
         :param int height: optional block height, defaults to current tip
-        :return: LiquidityProvidersResponse
+        :return: list[LiquidityProviderSummary]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -230,7 +230,7 @@ class LiquidityProvidersApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='LiquidityProvidersResponse',  # noqa: E501
+            response_type='list[LiquidityProviderSummary]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),

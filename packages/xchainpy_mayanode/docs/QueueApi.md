@@ -56,7 +56,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **queue_outbound**
-> OutboundResponse queue_outbound(height=height)
+> list[TxOutItem] queue_outbound(height=height)
 
 
 
@@ -89,7 +89,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**OutboundResponse**](OutboundResponse.md)
+[**list[TxOutItem]**](TxOutItem.md)
 
 ### Authorization
 
@@ -103,7 +103,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **queue_scheduled**
-> ScheduledResponse queue_scheduled(height=height)
+> list[TxOutItem] queue_scheduled(height=height)
 
 
 
@@ -136,7 +136,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**ScheduledResponse**](ScheduledResponse.md)
+[**list[TxOutItem]**](TxOutItem.md)
 
 ### Authorization
 

@@ -143,7 +143,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_churns**
-> Churns get_churns()
+> list[ChurnItem] get_churns()
 
 Churns List
 
@@ -173,7 +173,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**Churns**](Churns.md)
+[**list[ChurnItem]**](ChurnItem.md)
 
 ### Authorization
 
@@ -537,7 +537,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_nodes**
-> Nodes get_nodes()
+> list[Node] get_nodes()
 
 Nodes List
 
@@ -567,7 +567,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**Nodes**](Nodes.md)
+[**list[Node]**](Node.md)
 
 ### Authorization
 
@@ -681,7 +681,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_pools**
-> PoolDetails get_pools(status=status, period=period)
+> list[PoolDetail] get_pools(status=status, period=period)
 
 Pools List
 
@@ -717,7 +717,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PoolDetails**](PoolDetails.md)
+[**list[PoolDetail]**](PoolDetail.md)
 
 ### Authorization
 
@@ -775,7 +775,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_proxied_inbound_addresses**
-> InboundAddresses get_proxied_inbound_addresses()
+> list[InboundAddressesItem] get_proxied_inbound_addresses()
 
 Proxied THORChain Inbound Addresses
 
@@ -805,7 +805,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**InboundAddresses**](InboundAddresses.md)
+[**list[InboundAddressesItem]**](InboundAddressesItem.md)
 
 ### Authorization
 
@@ -819,7 +819,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_proxied_lastblock**
-> Lastblock get_proxied_lastblock()
+> list[LastblockItem] get_proxied_lastblock()
 
 Proxied THORChain Lastblock
 
@@ -849,7 +849,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**Lastblock**](Lastblock.md)
+[**list[LastblockItem]**](LastblockItem.md)
 
 ### Authorization
 
@@ -863,7 +863,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_proxied_nodes**
-> ProxiedNodes get_proxied_nodes()
+> list[ProxiedNode] get_proxied_nodes()
 
 Proxied THORChain Nodes
 
@@ -893,7 +893,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**ProxiedNodes**](ProxiedNodes.md)
+[**list[ProxiedNode]**](ProxiedNode.md)
 
 ### Authorization
 

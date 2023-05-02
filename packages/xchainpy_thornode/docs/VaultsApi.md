@@ -10,7 +10,7 @@ Method | HTTP request | Description
 [**yggdrasil**](VaultsApi.md#yggdrasil) | **GET** /thorchain/vaults/yggdrasil | 
 
 # **asgard**
-> VaultsResponse asgard(height=height)
+> list[Vault] asgard(height=height)
 
 
 
@@ -43,7 +43,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**VaultsResponse**](VaultsResponse.md)
+[**list[Vault]**](Vault.md)
 
 ### Authorization
 
@@ -57,7 +57,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **vault**
-> VaultResponse vault(pubkey, height=height)
+> Vault vault(pubkey, height=height)
 
 
 
@@ -92,7 +92,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**VaultResponse**](VaultResponse.md)
+[**Vault**](Vault.md)
 
 ### Authorization
 
@@ -153,7 +153,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **yggdrasil**
-> VaultsResponse yggdrasil(height=height)
+> list[Vault] yggdrasil(height=height)
 
 
 
@@ -186,7 +186,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**VaultsResponse**](VaultsResponse.md)
+[**list[Vault]**](Vault.md)
 
 ### Authorization
 

@@ -260,7 +260,7 @@ class DefaultApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :return: Churns
+        :return: list[ChurnItem]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -281,7 +281,7 @@ class DefaultApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :return: Churns
+        :return: list[ChurnItem]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -329,7 +329,7 @@ class DefaultApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='Churns',  # noqa: E501
+            response_type='list[ChurnItem]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -1028,7 +1028,7 @@ class DefaultApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :return: Nodes
+        :return: list[Node]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -1049,7 +1049,7 @@ class DefaultApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :return: Nodes
+        :return: list[Node]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -1097,7 +1097,7 @@ class DefaultApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='Nodes',  # noqa: E501
+            response_type='list[Node]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -1315,7 +1315,7 @@ class DefaultApi(object):
         :param async_req bool
         :param str status: Filter for only pools with this status
         :param str period: Specifies the base interval from which annualPercentageRate and poolAPY is extrapolated. Default is 30d. 
-        :return: PoolDetails
+        :return: list[PoolDetail]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -1338,7 +1338,7 @@ class DefaultApi(object):
         :param async_req bool
         :param str status: Filter for only pools with this status
         :param str period: Specifies the base interval from which annualPercentageRate and poolAPY is extrapolated. Default is 30d. 
-        :return: PoolDetails
+        :return: list[PoolDetail]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -1390,7 +1390,7 @@ class DefaultApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='PoolDetails',  # noqa: E501
+            response_type='list[PoolDetail]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -1495,7 +1495,7 @@ class DefaultApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :return: InboundAddresses
+        :return: list[InboundAddressesItem]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -1516,7 +1516,7 @@ class DefaultApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :return: InboundAddresses
+        :return: list[InboundAddressesItem]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -1564,7 +1564,7 @@ class DefaultApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='InboundAddresses',  # noqa: E501
+            response_type='list[InboundAddressesItem]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -1582,7 +1582,7 @@ class DefaultApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :return: Lastblock
+        :return: list[LastblockItem]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -1603,7 +1603,7 @@ class DefaultApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :return: Lastblock
+        :return: list[LastblockItem]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -1651,7 +1651,7 @@ class DefaultApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='Lastblock',  # noqa: E501
+            response_type='list[LastblockItem]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -1669,7 +1669,7 @@ class DefaultApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :return: ProxiedNodes
+        :return: list[ProxiedNode]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -1690,7 +1690,7 @@ class DefaultApi(object):
         >>> result = thread.get()
 
         :param async_req bool
-        :return: ProxiedNodes
+        :return: list[ProxiedNode]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -1738,7 +1738,7 @@ class DefaultApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='ProxiedNodes',  # noqa: E501
+            response_type='list[ProxiedNode]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),

@@ -8,7 +8,7 @@ Method | HTTP request | Description
 [**savers**](SaversApi.md#savers) | **GET** /thorchain/pool/{asset}/savers | 
 
 # **saver**
-> SaverResponse saver(asset, address, height=height)
+> Saver saver(asset, address, height=height)
 
 
 
@@ -45,7 +45,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**SaverResponse**](SaverResponse.md)
+[**Saver**](Saver.md)
 
 ### Authorization
 
@@ -59,7 +59,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **savers**
-> SaversResponse savers(asset, height=height)
+> list[Saver] savers(asset, height=height)
 
 
 
@@ -94,7 +94,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**SaversResponse**](SaversResponse.md)
+[**list[Saver]**](Saver.md)
 
 ### Authorization
 

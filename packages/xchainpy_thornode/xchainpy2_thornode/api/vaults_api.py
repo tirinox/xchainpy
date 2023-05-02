@@ -43,7 +43,7 @@ class VaultsApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: VaultsResponse
+        :return: list[Vault]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -65,7 +65,7 @@ class VaultsApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: VaultsResponse
+        :return: list[Vault]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -115,7 +115,7 @@ class VaultsApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='VaultsResponse',  # noqa: E501
+            response_type='list[Vault]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -135,7 +135,7 @@ class VaultsApi(object):
         :param async_req bool
         :param str pubkey: (required)
         :param int height: optional block height, defaults to current tip
-        :return: VaultResponse
+        :return: Vault
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -158,7 +158,7 @@ class VaultsApi(object):
         :param async_req bool
         :param str pubkey: (required)
         :param int height: optional block height, defaults to current tip
-        :return: VaultResponse
+        :return: Vault
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -214,7 +214,7 @@ class VaultsApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='VaultResponse',  # noqa: E501
+            response_type='Vault',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -324,7 +324,7 @@ class VaultsApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: VaultsResponse
+        :return: list[Vault]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -346,7 +346,7 @@ class VaultsApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: VaultsResponse
+        :return: list[Vault]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -396,7 +396,7 @@ class VaultsApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='VaultsResponse',  # noqa: E501
+            response_type='list[Vault]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),

@@ -157,7 +157,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **lastblock**
-> LastBlockResponse lastblock(height=height)
+> list[LastBlock] lastblock(height=height)
 
 
 
@@ -190,7 +190,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**LastBlockResponse**](LastBlockResponse.md)
+[**list[LastBlock]**](LastBlock.md)
 
 ### Authorization
 
@@ -204,7 +204,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **lastblock_chain**
-> LastBlockResponse lastblock_chain(chain, height=height)
+> list[LastBlock] lastblock_chain(chain, height=height)
 
 
 
@@ -239,7 +239,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**LastBlockResponse**](LastBlockResponse.md)
+[**list[LastBlock]**](LastBlock.md)
 
 ### Authorization
 

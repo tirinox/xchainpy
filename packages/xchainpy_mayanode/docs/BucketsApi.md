@@ -8,7 +8,7 @@ Method | HTTP request | Description
 [**buckets**](BucketsApi.md#buckets) | **GET** /mayachain/buckets | 
 
 # **bucket**
-> BucketResponse bucket(asset, height=height)
+> Bucket bucket(asset, height=height)
 
 
 
@@ -43,7 +43,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**BucketResponse**](BucketResponse.md)
+[**Bucket**](Bucket.md)
 
 ### Authorization
 
@@ -57,7 +57,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **buckets**
-> BucketsResponse buckets(height=height)
+> list[Bucket] buckets(height=height)
 
 
 
@@ -90,7 +90,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**BucketsResponse**](BucketsResponse.md)
+[**list[Bucket]**](Bucket.md)
 
 ### Authorization
 

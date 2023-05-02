@@ -8,7 +8,7 @@ Method | HTTP request | Description
 [**borrowers**](BorrowersApi.md#borrowers) | **GET** /thorchain/pool/{asset}/borrowers | 
 
 # **borrower**
-> BorrowerResponse borrower(asset, address, height=height)
+> Borrower borrower(asset, address, height=height)
 
 
 
@@ -45,7 +45,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**BorrowerResponse**](BorrowerResponse.md)
+[**Borrower**](Borrower.md)
 
 ### Authorization
 
@@ -59,7 +59,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **borrowers**
-> BorrowersResponse borrowers(asset, height=height)
+> list[Borrower] borrowers(asset, height=height)
 
 
 
@@ -94,7 +94,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**BorrowersResponse**](BorrowersResponse.md)
+[**list[Borrower]**](Borrower.md)
 
 ### Authorization
 
