@@ -60,12 +60,35 @@ function add_license() {
   cp "../LICENSE" "${OUTPUT_DIR}/LICENSE"
 }
 
+function fix_swagger_spec() {
+  read -p "Do you want fix swagger spec to generate complete Python models? (y/n) " yn
+  case $yn in
+  [yY])
+    python3 fix_swagger_spec.py -i ${SWAGGER_FILE} -o ${SWAGGER_FIXED_FILE}
+    export SWAGGER_FILE=${SWAGGER_FIXED_FILE}
+    return
+    ;;
+  [nN])
+    return
+    ;;
+  *) echo invalid response ;;
+  esac
+}
+
 function run_codegen() {
+  # Download swagger codegen jar if it is missing
   download_swagger_codegen
+
+  # Ask to fix swagger spec
+  fix_swagger_spec
+
   # Check if output directory is empty
   check_output_dir
+
   # Do job
   codegen_client "$OUTPUT_DIR" "$PACKAGE_NAME" "$SWAGGER_FILE"
   add_license
+
+  # Ask to install the package for development
   install_develop
 }

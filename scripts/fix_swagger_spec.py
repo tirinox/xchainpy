@@ -107,7 +107,7 @@ def fix_spec(spec):
             result = make_array(item_type_ref)
 
         if result:
-            r200.pop('$ref')
+            r200.pop('$ref', None)
             if 'content' not in r200:
                 r200['content'] = {
                     'application/json': {}

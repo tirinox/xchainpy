@@ -8,17 +8,17 @@ from xchainpy2_thorchain_query import URLs
 async def try_thornode():
     api_client = thor.ApiClient()
     api_client.configuration.host = URLs.THORNode.MAINNET
-    pol = thor.POLApi(api_client)
-    r = await pol.pol()
-    print(f"{type(r)}: {r}")
 
     t_pool_api = thor.PoolsApi(api_client)
-
     r = await t_pool_api.pools()
     print(f"{type(r)}: {r}")
 
     mimir = thor.MimirApi(api_client)
     r = await mimir.mimir()
+    print(f"{type(r)}: {r}")
+
+    pol = thor.POLApi(api_client)
+    r = await pol.pol()
     print(f"{type(r)}: {r}")
 
     await api_client.rest_client.pool_manager.close()
