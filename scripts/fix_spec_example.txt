@@ -1,0 +1,75 @@
+midgard:
+
+/v2/pools:
+  get:
+    description: Returns an array containing details for a set of pools
+    operationId: GetPools
+    parameters:
+      ...
+    responses:
+      '200':
+        $ref: '#/components/responses/PoolsResponse'
+
+# TODO:
+#      '200':
+#         application/json:
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/components/schemas/PoolDetail'
+
+
+v
+v
+v
+
+PoolsResponse:
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/PoolDetails'
+  description: Array of pool details
+
+v
+v
+v
+
+  PoolDetails:
+    items:
+      $ref: '#/components/schemas/PoolDetail'
+    type: array
+
+------------------------------------
+
+THORNode
+
+/thorchain/nodes:
+  parameters:
+  - $ref: '#/components/parameters/queryHeight'
+  get:
+    description: Returns node information for all registered validators.
+    operationId: nodes
+    tags:
+    - Nodes
+    responses:
+      200:
+        description: OK
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NodesResponse'
+
+# TODO:
+#             type: array
+#             items:
+#               $ref: '#/components/schemas/NodeResponse'
+
+
+v
+v
+v
+
+NodesResponse:
+  type: array
+  items:
+    $ref: '#/components/schemas/Node'
