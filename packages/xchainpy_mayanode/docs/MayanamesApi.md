@@ -7,7 +7,7 @@ Method | HTTP request | Description
 [**mayaname**](MayanamesApi.md#mayaname) | **GET** /mayachain/mayaname/{name} | 
 
 # **mayaname**
-> MayanameResponse mayaname(name, height=height)
+> list[Mayaname1] mayaname(name, height=height)
 
 
 
@@ -42,7 +42,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**MayanameResponse**](MayanameResponse.md)
+[**list[Mayaname1]**](Mayaname1.md)
 
 ### Authorization
 

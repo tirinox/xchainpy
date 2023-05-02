@@ -133,6 +133,7 @@ Class | Method | HTTP request | Description
  - [InboundAddressesResponse](docs/InboundAddressesResponse.md)
  - [KeygenMetric](docs/KeygenMetric.md)
  - [KeygenMetric1](docs/KeygenMetric1.md)
+ - [KeygenMetric2](docs/KeygenMetric2.md)
  - [KeygenMetricsResponse](docs/KeygenMetricsResponse.md)
  - [KeysignInfo](docs/KeysignInfo.md)
  - [KeysignMetrics](docs/KeysignMetrics.md)

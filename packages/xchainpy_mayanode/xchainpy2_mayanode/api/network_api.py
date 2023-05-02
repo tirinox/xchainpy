@@ -233,7 +233,7 @@ class NetworkApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: InboundAddressesResponse
+        :return: list[InboundAddress]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -255,7 +255,7 @@ class NetworkApi(object):
 
         :param async_req bool
         :param int height: optional block height, defaults to current tip
-        :return: InboundAddressesResponse
+        :return: list[InboundAddress]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -305,7 +305,7 @@ class NetworkApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='InboundAddressesResponse',  # noqa: E501
+            response_type='list[InboundAddress]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),

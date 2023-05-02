@@ -44,7 +44,7 @@ class MayanamesApi(object):
         :param async_req bool
         :param str name: the mayanode to lookup (required)
         :param int height: optional block height, defaults to current tip
-        :return: MayanameResponse
+        :return: list[Mayaname1]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -67,7 +67,7 @@ class MayanamesApi(object):
         :param async_req bool
         :param str name: the mayanode to lookup (required)
         :param int height: optional block height, defaults to current tip
-        :return: MayanameResponse
+        :return: list[Mayaname1]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -123,7 +123,7 @@ class MayanamesApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='MayanameResponse',  # noqa: E501
+            response_type='list[Mayaname1]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),

@@ -153,7 +153,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **metrics_keygen**
-> KeygenMetricsResponse metrics_keygen(pubkey, height=height)
+> list[KeygenMetric1] metrics_keygen(pubkey, height=height)
 
 
 
@@ -188,7 +188,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**KeygenMetricsResponse**](KeygenMetricsResponse.md)
+[**list[KeygenMetric1]**](KeygenMetric1.md)
 
 ### Authorization
 

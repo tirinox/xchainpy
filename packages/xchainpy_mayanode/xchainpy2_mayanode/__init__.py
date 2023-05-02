@@ -44,6 +44,7 @@ from xchainpy2_mayanode.models.inbound_address import InboundAddress
 from xchainpy2_mayanode.models.inbound_addresses_response import InboundAddressesResponse
 from xchainpy2_mayanode.models.keygen_metric import KeygenMetric
 from xchainpy2_mayanode.models.keygen_metric1 import KeygenMetric1
+from xchainpy2_mayanode.models.keygen_metric2 import KeygenMetric2
 from xchainpy2_mayanode.models.keygen_metrics_response import KeygenMetricsResponse
 from xchainpy2_mayanode.models.keysign_info import KeysignInfo
 from xchainpy2_mayanode.models.keysign_metrics import KeysignMetrics
