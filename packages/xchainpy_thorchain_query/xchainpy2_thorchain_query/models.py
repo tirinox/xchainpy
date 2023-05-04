@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
 from typing import NamedTuple, List, Dict, Optional
 
 from xchainpy2_midgard import PoolDetail
 from xchainpy2_thornode import Pool, LiquidityProviderSummary
-from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address
+from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
 
 
 class FeeOption(Enum):  # todo: move to it client package
@@ -23,7 +24,7 @@ class TotalFees(NamedTuple):
 
 class SwapEstimate(NamedTuple):
     total_fees: TotalFees
-    slip_percentage: float
+    slip_percentage: Decimal
     net_output: CryptoAmount
     wait_time_seconds: int
     can_swap: bool
@@ -37,23 +38,27 @@ class LiquidityPool(NamedTuple):
     rune_balance: Amount
     asset: Asset
     asset_string: str
-    rune_to_asset_ratio: float
-    asset_to_rune_ratio: float
+    rune_to_asset_ratio: Decimal
+    asset_to_rune_ratio: Decimal
 
     AVAILABLE = 'available'
 
     @classmethod
     def from_pool_details(cls, pool: PoolDetail, thornode_details: Pool):
         ab = Amount.from_base(pool.asset_depth)
-        rb = Amount.from_base(pool.asset_depth)
+        rb = Amount.from_base(pool.rune_depth)
+
+        ab_dec = Decimal(pool.asset_depth, DC)
+        rb_dec = Decimal(pool.rune_depth, DC)
+
         return cls(
             pool, thornode_details,
             asset_balance=ab,
             rune_balance=rb,
             asset=Asset.from_string(pool.asset),
             asset_string=pool.asset,
-            rune_to_asset_ratio=int(rb) / int(ab),
-            asset_to_rune_ratio=int(ab) / int(rb)
+            rune_to_asset_ratio=rb_dec / ab_dec,
+            asset_to_rune_ratio=ab_dec / rb_dec,
         )
 
     def is_available(self) -> bool:
@@ -88,7 +93,7 @@ class InboundDetailCache:
 @dataclass
 class NetworkValuesCache:
     last_refreshed: float
-    network_values: Dict[str, float]
+    network_values: Dict[str, int]
 
 
 class MidgardConfig(NamedTuple):
@@ -100,7 +105,7 @@ class EstimateSwapParams(NamedTuple):
     input: CryptoAmount
     destination_asset: Asset
     destination_address: Address
-    slip_limit: Optional[float] = None
+    slip_limit: Optional[Decimal] = None
     affiliate_address: Optional[Address] = None
     affiliate_fee_basis_points: Optional[int] = None
     interface_id: Optional[str] = None
@@ -130,7 +135,7 @@ class Block(NamedTuple):
 
 
 class ILProtectionData(NamedTuple):
-    il_protection: float
+    il_protection: Decimal
     total_days: int
 
 
@@ -167,7 +172,7 @@ class EstimateAddLP(NamedTuple):
 class EstimateWithdrawLP(NamedTuple):
     asset_address: Optional[str]
     rune_address: Optional[str]
-    slip_percent: float
+    slip_percent: Decimal
     inbound_fee: LPAmountTotal
     inbound_min_to_send: LPAmountTotal
     outbound_fee: LPAmountTotal
@@ -181,7 +186,7 @@ class EstimateWithdrawLP(NamedTuple):
 
 class WithdrawLiquidityPosition(NamedTuple):
     asset: Asset
-    percentage: float
+    percentage: Decimal
     asset_address: Optional[str] = None
     rune_address: Optional[str] = None
 
@@ -194,8 +199,8 @@ class LiquidityPosition(NamedTuple):
 
 
 class PoolRatios(NamedTuple):
-    asset_to_rune: float
-    rune_to_asset: float
+    asset_to_rune: Decimal
+    rune_to_asset: Decimal
 
 
 class GetSaver(NamedTuple):
@@ -228,7 +233,7 @@ class SaversPosition(NamedTuple):
     deposit_value: CryptoAmount
     redeemable_value: CryptoAmount
     last_add_height: int
-    percentage_growth: float
+    percentage_growth: Decimal
     age_in_years: float
     age_in_days: float
 
@@ -238,3 +243,9 @@ class SaversWithdraw(NamedTuple):
     asset: str
     address: str
     withdraw_bps: int
+
+
+class SwapOutput(NamedTuple):
+    output: CryptoAmount
+    swap_fee: CryptoAmount
+    slip: Decimal

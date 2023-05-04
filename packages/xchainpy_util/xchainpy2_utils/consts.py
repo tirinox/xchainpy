@@ -50,3 +50,6 @@ Address = str
 class XChainProtocol(Enum):
     THORCHAIN = 'THORCHAIN'
     MAYA = 'MAYA'
+
+
+MAX_BASIS_POINTS = 10_0000
