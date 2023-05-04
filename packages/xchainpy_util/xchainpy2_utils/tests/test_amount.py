@@ -97,3 +97,14 @@ def test_compare():
     assert Amount(200) > Amount(100)
     assert int(Amount(11111, 6)) == int(Amount(11111, 10))
     assert Amount(11111, 6) != Amount(11111, 8)
+
+
+def test_change_decimals():
+    a = Amount(123456789, 8, Denomination.BASE)
+    d6 = a.changed_decimals(6)
+    assert d6.internal_amount == 1234567
+    d10 = a.changed_decimals(10)
+    assert d10.internal_amount == 12345678900
+
+    d8 = a.changed_decimals(8)
+    assert d8.internal_amount == 123456789

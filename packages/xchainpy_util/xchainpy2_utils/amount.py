@@ -5,6 +5,11 @@ from typing import NamedTuple, Union
 from .asset import Asset
 
 DECIMAL_CONTEXT = Context(prec=100)
+DC = DECIMAL_CONTEXT
+
+
+def decimal_power_10(x, context=DC):
+    return Decimal(10, context) ** Decimal(x, context)
 
 
 class Denomination(Enum):
@@ -79,19 +84,32 @@ class Amount(NamedTuple):
         base_amount = int(base_amount)
         return cls(base_amount, decimals, Denomination.BASE)
 
+    def changed_decimals(self, new_decimals, context=DC) -> 'Amount':
+        if new_decimals == self.decimal:
+            return self
+
+        a = Decimal(self.internal_amount) * decimal_power_10(new_decimals - self.decimal, context)
+        return Amount(int(a), new_decimals, Denomination.BASE)
+
     @classmethod
-    def from_asset(cls, asset_amount: Union[float, str, int], decimals=ASSET_DECIMAL):
-        v = int(Decimal(asset_amount, context=DECIMAL_CONTEXT) * 10 ** decimals)
+    def from_asset(cls, asset_amount: Union[float, str, int], decimals=ASSET_DECIMAL, context=DC):
+        v = int(
+            Decimal(asset_amount, context) *
+            decimal_power_10(decimals, context)
+        )
         return cls(v, decimals)
 
     @classmethod
-    def automatic(cls, x, decimals=ASSET_DECIMAL):
+    def automatic(cls, x, decimals=ASSET_DECIMAL, context=DC):
         if isinstance(x, Amount):
             return x if x.decimal == decimals else cls(x.internal_amount, decimals, x.denom)
         elif isinstance(x, int):
             return cls.from_base(x, decimals)
         elif isinstance(x, (float, str)):
             return cls.from_asset(x, decimals)
+        elif isinstance(x, Decimal):
+            d = x / decimal_power_10(decimals, context)
+            return cls(int(d), decimals)
         else:
             raise ValueError(f'Cannot convert {x} to Amount')
 
@@ -123,6 +141,13 @@ class Amount(NamedTuple):
 
     def __int__(self):
         return self.internal_amount
+
+    @property
+    def as_decimal(self):
+        return self.as_decimal_ctx()
+
+    def as_decimal_ctx(self, context=DC):
+        return Decimal(self.internal_amount, context) / decimal_power_10(self.decimal, context)
 
 
 def amount(x) -> Amount:
@@ -183,4 +208,5 @@ class CryptoAmount(NamedTuple):
                 raise ValueError(f"Cannot perform math on 2 different assets: {self.asset} and {a.asset}")
 
 
-MAX_BASIS_POINTS = 10_0000
+def bn(s: str, context=DECIMAL_CONTEXT) -> Decimal:
+    return Decimal(s, context)
