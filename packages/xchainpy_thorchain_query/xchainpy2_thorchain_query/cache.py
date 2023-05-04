@@ -1,16 +1,18 @@
 import asyncio
 import logging
 import time
+from itertools import chain
 from typing import Dict, List
 
+from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMaya, NetworkApi as NetworkApiMaya
 from xchainpy2_midgard import PoolDetail
 from xchainpy2_midgard.api import DefaultApi as MidgardAPI
 from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress
-from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMaya, NetworkApi as NetworkApiMaya
-from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO
+from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, bn, CryptoAmount
+from . import Mimir
 from .env import Network, URLs
 from .midgard import MidgardAPIClient
-from .models import PoolCache, InboundDetailCache, NetworkValuesCache, LiquidityPool
+from .models import PoolCache, InboundDetailCache, NetworkValuesCache, LiquidityPool, InboundDetail, SwapOutput
 from .patch_clients import request_api_with_backup_hosts
 from .thornode import ThornodeAPIClient
 
@@ -60,14 +62,17 @@ class THORChainCache:
         self.native_asset = native_asset
 
         self.midgard_api = MidgardAPI(midgard_client)
+
         if native_asset == AssetRUNE:
             self.t_pool_api = PoolsApi(thornode_client)
             self.mimir_api = MimirApi(thornode_client)
             self.network_api = NetworkApi(thornode_client)
+            self.chain = Chain.THORChain
         elif native_asset == AssetCACAO:
             self.t_pool_api = PoolsApiMaya(thornode_client)
             self.mimir_api = MimirApiMaya(thornode_client)
             self.network_api = NetworkApiMaya(thornode_client)
+            self.chain = Chain.Maya
         else:
             raise ValueError('Invalid native asset. Must be RUNE or CACAO')
 
@@ -124,6 +129,11 @@ class THORChainCache:
         self._pool_cache = PoolCache(time.monotonic(), pool_map)
 
     async def refresh_inbound_cache(self):
+        """
+        Refreshes the InboundDetailCache Cache
+           * NOTE: do not call refresh_inbound_cache() directly, call get_inbound_details() instead
+           * which will refresh the cache if it's expired
+        """
         mimir, inbound_addresses = await asyncio.gather(
             request_api_with_backup_hosts(self.mimir_api, self.mimir_api.mimir),
             request_api_with_backup_hosts(self.network_api, self.network_api.inbound_addresses)
@@ -132,10 +142,103 @@ class THORChainCache:
         inbound_map = {}
         for inbound in inbound_addresses:
             inbound: InboundAddress
-            chain = inbound.chain
 
-            # inbound_map[inbound.chain] = inbound
+            if (
+                    not inbound.chain or
+                    not inbound.gas_rate or
+                    not inbound.gas_rate_units or
+                    not inbound.address or
+                    not inbound.outbound_fee or
+                    not inbound.outbound_tx_size
+            ):
+                raise LookupError('Missing required inbound info')
+
+            halted = (
+                    inbound.halted or
+                    # is it necessary?
+                    mimir.get(Mimir.HALTCHAINGLOBAL, False) or
+                    mimir.get(Mimir.halt_trading(inbound.chain), False)
+            )
+
+            halted_trading = (
+                    inbound.global_trading_paused or
+                    inbound.chain_trading_paused or
+                    # is it necessary?
+                    mimir.get(Mimir.HALTTRADING, False) or
+                    mimir.get(Mimir.halt_trading(inbound.chain), False)
+            )
+
+            halted_lp = (
+                    inbound.chain_lp_actions_paused or
+                    # is it necessary?
+                    mimir.get(Mimir.PAUSELP, False) or
+                    mimir.get(Mimir.pause_lp(inbound.chain))
+            )
+
+            inbound_map[inbound.chain] = InboundDetail(
+                chain=Chain(inbound.chain),
+                address=inbound.address,
+                gas_rate=bn(inbound.gas_rate),
+                gas_rate_units=inbound.gas_rate_units,
+                outbound_fee=bn(inbound.outbound_fee),
+                outbound_tx_size=bn(inbound.outbound_tx_size),
+                halted_chain=halted,
+                halted_trading=halted_trading,
+                halted_lp=halted_lp,
+                router=inbound.router,
+            )
+
+        inbound_map[Chain.THORChain.value] = InboundDetail(
+            chain=Chain.THORChain,
+            address='',
+            router='',
+            gas_rate=0,
+            gas_rate_units='',
+            outbound_fee=0,
+            outbound_tx_size=0,
+            halted_chain=False,
+            halted_trading=not (mimir.get(Mimir.HALTTRADING, False)),
+            halted_lp=False,
+        )
+
         self._inbound_cache = InboundDetailCache(time.monotonic(), inbound_map)
 
     async def refresh_network_values(self):
-        ...
+        constants, mimir = await asyncio.gather(
+            request_api_with_backup_hosts(self.network_api, self.network_api.constants),
+            request_api_with_backup_hosts(self.mimir_api, self.mimir_api.mimir)
+        )
+
+        network_values = {}
+        for k, v in chain(constants.items(), mimir.items()):
+            network_values[k.upper()] = int(v)
+
+        self._inbound_cache = NetworkValuesCache(time.monotonic(), network_values)
+
+    async def get_expected_swap_output(self, input_amount: CryptoAmount, dest_asset: Asset) -> SwapOutput:
+        swap_output: SwapOutput
+        if self.is_native_asset(input_amount.asset):
+            # single swap from Rune -> asset
+            pool = await self.get_pool_for_asset(dest_asset)
+            swap_output = await self.get_single_swap(input_amount, pool, False)
+        elif self.is_native_asset(dest_asset):
+            # single swap from asset -> Rune
+            pool = await self.get_pool_for_asset(input_amount.asset)
+            swap_output = await self.get_single_swap(input_amount, pool, True)
+        else:
+            # double swap asset -> asset
+            in_pool, out_pool = await asyncio.gather(
+                self.get_pool_for_asset(input_amount.asset),
+                self.get_pool_for_asset(dest_asset)
+            )
+            swap_output = await self.get_double_swap(input_amount, in_pool, out_pool)
+        # Note this is needed to return a synth vs. a  native asset on swap out
+        swap_output.output = CryptoAmount(swap_output.output.amount, dest_asset)
+        return swap_output
+
+    async def get_single_swap(self, input_amount, pool, param) -> SwapOutput:
+        pass
+
+    async def get_double_swap(self, input_amount, in_pool, out_pool) -> SwapOutput:
+        pass
+
