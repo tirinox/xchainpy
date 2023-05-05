@@ -1,3 +1,5 @@
+from enum import Enum
+
 DEFAULT_USER_AGENT = 'XChainPy2/0.0.1/python'
 DEFAULT_INTERFACE_ID = 'XChainPy2'
 
@@ -22,3 +24,13 @@ class Mimir:
     @staticmethod
     def halt_trading(chain):
         return f'HALT{chain.upper()}TRADING'
+
+
+class TxType(Enum):
+    Swap = 'Swap'
+    AddLP = 'AddLP'
+    WithdrawLP = 'WithdrawLP'
+    AddSaver = 'AddSaver'
+    WithdrawSaver = 'WithdrawSaver'
+    Refund = 'Refund'
+    Other = 'Other'

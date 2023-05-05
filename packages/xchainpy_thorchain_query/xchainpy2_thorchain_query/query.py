@@ -44,7 +44,7 @@ class THORChainQuery:
         :return: bool
         """
         if input_coin.asset.is_rune_native or input_coin.asset.synth:
-            if input_coin.amount.decimal != self.native_decimal:
+            if input_coin.amount.decimals != self.native_decimal:
                 raise ValueError(f"input asset "
                                  f"{input_coin.asset!s} "
                                  f"must have decimals of {self.native_decimal}")

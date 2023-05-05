@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from decimal import Decimal
 from itertools import chain
 from typing import Dict, List
 
@@ -8,7 +9,9 @@ from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMay
 from xchainpy2_midgard import PoolDetail
 from xchainpy2_midgard.api import DefaultApi as MidgardAPI
 from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress
-from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, bn, CryptoAmount
+from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, CryptoAmount, RUNE_DECIMAL, CACAO_DECIMAL, Amount, \
+    Address
+from xchainpy2_utils.swap import get_swap_fee, get_swap_output
 from . import Mimir
 from .env import Network, URLs
 from .midgard import MidgardAPIClient
@@ -49,7 +52,8 @@ class THORChainCache:
                  expire_pool: float = TEN_MINUTES,
                  expire_inbound: float = TEN_MINUTES,
                  expire_network: float = TEN_MINUTES,
-                 native_asset: Asset = AssetRUNE):
+                 native_asset: Asset = AssetRUNE,
+                 network: Network = Network.MAINNET):
         self.midgard_client = midgard_client
         self.thornode_client = thornode_client
         self._pool_cache = PoolCache(0, {})
@@ -60,6 +64,7 @@ class THORChainCache:
         self.expire_network = expire_network
 
         self.native_asset = native_asset
+        self.network = network
 
         self.midgard_api = MidgardAPI(midgard_client)
 
@@ -68,11 +73,13 @@ class THORChainCache:
             self.mimir_api = MimirApi(thornode_client)
             self.network_api = NetworkApi(thornode_client)
             self.chain = Chain.THORChain
+            self.native_decimals = RUNE_DECIMAL
         elif native_asset == AssetCACAO:
             self.t_pool_api = PoolsApiMaya(thornode_client)
             self.mimir_api = MimirApiMaya(thornode_client)
             self.network_api = NetworkApiMaya(thornode_client)
             self.chain = Chain.Maya
+            self.native_decimals = CACAO_DECIMAL
         else:
             raise ValueError('Invalid native asset. Must be RUNE or CACAO')
 
@@ -178,10 +185,10 @@ class THORChainCache:
             inbound_map[inbound.chain] = InboundDetail(
                 chain=Chain(inbound.chain),
                 address=inbound.address,
-                gas_rate=bn(inbound.gas_rate),
+                gas_rate=int(inbound.gas_rate),
                 gas_rate_units=inbound.gas_rate_units,
-                outbound_fee=bn(inbound.outbound_fee),
-                outbound_tx_size=bn(inbound.outbound_tx_size),
+                outbound_fee=int(inbound.outbound_fee),
+                outbound_tx_size=int(inbound.outbound_tx_size),
                 halted_chain=halted,
                 halted_trading=halted_trading,
                 halted_lp=halted_lp,
@@ -204,6 +211,10 @@ class THORChainCache:
         self._inbound_cache = InboundDetailCache(time.monotonic(), inbound_map)
 
     async def refresh_network_values(self):
+        """
+        Refreshes the NetworkValues Cache (Mimir and Constants combined)
+        :return: Dict[str, int]
+        """
         constants, mimir = await asyncio.gather(
             request_api_with_backup_hosts(self.network_api, self.network_api.constants),
             request_api_with_backup_hosts(self.mimir_api, self.mimir_api.mimir)
@@ -237,8 +248,77 @@ class THORChainCache:
         return swap_output
 
     async def get_single_swap(self, input_amount, pool, param) -> SwapOutput:
+        # todo
         pass
 
     async def get_double_swap(self, input_amount, in_pool, out_pool) -> SwapOutput:
+        # todo
         pass
 
+    async def get_double_swap_fee(self, asset: Asset, pool1: LiquidityPool, pool2: LiquidityPool) -> CryptoAmount:
+        """
+        formula: getSwapFee1 + getSwapFee2
+        """
+        fee1_in_rune = get_swap_fee(asset, pool1, True)  # fixme
+        swap_output = get_swap_output(asset, pool1, True)  # fixme
+        fee2_in_asset = get_swap_fee(swap_output, pool2, False)
+        fee2_in_rune = await self.convert(fee2_in_asset, self.native_asset)
+        return fee1_in_rune + fee2_in_rune
+
+    async def get_decimal_for_asset(self, asset: Asset) -> int:
+        if asset == self.native_asset:
+            return self.native_decimals
+        else:
+            pool = await self.get_pool_for_asset(asset)
+            decimal = int(pool.thornode_details.decimals)
+            return decimal if decimal > 0 else self.native_decimals
+
+    async def convert(self, input_amount: CryptoAmount, out_asset: Asset) -> CryptoAmount:
+        """
+        Returns the exchange of a CryptoAmount to a different Asset
+        Ex. convert(input:100 BUSD, outAsset: BTC) -> 0.0001234 BTC
+        :param input_amount: amount/asset to convert to outAsset
+        :param out_asset: the Asset you want to convert to
+        :return: CryptoAmount of input
+        """
+        exchange_rate = await self.get_exchange_rate(input_amount.asset, out_asset)
+        out_decimals = await self.get_decimal_for_asset(out_asset)
+        in_decimals = input_amount.amount.decimals
+        base_amount_out = input_amount.amount * exchange_rate
+        adjust_decimals = out_decimals - in_decimals
+        base_amount_out *= Decimal(10 ** adjust_decimals)
+        # noinspection PyTypeChecker
+        amt = Amount.from_base(int(base_amount_out), out_decimals)
+        return CryptoAmount(amt, out_asset)
+
+    async def get_router_address_for_chain(self, chain: Chain) -> Address:
+        inbound = await self.get_inbound_details()
+        if not inbound[chain].router:
+            raise Exception('router address is not defined')
+        return inbound[chain].router
+
+    async def get_inbound_details(self):
+        """
+        Returns the inbound details for all chains
+        :return: inbound details
+        """
+        time_elapsed = time.monotonic() - self._inbound_cache.last_refreshed
+        if time_elapsed > self.expire_inbound:
+            await self.refresh_inbound_cache()
+        if self._inbound_cache:
+            return self._inbound_cache.inbound_details
+        else:
+            raise Exception('Could not refresh inbound cache')
+
+    async def get_deepest_usd_pool(self) -> LiquidityPool:
+        usd_assets = USD_ASSETS[self.network]
+        deepest_rune_depth = 0
+        deepest_pool = None
+        for usd_asset in usd_assets:
+            usd_pool = await self.get_pool_for_asset(usd_asset)
+            if usd_pool.rune_balance.amount > deepest_rune_depth:
+                deepest_rune_depth = usd_pool.rune_balance.amount
+                deepest_pool = usd_pool
+        if not deepest_pool:
+            raise Exception('no USD Pool found')
+        return deepest_pool
