@@ -22,12 +22,12 @@ ASSET_DECIMAL = 8
 
 class Amount(NamedTuple):
     internal_amount: int
-    decimal: int = ASSET_DECIMAL
+    decimals: int = ASSET_DECIMAL
     denom: Denomination = Denomination.ASSET
 
     @property
     def ten_power(self):
-        return 10 ** self.decimal
+        return 10 ** self.decimals
 
     @property
     def amount(self) -> Union[int, float]:
@@ -42,26 +42,26 @@ class Amount(NamedTuple):
     def __add__(self, other):
         if self.denom != other.denom:
             raise ValueError(f'Cannot add {self.denom.name} with {other.denom.name}')
-        return Amount(self.internal_amount + other.internal_amount, self.decimal, self.denom)
+        return Amount(self.internal_amount + other.internal_amount, self.decimals, self.denom)
 
     def __sub__(self, other):
         if self.denom != other.denom:
             raise ValueError(f'Cannot subtract {self.denom.name} with {other.denom.name}')
-        return Amount(self.internal_amount - other.internal_amount, self.decimal, self.denom)
+        return Amount(self.internal_amount - other.internal_amount, self.decimals, self.denom)
 
     def __mul__(self, other):
         if self.denom != Denomination.BASE:
             raise ValueError(f'Cannot multiply {self.denom.name} with {other.denom.name}')
-        return Amount(self.internal_amount * other.internal_amount, self.decimal, self.denom)
+        return Amount(self.internal_amount * other.internal_amount, self.decimals, self.denom)
 
     def __truediv__(self, other):
         if self.denom != Denomination.BASE:
             raise ValueError(f'Cannot divide {self.denom.name} with {other.denom.name}')
-        return Amount(self.internal_amount // other.internal_amount, self.decimal, self.denom)
+        return Amount(self.internal_amount // other.internal_amount, self.decimals, self.denom)
 
     def __eq__(self, other):
         return self.internal_amount == other.internal_amount and \
-            self.decimal == other.decimal and self.denom == other.denom
+            self.decimals == other.decimals and self.denom == other.denom
 
     def __lt__(self, other):
         return self.internal_amount < other.internal_amount
@@ -85,10 +85,10 @@ class Amount(NamedTuple):
         return cls(base_amount, decimals, Denomination.BASE)
 
     def changed_decimals(self, new_decimals, context=DC) -> 'Amount':
-        if new_decimals == self.decimal:
+        if new_decimals == self.decimals:
             return self
 
-        a = Decimal(self.internal_amount) * decimal_power_10(new_decimals - self.decimal, context)
+        a = Decimal(self.internal_amount) * decimal_power_10(new_decimals - self.decimals, context)
         return Amount(int(a), new_decimals, Denomination.BASE)
 
     @classmethod
@@ -102,7 +102,7 @@ class Amount(NamedTuple):
     @classmethod
     def automatic(cls, x, decimals=ASSET_DECIMAL, context=DC):
         if isinstance(x, Amount):
-            return x if x.decimal == decimals else cls(x.internal_amount, decimals, x.denom)
+            return x if x.decimals == decimals else cls(x.internal_amount, decimals, x.denom)
         elif isinstance(x, int):
             return cls.from_base(x, decimals)
         elif isinstance(x, (float, str)):
@@ -115,11 +115,11 @@ class Amount(NamedTuple):
 
     @classmethod
     def to_base(cls, a: 'Amount'):
-        return cls.from_base(a.internal_amount, a.decimal)
+        return cls.from_base(a.internal_amount, a.decimals)
 
     @classmethod
     def to_asset(cls, a: 'Amount'):
-        return cls(a.internal_amount, a.decimal)
+        return cls(a.internal_amount, a.decimals)
 
     @property
     def integer_part(self):
@@ -131,7 +131,7 @@ class Amount(NamedTuple):
 
     @property
     def decimal_part_str(self):
-        return f'{self.decimal_part:0>{self.decimal}}'
+        return f'{self.decimal_part:0>{self.decimals}}'
 
     def format(self, trailing_zeros=False):
         decimal_part = self.decimal_part_str
@@ -147,7 +147,7 @@ class Amount(NamedTuple):
         return self.as_decimal_ctx()
 
     def as_decimal_ctx(self, context=DC):
-        return Decimal(self.internal_amount, context) / decimal_power_10(self.decimal, context)
+        return Decimal(self.internal_amount, context) / decimal_power_10(self.decimals, context)
 
 
 def amount(x) -> Amount:
