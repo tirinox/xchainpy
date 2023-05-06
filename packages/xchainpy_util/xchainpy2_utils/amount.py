@@ -80,7 +80,7 @@ class Amount(NamedTuple):
         return cls(0, decimals, denom)
 
     @classmethod
-    def from_base(cls, base_amount: Union[str, int], decimals=ASSET_DECIMAL):
+    def from_base(cls, base_amount: Union[str, int, Decimal], decimals=ASSET_DECIMAL):
         base_amount = int(base_amount)
         return cls(base_amount, decimals, Denomination.BASE)
 
@@ -92,7 +92,7 @@ class Amount(NamedTuple):
         return Amount(int(a), new_decimals, Denomination.BASE)
 
     @classmethod
-    def from_asset(cls, asset_amount: Union[float, str, int], decimals=ASSET_DECIMAL, context=DC):
+    def from_asset(cls, asset_amount: Union[float, str, int, Decimal], decimals=ASSET_DECIMAL, context=DC):
         v = int(
             Decimal(asset_amount, context) *
             decimal_power_10(decimals, context)
