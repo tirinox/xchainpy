@@ -1,4 +1,7 @@
+from decimal import Decimal
 from enum import Enum
+
+from xchainpy2_utils import Amount, CryptoAmount, AssetRUNE, AssetCACAO, CACAO_DECIMAL, RUNE_DECIMAL
 
 DEFAULT_USER_AGENT = 'XChainPy2/0.0.1/python'
 DEFAULT_INTERFACE_ID = 'XChainPy2'
@@ -34,3 +37,10 @@ class TxType(Enum):
     WithdrawSaver = 'WithdrawSaver'
     Refund = 'Refund'
     Other = 'Other'
+
+
+ETH_DECIMALS = 18
+AVAX_DECIMALS = 18
+
+RUNE_NETWORK_FEE = CryptoAmount(Amount.from_asset(Decimal("0.02"), RUNE_DECIMAL), AssetRUNE)
+CACAO_NETWORK_FEE = CryptoAmount(Amount.from_asset(Decimal("0.02"), CACAO_DECIMAL), AssetCACAO)
