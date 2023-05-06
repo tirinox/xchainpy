@@ -11,7 +11,8 @@ from xchainpy2_midgard.api import DefaultApi as MidgardAPI
 from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress
 from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, CryptoAmount, RUNE_DECIMAL, CACAO_DECIMAL, Amount, \
     Address
-from xchainpy2_utils.swap import get_swap_fee, get_swap_output
+from xchainpy2_utils.swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
+    get_double_swap_slip
 from . import Mimir
 from .env import Network, URLs
 from .midgard import MidgardAPIClient
@@ -29,6 +30,7 @@ USD_ASSETS = {
         Asset.from_string('BNB.BUSD-BD1'),
         Asset.from_string('ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48'),
         Asset.from_string('ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7'),
+        Asset.from_string('AVAX.USDC-0XB97EF9EF8734C71904D8002F8B6BC66DD9C48A6E'),
     ],
     Network.STAGENET: [
         Asset.from_string('ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7')
@@ -231,11 +233,11 @@ class THORChainCache:
         if self.is_native_asset(input_amount.asset):
             # single swap from Rune -> asset
             pool = await self.get_pool_for_asset(dest_asset)
-            swap_output = await self.get_single_swap(input_amount, pool, False)
+            swap_output = get_single_swap(input_amount, pool, False, self.native_asset)
         elif self.is_native_asset(dest_asset):
             # single swap from asset -> Rune
             pool = await self.get_pool_for_asset(input_amount.asset)
-            swap_output = await self.get_single_swap(input_amount, pool, True)
+            swap_output = get_single_swap(input_amount, pool, True, self.native_asset)
         else:
             # double swap asset -> asset
             in_pool, out_pool = await asyncio.gather(
@@ -247,20 +249,23 @@ class THORChainCache:
         swap_output.output = CryptoAmount(swap_output.output.amount, dest_asset)
         return swap_output
 
-    async def get_single_swap(self, input_amount, pool, param) -> SwapOutput:
-        # todo
-        pass
-
     async def get_double_swap(self, input_amount, in_pool, out_pool) -> SwapOutput:
-        # todo
-        pass
+        double_output = get_double_swap_output(input_amount, in_pool, out_pool)
+        double_fee = await self.get_double_swap_fee(input_amount, in_pool, out_pool)
+        double_slip = get_double_swap_slip(input_amount, in_pool, out_pool)
+        return SwapOutput(
+            output=double_output,
+            swap_fee=double_fee,
+            slip=double_slip,
+        )
 
-    async def get_double_swap_fee(self, asset: Asset, pool1: LiquidityPool, pool2: LiquidityPool) -> CryptoAmount:
+    async def get_double_swap_fee(self, input_amount: CryptoAmount,
+                                  pool1: LiquidityPool, pool2: LiquidityPool) -> CryptoAmount:
         """
         formula: getSwapFee1 + getSwapFee2
         """
-        fee1_in_rune = get_swap_fee(asset, pool1, True)  # fixme
-        swap_output = get_swap_output(asset, pool1, True)  # fixme
+        fee1_in_rune = get_swap_fee(input_amount, pool1, True)
+        swap_output = get_swap_output(input_amount, pool1, True)
         fee2_in_asset = get_swap_fee(swap_output, pool2, False)
         fee2_in_rune = await self.convert(fee2_in_asset, self.native_asset)
         return fee1_in_rune + fee2_in_rune
@@ -293,9 +298,9 @@ class THORChainCache:
 
     async def get_router_address_for_chain(self, chain: Chain) -> Address:
         inbound = await self.get_inbound_details()
-        if not inbound[chain].router:
+        if not inbound[chain.value].router:
             raise Exception('router address is not defined')
-        return inbound[chain].router
+        return inbound[chain.value].router
 
     async def get_inbound_details(self):
         """
@@ -305,6 +310,7 @@ class THORChainCache:
         time_elapsed = time.monotonic() - self._inbound_cache.last_refreshed
         if time_elapsed > self.expire_inbound:
             await self.refresh_inbound_cache()
+
         if self._inbound_cache:
             return self._inbound_cache.inbound_details
         else:

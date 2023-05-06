@@ -126,3 +126,10 @@ def get_double_swap_slip(input_amount: CryptoAmount, pool1: LiquidityPool, pool2
     swap_output2 = get_single_swap(swap_output.output, pool2, False, rune_units)
     result = swap_output2.slip + swap_output.slip
     return result
+
+
+def get_double_swap_output(input_amount: CryptoAmount, pool1: LiquidityPool, pool2: LiquidityPool) -> CryptoAmount:
+    # formula: getSwapOutput(pool1) => getSwapOutput(pool2)
+    r = get_swap_output(input_amount, pool1, True)
+    output = get_swap_output(r, pool2, False)
+    return output
