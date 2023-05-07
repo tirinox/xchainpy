@@ -53,3 +53,13 @@ class XChainProtocol(Enum):
 
 
 MAX_BASIS_POINTS = 10_0000
+
+DAY = 24 * 60 * 60
+
+
+def calculate_time_from_blocks(blocks: int, chain: Chain = Chain.THORChain) -> float:
+    return blocks * DEFAULT_CHAIN_ATTRS[chain].avg_block_time
+
+
+def calculate_days_from_blocks(blocks: int, chain: Chain = Chain.THORChain) -> float:
+    return calculate_time_from_blocks(blocks, chain) / DAY
