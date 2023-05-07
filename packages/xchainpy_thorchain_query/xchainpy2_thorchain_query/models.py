@@ -136,7 +136,7 @@ class Block(NamedTuple):
 
 class ILProtectionData(NamedTuple):
     il_protection: Decimal
-    total_days: int
+    total_days: float
 
 
 class ConstructMemo(NamedTuple):
