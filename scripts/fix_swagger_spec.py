@@ -113,30 +113,7 @@ def fix_spec(spec):
                 }
             r200['content']['application/json']['schema'] = result
 
-        """ 
-  THORNode:
-    LiquidityProviderResponse:
-      $ref: '#/components/schemas/LiquidityProvider'
-    SaverResponse:
-      $ref: '#/components/schemas/Saver'
-    SaversResponse:
-      type: array
-      items:
-        $ref: '#/components/schemas/Saver'
-----------------------------------------------------
- Midgard:
-    EarningsHistoryResponse:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/EarningsHistory'
-    """
-
     return spec
-
-
-def fix_array(mount_point, path, item_type):
-    print(f'Fixing {path}...')
 
 
 def main():
