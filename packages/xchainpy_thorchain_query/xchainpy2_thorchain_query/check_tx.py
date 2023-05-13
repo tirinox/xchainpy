@@ -1,12 +1,14 @@
 import logging
+import re
 from datetime import datetime, timedelta
 from typing import Union, List
 
 from xchainpy2_mayanode import LastBlock as LastBlockMaya
 from xchainpy2_thornode import TxSignersResponse, LastBlock
-from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, Asset, Chain
+from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, Asset, Chain, CryptoAmount, Amount
+from xchainpy2_utils.swap import get_decimal
 from .cache import THORChainCache
-from .models import TxProgress, TxType
+from .models import TxProgress, TxType, InboundStatus, InboundTx
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +45,77 @@ class TransactionStage:
 
         return progress
 
-    async def determine_observed(self, tx_data) -> TxProgress:
-        pass  # todo
+    async def determine_observed(self, tx_data: TxSignersResponse) -> TxProgress:
+        progress = TxProgress(TxType.Unknown)
+        if tx_data.tx:
+            memo = tx_data.tx.memo or ''
+            parts = memo.split(':')
+            operation = get_part(parts, 0)
+            if tx_data.tx.tx.coins and len(tx_data.tx.tx.coins) > 0:
+                asset_in = Asset.from_string(tx_data.tx.tx.coins[0].asset)
+                inbound_amount = tx_data.tx.tx.coins[0].amount
+            else:
+                asset_in = 'unknown'
+                inbound_amount = 0
+
+            from_address = tx_data.tx.tx.from_address or 'unknown'
+
+            if tx_data.tx.tx.chain == self.cache.chain:
+                block = tx_data.finalised_height
+            else:
+                block = tx_data.tx.finalise_height
+
+            if tx_data.tx.tx.chain == self.cache.chain:
+                finalize_block = tx_data.finalised_height
+            else:
+                finalize_block = tx_data.tx.finalise_height
+
+            if tx_data.tx.status.lower() == 'done':
+                status = InboundStatus.Observed_Consensus
+            else:
+                status = InboundStatus.Observed_Incomplete
+
+            has_slash = '/' in parts[1]
+            has_dot = '.' in parts[1]
+
+            if re.search(r'swap|s|=', operation, re.IGNORECASE):
+                progress.txType = TxType.Swap
+            if has_slash and \
+                    (re.search(r'add', operation, re.IGNORECASE) or re.search(r'a|[+]', operation, re.IGNORECASE)):
+                progress.txType = TxType.AddSaver
+            if has_dot and \
+                    (re.search(r'add', operation, re.IGNORECASE) or re.search(r'a|[+]', operation, re.IGNORECASE)):
+                progress.txType = TxType.AddLP
+            if re.search(r'withdraw|wd|-', operation, re.IGNORECASE) and has_slash:
+                progress.txType = TxType.WithdrawSaver
+            if re.search(r'withdraw|wd|-', operation, re.IGNORECASE) and has_dot:
+                progress.txType = TxType.WithdrawLP
+            if re.search(r'refund', operation, re.IGNORECASE):
+                progress.txType = TxType.Refund
+            if re.search(r'out', operation, re.IGNORECASE):
+                progress.txType = TxType.Other
+
+            amount = await self.get_crypto_amount(inbound_amount, asset_in)
+
+            date_observed = await self.block_to_date(self.cache.chain, tx_data, 0)
+            if tx_data.tx.tx.chain == self.cache.chain:
+                expected_confirmation_date = date_observed
+            else:
+                expected_confirmation_date = await self.block_to_date(Chain(asset_in.chain.upper()), tx_data, 0)
+
+            progress.inbound_observed = InboundTx(
+                status,
+                date_observed,
+                block,
+                finalize_block,
+                expected_confirmation_date,
+                amount,
+                from_address,
+                memo
+            )
+        return progress
+
+
 
     async def check_swap_progress(self, tx_data, progress):
         pass  # todo
@@ -95,9 +166,6 @@ class TransactionStage:
             raise ValueError(f'No block height found for {chain}')
         return last_block.last_observed_in
 
-    async def get_last_block(self):
-        return await self.cache.network_api.lastblock()
-
     async def block_to_date(self, chain: Chain, tx_data: TxSignersResponse, outbound_block: int):
         """
         Private function to return the date stamp from block height and chain
@@ -141,49 +209,58 @@ class TransactionStage:
             time = time - timedelta(seconds=block_difference * chain_block_time)
             return time
 
+    @staticmethod
+    def _parse_withdraw_lp_memo(memo: str):
+        # ADD: POOL:PAIREDADDR: AFFILIATE:FEE
+        parts = memo.split(':')
+        action = parts[0]
+        asset = parts[1]
+        # optional fields
+        paired_address = get_part(parts, 2)
+        affiliate_address = get_part(parts, 3)
+        affiliate_fee = get_part(parts, 4)
+        return action, asset, paired_address, affiliate_address, affiliate_fee
 
-"""
- /**
-   * Private function to return the date stamp from block height and chain
-   * @param chain - input chain
-   * @param txData - txResponse
-   * @returns date()
-   */
-  private async blockToDate(chain: Chain, txData: TxSignersResponse, outboundBlock?: number) {
-    const lastBlockObj = await this.thorchainCache.thornode.getLastBlock()
-    const time = new Date()
-    let blockDifference: number
-    const currentHeight = lastBlockObj.find((obj) => obj.chain == chain)
-    const chainHeight = Number(`${currentHeight?.last_observed_in}`)
-    const recordedChainHeight = Number(`${txData.tx.block_height}`)
-    // If outbound time is required
-    if (outboundBlock) {
-      const currentHeight = lastBlockObj.find((obj) => obj)
-      const thorchainHeight = Number(`${currentHeight?.thorchain}`)
-      if (outboundBlock > thorchainHeight) {
-        blockDifference = outboundBlock - thorchainHeight
-        time.setSeconds(time.getSeconds() + blockDifference * this.chainAttributes[chain].avgBlockTimeInSecs)
-        console.log(time)
-      } else {
-        blockDifference = thorchainHeight - outboundBlock // already processed find the date it was completed
-        time.setSeconds(time.getSeconds() - blockDifference * this.chainAttributes[chain].avgBlockTimeInSecs)
-        return time
-      }
-    }
-    // find out how long ago it was processed for all chains
-    if (chain == THORChain) {
-      const currentHeight = lastBlockObj.find((obj) => obj)
-      const thorchainHeight = Number(`${currentHeight?.thorchain}`) // current height of the TC
-      const finalisedHeight = Number(`${txData.finalised_height}`) // height tx was completed in
-      blockDifference = thorchainHeight - finalisedHeight
-      time.setSeconds(time.getSeconds() - blockDifference * this.chainAttributes[chain].avgBlockTimeInSecs) // note if using data from a tx that was before a thorchain halt this calculation becomes inaccurate...
-    } else {
-      // set the time for all other chains
-      blockDifference = chainHeight - recordedChainHeight
-      time.setSeconds(time.getSeconds() - blockDifference * this.chainAttributes[chain].avgBlockTimeInSecs)
-    }
-    return time
-  }
+    @staticmethod
+    def parse_add_liquidity_memo(memo: str):
+        # ADD:POOL:PAIREDADDR:AFFILIATE:FEE
+        parts = memo.split(':')
+        action = parts[0]
+        asset = parts[1]
+        # optional fields
+        paired_address = get_part(parts, 2)
+        affiliate_address = get_part(parts, 3)
+        affiliate_fee = get_part(parts, 4)
+        return action, asset, paired_address, affiliate_address, affiliate_fee
+
+    @staticmethod
+    def parse_swap_memo(memo: str):
+        # SWAP:ASSET:DESTADDR:LIM:AFFILIATE:FEE
+        parts = memo.split(':')
+        action = parts[0]
+        asset = parts[1]
+        dest_address = parts[2]
+        limit = get_part(parts, 3)
+        affiliate_address = get_part(parts, 4)
+        affiliate_fee = get_part(parts, 5)
+        return action, asset, dest_address, limit, affiliate_address, affiliate_fee
+
+    async def get_crypto_amount(self, base_amount: str, asset: Asset):
+        try:
+            decimals = get_decimal(asset)
+        except ValueError:
+            pool = await self.cache.get_pool_for_asset(asset)
+            decimals = pool.thornode_details.decimals
+        return CryptoAmount(Amount.from_base(base_amount, decimals), asset)
 
 
-"""
+    """
+    private async getCryptoAmount(baseAmt: string, asset: Asset): Promise<CryptoAmount> {
+    const decimals =
+      THORChain === asset.chain ? 8 : Number((await this.thorchainCache.getPoolForAsset(asset)).pool.nativeDecimal)
+    return new CryptoAmount(baseAmount(baseAmt, decimals), asset)
+  }"""
+
+
+def get_part(parts: List[str], index: int):
+    return parts[index] if len(parts) > index and parts[index] else None
