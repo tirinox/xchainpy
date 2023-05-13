@@ -29,15 +29,6 @@ class Mimir:
         return f'HALT{chain.upper()}TRADING'
 
 
-class TxType(Enum):
-    Swap = 'Swap'
-    AddLP = 'AddLP'
-    WithdrawLP = 'WithdrawLP'
-    AddSaver = 'AddSaver'
-    WithdrawSaver = 'WithdrawSaver'
-    Refund = 'Refund'
-    Other = 'Other'
-
 
 ETH_DECIMALS = 18
 AVAX_DECIMALS = 18

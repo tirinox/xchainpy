@@ -5,7 +5,7 @@ from enum import Enum
 from typing import NamedTuple, List, Dict, Optional
 
 from xchainpy2_midgard import PoolDetail
-from xchainpy2_thornode import Pool, LiquidityProviderSummary
+from xchainpy2_thornode import Pool, LiquidityProviderSummary, Saver
 from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
 
 
@@ -249,3 +249,122 @@ class SwapOutput(NamedTuple):
     output: CryptoAmount
     swap_fee: CryptoAmount
     slip: Decimal
+
+
+class TxType(Enum):
+    Swap = 'Swap'
+    AddLP = 'AddLP'
+    WithdrawLP = 'WithdrawLP'
+    AddSaver = 'AddSaver'
+    WithdrawSaver = 'WithdrawSaver'
+    Refund = 'Refund'
+    Other = 'Other'
+    Unknown = 'Unknown'
+
+
+class InboundStatus(Enum):
+    Observed_Consensus = 'Observed_Consensus'
+    Observed_Incomplete = 'Observed_Incomplete'
+    Unknown = 'Unknown'
+
+
+class SwapStatus(Enum):
+    Complete = 'Complete'
+    Complete_Refunded = 'Complete_Refunded'
+    Complete_Below_Dust = 'Complete_Below_Dust'
+    Incomplete = 'Incomplete'
+
+
+class AddLpStatus(Enum):
+    Complete = 'Complete'
+    Complete_Refunded = 'Complete_Refunded'
+    Complete_Below_Dust = 'Complete_Below_Dust'
+    Incomplete = 'Incomplete'
+
+
+class WithdrawStatus(Enum):
+    Complete = 'Complete'
+    Incomplete = 'Incomplete'
+    Complete_Refunded = 'Complete_Refunded'
+
+
+class RefundStatus(Enum):
+    Complete = 'Complete'
+    Incomplete = 'Incomplete'
+    Complete_Refunded = 'Complete_Refunded'
+
+
+class AddSaverStatus(Enum):
+    Complete = 'Complete'
+    Complete_Refunded = 'Complete_Refunded'
+    Complete_Below_Dust = 'Complete_Below_Dust'
+    Incomplete = 'Incomplete'
+
+
+class SwapInfo(NamedTuple):
+    status: SwapStatus
+    to_address: str
+    minimum_amount_out: CryptoAmount
+    affliate_fee: CryptoAmount
+    expected_out_block: int
+    expected_out_date: datetime
+    confirmations: int
+    expected_amount_out: CryptoAmount
+    actual_amount_out: Optional[CryptoAmount] = None
+
+
+class InboundTx(NamedTuple):
+    status: InboundStatus
+    date: datetime
+    block: int
+    expected_confirmation_block: int
+    expected_confirmation_date: datetime
+    amount: CryptoAmount
+    from_address: str
+    memo: str
+
+
+class AddLpInfo(NamedTuple):
+    status: AddLpStatus
+    is_symmetric: bool
+    asset_tx: Optional[InboundTx] = None
+    rune_tx: Optional[InboundTx] = None
+    asset_confirmation_date: Optional[datetime] = None
+    pool: Asset = None
+
+
+class WithdrawInfo(NamedTuple):
+    status: WithdrawStatus
+    withdrawal_amount: CryptoAmount
+    expected_confirmation_date: datetime
+    thorchain_height: int
+    outbound_height: int
+    estimated_wait_time: int
+
+
+class RefundInfo(NamedTuple):
+    status: RefundStatus
+    refund_amount: CryptoAmount
+    to_address: str
+    expected_confirmation_date: datetime
+    finalised_height: int
+    thorchain_height: int
+    outbound_block: int
+    estimated_wait_time: int
+
+
+class AddSaverInfo(NamedTuple):
+    status: AddSaverStatus
+    asset_tx: Optional[InboundTx] = None
+    saver_pos: Optional[Saver] = None
+
+
+class TxProgress(NamedTuple):
+    tx_type: TxType
+    inbound_observed: Optional[InboundTx] = None
+    swap_info: Optional[SwapInfo] = None
+    add_lp_info: Optional[AddLpInfo] = None
+    add_saver_info: Optional[AddSaverInfo] = None
+    withdraw_lp_info: Optional[WithdrawInfo] = None
+    withdraw_saver_info: Optional[WithdrawInfo] = None
+    refund_info: Optional[RefundInfo] = None
