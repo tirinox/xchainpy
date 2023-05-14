@@ -10,7 +10,7 @@ from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, Asset, Chain, CryptoAmount, Amo
 from xchainpy2_utils.swap import get_decimal
 from .cache import THORChainCache
 from .models import TxProgress, TxType, InboundStatus, InboundTx, SwapStatus, SwapInfo, AddLpStatus, AddLpInfo, \
-    WithdrawStatus, WithdrawInfo
+    WithdrawStatus, WithdrawInfo, AddSaverStatus, AddSaverInfo, WithdrawSaverInfo, RefundStatus, RefundInfo
 
 logger = logging.getLogger(__name__)
 
@@ -158,7 +158,7 @@ class TransactionStage:
             expected_out_block=expected_block_out,
             expected_out_date=expected_out_date,
             confirmations=confirmations,
-            expected_amount_out=miminum_amount_out, # TODO call estimateSwap()
+            expected_amount_out=miminum_amount_out,  # TODO call estimateSwap()
         )
 
         return progress
@@ -173,8 +173,8 @@ class TransactionStage:
         is_symmetric = bool(paired_address)
         asset_tx = progress.inbound_observed if progress.inbound_observed.amount.asset != self.native_asset else None
         rune_tx = progress.inbound_observed if progress.inbound_observed.amount.asset == self.native_asset else None
-        paired_asset_expected_confirmation_date = (await self.block_to_date(Chain(asset.chain), tx_data, 0)) \
-
+        paired_asset_expected_confirmation_date = await self.block_to_date(Chain(asset.chain), tx_data, 0)
+ 
         check_lp_position = await self.cache.lp_api.liquidity_provider(
             asset,
             progress.inbound_observed.from_address
@@ -207,7 +207,7 @@ class TransactionStage:
         if tx_data.tx.status.lower() == 'done':
             outbound_height = int(tx_data.finalised_height)
             status = WithdrawStatus.Complete
-            out_amount = json.dumps(tx_data.out_txs).split('"amount":"')[1].split('"')[0]  # fixme: ugly!
+            out_amount = parse_amount(tx_data)
         else:
             outbound_height = int(tx_data.outbound_height)
             status = WithdrawStatus.Incomplete
@@ -238,13 +238,127 @@ class TransactionStage:
         return progress
 
     async def check_add_saver_progress(self, tx_data: TxDetailsResponse, progress: TxProgress):
-        pass  # todo
+        if not progress.inbound_observed:
+            return progress
+
+        if progress.inbound_observed.amount.asset != self.native_asset:
+            asset_tx = progress.inbound_observed
+        else:
+            asset_tx = None
+
+        check_saver_vaults = await self.cache.saver_api.saver(
+            tx_data.tx.tx.coins[0].asset,
+            asset_tx.from_address if asset_tx else ''
+        )
+
+        if check_saver_vaults:
+            status = AddSaverStatus.Complete
+        else:
+            status = AddSaverStatus.Incomplete
+
+        progress.add_saver_info = AddSaverInfo(
+            status,
+            asset_tx,
+            check_saver_vaults
+        )
+
+        return progress
 
     async def check_withdraw_saver_progress(self, tx_data: TxDetailsResponse, progress: TxProgress):
-        pass  # todo
+        if not progress.inbound_observed:
+            return progress
+
+        memo = tx_data.tx.tx.memo or ''
+        action, asset, paired_address, affiliate_address, affiliate_fee = self._parse_withdraw_lp_memo(memo)
+
+        last_block_obj = await self.cache.network_api.lastblock()
+        if not last_block_obj:
+            raise ValueError("No last block")
+
+        # find the date in which the asset should be seen in the wallet
+        if tx_data.tx.status.lower() == 'done':
+            outbound_height = int(tx_data.finalised_height)
+        else:
+            outbound_height = int(tx_data.outbound_height)
+
+        # always pass in thorchain
+        expected_confirmation_date = await self.block_to_date(self.cache.chain, tx_data, outbound_height)
+
+        out_amount = parse_amount(tx_data) if tx_data.out_txs else 0
+        outbound_block = int(tx_data.outbound_height)
+        finalised_height = int(tx_data.finalised_height)
+        current_tc_height = int(self.get_last_native_block(last_block_obj[0])) if last_block_obj else 0
+
+        if outbound_block > current_tc_height:
+            avg_block_time = self.chain_attributes[self.cache.chain].avg_block_time
+            estimated_wait_time = (outbound_block - current_tc_height) * avg_block_time
+        else:
+            estimated_wait_time = 0
+
+        if tx_data.out_txs:
+            status = WithdrawStatus.Complete
+        else:
+            status = WithdrawStatus.Incomplete
+
+        withdraw_amount = await self.get_crypto_amount(out_amount, Asset.from_string(asset))
+
+        progress.withdraw_saver_info = WithdrawSaverInfo(
+            status,
+            withdraw_amount,
+            expected_confirmation_date,
+            current_tc_height,
+            finalised_height,
+            outbound_block,
+            estimated_wait_time,
+        )
+
+        return progress
 
     async def check_refund_progress(self, tx_data: TxDetailsResponse, progress: TxProgress):
-        pass  # todo
+        if not progress.inbound_observed:
+            return progress
+
+        last_block_obj = await self.cache.network_api.lastblock()
+        if not last_block_obj:
+            raise ValueError("No last block")
+
+        if tx_data.tx.status.lower() == 'done':
+            outbound_height = int(tx_data.finalised_height)
+        else:
+            outbound_height = int(tx_data.outbound_height)
+
+        expected_confirmation_date = await self.block_to_date(self.cache.chain, tx_data, outbound_height)
+        amount = tx_data.tx.tx.coins[0].amount
+        asset = Asset.from_string(tx_data.tx.tx.coins[0].asset)
+        to_address = str(tx_data.tx.tx.to_address)
+        outbound_block = self.get_chain_height(last_block_obj, asset.chain)
+        finalised_height = int(tx_data.finalised_height)
+        current_tc_height = int(self.get_last_native_block(last_block_obj[0])) if last_block_obj else 0
+
+        if outbound_block > current_tc_height:
+            avg_block_time = self.chain_attributes[self.cache.chain].avg_block_time
+            estimated_wait_time = ((outbound_block - current_tc_height) * avg_block_time +
+                                   self.chain_attributes[asset.chain].avg_block_time)
+        else:
+            estimated_wait_time = 0
+
+        if tx_data.tx.status.lower() == 'done':
+            status = RefundStatus.Complete
+        else:
+            status = RefundStatus.Incomplete
+
+        progress.refund_info = RefundInfo(
+            status,
+            amount,
+            to_address,
+            expected_confirmation_date,
+            finalised_height,
+            current_tc_height,
+            outbound_block,
+            estimated_wait_time
+        )
+
+        return progress
 
     def get_last_native_block(self, last_block: Union[LastBlock, LastBlockMaya]):
         if self.cache.chain == Chain.THORChain:
@@ -356,7 +470,7 @@ class TransactionStage:
         affiliate_fee = get_part(parts, 5)
         return action, asset, dest_address, limit, affiliate_address, affiliate_fee
 
-    async def get_crypto_amount(self, base_amount: str, asset: Asset):
+    async def get_crypto_amount(self, base_amount: Union[str, int], asset: Asset):
         try:
             decimals = get_decimal(asset)
         except ValueError:
@@ -367,3 +481,7 @@ class TransactionStage:
 
 def get_part(parts: List[str], index: int):
     return parts[index] if len(parts) > index and parts[index] else None
+
+
+def parse_amount(tx_data: TxDetailsResponse):
+    return int(json.dumps(tx_data.out_txs).split('"amount":"')[1].split('"')[0])  # fixme: ugly!

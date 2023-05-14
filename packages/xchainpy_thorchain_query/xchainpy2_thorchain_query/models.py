@@ -342,6 +342,16 @@ class WithdrawInfo(NamedTuple):
     estimated_wait_time: int
 
 
+class WithdrawSaverInfo(NamedTuple):
+    status: WithdrawStatus
+    withdrawal_amount: CryptoAmount
+    expected_confirmation_date: datetime
+    thorchain_height: int
+    finalised_height: int
+    outbound_block: int
+    estimated_wait_time: float
+
+
 class RefundInfo(NamedTuple):
     status: RefundStatus
     refund_amount: CryptoAmount
