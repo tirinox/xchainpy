@@ -1,6 +1,6 @@
 from typing import NamedTuple, Optional
 
-from .consts import XChainProtocol
+from .util import XChainProtocol
 
 SYNTH_DELIMITER = '/'
 NON_SYNTH_DELIMITER = '.'
