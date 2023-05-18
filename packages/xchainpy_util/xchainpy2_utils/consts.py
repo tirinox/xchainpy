@@ -1,5 +1,10 @@
+from decimal import Decimal
 from enum import Enum
 from typing import NamedTuple
+
+from .amount import CryptoAmount, Amount
+from .asset import AssetBNB, AssetBTC, AssetLTC, AssetBCH, AssetETH, AssetRUNE, AssetATOM, AssetDOGE, AssetAVAX, \
+    AssetBSC, AssetCACAO
 
 
 class Chain(Enum):
@@ -24,33 +29,72 @@ DOLLAR_SIGN = '$'
 RUNE_DECIMAL = 8
 CACAO_DECIMAL = 10
 
+ZERO_RUNE = CryptoAmount.zero(Chain.THORChain)
+ZERO_CACAO = CryptoAmount.zero(Chain.Maya)
+
+
+class DustAmount(NamedTuple):
+    asset: CryptoAmount
+    rune: CryptoAmount = ZERO_RUNE
+    cacao: CryptoAmount = ZERO_CACAO
+
 
 class ChainAttributes(NamedTuple):
     block_reward: float
     avg_block_time: float
+    dust: DustAmount
 
+
+AMOUNT_10K_SAT = Amount.from_asset(Decimal("0.0001"), 8)
 
 DEFAULT_CHAIN_ATTRS = {
-    Chain.BitcoinCash: ChainAttributes(6.25, 600),
-    Chain.Bitcoin: ChainAttributes(6.25, 600),
-    Chain.Ethereum: ChainAttributes(2, 13),
-    Chain.Avax: ChainAttributes(2, 3),
-    Chain.Litecoin: ChainAttributes(12.5, 150),
-    Chain.Doge: ChainAttributes(10000, 60),
-    Chain.Cosmos: ChainAttributes(0, 6),
-    Chain.Binance: ChainAttributes(0, 6),
-    Chain.THORChain: ChainAttributes(0, 6),
-    Chain.BinanceSmartChain: ChainAttributes(0, 3),
-    Chain.Maya: ChainAttributes(0, 6),
+    Chain.Bitcoin: ChainAttributes(
+        6.25, 600,
+        DustAmount(AMOUNT_10K_SAT, AssetBTC)
+    ),
+    Chain.Litecoin: ChainAttributes(
+        12.5, 150,
+        DustAmount(AMOUNT_10K_SAT, AssetLTC)
+    ),
+    Chain.BitcoinCash: ChainAttributes(
+        6.25, 600,
+        DustAmount(AMOUNT_10K_SAT, AssetBCH)
+    ),
+    Chain.Ethereum: ChainAttributes(
+        2, 13,
+        DustAmount(Amount.zero(decimals=18), AssetETH)
+    ),
+    Chain.Avax: ChainAttributes(
+        2, 3,
+        DustAmount(Amount.zero(decimals=18), AssetAVAX)
+    ),
+    Chain.Doge: ChainAttributes(
+        10000, 60,
+        DustAmount(Amount.from_asset(Decimal("0.01"), 8), AssetDOGE)  # 1 million sat
+    ),
+    Chain.Cosmos: ChainAttributes(
+        0, 6,
+        DustAmount(Amount.zero(decimals=8), AssetATOM)
+    ),
+    Chain.Binance: ChainAttributes(
+        0, 6,
+        DustAmount(Amount.from_asset(Decimal("0.000001")), AssetBNB)
+    ),
+    Chain.THORChain: ChainAttributes(
+        0, 6,
+        DustAmount(Amount.zero(decimals=RUNE_DECIMAL), AssetRUNE)
+    ),
+    Chain.BinanceSmartChain: ChainAttributes(
+        0, 3,
+        DustAmount(Amount.zero(decimals=8), AssetBSC),
+    ),
+    Chain.Maya: ChainAttributes(
+        0, 6,
+        DustAmount(Amount.zero(decimals=8), AssetCACAO),
+    ),
 }
 
 Address = str
-
-
-class XChainProtocol(Enum):
-    THORCHAIN = 'THORCHAIN'
-    MAYA = 'MAYA'
-
 
 MAX_BASIS_POINTS = 10_0000
 
