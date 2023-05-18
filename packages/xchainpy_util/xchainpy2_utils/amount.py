@@ -163,19 +163,19 @@ class CryptoAmount(NamedTuple):
     amount: Amount
     asset: Asset
 
-    def __add__(self, other):
+    def __add__(self, other) -> 'CryptoAmount':
         self.check(other)
         return CryptoAmount(self.amount + other.amount, self.asset)
 
-    def __sub__(self, other):
+    def __sub__(self, other) -> 'CryptoAmount':
         self.check(other)
         return CryptoAmount(self.amount - other.amount, self.asset)
 
-    def __mul__(self, other):
+    def __mul__(self, other) -> 'CryptoAmount':
         self.check(other)
         return CryptoAmount(self.amount * other.amount, self.asset)
 
-    def __truediv__(self, other):
+    def __truediv__(self, other) -> 'CryptoAmount':
         self.check(other)
         return CryptoAmount(self.amount / other.amount, self.asset)
 
@@ -206,6 +206,10 @@ class CryptoAmount(NamedTuple):
         if isinstance(a, CryptoAmount):
             if a.asset != self.asset:
                 raise ValueError(f"Cannot perform math on 2 different assets: {self.asset} and {a.asset}")
+
+    @classmethod
+    def zero(cls, asset):
+        return cls(Amount.zero(asset.decimals), asset)
 
 
 def bn(s: str, context=DECIMAL_CONTEXT) -> Decimal:
