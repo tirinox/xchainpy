@@ -226,3 +226,35 @@ def calc_outbound_fee(asset: Asset, inbound: InboundDetail, base_asset=AssetRUNE
         return CACAO_NETWORK_FEE
     else:
         raise ValueError(f"Could not calculate outbound fee for {asset.chain} chain")
+
+
+def get_chain_gas_asset(chain: Chain) -> Asset:
+    if chain == Chain.Bitcoin:
+        return AssetBTC
+    elif chain == Chain.BitcoinCash:
+        return AssetBCH
+    elif chain == Chain.Litecoin:
+        return AssetLTC
+    elif chain == Chain.Doge:
+        return AssetDOGE
+    elif chain == Chain.Binance:
+        return AssetBNB
+    elif chain == Chain.Ethereum:
+        return AssetETH
+    elif chain == Chain.Avax:
+        return AssetAVAX
+    elif chain == Chain.Cosmos:
+        return AssetATOM
+    elif chain == Chain.BinanceSmartChain:
+        return AssetBSC
+    elif chain == Chain.THORChain:
+        return AssetRUNE
+    elif chain == Chain.Maya:
+        return AssetCACAO
+    else:
+        raise ValueError(f"Could not get gas asset for {chain} chain")
+
+
+def is_gas_asset(asset: Asset) -> bool:
+    # todo: should we check for synth?
+    return get_chain_gas_asset(Chain(asset.chain)) == asset
