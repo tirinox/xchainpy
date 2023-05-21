@@ -108,3 +108,20 @@ def test_change_decimals():
 
     d8 = a.changed_decimals(8)
     assert d8.internal_amount == 123456789
+
+
+def test_multiply():
+    a = Amount(100, 8, Denomination.BASE)
+    b = a * 2
+    assert b.internal_amount == 200
+
+    c = a * 2.5
+    assert c.internal_amount == 250
+
+    d = a * Decimal(0.5)
+    assert d.internal_amount == 50
+
+    e = a * Decimal(3.0)
+    assert e.internal_amount == 300
+
+    assert a * 0 == 0

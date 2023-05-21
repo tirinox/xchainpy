@@ -49,17 +49,32 @@ class Amount(NamedTuple):
             raise ValueError(f'Cannot subtract {self.denom.name} with {other.denom.name}')
         return Amount(self.internal_amount - other.internal_amount, self.decimals, self.denom)
 
-    def __mul__(self, other):
-        if self.denom != Denomination.BASE:
-            raise ValueError(f'Cannot multiply {self.denom.name} with {other.denom.name}')
-        return Amount(self.internal_amount * other.internal_amount, self.decimals, self.denom)
+    def __mul__(self, other) -> 'Amount':
+        if isinstance(other, (int, float, Decimal)):
+            return Amount(self.internal_amount * other, self.decimals, self.denom)
+        elif isinstance(other, Amount):
+            if self.denom != Denomination.BASE:
+                raise ValueError(f'Cannot multiply {self.denom.name} with {other.denom.name}')
+            return Amount(self.internal_amount * other.internal_amount, self.decimals, self.denom)
+        else:
+            raise TypeError(f'Cannot multiply {self} with {type(other)}')
 
-    def __truediv__(self, other):
-        if self.denom != Denomination.BASE:
-            raise ValueError(f'Cannot divide {self.denom.name} with {other.denom.name}')
-        return Amount(self.internal_amount // other.internal_amount, self.decimals, self.denom)
+    def __truediv__(self, other) -> 'Amount':
+        if isinstance(other, (int, float, Decimal)):
+            return Amount(int(self.internal_amount // other), self.decimals, self.denom)
+        elif isinstance(other, Decimal):
+            return Amount(int(self.internal_amount // other), self.decimals, self.denom)
+        elif isinstance(other, Amount):
+            if self.denom != Denomination.BASE:
+                raise ValueError(f'Cannot divide {self.denom.name} with {other.denom.name}')
+            return Amount(self.internal_amount // other.internal_amount, self.decimals, self.denom)
+        else:
+            raise TypeError(f'Cannot divide {self} with {type(other)}')
 
     def __eq__(self, other):
+        if not isinstance(other, Amount):
+            return self == Amount.automatic(other, self.decimals)
+
         return self.internal_amount == other.internal_amount and \
             self.decimals == other.decimals and self.denom == other.denom
 
@@ -120,6 +135,14 @@ class Amount(NamedTuple):
     @classmethod
     def to_asset(cls, a: 'Amount'):
         return cls(a.internal_amount, a.decimals)
+
+    @property
+    def as_base(self):
+        return self.to_base(self)
+
+    @property
+    def as_asset(self):
+        return self.to_asset(self)
 
     @property
     def integer_part(self):
@@ -208,8 +231,8 @@ class CryptoAmount(NamedTuple):
                 raise ValueError(f"Cannot perform math on 2 different assets: {self.asset} and {a.asset}")
 
     @classmethod
-    def zero(cls, asset):
-        return cls(Amount.zero(asset.decimals), asset)
+    def zero(cls, asset, decimals=ASSET_DECIMAL):
+        return cls(Amount.zero(decimals), asset)
 
 
 def bn(s: str, context=DECIMAL_CONTEXT) -> Decimal:

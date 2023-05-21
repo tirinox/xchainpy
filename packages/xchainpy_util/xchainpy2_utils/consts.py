@@ -29,8 +29,8 @@ DOLLAR_SIGN = '$'
 RUNE_DECIMAL = 8
 CACAO_DECIMAL = 10
 
-ZERO_RUNE = CryptoAmount.zero(Chain.THORChain)
-ZERO_CACAO = CryptoAmount.zero(Chain.Maya)
+ZERO_RUNE = CryptoAmount.zero(AssetRUNE)
+ZERO_CACAO = CryptoAmount.zero(AssetCACAO)
 
 
 class DustAmount(NamedTuple):
@@ -107,3 +107,9 @@ def calculate_time_from_blocks(blocks: int, chain: Chain = Chain.THORChain) -> f
 
 def calculate_days_from_blocks(blocks: int, chain: Chain = Chain.THORChain) -> float:
     return calculate_time_from_blocks(blocks, chain) / DAY
+
+
+class Network(Enum):
+    TESTNET = 'testnet'
+    STAGENET = 'stagenet'
+    MAINNET = 'mainnet'
