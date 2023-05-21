@@ -6,17 +6,18 @@ from itertools import chain
 from typing import Dict, List, Optional
 
 from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMaya, NetworkApi as NetworkApiMaya, \
-    TransactionsApi as TransactionsApiMaya, LiquidityProvidersApi as LiquidityProvidersApiMaya
+    TransactionsApi as TransactionsApiMaya, LiquidityProvidersApi as LiquidityProvidersApiMaya, \
+    QueueApi as QueueApiMaya
 from xchainpy2_midgard import PoolDetail
 from xchainpy2_midgard.api import DefaultApi as MidgardAPI
 from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress, TransactionsApi, LiquidityProvidersApi, \
-    SaversApi
+    SaversApi, QueueApi
 from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, CryptoAmount, RUNE_DECIMAL, CACAO_DECIMAL, Amount, \
-    Address
+    Address, Network
 from xchainpy2_utils.swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
     get_double_swap_slip
 from . import Mimir
-from .env import Network, URLs
+from .env import URLs
 from .midgard import MidgardAPIClient
 from .models import PoolCache, InboundDetailCache, NetworkValuesCache, LiquidityPool, InboundDetail, SwapOutput
 from .patch_clients import request_api_with_backup_hosts
@@ -78,6 +79,7 @@ class THORChainCache:
             self.network_api = NetworkApi(thornode_client)
             self.tx_api = TransactionsApi(thornode_client)
             self.lp_api = LiquidityProvidersApi(thornode_client)
+            self.queue_api = QueueApi(thornode_client)
             self.saver_api = SaversApi(thornode_client)
             self.chain = Chain.THORChain
             self.native_decimals = RUNE_DECIMAL
@@ -87,6 +89,7 @@ class THORChainCache:
             self.network_api = NetworkApiMaya(thornode_client)
             self.tx_api = TransactionsApiMaya(thornode_client)
             self.lp_api = LiquidityProvidersApiMaya(thornode_client)
+            self.queue_api = QueueApiMaya(thornode_client)
             self.saver_api = None  # no savers api for maya?
             self.chain = Chain.Maya
             self.native_decimals = CACAO_DECIMAL
@@ -173,7 +176,7 @@ class THORChainCache:
             halted = (
                     inbound.halted or
                     # is it necessary?
-                    mimir.get(Mimir.HALTCHAINGLOBAL, False) or
+                    mimir.get(Mimir.HALT_CHAIN_GLOBAL, False) or
                     mimir.get(Mimir.halt_trading(inbound.chain), False)
             )
 
@@ -181,14 +184,14 @@ class THORChainCache:
                     inbound.global_trading_paused or
                     inbound.chain_trading_paused or
                     # is it necessary?
-                    mimir.get(Mimir.HALTTRADING, False) or
+                    mimir.get(Mimir.HALT_TRADING, False) or
                     mimir.get(Mimir.halt_trading(inbound.chain), False)
             )
 
             halted_lp = (
                     inbound.chain_lp_actions_paused or
                     # is it necessary?
-                    mimir.get(Mimir.PAUSELP, False) or
+                    mimir.get(Mimir.PAUSE_LP, False) or
                     mimir.get(Mimir.pause_lp(inbound.chain))
             )
 
@@ -214,7 +217,7 @@ class THORChainCache:
             outbound_fee=0,
             outbound_tx_size=0,
             halted_chain=False,
-            halted_trading=not (mimir.get(Mimir.HALTTRADING, False)),
+            halted_trading=not (mimir.get(Mimir.HALT_TRADING, False)),
             halted_lp=False,
         )
 
@@ -234,7 +237,21 @@ class THORChainCache:
         for k, v in chain(constants.items(), mimir.items()):
             network_values[k.upper()] = int(v)
 
-        self._inbound_cache = NetworkValuesCache(time.monotonic(), network_values)
+        self._network_cache = NetworkValuesCache(time.monotonic(), network_values)
+
+    async def get_network_values(self) -> Dict[str, int]:
+        """
+        Returns the NetworkValues Cache (Mimir and Constants combined)
+        :return:
+        """
+        sec_since_last_refresh = time.monotonic() - self._network_cache.last_refreshed
+        if sec_since_last_refresh > self.expire_network:
+            await self.refresh_network_values()
+
+        if not self._network_cache.network_values:
+            raise LookupError('Could not refresh network values')
+
+        return self._network_cache.network_values
 
     async def get_expected_swap_output(self, input_amount: CryptoAmount, dest_asset: Asset) -> SwapOutput:
         swap_output: SwapOutput

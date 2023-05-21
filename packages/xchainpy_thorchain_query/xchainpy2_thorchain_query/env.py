@@ -1,12 +1,3 @@
-from enum import Enum
-
-
-class Network(Enum):
-    TESTNET = 'testnet'
-    STAGENET = 'stagenet'
-    MAINNET = 'mainnet'
-
-
 class URLs:
     """
     A collection of URLs for public THORChain APIs

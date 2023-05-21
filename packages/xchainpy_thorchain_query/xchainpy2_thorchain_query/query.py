@@ -1,13 +1,15 @@
+import math
 from datetime import datetime, timedelta
 from decimal import Decimal
 
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, Address, RUNE_DECIMAL, Amount, AssetBTC, \
-    MAX_BASIS_POINTS
+    MAX_BASIS_POINTS, Chain
 from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
-    is_gas_asset
+    is_gas_asset, get_chain_gas_asset
 from .cache import THORChainCache
-from .const import DEFAULT_INTERFACE_ID
-from .models import TxDetails, SwapEstimate, SwapOutput, TotalFees
+from .const import DEFAULT_INTERFACE_ID, Mimir
+from .liquidity import get_liquidity_units, get_pool_share
+from .models import TxDetails, SwapEstimate, SwapOutput, TotalFees, LPAmount, EstimateAddLP, UnitData
 
 
 class THORChainQuery:
@@ -194,7 +196,7 @@ class THORChainQuery:
             outbound_fee = await self.cache.convert(outbound_fee_in_outbound_gas_asset, usd_asset)
             if outbound_fee.amount.internal_amount < usd_min_fee.amount.internal_amount:
                 # fixme: why native asset (RUNE)?
-                outbound_fee_in_outbound_gas_asset = await self.cache.convert(usd_min_fee, self.cache.native_asset)
+                outbound_fee_in_outbound_gas_asset = await self.cache.convert(usd_min_fee, self.native_asset)
 
         # --- Remove Fees from inbound before doing the swap ---
 
@@ -215,16 +217,16 @@ class THORChainQuery:
 
         affiliate_fee_in_asset = input_minus_outbound_fee_in_asset * affiliate_fee_percent
 
-        if affiliate_fee_in_asset.asset == self.cache.native_asset:  # rune/cacao
+        if affiliate_fee_in_asset.asset == self.native_asset:  # rune/cacao
             affiliate_fee_swap_out_in_rune = SwapOutput(
                 output=affiliate_fee_in_asset,
-                swap_fee=CryptoAmount(Amount(0, self.native_decimal), self.cache.native_asset),
+                swap_fee=CryptoAmount(Amount(0, self.native_decimal), self.native_asset),
                 slip=Decimal(0),
             )
         else:
             affiliate_fee_swap_out_in_rune = await self.cache.get_expected_swap_output(
                 affiliate_fee_in_asset,
-                self.cache.native_asset
+                self.native_asset
             )
 
         # remove the affiliate fee from the input.
@@ -271,13 +273,91 @@ class THORChainQuery:
                                        swap_estimate,
                                        source_inbound_details,
                                        destination_inbound_details):
-        pass
+        pass  # todo
 
-    async def get_confirmation_counting(self, input_coin):
-        return 0
+    async def get_confirmation_counting(self, input_coin: CryptoAmount):
+        """
+        Finds the required confCount required for an inbound or outbound Tx to THORChain.
+        Estimate based on Midgard data only.
+        Finds the gas asset of the given asset (e.g. BUSD is on BNB),
+        finds the value of asset in Gas Asset then finds the required confirmation count.
+        ConfCount is then times by 6 seconds.
+        See https://docs.thorchain.org/chain-clients/overview
+        :param input_coin: amount/asset of the outbound amount.
+        :return: time in seconds before a Tx is confirmed by THORChain
+        """
 
-    async def get_outbound_delay(self, lim_asset_amount):
-        return 0
+        # RUNE, BNB and Synths have near instant finality, so no conf counting required. - need to make a BFT only case.
+        if (input_coin.asset == self.native_asset or
+                input_coin.asset.chain in (Chain.Binance, Chain.Cosmos, Chain.THORChain, Chain.Maya) or
+                input_coin.asset.chain):
+            return self.chain_attributes[Chain.THORChain].avg_block_time
+        else:
+            # Get the gas asset for the inbound.asset.chain
+            gas_asset = get_chain_gas_asset(input_coin.asset.chain)
+
+            # check for chain asset, else need to convert asset value to chain asset.
+            amount_in_gas_asset = await self.cache.convert(input_coin, gas_asset)
+
+            # find the required confs
+            conf_config = self.chain_attributes[input_coin.asset.chain]
+            required_confs = math.ceil(amount_in_gas_asset.amount / conf_config.block_reward)
+            return required_confs * conf_config.avg_block_time
+
+    async def get_outbound_delay(self, outbound_amount: CryptoAmount):
+        """
+        Works out how long an outbound Tx will be held by THORChain before sending.
+        See: https://gitlab.com/thorchain/thornode/-/blob/develop/x/thorchain/manager_txout_current.go#L548
+        :param outbound_amount: CryptoAmount  being sent.
+        :return: required delay in seconds
+        """
+        network_values = await self.cache.get_network_values()
+        min_tx_out_volume_threshold = CryptoAmount(
+            Amount.from_base(network_values[Mimir.MIN_TX_OUT_VOLUME_THRESHOLD]),
+            self.native_asset
+        )
+        max_tx_out_offset = network_values[Mimir.MAX_TX_OUT_OFFSET]
+        tx_out_delay_rate = Amount.from_base(network_values[Mimir.TX_OUT_DELAY_RATE]).as_asset.amount
+
+        queue = await self.cache.queue_api.queue()
+        outbound_value = Amount.from_base(queue.outbound_value).as_asset.amount
+        tc_block_time = self.native_chain_attributes.avg_block_time
+
+        # If asset is equal to Rune set runeValue as outbound amount else set it to the asset's value in rune
+        rune_value = await self.cache.convert(outbound_amount, self.native_asset)
+
+        # Check rune value amount
+        if rune_value < min_tx_out_volume_threshold:
+            return tc_block_time
+
+        # Rune value in the outbound queue
+        if outbound_value is None:
+            raise ValueError("Could not return Scheduled Outbound Value")
+
+        # Add OutboundAmount in rune to the outbound queue
+        outbound_total_amount = rune_value + outbound_value
+
+        # calculate the if outboundAmountTotal is over the volume threshold
+        volume_threshold = outbound_total_amount / min_tx_out_volume_threshold
+
+        # check delay rate
+        deduction = 1 if volume_threshold.amount.as_asset.amount < 1 else tx_out_delay_rate
+        tx_out_delay_rate = tx_out_delay_rate - deduction
+
+        # calculate the minimum number of blocks in the future the txn has to be
+        min_blocks = rune_value.amount.as_asset.amount / tx_out_delay_rate  # fixme: potential zero-division here
+
+        min_blocks = min(min_blocks, max_tx_out_offset)
+
+        return min_blocks * tc_block_time
+
+    @property
+    def native_chain_attributes(self):
+        return self.chain_attributes[self.native_asset.chain]
+
+    @property
+    def native_asset(self):
+        return self.cache.native_asset
 
     def construct_swap_memo(self,
                             input_coin,
@@ -311,3 +391,79 @@ class THORChainQuery:
             abrev = asset.contract[:max_length]
             asset = asset._replace(contract=abrev)
         return str(asset)
+
+    async def estimate_add_lp(self, param: LPAmount) -> EstimateAddLP:
+        """
+        Estimates a liquidity position for given crypto amount value, both asymmetrical and symetrical
+        :param param: LPAmount - parameters needed for a estimated liquidity position
+        :return: EstimateAddLP
+        """
+        errors = []
+
+        if param.asset.asset.synth or param.rune.asset.synth:
+            errors.append('you cannot add liquidity with a synth')
+        if param.rune.asset != self.native_asset:
+            errors.append('param.rune must be THOR.RUNE/MAYA.CACAO')
+
+        asset_pool = await self.cache.get_pool_for_asset(param.asset.asset)
+
+        lp_units = get_liquidity_units(param, asset_pool)
+        inbound_details = await self.cache.get_inbound_details()
+        unit_data = UnitData(
+            liquidity_units=lp_units,
+            total_units=int(asset_pool.thornode_details.pool_units),
+        )
+
+        pool_share = get_pool_share(unit_data, inbound_details)
+
+        asset_wait_time_sec = await self.get_confirmation_counting(param.asset)
+        rune_wait_time_sec = await self.get_confirmation_counting(param.rune)
+
+        wait_time_sec = max(asset_wait_time_sec, rune_wait_time_sec)
+
+        asset_inbound_fee = CryptoAmount(Amount.zero(), param.asset.asset)
+        rune_inbound_fee = CryptoAmount(Amount.zero(), self.native_asset)
+
+        if param.asset.amount > 0:
+            asset_inbound_fee = calc_network_fee(param.asset.asset, inbound_details[param.asset.asset.chain])
+            # if asset_inbound_fee.amount.times(3) > param.asset.amount:
+            # todo!
+
+
+"""
+... (truncated)
+    let assetInboundFee = new CryptoAmount(baseAmount(0), params.asset.asset)
+    let runeInboundFee = new CryptoAmount(baseAmount(0), AssetRuneNative)
+
+    if (!params.asset.assetAmount.eq(0)) {
+      assetInboundFee = calcNetworkFee(params.asset.asset, inboundDetails[params.asset.asset.chain])
+      if (assetInboundFee.assetAmount.amount().times(3).gt(params.asset.assetAmount.amount()))
+        errors.push(`Asset amount is less than fees`)
+    }
+    if (!params.rune.assetAmount.eq(0)) {
+      runeInboundFee = calcNetworkFee(params.rune.asset, inboundDetails[params.rune.asset.chain])
+      if (runeInboundFee.assetAmount.amount().times(3).gt(params.rune.assetAmount.amount()))
+        errors.push(`Rune amount is less than fees`)
+    }
+    const totalFees = (await this.convert(assetInboundFee, AssetRuneNative)).plus(runeInboundFee)
+    const slip = getSlipOnLiquidity({ asset: params.asset, rune: params.rune }, assetPool)
+    const estimateLP: EstimateAddLP = {
+      assetPool: assetPool.pool.asset,
+      slipPercent: slip.times(100),
+      poolShare: poolShare,
+      lpUnits: baseAmount(lpUnits),
+      runeToAssetRatio: assetPool.runeToAssetRatio,
+      inbound: {
+        fees: {
+          asset: assetInboundFee,
+          rune: runeInboundFee,
+          total: totalFees,
+        },
+      },
+      estimatedWaitSeconds: waitTimeSeconds,
+      errors,
+      canAdd: errors.length > 0 ? false : true,
+    }
+    return estimateLP
+  }
+"""

@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Union
 
 from xchainpy2_thorchain_query import RUNE_NETWORK_FEE, CACAO_NETWORK_FEE, ETH_DECIMALS, AVAX_DECIMALS
 from xchainpy2_thorchain_query.models import LiquidityPool, SwapOutput, InboundDetail
@@ -228,7 +229,10 @@ def calc_outbound_fee(asset: Asset, inbound: InboundDetail, base_asset=AssetRUNE
         raise ValueError(f"Could not calculate outbound fee for {asset.chain} chain")
 
 
-def get_chain_gas_asset(chain: Chain) -> Asset:
+def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
+    if isinstance(chain, str):
+        chain = Chain(chain)
+
     if chain == Chain.Bitcoin:
         return AssetBTC
     elif chain == Chain.BitcoinCash:

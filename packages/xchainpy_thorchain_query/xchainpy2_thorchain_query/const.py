@@ -1,5 +1,4 @@
 from decimal import Decimal
-from enum import Enum
 
 from xchainpy2_utils import Amount, CryptoAmount, AssetRUNE, AssetCACAO, CACAO_DECIMAL, RUNE_DECIMAL
 
@@ -16,9 +15,12 @@ TC_STANDBY_RESERVE_ADDR = 'thor1lj62pg6ryxv2htekqx04nv7wd3g98qf9gfvamy'
 
 
 class Mimir:
-    HALTTRADING = 'HALTTRADING'
-    HALTCHAINGLOBAL = 'HALTCHAINGLOBAL'
-    PAUSELP = 'PAUSELP'
+    HALT_TRADING = 'HALTTRADING'
+    HALT_CHAIN_GLOBAL = 'HALTCHAINGLOBAL'
+    PAUSE_LP = 'PAUSELP'
+    MIN_TX_OUT_VOLUME_THRESHOLD = 'MINTXOUTVOLUMETHRESHOLD'
+    MAX_TX_OUT_OFFSET = 'MAXTXOUTOFFSET'
+    TX_OUT_DELAY_RATE = 'TXOUTDELAYRATE'
 
     @staticmethod
     def pause_lp(chain):
@@ -27,7 +29,6 @@ class Mimir:
     @staticmethod
     def halt_trading(chain):
         return f'HALT{chain.upper()}TRADING'
-
 
 
 ETH_DECIMALS = 18
