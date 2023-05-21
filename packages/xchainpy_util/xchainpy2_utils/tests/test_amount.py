@@ -1,3 +1,5 @@
+import pytest
+
 from xchainpy2_utils import *
 
 
@@ -125,3 +127,23 @@ def test_multiply():
     assert e.internal_amount == 300
 
     assert a * 0 == 0
+
+    assert Amount(100500, 6, Denomination.ASSET) * 2 == Amount(201000, 6, Denomination.ASSET)
+
+
+def test_divide():
+    a = Amount(100, 8, Denomination.BASE)
+    b = a / 2
+    assert b.internal_amount == 50
+
+    c = a / 2.5
+    assert c.internal_amount == 40
+
+    d = a / Decimal(0.5)
+    assert d.internal_amount == 200
+
+    e = a / Decimal(3.0)
+    assert e.internal_amount == 33
+
+    with pytest.raises(ZeroDivisionError):
+        assert a / 0 == 0
