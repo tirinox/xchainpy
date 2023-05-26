@@ -109,7 +109,7 @@ def calculate_days_from_blocks(blocks: int, chain: Chain = Chain.THORChain) -> f
     return calculate_time_from_blocks(blocks, chain) / DAY
 
 
-class Network(Enum):
+class NetworkType(Enum):
     TESTNET = 'testnet'
     STAGENET = 'stagenet'
     MAINNET = 'mainnet'

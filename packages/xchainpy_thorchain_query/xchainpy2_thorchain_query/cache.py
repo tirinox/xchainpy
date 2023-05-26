@@ -13,7 +13,7 @@ from xchainpy2_midgard.api import DefaultApi as MidgardAPI
 from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress, TransactionsApi, LiquidityProvidersApi, \
     SaversApi, QueueApi
 from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, CryptoAmount, RUNE_DECIMAL, CACAO_DECIMAL, Amount, \
-    Address, Network
+    Address, NetworkType
 from xchainpy2_utils.swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
     get_double_swap_slip
 from . import Mimir
@@ -29,16 +29,16 @@ SAME_ASSET_EXCHANGE_RATE = 1.0
 TEN_MINUTES = 60 * 10
 
 USD_ASSETS = {
-    Network.MAINNET: [
+    NetworkType.MAINNET: [
         Asset.from_string('BNB.BUSD-BD1'),
         Asset.from_string('ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48'),
         Asset.from_string('ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7'),
         Asset.from_string('AVAX.USDC-0XB97EF9EF8734C71904D8002F8B6BC66DD9C48A6E'),
     ],
-    Network.STAGENET: [
+    NetworkType.STAGENET: [
         Asset.from_string('ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7')
     ],
-    Network.TESTNET: [
+    NetworkType.TESTNET: [
         Asset.from_string('BNB.BUSD-74E'),
         Asset.from_string('ETH.USDT-0XA3910454BF2CB59B8B3A401589A3BACC5CA42306')
     ]
@@ -58,7 +58,7 @@ class THORChainCache:
                  expire_inbound: float = TEN_MINUTES,
                  expire_network: float = TEN_MINUTES,
                  native_asset: Asset = AssetRUNE,
-                 network: Network = Network.MAINNET):
+                 network: NetworkType = NetworkType.MAINNET):
         self.midgard_client = midgard_client
         self.thornode_client = thornode_client
         self._pool_cache = PoolCache(0, {})

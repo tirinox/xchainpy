@@ -1,9 +1,8 @@
-import abc
 from datetime import datetime
 from enum import Enum
 from typing import Optional, List, NamedTuple, Dict
 
-from xchainpy2_utils import Asset, CryptoAmount, Amount, Network
+from xchainpy2_utils import Asset, Amount, NetworkType
 
 
 class TxType(Enum):
@@ -24,7 +23,7 @@ class TxFrom(NamedTuple):
     asset: Optional[Asset] = None
 
 
-class Tx(NamedTuple):
+class XcTx(NamedTuple):
     asset: Asset
     # list of "from" txs. BNC will have one `TxFrom` only, `BTC` might have many transactions going "in" (based on UTXO)
     from_txs: List[TxFrom]
@@ -38,7 +37,7 @@ class Tx(NamedTuple):
 
 class TxPage(NamedTuple):
     total: int
-    txs: List[Tx]
+    txs: List[XcTx]
 
 
 class TxHistoryPage(NamedTuple):
@@ -49,20 +48,22 @@ class TxHistoryPage(NamedTuple):
     asset: Optional[Asset] = None
 
 
-# class TxHistoryParams(NamedTuple):
-#     address: str
-#     offset: int = 0
-#     limit: int = 0
-#     start_time: Optional[datetime] = None
-#     end_time: Optional[datetime] = None
-#     asset: Optional[Asset] = None
+class TxHistoryParams(NamedTuple):
+    address: str
+    offset: int = 0
+    limit: int = 0
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    asset: Optional[Asset] = None
 
-# class TxParams(NamedTuple):
-#     asset: Asset
-#     amount: Amount
-#     recipient: str
-#     memo: Optional[str] = None
-#     fee_rate: Optional[int] = None
+
+class TxParams(NamedTuple):
+    asset: Asset
+    amount: Amount
+    recipient: str
+    memo: Optional[str] = None
+    fee_rate: Optional[int] = None
+
 
 class FeeOption(Enum):
     AVERAGE = 'average'
@@ -97,55 +98,11 @@ class FeeBounds(NamedTuple):
     upper: Fee
 
 
-class RootDerivationPaths(NamedTuple):
-    mainnet: str
-    testnet: str
+RootDerivationPaths = Dict[NetworkType, str]
 
 
 class XChainClientParams(NamedTuple):
-    network: Optional[Network] = None
+    network: Optional[NetworkType] = None
     phrase: Optional[str] = None
     fee_bound: Optional[FeeBounds] = None
     root_derivation_paths: Optional[RootDerivationPaths] = None
-
-
-class XChainClient(abc.ABC):
-    @abc.abstractmethod
-    def set_network(self, network):
-        pass
-
-    @abc.abstractmethod
-    def get_network(self):
-        pass
-
-    @abc.abstractmethod
-    def set_phrase(self, phrase: str, wallet_index: int = 0):
-        pass
-
-    @abc.abstractmethod
-    def purge_client(self):
-        pass
-
-    @abc.abstractmethod
-    def get_explorer_url(self) -> str:
-        pass
-
-    @abc.abstractmethod
-    def get_explorer_address_url(self, address: str) -> str:
-        pass
-
-    @abc.abstractmethod
-    def get_explorer_tx_url(self, tx_id: str) -> str:
-        pass
-
-    @abc.abstractmethod
-    def validate_address(self, address: str) -> bool:
-        pass
-
-    @abc.abstractmethod
-    def get_address(self, wallet_index=0) -> str:
-        pass
-
-    @abc.abstractmethod
-    def get_balance(self, address: str, assets: Optional[List[Asset]]) -> List[CryptoAmount]:
-        ...
