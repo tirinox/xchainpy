@@ -3,7 +3,7 @@ from pathlib import Path
 from setuptools import setup, find_packages  # noqa: H301
 
 NAME = "xchainpy2_thorchain_query"
-VERSION = "0.0.1"
+VERSION = "0.0.3"
 # To install the library, run the following
 #
 # python setup.py install
@@ -14,7 +14,14 @@ VERSION = "0.0.1"
 REQUIRES = [
     'aiohttp>=3.8.0,<4.0.0',
     'aiohttp-retry>=2.3.0,<3.0.0',
-]  # todo: add here real dependencies for THORNode and Midgard
+
+    # todo: make sure that all of these are correct
+    'xchainpy2_util',
+    'xchainpy2_crypto',
+    'xchainpy2_midgard',
+    'xchainpy2_thornode',
+    'xchainpy2_mayanode',
+]
 
 CWD = Path(__file__).resolve().parent
 
