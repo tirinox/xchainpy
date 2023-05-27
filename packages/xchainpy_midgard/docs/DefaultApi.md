@@ -445,7 +445,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_members_adresses**
-> Members get_members_adresses(pool=pool)
+> list[str] get_members_adresses(pool=pool)
 
 Members List
 
@@ -479,7 +479,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**Members**](Members.md)
+**list[str]**
 
 ### Authorization
 
@@ -1099,7 +1099,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_thor_names_by_address**
-> ReverseTHORNames get_thor_names_by_address(address)
+> list[str] get_thor_names_by_address(address)
 
 Gives a list of THORNames by reverse lookup
 
@@ -1133,7 +1133,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**ReverseTHORNames**](ReverseTHORNames.md)
+**list[str]**
 
 ### Authorization
 
@@ -1147,7 +1147,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_thor_names_owner_by_address**
-> ReverseTHORNames get_thor_names_owner_by_address(address)
+> list[str] get_thor_names_owner_by_address(address)
 
 THORName owner
 
@@ -1181,7 +1181,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**ReverseTHORNames**](ReverseTHORNames.md)
+**list[str]**
 
 ### Authorization
 

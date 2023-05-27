@@ -851,7 +851,7 @@ class DefaultApi(object):
 
         :param async_req bool
         :param str pool: Return only members present in the pool.
-        :return: Members
+        :return: list[str]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -873,7 +873,7 @@ class DefaultApi(object):
 
         :param async_req bool
         :param str pool: Return only members present in the pool.
-        :return: Members
+        :return: list[str]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -923,7 +923,7 @@ class DefaultApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='Members',  # noqa: E501
+            response_type='list[str]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -2133,7 +2133,7 @@ class DefaultApi(object):
 
         :param async_req bool
         :param str address: Address to match THORNames against. (required)
-        :return: ReverseTHORNames
+        :return: list[str]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -2155,7 +2155,7 @@ class DefaultApi(object):
 
         :param async_req bool
         :param str address: Address to match THORNames against. (required)
-        :return: ReverseTHORNames
+        :return: list[str]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -2209,7 +2209,7 @@ class DefaultApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='ReverseTHORNames',  # noqa: E501
+            response_type='list[str]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),
@@ -2228,7 +2228,7 @@ class DefaultApi(object):
 
         :param async_req bool
         :param str address: Address which owns a THORName. (required)
-        :return: ReverseTHORNames
+        :return: list[str]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -2250,7 +2250,7 @@ class DefaultApi(object):
 
         :param async_req bool
         :param str address: Address which owns a THORName. (required)
-        :return: ReverseTHORNames
+        :return: list[str]
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -2304,7 +2304,7 @@ class DefaultApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
-            response_type='ReverseTHORNames',  # noqa: E501
+            response_type='list[str]',  # noqa: E501
             auth_settings=auth_settings,
             async_req=params.get('async_req'),
             _return_http_data_only=params.get('_return_http_data_only'),

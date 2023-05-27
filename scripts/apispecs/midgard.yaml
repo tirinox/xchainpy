@@ -327,7 +327,7 @@ components:
       - date
       type: object
     Churns:
-      items:
+      items: &id001
         $ref: '#/components/schemas/ChurnItem'
       type: array
     Coin:
@@ -661,7 +661,7 @@ components:
       - timestamp
       type: object
     InboundAddresses:
-      items:
+      items: &id005
         $ref: '#/components/schemas/InboundAddressesItem'
       type: array
     InboundAddressesItem:
@@ -874,7 +874,7 @@ components:
       - YggFundLimit
       type: object
     Lastblock:
-      items:
+      items: &id006
         $ref: '#/components/schemas/LastblockItem'
       type: array
     LastblockItem:
@@ -1077,7 +1077,7 @@ components:
       - dateLastAdded
       type: object
     Members:
-      items:
+      items: &id002
         description: Member address
         example: tbnb1fj2lqj8dvr5pumfchc7ntlfqd2v6zdxqwjewf5
         type: string
@@ -1217,7 +1217,7 @@ components:
       - ed25519
       type: object
     Nodes:
-      items:
+      items: &id003
         $ref: '#/components/schemas/Node'
       type: array
     ObservedChain:
@@ -1308,7 +1308,7 @@ components:
       - units
       type: object
     PoolDetails:
-      items:
+      items: &id004
         $ref: '#/components/schemas/PoolDetail'
       type: array
     PoolStatsDetail:
@@ -1593,7 +1593,7 @@ components:
       - preflight_status
       type: object
     ProxiedNodes:
-      items:
+      items: &id007
         $ref: '#/components/schemas/ProxiedNode'
       type: array
     Queue:
@@ -1628,7 +1628,7 @@ components:
       - memo
       type: object
     ReverseTHORNames:
-      items:
+      items: &id008
         description: THORName name
         example: myname
         type: string
@@ -2224,9 +2224,8 @@ paths:
           content:
             application/json:
               schema:
+                items: *id001
                 type: array
-                items:
-                  $ref: '#/components/schemas/ChurnItem'
       summary: Churns List
   /v2/doc:
     get:
@@ -2655,7 +2654,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Members'
+                items: *id002
+                type: array
       summary: Members List
   /v2/network:
     get:
@@ -2677,9 +2677,8 @@ paths:
           content:
             application/json:
               schema:
+                items: *id003
                 type: array
-                items:
-                  $ref: '#/components/schemas/Node'
       summary: Nodes List
   /v2/pool/{asset}:
     get:
@@ -2804,9 +2803,8 @@ paths:
           content:
             application/json:
               schema:
+                items: *id004
                 type: array
-                items:
-                  $ref: '#/components/schemas/PoolDetail'
       summary: Pools List
   /v2/stats:
     get:
@@ -2856,9 +2854,8 @@ paths:
           content:
             application/json:
               schema:
+                items: *id005
                 type: array
-                items:
-                  $ref: '#/components/schemas/InboundAddressesItem'
       summary: Proxied THORChain Inbound Addresses
   /v2/thorchain/lastblock:
     get:
@@ -2869,9 +2866,8 @@ paths:
           content:
             application/json:
               schema:
+                items: *id006
                 type: array
-                items:
-                  $ref: '#/components/schemas/LastblockItem'
       summary: Proxied THORChain Lastblock
   /v2/thorchain/nodes:
     get:
@@ -2882,9 +2878,8 @@ paths:
           content:
             application/json:
               schema:
+                items: *id007
                 type: array
-                items:
-                  $ref: '#/components/schemas/ProxiedNode'
       summary: Proxied THORChain Nodes
   /v2/thorchain/queue:
     get:
@@ -2939,7 +2934,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReverseTHORNames'
+                items: *id008
+                type: array
       summary: THORName owner
   /v2/thorname/rlookup/{address}:
     get:
@@ -2958,5 +2954,6 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReverseTHORNames'
+                items: *id008
+                type: array
       summary: Gives a list of THORNames by reverse lookup
