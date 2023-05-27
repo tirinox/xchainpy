@@ -51,7 +51,7 @@ class Amount(NamedTuple):
 
     def __mul__(self, other) -> 'Amount':
         if isinstance(other, (int, float, Decimal)):
-            return Amount(self.internal_amount * other, self.decimals, self.denom)
+            return Amount(int(self.internal_amount * other), self.decimals, self.denom)
         elif isinstance(other, Amount):
             if self.denom != Denomination.BASE:
                 raise ValueError(f'Cannot multiply {self.denom.name} with {other.denom.name}')
