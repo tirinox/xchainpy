@@ -19,7 +19,8 @@ from xchainpy2_utils.swap import get_swap_fee, get_swap_output, get_single_swap,
 from . import Mimir
 from .env import URLs
 from .midgard import MidgardAPIClient
-from .models import PoolCache, InboundDetailCache, NetworkValuesCache, LiquidityPool, InboundDetail, SwapOutput
+from .models import PoolCache, InboundDetailCache, NetworkValuesCache, LiquidityPool, InboundDetail, SwapOutput, \
+    InboundDetails
 from .patch_clients import request_api_with_backup_hosts
 from .thornode import ThornodeAPIClient
 
@@ -327,7 +328,7 @@ class THORChainCache:
             raise Exception('router address is not defined')
         return inbound[chain.value].router
 
-    async def get_inbound_details(self):
+    async def get_inbound_details(self) -> InboundDetails:
         """
         Returns the inbound details for all chains
         :return: inbound details

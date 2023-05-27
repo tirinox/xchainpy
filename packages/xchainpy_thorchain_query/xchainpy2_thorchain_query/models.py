@@ -84,10 +84,12 @@ class InboundDetail(NamedTuple):
     halted_lp: bool
 
 
+InboundDetails = Dict[str, InboundDetail]
+
 @dataclass
 class InboundDetailCache:
     last_refreshed: float
-    inbound_details: Dict[str, InboundDetail]
+    inbound_details: InboundDetails
 
 
 @dataclass
