@@ -3,8 +3,10 @@ from typing import Union
 
 from xchainpy2_thorchain_query import RUNE_NETWORK_FEE, CACAO_NETWORK_FEE, ETH_DECIMALS, AVAX_DECIMALS
 from xchainpy2_thorchain_query.models import LiquidityPool, SwapOutput, InboundDetail
-from xchainpy2_utils import CryptoAmount, AssetRUNE, Asset, Amount, RUNE_DECIMAL, AssetCACAO, \
-    CACAO_DECIMAL, Chain, AssetBTC, AssetBCH, AssetLTC, AssetDOGE, AssetBNB, AssetETH, AssetAVAX, AssetATOM, AssetBSC
+from .amount import CryptoAmount, Amount
+from .asset import Asset, AssetRUNE, AssetCACAO, AssetETH, AssetBSC, AssetAVAX, AssetATOM, AssetBCH, AssetBNB, \
+    AssetBTC, AssetDOGE, AssetLTC
+from .consts import RUNE_DECIMAL, CACAO_DECIMAL, Chain
 
 
 def get_base_amount_with_diff_decimals(amount: CryptoAmount, out_decimals: int) -> Decimal:
