@@ -16,6 +16,7 @@ Name | Type | Description | Notes
 **pending_tx_block_heights** | **list[int]** |  | [optional] 
 **routers** | [**list[VaultRouter]**](VaultRouter.md) |  | 
 **addresses** | [**list[VaultAddress]**](VaultAddress.md) |  | 
+**frozen** | **list[str]** |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

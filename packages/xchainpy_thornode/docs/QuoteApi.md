@@ -11,7 +11,7 @@ Method | HTTP request | Description
 [**quoteswap**](QuoteApi.md#quoteswap) | **GET** /thorchain/quote/swap | 
 
 # **quoteloanclose**
-> QuoteLoanCloseResponse quoteloanclose(height=height, asset=asset, amount=amount, loan_asset=loan_asset, loan_owner=loan_owner, min_out=min_out)
+> QuoteLoanCloseResponse quoteloanclose(height=height, asset=asset, amount=amount, from_address=from_address, loan_asset=loan_asset, loan_owner=loan_owner, min_out=min_out)
 
 
 
@@ -30,12 +30,13 @@ api_instance = xchainpy2_thornode.QuoteApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 asset = 'asset_example' # str | the asset used to repay the loan (optional)
 amount = 789 # int | the asset amount in 1e8 decimals (optional)
+from_address = 'from_address_example' # str | the address that is paying off the loan (optional)
 loan_asset = 'loan_asset_example' # str | the collateral asset of the loan (optional)
 loan_owner = 'loan_owner_example' # str | the owner of the loan collateral (optional)
 min_out = 'min_out_example' # str | the minimum amount of the target asset to accept (optional)
 
 try:
-    api_response = api_instance.quoteloanclose(height=height, asset=asset, amount=amount, loan_asset=loan_asset, loan_owner=loan_owner, min_out=min_out)
+    api_response = api_instance.quoteloanclose(height=height, asset=asset, amount=amount, from_address=from_address, loan_asset=loan_asset, loan_owner=loan_owner, min_out=min_out)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling QuoteApi->quoteloanclose: %s\n" % e)
@@ -48,6 +49,7 @@ Name | Type | Description  | Notes
  **height** | **int**| optional block height, defaults to current tip | [optional] 
  **asset** | **str**| the asset used to repay the loan | [optional] 
  **amount** | **int**| the asset amount in 1e8 decimals | [optional] 
+ **from_address** | **str**| the address that is paying off the loan | [optional] 
  **loan_asset** | **str**| the collateral asset of the loan | [optional] 
  **loan_owner** | **str**| the owner of the loan collateral | [optional] 
  **min_out** | **str**| the minimum amount of the target asset to accept | [optional] 

@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Thornode API
-  version: 1.108.3
+  version: 1.110.0
   contact:
     email: devs@thorchain.org
   description: Thornode REST API.
@@ -923,6 +923,12 @@ paths:
         type: integer
         format: int64
         example: 1000000
+    - name: from_address
+      in: query
+      description: the address that is paying off the loan
+      schema:
+        type: string
+        example: btc1xxxxxxxxxxxxx
     - name: loan_asset
       in: query
       description: the collateral asset of the loan
@@ -1049,39 +1055,25 @@ components:
     Pool:
       type: object
       required:
-      - balance_rune
-      - balance_asset
       - asset
-      - LP_units
-      - pool_units
       - status
+      - pending_inbound_asset
+      - pending_inbound_rune
+      - balance_asset
+      - balance_rune
+      - pool_units
+      - LP_units
       - synth_units
       - synth_supply
-      - pending_inbound_rune
-      - pending_inbound_asset
       - savers_depth
       - savers_units
       - synth_mint_paused
       - synth_supply_remaining
       - loan_collateral
       properties:
-        balance_rune:
-          type: string
-          example: '13460619152985'
-        balance_asset:
-          type: string
-          example: '3197744873'
         asset:
           type: string
           example: BTC.BTC
-        LP_units:
-          type: string
-          description: the total pool liquidity provider units
-          example: '14694928607473'
-        pool_units:
-          type: string
-          description: the total pool units, this is the sum of LP and synth units
-          example: '14694928607473'
         status:
           type: string
           example: Available
@@ -1089,6 +1081,26 @@ components:
           type: integer
           format: int64
           example: 6
+        pending_inbound_asset:
+          type: string
+          example: '101713319'
+        pending_inbound_rune:
+          type: string
+          example: '464993836'
+        balance_asset:
+          type: string
+          example: '3197744873'
+        balance_rune:
+          type: string
+          example: '13460619152985'
+        pool_units:
+          type: string
+          description: the total pool units, this is the sum of LP and synth units
+          example: '14694928607473'
+        LP_units:
+          type: string
+          description: the total pool liquidity provider units
+          example: '14694928607473'
         synth_units:
           type: string
           description: the total synth units in the pool
@@ -1097,12 +1109,6 @@ components:
           type: string
           description: the total supply of synths for the asset
           example: '0'
-        pending_inbound_rune:
-          type: string
-          example: '464993836'
-        pending_inbound_asset:
-          type: string
-          example: '101713319'
         savers_depth:
           type: string
           example: '199998'
@@ -1378,6 +1384,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/VaultAddress'
+        frozen:
+          type: array
+          items:
+            type: string
     VaultRouter:
       type: object
       properties:
@@ -2289,7 +2299,12 @@ components:
         next:
           type: string
           example: 0.18.0
-          description: next version
+          description: next version (minimum version for a node to become Active)
+        next_since_height:
+          type: integer
+          format: int64
+          example: 2000000
+          description: height at which the minimum joining version last changed
         querier:
           type: string
           example: 0.16.0
