@@ -13,11 +13,23 @@ def single_fee(fee_type: FeeType, amount: Fee) -> Fees:
     )
 
 
+AVERAGE_FEE_MULTIPLIER = 0.5
+FASTEST_FEE_MULTIPLIER = 5
+
+
 def standard_fee(fee_type: FeeType, amount: Fee) -> Fees:
     fees = single_fee(fee_type, amount)
-    fees.fees[FeeOption.AVERAGE] = amount * 0.5
-    fees.fees[FeeOption.FASTEST] = amount * 5
+    fees.fees[FeeOption.AVERAGE] = amount * AVERAGE_FEE_MULTIPLIER
+    fees.fees[FeeOption.FASTEST] = amount * FASTEST_FEE_MULTIPLIER
     return fees
+
+
+def standard_fee_rates(amount: FeeRate) -> FeeRates:
+    return {
+        FeeOption.AVERAGE: amount * AVERAGE_FEE_MULTIPLIER,
+        FeeOption.FAST: amount,
+        FeeOption.FASTEST: amount * FASTEST_FEE_MULTIPLIER,
+    }
 
 
 def calc_fees(fee_rates: FeeRates, calc_fee: Callable[..., Fee], *args) -> Fees:
