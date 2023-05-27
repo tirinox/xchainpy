@@ -76,7 +76,7 @@ class XChainClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_balance(self, address: str, assets: Optional[List[Asset]]) -> List[CryptoAmount]:
+    async def get_balance(self, address: str) -> List[CryptoAmount]:
         ...
 
     def get_full_derivation_path(self, wallet_index: int) -> str:
@@ -85,7 +85,7 @@ class XChainClient(abc.ABC):
         return ''
 
     @abc.abstractmethod
-    async def get_transactions(self, params: TxHistoryParams) -> TxPage:
+    async def get_transactions(self, params: Optional[TxHistoryParams]) -> TxPage:
         pass
 
     @abc.abstractmethod

@@ -1,6 +1,7 @@
-from typing import Dict, Callable
+import asyncio
+from typing import Callable, Awaitable
 
-from packages.xchainpy_client.models import FeeType, Fee, Fees, FeeOption, FeeBounds, FeeRate
+from .models import FeeType, Fee, Fees, FeeOption, FeeBounds, FeeRate, FeeRates
 
 
 def single_fee(fee_type: FeeType, amount: Fee) -> Fees:
@@ -19,11 +20,27 @@ def standard_fee(fee_type: FeeType, amount: Fee) -> Fees:
     return fees
 
 
-def calc_fees(fee_rates: Dict[FeeOption, ], calc_fee: Callable[..., Fee], *args) -> Fees:
+def calc_fees(fee_rates: FeeRates, calc_fee: Callable[..., Fee], *args) -> Fees:
     fees = {
-        k: calc_fee(v, *args)
+        k: calc_fee(k, v, *args)
         for k, v in fee_rates.items()
     }
+    return Fees(
+        fees=fees,
+        type=FeeType.PER_BYTE
+    )
+
+
+async def calc_fees_async(fee_rates: FeeRates, calc_fee: Callable[..., Awaitable[...]], *args) -> Fees:
+    all_fees = await asyncio.gather(
+        calc_fee(v, *args) for v in fee_rates.values()
+    )
+
+    fees = {
+        k: fee
+        for k, fee in zip(fee_rates.keys(), all_fees)
+    }
+
     return Fees(
         fees=fees,
         type=FeeType.PER_BYTE

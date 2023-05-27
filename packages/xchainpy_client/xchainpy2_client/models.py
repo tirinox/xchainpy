@@ -1,8 +1,9 @@
+import abc
 from datetime import datetime
 from enum import Enum
 from typing import Optional, List, NamedTuple, Dict
 
-from xchainpy2_utils import Asset, Amount, NetworkType
+from xchainpy2_utils import Asset, Amount, NetworkType, CryptoAmount, Address
 
 
 class TxType(Enum):
@@ -88,8 +89,8 @@ class Fees(NamedTuple):
     fees: Dict[FeeOption, Fee]
 
 
-class FeeWithRates(NamedTuple):
-    fee: Fee
+class FeesWithRates(NamedTuple):
+    fees: Fees
     rates: FeeRates
 
 
@@ -106,3 +107,49 @@ class XChainClientParams(NamedTuple):
     phrase: Optional[str] = None
     fee_bound: Optional[FeeBounds] = None
     root_derivation_paths: Optional[RootDerivationPaths] = None
+
+
+# export type UtxoOnlineDataProviders = Record<Network, UtxoOnlineDataProvider | undefined>
+
+class OnlineDataProvider(abc.ABC):
+    @abc.abstractmethod
+    async def get_balance(self, address: str) -> List[CryptoAmount]:
+        pass
+
+    @abc.abstractmethod
+    async def get_transactions(self, params: TxHistoryParams) -> TxPage:
+        pass
+
+    @abc.abstractmethod
+    async def get_transaction_data(self, tx_id: str, asset_address: Optional[Address]) -> XcTx:
+        pass
+
+
+class Witness(NamedTuple):
+    value: int
+    script: bytes
+
+
+class UTXO(NamedTuple):
+    hash: str
+    index: int
+    value: int
+    witness_utxo: Witness
+    tx_hex: str = ""
+
+
+class UtxoOnlineDataProvider(OnlineDataProvider):
+    @abc.abstractmethod
+    async def get_confirmed_unspent_txs(self, address: str) -> List[UTXO]:
+        ...
+
+    @abc.abstractmethod
+    async def get_unspent_txs(self, address: str) -> List[UTXO]:
+        ...
+
+    @abc.abstractmethod
+    async def broadcast_tx(self, tx_hex: str) -> str:
+        ...
+
+
+UTXOOnlineDataProviders = Dict[NetworkType, UtxoOnlineDataProvider]
