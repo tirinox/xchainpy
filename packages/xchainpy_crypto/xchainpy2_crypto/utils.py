@@ -2,7 +2,7 @@ from typing import Union
 
 from Crypto.Hash import RIPEMD160, SHA256
 from bip_utils import Bip39MnemonicGenerator, Bip39WordsNum, Bip39Languages, Bip39MnemonicValidator, \
-    Bip39SeedGenerator, Bech32Encoder
+    Bip39SeedGenerator, Bech32Encoder, Bip32Secp256k1
 
 
 def generate_mnemonic(words_number=Bip39WordsNum.WORDS_NUM_12, lang=Bip39Languages.ENGLISH):
@@ -78,3 +78,7 @@ def create_address(public_key: bytes, prefix='thor') -> str:
     hexed = public_key.hex()
     hash_hex = sha256ripemd160(hexed)
     return encode_address(hash_hex, prefix)
+
+
+def get_bip32(seed: bytes, derivation_path: str) -> Bip32Secp256k1:
+    return Bip32Secp256k1.FromSeed(seed).DerivePath(derivation_path)
