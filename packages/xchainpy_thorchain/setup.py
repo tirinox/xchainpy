@@ -17,6 +17,7 @@ REQUIRES = [
     "pycryptodome>=3.17,<4.0",
     "xchainpy2_util",
     "xchainpy2_crypto",
+    "cosmpy",
 ]
 
 
