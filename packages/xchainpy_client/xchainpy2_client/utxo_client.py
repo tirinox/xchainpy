@@ -1,13 +1,13 @@
 import abc
 import logging
-from typing import List, Optional
+from typing import List, Optional, Dict
 
-from xchainpy2_utils import Chain, Address, CryptoAmount
+from xchainpy2_utils import Chain, Address, CryptoAmount, NetworkType
 from .base_client import XChainClient
 from .explorer import ExplorerProvider
 from .fees import calc_fees_async, standard_fee_rates
 from .models import XChainClientParams, UTXOOnlineDataProviders, FeeRates, \
-    FeeRate, TxHistoryParams, TxPage, XcTx, UTXO, FeesWithRates, FeeOption, Fees, Fee
+    FeeRate, TxHistoryParams, TxPage, XcTx, UTXO, FeesWithRates, FeeOption, Fees, Fee, FeeBounds, RootDerivationPaths
 
 
 class UTXOClientParams(XChainClientParams):
@@ -19,10 +19,19 @@ logger = logging.getLogger(__name__)
 
 
 class UTXOClient(XChainClient, abc.ABC):
-    def __init__(self, chain: Chain, params: UTXOClientParams):
-        super().__init__(chain, params)
-        self.explorer_providers = params.explorer_providers
-        self.data_providers = params.data_providers
+    def __init__(
+            self,
+            chain: Chain,
+            network: Optional[NetworkType] = None,
+            phrase: Optional[str] = None,
+            fee_bound: Optional[FeeBounds] = None,
+            root_derivation_paths: Optional[RootDerivationPaths] = None,
+            data_providers: Optional[UTXOOnlineDataProviders] = None,
+            explorer_providers: Dict[NetworkType, ExplorerProvider] = None
+    ):
+        super().__init__(chain, network, phrase, fee_bound, root_derivation_paths)
+        self.explorer_providers = explorer_providers
+        self.data_providers = data_providers
 
     @abc.abstractmethod
     async def get_suggested_fee_rate(self) -> FeeRates:
@@ -37,7 +46,7 @@ class UTXOClient(XChainClient, abc.ABC):
         Get the explorer url.
         :return: The explorer url based on the network.
         """
-        return self.explorer_providers[self.network].get_explorer_url()
+        return self.explorer_providers[self.network].explorer_url
 
     def get_explorer_tx_url(self, tx_id: str) -> str:
         """
