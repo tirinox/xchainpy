@@ -6,6 +6,7 @@ from cosmpy.aerial.wallet import LocalWallet
 
 from packages.xchainpy_client.xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, TxParams, XcTx, \
     Fees, TxHistoryParams, TxPage
+from xchainpy2_crypto import derive_private_key, derive_address
 from xchainpy2_utils import Chain, NetworkType, Address, CryptoAmount
 from . import get_thor_address_prefix
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
@@ -13,7 +14,6 @@ from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_N
 
 
 class THORChainClient(XChainClient):
-
     def __init__(self,
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
@@ -95,7 +95,7 @@ class THORChainClient(XChainClient):
         return self.network
 
     def set_phrase(self, phrase: str, wallet_index: int = 0):
-        pass
+        super().set_phrase(phrase, wallet_index)
 
     def purge_client(self):
         super().purge_client()
@@ -124,10 +124,24 @@ class THORChainClient(XChainClient):
         return self.explorer.get_tx_url(tx_id)
 
     def validate_address(self, address: str) -> bool:
-        pass
+        if not address:
+            return False
+        if not address.startswith(get_thor_address_prefix(self.network)):
+            return False
+
+        # todo
+
+        return True
 
     def get_address(self, wallet_index=0) -> str:
-        pass
+        """
+        Get the address for the given wallet index.
+        :param wallet_index: Wallet index. Default is 0.
+        :return: string address
+        """
+        return derive_address(self.phrase,
+                              self.get_full_derivation_path(wallet_index),
+                              get_thor_address_prefix(self.network))
 
     def get_private_key(self, wallet_index=0) -> str:
         """
@@ -135,7 +149,7 @@ class THORChainClient(XChainClient):
         :param wallet_index: Wallet index. Default is 0.
         :return:
         """
-        return self._wallet.signer().private_key
+        return derive_private_key(self.phrase, self.get_full_derivation_path(wallet_index)).hex()
 
     async def get_balance(self, address: str) -> List[CryptoAmount]:
         pass
