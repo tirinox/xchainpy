@@ -82,3 +82,11 @@ def create_address(public_key: bytes, prefix='thor') -> str:
 
 def get_bip32(seed: bytes, derivation_path: str) -> Bip32Secp256k1:
     return Bip32Secp256k1.FromSeed(seed).DerivePath(derivation_path)
+
+
+def get_private_key(key: Bip32Secp256k1) -> bytes:
+    return key.PrivateKey().Raw().ToBytes()
+
+
+def get_public_key(key: Bip32Secp256k1) -> bytes:
+    return key.PublicKey().RawCompressed().ToBytes()

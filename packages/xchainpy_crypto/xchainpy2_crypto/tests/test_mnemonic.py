@@ -38,8 +38,8 @@ def test_wallet_private_key_index(wallet_index, key, address):
     assert len(seed) == 64
     gen_key = get_bip32(seed, derivation_path)
 
-    priv_key = gen_key.PrivateKey().Raw().ToBytes()
-    pub_key = gen_key.PublicKey().RawCompressed().ToBytes()
+    priv_key = get_private_key(gen_key)
+    pub_key = get_public_key(gen_key)
 
     assert priv_key.hex() == key, 'Generated key does not match expected key'
     assert create_address(pub_key, 'thor') == address, 'Generated address does not match expected address'
