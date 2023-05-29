@@ -90,3 +90,30 @@ def get_private_key(key: Bip32Secp256k1) -> bytes:
 
 def get_public_key(key: Bip32Secp256k1) -> bytes:
     return key.PublicKey().RawCompressed().ToBytes()
+
+
+def derive_private_key(mnemonic: str, derivation_path: str) -> bytes:
+    """
+    Derive private key from mnemonic and derivation path
+    :param str mnemonic: Mnemonic phrase or list of words
+    :param str derivation_path: Derivation path
+    :return: bytes: Private key
+    """
+    seed = get_seed(mnemonic)
+    key = get_bip32(seed, derivation_path)
+    return get_private_key(key)
+
+
+def derive_address(mnemonic: str, derivation_path: str, prefix='thor', lang: str = None) -> str:
+    """
+    Derive address from mnemonic and derivation path
+    :param str mnemonic: Mnemonic phrase or list of words
+    :param str derivation_path: Derivation path
+    :param str prefix: Address prefix
+    :param str lang: Language of mnemonic words
+    :return: str: Address
+    """
+    seed = get_seed(mnemonic, lang)
+    key = get_bip32(seed, derivation_path)
+    public_key = get_public_key(key)
+    return create_address(public_key, prefix)

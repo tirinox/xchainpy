@@ -43,3 +43,7 @@ def test_wallet_private_key_index(wallet_index, key, address):
 
     assert priv_key.hex() == key, 'Generated key does not match expected key'
     assert create_address(pub_key, 'thor') == address, 'Generated address does not match expected address'
+
+    assert derive_private_key(mnemonic, derivation_path).hex() == key, 'Generated key does not match expected key'
+    assert derive_address(mnemonic, derivation_path, 'thor') == address, \
+        'Generated address does not match expected address'
