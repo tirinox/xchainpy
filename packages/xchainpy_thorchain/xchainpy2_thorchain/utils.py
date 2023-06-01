@@ -1,4 +1,6 @@
-from xchainpy2_utils import NetworkType
+from cosmpy.aerial.client import Coin
+
+from xchainpy2_utils import NetworkType, CryptoAmount, Amount, RUNE_DECIMAL, Asset
 
 
 def get_thor_address_prefix(network: NetworkType) -> str:
@@ -15,3 +17,11 @@ def get_thor_address_prefix(network: NetworkType) -> str:
         return 'thor'
     else:
         raise ValueError('Invalid network')
+
+
+def convert_coin_to_crypto_amount(coin: Coin, decimals=RUNE_DECIMAL) -> CryptoAmount:
+    asset = Asset.from_string(f'THOR.{coin.denom.upper()}')
+    return CryptoAmount(
+        amount=Amount.from_base(coin.amount, decimals),
+        asset=asset
+    )

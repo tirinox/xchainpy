@@ -1,16 +1,18 @@
+import asyncio
 from typing import Optional, List
 
-from cosmpy.aerial.client import LedgerClient
+from bip_utils import Bech32ChecksumError
+from cosmpy.aerial.client import LedgerClient, Address
 from cosmpy.aerial.config import NetworkConfig
 from cosmpy.aerial.wallet import LocalWallet
 
 from packages.xchainpy_client.xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, TxParams, XcTx, \
     Fees, TxHistoryParams, TxPage
-from xchainpy2_crypto import derive_private_key, derive_address
-from xchainpy2_utils import Chain, NetworkType, Address, CryptoAmount
-from . import get_thor_address_prefix
+from xchainpy2_crypto import derive_private_key, derive_address, decode_address
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS
+from .utils import get_thor_address_prefix, convert_coin_to_crypto_amount
 
 
 class THORChainClient(XChainClient):
@@ -49,19 +51,15 @@ class THORChainClient(XChainClient):
         self._wallet: Optional[LocalWallet] = None
 
     def _recreate_client(self):
+        base_url = self.client_urls[self.network].node
+        rest_url = f'rest+{base_url}'
         self._client = LedgerClient(NetworkConfig(
             chain_id=self.chain_ids[self.network],
-            url=self.client_urls[self.network].node,
+            url=rest_url,
             fee_denomination=DENOM_RUNE_NATIVE,
             staking_denomination=DENOM_RUNE_NATIVE,
             fee_minimum_gas_price=0,
         ))
-
-    def _recreate_wallet(self):
-        self._wallet = LocalWallet(
-            self.get_private_key(),
-            get_thor_address_prefix(self.network)
-        )
 
     def set_chain_id(self, chain_id: str):
         """
@@ -89,7 +87,6 @@ class THORChainClient(XChainClient):
             return
         super().set_network(network)
         self._recreate_client()
-        self._recreate_wallet()
 
     def get_network(self):
         return self.network
@@ -126,10 +123,16 @@ class THORChainClient(XChainClient):
     def validate_address(self, address: str) -> bool:
         if not address:
             return False
-        if not address.startswith(get_thor_address_prefix(self.network)):
+
+        prefix = get_thor_address_prefix(self.network)
+
+        if not address.startswith(prefix):
             return False
 
-        # todo
+        try:
+            decode_address(address, prefix)
+        except (ValueError, Bech32ChecksumError):
+            return False
 
         return True
 
@@ -151,13 +154,34 @@ class THORChainClient(XChainClient):
         """
         return derive_private_key(self.phrase, self.get_full_derivation_path(wallet_index)).hex()
 
-    async def get_balance(self, address: str) -> List[CryptoAmount]:
-        pass
+    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+        """
+        Get the balance of a given address.
+        :param address: By default, it will return the balance of the current wallet. (optional)
+        :return:
+        """
+        if not address:
+            address = self.get_address()
+
+        self._client: LedgerClient
+        address = Address(address)
+        balances = await asyncio.get_event_loop().run_in_executor(
+            None,
+            self._client.query_bank_all_balances,
+            address
+        )
+
+        our_balances = [
+            convert_coin_to_crypto_amount(coin)
+            for coin in balances
+        ]
+
+        return our_balances
 
     async def get_transactions(self, params: Optional[TxHistoryParams]) -> TxPage:
         pass
 
-    async def get_transaction_data(self, tx_id: str, asset_address: Optional[Address]) -> XcTx:
+    async def get_transaction_data(self, tx_id: str, asset_address: Optional[str]) -> XcTx:
         pass
 
     async def get_fees(self) -> Fees:
