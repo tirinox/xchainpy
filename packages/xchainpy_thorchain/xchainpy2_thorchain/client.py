@@ -2,7 +2,7 @@ import asyncio
 from typing import Optional, List
 
 from bip_utils import Bech32ChecksumError
-from cosmpy.aerial.client import LedgerClient, Address
+from cosmpy.aerial.client import LedgerClient, Address, Account
 from cosmpy.aerial.config import NetworkConfig
 from cosmpy.aerial.wallet import LocalWallet
 
@@ -163,7 +163,6 @@ class THORChainClient(XChainClient):
         if not address:
             address = self.get_address()
 
-        self._client: LedgerClient
         address = Address(address)
         balances = await asyncio.get_event_loop().run_in_executor(
             None,
@@ -177,6 +176,28 @@ class THORChainClient(XChainClient):
         ]
 
         return our_balances
+
+    async def get_account(self, address: str) -> Optional[Account]:
+        """
+        Get the account information for the given address: number and sequence.
+        It there is no account, it will return None.
+        It will throw an exception for special addresses (like Reserve)
+        :param address: By default, it will return the account of the current wallet. (optional)
+        :return:
+        """
+        address = Address(address)
+
+        try:
+            account = await asyncio.get_event_loop().run_in_executor(
+                None,
+                self._client.query_account,
+                address
+            )
+            return account
+        except RuntimeError as e:
+            if 'NotFound' in str(e):
+                return
+            raise e
 
     async def get_transactions(self, params: Optional[TxHistoryParams]) -> TxPage:
         pass

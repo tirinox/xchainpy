@@ -8,6 +8,11 @@ from xchainpy2_thorchain_query import TC_RESERVE_ADDR
 async def main():
     client = THORChainClient(phrase=generate_mnemonic())
 
+    addr = 'thor1z9xhmhtxn5gxd4ugfuxk7hg9hp03tw3qtqs3f3'
+    # addr = client.get_address()
+    reserve_account = await client.get_account(addr)
+    print(f"Account of ({addr}) is {reserve_account}")
+
     balance = await client.get_balance()
     print(f"Balance of {client.get_address()} is {balance}")
 
