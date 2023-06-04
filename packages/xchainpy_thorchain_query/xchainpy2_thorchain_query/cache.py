@@ -7,16 +7,16 @@ from typing import Dict, List, Optional
 
 from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMaya, NetworkApi as NetworkApiMaya, \
     TransactionsApi as TransactionsApiMaya, LiquidityProvidersApi as LiquidityProvidersApiMaya, \
-    QueueApi as QueueApiMaya
+    QueueApi as QueueApiMaya, QuoteApi as QuoteApiMaya
 from xchainpy2_midgard import PoolDetail
 from xchainpy2_midgard.api import DefaultApi as MidgardAPI
 from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress, TransactionsApi, LiquidityProvidersApi, \
-    SaversApi, QueueApi
+    SaversApi, QueueApi, QuoteApi
 from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, CryptoAmount, RUNE_DECIMAL, CACAO_DECIMAL, Amount, \
     Address, NetworkType
 from xchainpy2_utils.swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
     get_double_swap_slip
-from . import Mimir
+from .const import Mimir
 from .env import URLs
 from .midgard import MidgardAPIClient
 from .models import PoolCache, InboundDetailCache, NetworkValuesCache, LiquidityPool, InboundDetail, SwapOutput, \
@@ -82,6 +82,7 @@ class THORChainCache:
             self.lp_api = LiquidityProvidersApi(thornode_client)
             self.queue_api = QueueApi(thornode_client)
             self.saver_api = SaversApi(thornode_client)
+            self.quote_api = QuoteApi(thornode_client)
             self.chain = Chain.THORChain
             self.native_decimals = RUNE_DECIMAL
         elif native_asset == AssetCACAO:
@@ -92,6 +93,7 @@ class THORChainCache:
             self.lp_api = LiquidityProvidersApiMaya(thornode_client)
             self.queue_api = QueueApiMaya(thornode_client)
             self.saver_api = None  # no savers api for maya?
+            self.quote_api = QuoteApiMaya(thornode_client)
             self.chain = Chain.Maya
             self.native_decimals = CACAO_DECIMAL
         else:

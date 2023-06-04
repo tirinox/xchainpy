@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Union
 
-from xchainpy2_thorchain_query import RUNE_NETWORK_FEE, CACAO_NETWORK_FEE, ETH_DECIMALS, AVAX_DECIMALS
+from xchainpy2_thorchain_query.const import RUNE_NETWORK_FEE, CACAO_NETWORK_FEE, ETH_DECIMALS, AVAX_DECIMALS
 from xchainpy2_thorchain_query.models import LiquidityPool, SwapOutput, InboundDetail
 from .amount import CryptoAmount, Amount
 from .asset import Asset, AssetRUNE, AssetCACAO, AssetETH, AssetBSC, AssetAVAX, AssetATOM, AssetBCH, AssetBNB, \
@@ -9,8 +9,10 @@ from .asset import Asset, AssetRUNE, AssetCACAO, AssetETH, AssetBSC, AssetAVAX, 
 from .consts import RUNE_DECIMAL, CACAO_DECIMAL, Chain
 
 
-def get_base_amount_with_diff_decimals(amount: CryptoAmount, out_decimals: int) -> Decimal:
-    new_amount = amount.amount.changed_decimals(out_decimals)
+def get_base_amount_with_diff_decimals(amount: Union[CryptoAmount, Amount], out_decimals: int) -> Decimal:
+    if isinstance(amount, CryptoAmount):
+        amount = amount.amount
+    new_amount = amount.changed_decimals(out_decimals)
     return new_amount.as_decimal
 
 

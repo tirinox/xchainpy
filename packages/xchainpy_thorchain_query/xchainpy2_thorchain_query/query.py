@@ -1,7 +1,9 @@
 import math
 from datetime import datetime, timedelta
 from decimal import Decimal
+from typing import Union
 
+from xchainpy2_thornode import QuoteApi
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, Address, RUNE_DECIMAL, Amount, AssetBTC, \
     MAX_BASIS_POINTS, Chain
 from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
@@ -18,10 +20,56 @@ class THORChainQuery:
                  chain_attributes=DEFAULT_CHAIN_ATTRS,
                  interface_id=DEFAULT_INTERFACE_ID,
                  native_decimal=RUNE_DECIMAL):
+
+        if not cache:
+            cache = THORChainCache()
+
         self.cache = cache
         self.chain_attributes = chain_attributes
         self.interface_id = interface_id
         self.native_decimal = native_decimal
+
+    async def quote_swap(self,
+                         from_address: Address,
+                         amount: Amount,
+                         from_asset: Union[Asset, str],
+                         destination_address: str,
+                         destination_asset: Union[Asset, str],
+                         tolerance_bps: int=0,
+                         interface_id=DEFAULT_INTERFACE_ID,
+                         affiliate_bps=0,
+                         affiliate_address='',
+                         height=0,
+                         ) -> TxDetails:
+        """
+        Quote a swap transaction
+        :param from_address:
+        :param amount:
+        :param from_asset:
+        :param destination_address:
+        :param destination_asset:
+        :param tolerance_bps:
+        :param interface_id:
+        :param affiliate_bps:
+        :param affiliate_address:
+        :param height:
+        :return:
+        """
+        errors = []
+        from_asset = str(from_asset) if isinstance(from_asset, Asset) else from_asset
+        destination_asset = str(destination_asset) if isinstance(destination_asset, Asset) else destination_asset
+        input_amount = get_base_amount_with_diff_decimals(amount, 8)
+
+        api: QuoteApi = self.cache.quote_api
+        swap_quote = await self.cache.quote_api.quoteswap(
+            height=height, from_asset=from_asset, to_asset=destination_asset, amount=int(input_amount),
+            destination=destination_address,
+            from_address=from_address, tolerance_bps=tolerance_bps,
+            affiliate_bps=affiliate_bps, affiliate=affiliate_address
+        )
+
+        print(swap_quote)
+
 
     async def estimate_swap(
             self,
