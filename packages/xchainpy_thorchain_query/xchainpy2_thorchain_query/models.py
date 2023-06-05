@@ -16,8 +16,7 @@ class FeeOption(Enum):  # todo: move to it client package
 
 
 class TotalFees(NamedTuple):
-    inbound_fee: CryptoAmount
-    swap_fee: CryptoAmount
+    asset: Asset
     outbound_fee: CryptoAmount
     affiliate_fee: CryptoAmount
 
@@ -85,6 +84,7 @@ class InboundDetail(NamedTuple):
 
 
 InboundDetails = Dict[str, InboundDetail]
+
 
 @dataclass
 class InboundDetailCache:

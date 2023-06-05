@@ -13,7 +13,7 @@ def get_base_amount_with_diff_decimals(amount: Union[CryptoAmount, Amount], out_
     if isinstance(amount, CryptoAmount):
         amount = amount.amount
     new_amount = amount.changed_decimals(out_decimals)
-    return new_amount.as_decimal
+    return Decimal(new_amount.internal_amount)
 
 
 def get_decimal(base_asset: Asset) -> int:

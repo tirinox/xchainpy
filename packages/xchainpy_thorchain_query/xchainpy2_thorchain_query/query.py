@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Union
 
-from xchainpy2_thornode import QuoteApi
+from xchainpy2_thornode import QuoteApi, QuoteSwapResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, Address, RUNE_DECIMAL, Amount, AssetBTC, \
-    MAX_BASIS_POINTS, Chain
+    MAX_BASIS_POINTS, Chain, AssetRUNE
 from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
     is_gas_asset, get_chain_gas_asset
 from .cache import THORChainCache
@@ -35,7 +35,7 @@ class THORChainQuery:
                          from_asset: Union[Asset, str],
                          destination_address: str,
                          destination_asset: Union[Asset, str],
-                         tolerance_bps: int=0,
+                         tolerance_bps: int = 0,
                          interface_id=DEFAULT_INTERFACE_ID,
                          affiliate_bps=0,
                          affiliate_address='',
@@ -60,16 +60,51 @@ class THORChainQuery:
         destination_asset = str(destination_asset) if isinstance(destination_asset, Asset) else destination_asset
         input_amount = get_base_amount_with_diff_decimals(amount, 8)
 
-        api: QuoteApi = self.cache.quote_api
-        swap_quote = await self.cache.quote_api.quoteswap(
-            height=height, from_asset=from_asset, to_asset=destination_asset, amount=int(input_amount),
-            destination=destination_address,
-            from_address=from_address, tolerance_bps=tolerance_bps,
-            affiliate_bps=affiliate_bps, affiliate=affiliate_address
+        try:
+            swap_quote: QuoteSwapResponse
+            swap_quote = await self.cache.quote_api.quoteswap(
+                height=height, from_asset=from_asset, to_asset=destination_asset, amount=int(input_amount),
+                destination=destination_address,
+                from_address=from_address, tolerance_bps=tolerance_bps,
+                affiliate_bps=affiliate_bps, affiliate=affiliate_address
+            )
+        except ValueError:
+            response = self.cache.thornode_client.last_response
+            error = response.data.get('error', 'unknown error')
+            error.append(f'Thornode request quote: {error}')
+
+            zero = CryptoAmount(Amount.zero(), AssetRUNE)
+            return TxDetails(
+                '', '', datetime.now(),
+                SwapEstimate(
+                    TotalFees(destination_asset, zero, zero),
+                    Decimal(0),
+                    zero,
+                    0,
+                    can_swap=False,
+                    errors=errors
+                )
+            )
+
+        fee_asset = Asset.from_string(swap_quote.fees.asset)
+
+        return TxDetails(
+            memo=swap_quote.memo,
+            to_address=swap_quote.inbound_address,
+            expiry=datetime.fromtimestamp(swap_quote.expiry),  # timezone?
+            tx_estimate=SwapEstimate(
+                TotalFees(
+                    from_asset,
+                    affiliate_fee=CryptoAmount(Amount.from_base(swap_quote.fees.affiliate), fee_asset),
+                    outbound_fee=CryptoAmount(Amount.from_base(swap_quote.fees.outbound), fee_asset)
+                ),
+                Decimal(swap_quote.slip),
+                CryptoAmount(Amount(swap_quote.result, fee_asset), fee_asset),
+                swap_quote.slip,
+                can_swap=True,
+                errors=errors
+            )
         )
-
-        print(swap_quote)
-
 
     async def estimate_swap(
             self,
@@ -415,6 +450,7 @@ class THORChainQuery:
                             affiliate_address,
                             affiliate_fee_basis_points,
                             interface_id) -> str:
+        # todo: rewrite!!
         lim_string = str(limit.amount)
         lim_string = lim_string[:-3]  # we don't want the decimal places? todo: check this
         dest_asset_str = {self.abbreviate_asset_string(destination_asset)}
