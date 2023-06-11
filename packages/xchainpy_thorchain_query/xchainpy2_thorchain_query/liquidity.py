@@ -1,6 +1,7 @@
 from decimal import Decimal
 
-from xchainpy2_thorchain_query.models import LiquidityPool, LPAmount, UnitData, Block, ILProtectionData
+from xchainpy2_thorchain_query.models import LiquidityPool, LPAmount, UnitData, Block, ILProtectionData, \
+    PostionDepositValue
 from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE, Asset, calculate_days_from_blocks
 from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, get_decimal
 
@@ -63,7 +64,7 @@ def get_slip_on_liquidity(stake: LPAmount, pool: LiquidityPool) -> Decimal:
     return result
 
 
-def get_liquidity_protection_data(deposit_value: LPAmount,
+def get_liquidity_protection_data(deposit_value: PostionDepositValue,
                                   pool_share:
                                   LPAmount,
                                   block: Block) -> ILProtectionData:
@@ -78,8 +79,8 @@ def get_liquidity_protection_data(deposit_value: LPAmount,
     :param block: Block object with current, last added and the constant BlocksForFullProtection
     :return:
     """
-    R0 = deposit_value.rune.amount.as_decimal  # rune deposit value
-    A0 = deposit_value.asset.amount.as_decimal  # asset deposit value
+    R0 = deposit_value.rune.as_decimal  # rune deposit value
+    A0 = deposit_value.asset.as_decimal  # asset deposit value
     R1 = pool_share.rune.amount.as_decimal  # rune amount to redeem
     A1 = pool_share.asset.amount.as_decimal  # asset amount to redeem
     P1 = R1 / A1  # Pool ratio at withdrawal

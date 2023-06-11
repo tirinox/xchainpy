@@ -1,17 +1,19 @@
+import asyncio
 import math
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Union
 
-from xchainpy2_thornode import QuoteApi, QuoteSwapResponse
-from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, Address, RUNE_DECIMAL, Amount, AssetBTC, \
-    MAX_BASIS_POINTS, Chain, AssetRUNE
+from xchainpy2_thornode import QuoteSwapResponse, QueueResponse
+from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, Address, RUNE_DECIMAL, Amount, MAX_BASIS_POINTS, \
+    Chain, AssetRUNE
 from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
     is_gas_asset, get_chain_gas_asset
 from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir
-from .liquidity import get_liquidity_units, get_pool_share
-from .models import TxDetails, SwapEstimate, SwapOutput, TotalFees, LPAmount, EstimateAddLP, UnitData
+from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity, get_liquidity_protection_data
+from .models import TxDetails, SwapEstimate, SwapOutput, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
+    LiquidityPosition, Block, PostionDepositValue
 
 
 class THORChainQuery:
@@ -78,9 +80,9 @@ class THORChainQuery:
                 '', '', datetime.now(),
                 SwapEstimate(
                     TotalFees(destination_asset, zero, zero),
-                    Decimal(0),
-                    zero,
                     0,
+                    zero,
+                    0, 0,
                     can_swap=False,
                     errors=errors
                 )
@@ -89,7 +91,7 @@ class THORChainQuery:
         fee_asset = Asset.from_string(swap_quote.fees.asset)
 
         return TxDetails(
-            memo=swap_quote.memo,
+            memo=self.construct_swap_memo(swap_quote.memo, interface_id),
             to_address=swap_quote.inbound_address,
             expiry=datetime.fromtimestamp(swap_quote.expiry),  # timezone?
             tx_estimate=SwapEstimate(
@@ -98,110 +100,259 @@ class THORChainQuery:
                     affiliate_fee=CryptoAmount(Amount.from_base(swap_quote.fees.affiliate), fee_asset),
                     outbound_fee=CryptoAmount(Amount.from_base(swap_quote.fees.outbound), fee_asset)
                 ),
-                Decimal(swap_quote.slip),
-                CryptoAmount(Amount(swap_quote.result, fee_asset), fee_asset),
-                swap_quote.slip,
+                slip_bps=int(swap_quote.slippage_bps),
+                net_output=CryptoAmount(Amount(int(swap_quote.expected_amount_out)), destination_asset),
+                outbound_delay_seconds=swap_quote.outbound_delay_seconds,
+                inbound_confirmation_seconds=swap_quote.inbound_confirmation_seconds,
                 can_swap=True,
                 errors=errors
             )
         )
 
-    async def estimate_swap(
-            self,
-            input_coin: CryptoAmount,
-            destination_asset: Asset,
-            destination_address: Address,
-            slip_limit=0.03,
-            affiliate_address='',
-            affiliate_fee_basis_points=0,
-            interface_id=DEFAULT_INTERFACE_ID,
-    ) -> TxDetails:
-        await self.is_swap_valid(input_coin,
-                                 destination_asset,
-                                 destination_address,
-                                 slip_limit,
-                                 affiliate_address,
-                                 affiliate_fee_basis_points)
+    @staticmethod
+    def construct_swap_memo(memo: str, interface_id: str) -> str:
+        memo_parts = memo.split(':')
+        if len(memo_parts) > 3:
+            part3 = memo_parts[3]
+            if len(part3) >= 3:
+                #  memoPart[3].substring(0, memoPart[3].length - 3)
+                part3 = part3[:-3] + interface_id
+            else:
+                part3 = interface_id
+            memo_parts[3] = part3
 
-        inbound_details = await self.cache.get_inbound_details()
-        source_inbound_details = inbound_details[input_coin.asset.chain]
-        destination_inbound_details = inbound_details[destination_asset.chain]
+            return ':'.join(memo_parts)
 
-        # Calculate swap estimate
-        swap_estimate = await self.calc_swap_estimate(
-            input_coin,
-            destination_asset,
-            destination_address,
-            slip_limit,
-            affiliate_address,
-            affiliate_fee_basis_points,
-            interface_id,
-            source_inbound_details,
-            destination_inbound_details
+        return memo
+
+    async def outbound_delay(self, outbound_amount: CryptoAmount) -> float:
+        """
+        Works out how long an outbound Tx will be held by THORChain before sending.
+        See https://gitlab.com/thorchain/thornode/-/blob/develop/x/thorchain/manager_txout_current.go#L548
+        :param outbound_amount: CryptoAmount  being sent.
+        :return: required delay in seconds
+        """
+        values = await self.cache.get_network_values()
+
+        min_tx_volume_threshold = CryptoAmount(
+            values.get(Mimir.MIN_TX_OUT_VOLUME_THRESHOLD, 1),
+            self.cache.native_asset
+        )
+        max_tx_out_offset = values.get(Mimir.MAX_TX_OUT_OFFSET, 0)
+        tx_out_delay_rate = float(
+            Amount.from_base(values.get(Mimir.TX_OUT_DELAY_RATE, 0), self.native_decimal)
         )
 
-        # Calculate transaction expiry time
-        current_datetime = datetime.now()
-        minutes_to_add = 15
-        expiry = current_datetime + timedelta(minutes=minutes_to_add)
-
-        # Check for errors
-        errors = await self.get_swap_estimate_errors(
-            input_coin,
-            destination_asset,
-            destination_address,
-            slip_limit,
-            affiliate_address,
-            affiliate_fee_basis_points,
-            interface_id,
-            swap_estimate,
-            source_inbound_details,
-            destination_inbound_details
+        queue: QueueResponse = await self.cache.queue_api.get_queue()
+        outbound_value = CryptoAmount(
+            Amount.from_base(queue.scheduled_outbound_value, self.native_decimal),
+            self.cache.native_asset
         )
 
-        tx_details = TxDetails(
-            memo='',
-            to_address='',
-            expiry=expiry,
-            tx_estimate=swap_estimate
-        )
+        # blocks required to confirm tx
+        avg_block_time = self.chain_attributes[self.cache.chain].avg_block_time
 
-        if errors:
-            tx_details.tx_estimate.can_swap = False
-            tx_details.tx_estimate.errors = errors
+        # If asset is equal to Rune set runeValue as outbound amount else set it to the asset's value in rune
+        rune_value = await self.cache.convert(outbound_value, self.cache.native_asset)
+
+        # Check rune value amount
+        if rune_value.amount < min_tx_volume_threshold.amount:
+            return avg_block_time
+
+        # Add OutboundAmount in rune to the oubound queue
+        outbound_amount_total = outbound_amount + rune_value
+
+        # calculate the if outboundAmountTotal is over the volume threshold
+        volume_threshold = outbound_amount_total / min_tx_volume_threshold
+
+        # check delay rate
+        if tx_out_delay_rate - volume_threshold.amount.amount <= 1:
+            tx_out_delay_rate = 1
+
+        # calculate the minimum number of blocks in the future the txn has to be
+        min_blocks = rune_value.amount.amount / tx_out_delay_rate
+
+        min_blocks = min(max_tx_out_offset, min_blocks)
+        return avg_block_time * min_blocks
+
+    async def get_fees_in(self, fees: TotalFees, asset: Asset) -> TotalFees:
+        """
+        Convenience method to convert TotalFees to a different CryptoAmount
+
+        TotalFees are always calculated and returned in RUNE, this method can
+        be used to show the equivalent fees in another Asset Type
+        :param fees: TotalFees - the fees you want to convert
+        :param asset: Asset - the asset you want the fees converted to
+        :return: TotalFees in asset
+        """
+        outbound_fee, affiliate_fee = await asyncio.gather(
+            self.cache.convert(fees.outbound_fee, asset),
+            self.cache.convert(fees.affiliate_fee, asset)
+        )
+        return TotalFees(asset, outbound_fee, affiliate_fee)
+
+    async def get_confirmation_counting(self, input_coin: CryptoAmount):
+        """
+        Finds the required confCount required for an inbound or outbound Tx to THORChain.
+        Estimate based on Midgard data only.
+        Finds the gas asset of the given asset (e.g. BUSD is on BNB),
+        finds the value of asset in Gas Asset then finds the required confirmation count.
+        ConfCount is then times by 6 seconds.
+        See https://docs.thorchain.org/chain-clients/overview
+        :param input_coin: amount/asset of the outbound amount.
+        :return: time in seconds before a Tx is confirmed by THORChain
+        """
+
+        # RUNE, BNB and Synths have near instant finality, so no conf counting required. - need to make a BFT only case.
+        if (input_coin.asset == self.native_asset or
+                input_coin.asset.chain in (Chain.Binance, Chain.Cosmos, Chain.THORChain, Chain.Maya) or
+                input_coin.asset.chain):
+            return self.chain_attributes[Chain.THORChain].avg_block_time
         else:
-            tx_details.tx_estimate.can_swap = True
+            # Get the gas asset for the inbound.asset.chain
+            gas_asset = get_chain_gas_asset(input_coin.asset.chain)
 
-            inbound_details = await self.cache.get_inbound_details()
-            inbound_asgard = inbound_details[input_coin.asset.chain]
+            # check for chain asset, else need to convert asset value to chain asset.
+            amount_in_gas_asset = await self.cache.convert(input_coin, gas_asset)
 
-            tx_details.to_address = inbound_asgard.address if inbound_asgard else ''
+            # find the required confs
+            conf_config = self.chain_attributes[input_coin.asset.chain]
+            required_confs = math.ceil(amount_in_gas_asset.amount / conf_config.block_reward)
+            return required_confs * conf_config.avg_block_time
 
-            # Work out LIM from the slip percentage
-            lim_percentage = 1
-            if slip_limit:
-                lim_percentage = 1 - slip_limit
-                # else allowed slip is 100%
-            # Lim should allways be 1e8
-            lim_asset_amount: CryptoAmount = swap_estimate.net_output * lim_percentage
-            lim_asset_amount_8 = get_base_amount_with_diff_decimals(lim_asset_amount, 8)
+    async def estimate_add_lp(self, param: LPAmount) -> EstimateAddLP:
+        """
+        Estimates a liquidity position for given crypto amount value, both asymmetrical and symetrical
+        :param param: LPAmount - parameters needed for a estimated liquidity position
+        :return: EstimateAddLP
+        """
+        errors = []
 
-            inbound_delay = await self.get_confirmation_counting(input_coin)
-            outbound_delay = await self.get_outbound_delay(lim_asset_amount)
+        if param.asset.asset.synth or param.rune.asset.synth:
+            errors.append('you cannot add liquidity with a synth')
+        if param.rune.asset != self.native_asset:
+            errors.append('param.rune must be THOR.RUNE/MAYA.CACAO')
 
-            tx_details.tx_estimate.wait_time_seconds = outbound_delay + inbound_delay
+        asset_pool = await self.cache.get_pool_for_asset(param.asset.asset)
 
-            limit = Amount.from_base(lim_asset_amount_8, 8)
-            tx_details.memo = self.construct_swap_memo(
-                input_coin,
-                destination_asset,
-                limit,
-                destination_address,
-                affiliate_address,
-                affiliate_fee_basis_points,
-                interface_id
-            )
-        return tx_details
+        lp_units = get_liquidity_units(param, asset_pool)
+        inbound_details = await self.cache.get_inbound_details()
+        unit_data = UnitData(
+            liquidity_units=lp_units,
+            total_units=int(asset_pool.thornode_details.pool_units),
+        )
+
+        pool_share = get_pool_share(unit_data, asset_pool)
+
+        asset_wait_time_sec = await self.get_confirmation_counting(param.asset)
+        rune_wait_time_sec = await self.get_confirmation_counting(param.rune)
+
+        wait_time_sec = max(asset_wait_time_sec, rune_wait_time_sec)
+
+        asset_inbound_fee = CryptoAmount(Amount.zero(), param.asset.asset)
+        rune_inbound_fee = CryptoAmount(Amount.zero(), self.native_asset)
+
+        if param.asset.amount > 0:
+            asset_inbound_fee = calc_network_fee(param.asset.asset, inbound_details[param.asset.asset.chain])
+            if asset_inbound_fee.amount * 3 > param.asset.amount:
+                errors.append('Asset amount is less than fees (3x inbound fee)')
+
+        if param.rune.amount > 0:
+            rune_inbound_fee = calc_network_fee(self.native_asset, inbound_details[self.native_asset.chain])
+            if rune_inbound_fee.amount * 3 > param.rune.amount:
+                errors.append('Rune amount is less than fees (3x inbound fee)')
+
+        asset_inbound_fee_rune = await self.cache.convert(asset_inbound_fee, self.native_asset)
+        total_fees_amount = asset_inbound_fee_rune + rune_inbound_fee
+
+        slip = get_slip_on_liquidity(LPAmount(param.asset, param.rune), asset_pool)
+
+        return EstimateAddLP(
+            asset_pool=asset_pool.pool.asset,
+            slip_percent=float(slip) * 100.0,
+            pool_share=pool_share,
+            lp_units=Amount.from_base(lp_units),
+            rune_to_asset_ratio=int(asset_pool.rune_to_asset_ratio),
+            inbound_fees=LPAmountTotal(
+                asset=asset_inbound_fee,
+                rune=rune_inbound_fee,
+                total=total_fees_amount,
+            ),
+            estimated_wait_seconds=wait_time_sec,
+            errors=errors,
+            can_add=(not errors),
+        )
+
+    async def check_liquidity_position(self, asset: Asset, asset_or_rune_address: str) -> LiquidityPosition:
+        """
+        Checks the liquidity position of a given asset and address
+        :param asset: Asset to check
+        :param asset_or_rune_address: address to check
+        :return: LiquidityPosition
+        """
+        pool_asset = await self.cache.get_pool_for_asset(asset)
+        if not pool_asset:
+            raise ValueError(f"Could not find pool for asset {asset}")
+
+        liquidity_provider = await self.cache.get_liquidity_provider(
+            pool_asset.asset_string,
+            asset_or_rune_address,
+        )
+
+        if not liquidity_provider:
+            raise ValueError(f"Could not find liquidity provider for {asset_or_rune_address}")
+
+        # Current block number for that chain
+        last_block_obj = await self.cache.get_last_block()
+        block = next((b for b in last_block_obj if b.chain == asset.chain), None)
+        if not block:
+            raise ValueError(f"Could not find block for chain {asset.chain}")
+
+        # Pools total units & Lp's total units
+        unit_data = UnitData(
+            liquidity_units=int(liquidity_provider.units),
+            total_units=int(pool_asset.thornode_details.pool_units),
+        )
+
+        network_values = await self.cache.get_network_values()
+
+        block = Block(
+            current=self.cache.get_native_block(block),
+            last_added=liquidity_provider.last_add_height,
+            full_protection=network_values.get(Mimir.FULL_IL_PROTECTION_BLOCKS, 0),
+        )
+
+        current_lp = PostionDepositValue(
+            asset=Amount.from_base(liquidity_provider.asset_deposit_value),
+            rune=Amount.from_base(liquidity_provider.rune_deposit_value),
+        )
+
+        pool_share = get_pool_share(unit_data, pool_asset)
+
+        # Liquidity Unit Value Index = sprt(assetdepth * runeDepth) / Poolunits
+        # Using this formula we can work out an individual position to find LUVI and then the growth rate
+
+        deposit_luvi = math.sqrt(
+            current_lp.asset.amount * current_lp.rune.amount / unit_data.liquidity_units
+        )
+
+        redeem_luvi = math.sqrt(
+            pool_share.asset.amount.amount * pool_share.rune.amount.amount / unit_data.liquidity_units
+        )
+
+        lp_growth = redeem_luvi - deposit_luvi
+        current_lp_growth = (lp_growth / deposit_luvi if lp_growth > 0 else 0.0) * 100.0
+
+        impermanent_loss_protection = get_liquidity_protection_data(current_lp, pool_share, block)
+
+        return LiquidityPosition(
+            pool_share,
+            liquidity_provider,
+            f'{current_lp_growth:.2f} %',
+            impermanent_loss_protection
+        )
+
+    # ---- previous code ----
 
     async def is_swap_valid(self,
                             input_coin: CryptoAmount,
@@ -358,35 +509,6 @@ class THORChainQuery:
                                        destination_inbound_details):
         pass  # todo
 
-    async def get_confirmation_counting(self, input_coin: CryptoAmount):
-        """
-        Finds the required confCount required for an inbound or outbound Tx to THORChain.
-        Estimate based on Midgard data only.
-        Finds the gas asset of the given asset (e.g. BUSD is on BNB),
-        finds the value of asset in Gas Asset then finds the required confirmation count.
-        ConfCount is then times by 6 seconds.
-        See https://docs.thorchain.org/chain-clients/overview
-        :param input_coin: amount/asset of the outbound amount.
-        :return: time in seconds before a Tx is confirmed by THORChain
-        """
-
-        # RUNE, BNB and Synths have near instant finality, so no conf counting required. - need to make a BFT only case.
-        if (input_coin.asset == self.native_asset or
-                input_coin.asset.chain in (Chain.Binance, Chain.Cosmos, Chain.THORChain, Chain.Maya) or
-                input_coin.asset.chain):
-            return self.chain_attributes[Chain.THORChain].avg_block_time
-        else:
-            # Get the gas asset for the inbound.asset.chain
-            gas_asset = get_chain_gas_asset(input_coin.asset.chain)
-
-            # check for chain asset, else need to convert asset value to chain asset.
-            amount_in_gas_asset = await self.cache.convert(input_coin, gas_asset)
-
-            # find the required confs
-            conf_config = self.chain_attributes[input_coin.asset.chain]
-            required_confs = math.ceil(amount_in_gas_asset.amount / conf_config.block_reward)
-            return required_confs * conf_config.avg_block_time
-
     async def get_outbound_delay(self, outbound_amount: CryptoAmount):
         """
         Works out how long an outbound Tx will be held by THORChain before sending.
@@ -442,33 +564,6 @@ class THORChainQuery:
     def native_asset(self):
         return self.cache.native_asset
 
-    def construct_swap_memo(self,
-                            input_coin,
-                            destination_asset,
-                            limit,
-                            destination_address,
-                            affiliate_address,
-                            affiliate_fee_basis_points,
-                            interface_id) -> str:
-        # todo: rewrite!!
-        lim_string = str(limit.amount)
-        lim_string = lim_string[:-3]  # we don't want the decimal places? todo: check this
-        dest_asset_str = {self.abbreviate_asset_string(destination_asset)}
-        memo = f'=:{dest_asset_str}:{destination_address}:{lim_string}'
-
-        # NOTE: we should validate affiliate address is EITHER: a thorname or valid thorchain address,
-        # currently we cannot do this without importing xchain-thorchain
-        if affiliate_address:
-            # NOTE: we should validate destinationAddress address is valid destination address
-            # for the asset type requested
-            memo += f':{affiliate_address}:{affiliate_fee_basis_points}'
-
-        # If memo length is too long for BTC, trim it
-        if input_coin.asset == AssetBTC and len(memo) > 80:
-            memo = f'=:{dest_asset_str}:{destination_address}:{lim_string}'  # fixme: wtf
-
-        return memo
-
     @staticmethod
     def abbreviate_asset_string(asset: Asset, max_length=5):
         if asset.contract and len(asset.contract) > max_length:
@@ -476,78 +571,91 @@ class THORChainQuery:
             asset = asset._replace(contract=abrev)
         return str(asset)
 
-    async def estimate_add_lp(self, param: LPAmount) -> EstimateAddLP:
-        """
-        Estimates a liquidity position for given crypto amount value, both asymmetrical and symetrical
-        :param param: LPAmount - parameters needed for a estimated liquidity position
-        :return: EstimateAddLP
-        """
-        errors = []
+    async def estimate_swap(
+            self,
+            input_coin: CryptoAmount,
+            destination_asset: Asset,
+            destination_address: Address,
+            slip_limit=0.03,
+            affiliate_address='',
+            affiliate_fee_basis_points=0,
+            interface_id=DEFAULT_INTERFACE_ID,
+    ) -> TxDetails:
+        await self.is_swap_valid(input_coin,
+                                 destination_asset,
+                                 destination_address,
+                                 slip_limit,
+                                 affiliate_address,
+                                 affiliate_fee_basis_points)
 
-        if param.asset.asset.synth or param.rune.asset.synth:
-            errors.append('you cannot add liquidity with a synth')
-        if param.rune.asset != self.native_asset:
-            errors.append('param.rune must be THOR.RUNE/MAYA.CACAO')
-
-        asset_pool = await self.cache.get_pool_for_asset(param.asset.asset)
-
-        lp_units = get_liquidity_units(param, asset_pool)
         inbound_details = await self.cache.get_inbound_details()
-        unit_data = UnitData(
-            liquidity_units=lp_units,
-            total_units=int(asset_pool.thornode_details.pool_units),
+        source_inbound_details = inbound_details[input_coin.asset.chain]
+        destination_inbound_details = inbound_details[destination_asset.chain]
+
+        # Calculate swap estimate
+        swap_estimate = await self.calc_swap_estimate(
+            input_coin,
+            destination_asset,
+            destination_address,
+            slip_limit,
+            affiliate_address,
+            affiliate_fee_basis_points,
+            interface_id,
+            source_inbound_details,
+            destination_inbound_details
         )
 
-        pool_share = get_pool_share(unit_data, inbound_details)
+        # Calculate transaction expiry time
+        current_datetime = datetime.now()
+        minutes_to_add = 15
+        expiry = current_datetime + timedelta(minutes=minutes_to_add)
 
-        asset_wait_time_sec = await self.get_confirmation_counting(param.asset)
-        rune_wait_time_sec = await self.get_confirmation_counting(param.rune)
+        # Check for errors
+        errors = await self.get_swap_estimate_errors(
+            input_coin,
+            destination_asset,
+            destination_address,
+            slip_limit,
+            affiliate_address,
+            affiliate_fee_basis_points,
+            interface_id,
+            swap_estimate,
+            source_inbound_details,
+            destination_inbound_details
+        )
 
-        wait_time_sec = max(asset_wait_time_sec, rune_wait_time_sec)
+        tx_details = TxDetails(
+            memo='',
+            to_address='',
+            expiry=expiry,
+            tx_estimate=swap_estimate
+        )
 
-        asset_inbound_fee = CryptoAmount(Amount.zero(), param.asset.asset)
-        rune_inbound_fee = CryptoAmount(Amount.zero(), self.native_asset)
+        if errors:
+            tx_details.tx_estimate.can_swap = False
+            tx_details.tx_estimate.errors = errors
+        else:
+            tx_details.tx_estimate.can_swap = True
 
-        if param.asset.amount > 0:
-            asset_inbound_fee = calc_network_fee(param.asset.asset, inbound_details[param.asset.asset.chain])
-            # if asset_inbound_fee.amount.times(3) > param.asset.amount:
-            # todo!
+            inbound_details = await self.cache.get_inbound_details()
+            inbound_asgard = inbound_details[input_coin.asset.chain]
 
+            tx_details.to_address = inbound_asgard.address if inbound_asgard else ''
 
-"""
-... (truncated)
-    let assetInboundFee = new CryptoAmount(baseAmount(0), params.asset.asset)
-    let runeInboundFee = new CryptoAmount(baseAmount(0), AssetRuneNative)
+            # Work out LIM from the slip percentage
+            lim_percentage = 1
+            if slip_limit:
+                lim_percentage = 1 - slip_limit
+                # else allowed slip is 100%
+            # Lim should allways be 1e8
+            lim_asset_amount: CryptoAmount = swap_estimate.net_output * lim_percentage
+            lim_asset_amount_8 = get_base_amount_with_diff_decimals(lim_asset_amount, 8)
 
-    if (!params.asset.assetAmount.eq(0)) {
-      assetInboundFee = calcNetworkFee(params.asset.asset, inboundDetails[params.asset.asset.chain])
-      if (assetInboundFee.assetAmount.amount().times(3).gt(params.asset.assetAmount.amount()))
-        errors.push(`Asset amount is less than fees`)
-    }
-    if (!params.rune.assetAmount.eq(0)) {
-      runeInboundFee = calcNetworkFee(params.rune.asset, inboundDetails[params.rune.asset.chain])
-      if (runeInboundFee.assetAmount.amount().times(3).gt(params.rune.assetAmount.amount()))
-        errors.push(`Rune amount is less than fees`)
-    }
-    const totalFees = (await this.convert(assetInboundFee, AssetRuneNative)).plus(runeInboundFee)
-    const slip = getSlipOnLiquidity({ asset: params.asset, rune: params.rune }, assetPool)
-    const estimateLP: EstimateAddLP = {
-      assetPool: assetPool.pool.asset,
-      slipPercent: slip.times(100),
-      poolShare: poolShare,
-      lpUnits: baseAmount(lpUnits),
-      runeToAssetRatio: assetPool.runeToAssetRatio,
-      inbound: {
-        fees: {
-          asset: assetInboundFee,
-          rune: runeInboundFee,
-          total: totalFees,
-        },
-      },
-      estimatedWaitSeconds: waitTimeSeconds,
-      errors,
-      canAdd: errors.length > 0 ? false : true,
-    }
-    return estimateLP
-  }
-"""
+            inbound_delay = await self.get_confirmation_counting(input_coin)
+            outbound_delay = await self.get_outbound_delay(lim_asset_amount)
+
+            tx_details.tx_estimate.wait_time_seconds = outbound_delay + inbound_delay
+
+            # limit = Amount.from_base(lim_asset_amount_8, 8)
+            # tx_details.memo = self.construct_swap_memo(???)
+        return tx_details

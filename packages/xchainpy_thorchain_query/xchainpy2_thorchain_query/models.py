@@ -125,6 +125,11 @@ class LPAmount(NamedTuple):
     asset: CryptoAmount
 
 
+class PostionDepositValue(NamedTuple):
+    rune: Amount
+    asset: Amount
+
+
 class LPAmountTotal(NamedTuple):
     rune: CryptoAmount
     asset: CryptoAmount
@@ -162,10 +167,10 @@ class TxDetails(NamedTuple):
 
 class EstimateAddLP(NamedTuple):
     asset_pool: str
-    slip_percent: int
+    slip_percent: float
     pool_share: LPAmount
     lp_units: int
-    inbound_fees: LPAmount
+    inbound_fees: LPAmountTotal
     rune_to_asset_ratio: int
     estimated_wait_seconds: int
     errors: List[str]
