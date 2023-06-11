@@ -11,7 +11,7 @@ from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMay
 from xchainpy2_midgard import PoolDetail
 from xchainpy2_midgard.api import DefaultApi as MidgardAPI
 from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress, TransactionsApi, LiquidityProvidersApi, \
-    SaversApi, QueueApi, QuoteApi
+    SaversApi, QueueApi, QuoteApi, LastBlock, LiquidityProviderSummary
 from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, CryptoAmount, RUNE_DECIMAL, CACAO_DECIMAL, Amount, \
     Address, NetworkType
 from xchainpy2_utils.swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
@@ -314,6 +314,9 @@ class THORChainCache:
         :param out_asset: the Asset you want to convert to
         :return: CryptoAmount of input
         """
+        if input_amount.asset == out_asset:
+            return input_amount
+
         exchange_rate = await self.get_exchange_rate(input_amount.asset, out_asset)
         out_decimals = await self.get_decimal_for_asset(out_asset)
         in_decimals = input_amount.amount.decimals
@@ -356,3 +359,32 @@ class THORChainCache:
         if not deepest_pool:
             raise Exception('no USD Pool found')
         return deepest_pool
+
+    @property
+    def is_thorchain(self):
+        return self.native_asset == AssetRUNE
+
+    @property
+    def is_maya(self):
+        return self.native_asset == AssetCACAO
+
+    def get_native_block(self, data: LastBlock) -> int:
+        key = 'thorchain' if self.is_thorchain else 'mayachain'
+        return getattr(data, key)
+
+    async def get_last_block(self) -> List[LastBlock]:
+        last_block_obj = await self.network_api.lastblock()
+        if not last_block_obj:
+            raise ValueError("No last block")
+        return last_block_obj
+
+    def get_rune_address(self, lp: LiquidityProviderSummary):
+        key = 'rune_address' if self.is_thorchain else 'cacao_address'
+        return getattr(lp, key)
+
+    async def get_liquidity_provider(self, asset: str, address: str, height: int = 0) -> LiquidityProviderSummary:
+        lps = await self.lp_api.liquidity_providers(asset, height=height)
+        return next((lp for lp in lps
+                     if lp.asset_address == address or
+                     self.get_rune_address(lp) == address),
+                    None)

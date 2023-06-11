@@ -200,9 +200,7 @@ class TransactionStage:
         action, asset, paired_address, affiliate_address, affiliate_fee = self._parse_withdraw_lp_memo(memo)
         asset = Asset.from_string(asset)
 
-        last_block_obj = await self.cache.network_api.lastblock()
-        if not last_block_obj:
-            raise ValueError("No last block")
+        last_block_obj = await self.cache.get_last_block()
 
         if tx_data.tx.status.lower() == 'done':
             outbound_height = int(tx_data.finalised_height)
@@ -271,9 +269,7 @@ class TransactionStage:
         memo = tx_data.tx.tx.memo or ''
         action, asset, paired_address, affiliate_address, affiliate_fee = self._parse_withdraw_lp_memo(memo)
 
-        last_block_obj = await self.cache.network_api.lastblock()
-        if not last_block_obj:
-            raise ValueError("No last block")
+        last_block_obj = await self.cache.get_last_block()
 
         # find the date in which the asset should be seen in the wallet
         if tx_data.tx.status.lower() == 'done':
@@ -318,9 +314,7 @@ class TransactionStage:
         if not progress.inbound_observed:
             return progress
 
-        last_block_obj = await self.cache.network_api.lastblock()
-        if not last_block_obj:
-            raise ValueError("No last block")
+        last_block_obj = await self.cache.get_last_block()
 
         if tx_data.tx.status.lower() == 'done':
             outbound_height = int(tx_data.finalised_height)
@@ -374,7 +368,7 @@ class TransactionStage:
         :param asset:
         :return:
         """
-        last_block_obj = await self.cache.network_api.lastblock()
+        last_block_obj = await self.cache.get_last_block()
 
         if asset.chain == self.native_asset.chain or asset.synth:
             last_block = last_block_obj[0]
@@ -399,7 +393,8 @@ class TransactionStage:
         :param outbound_block:
         :return: datetime
         """
-        last_block_obj = await self.cache.network_api.lastblock()
+        last_block_obj = await self.cache.get_last_block()
+
         time = datetime.now()
 
         last_block = [obj for obj in last_block_obj if obj.chain == chain]
