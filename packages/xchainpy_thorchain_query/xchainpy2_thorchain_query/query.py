@@ -13,7 +13,7 @@ from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity, get_liquidity_protection_data
 from .models import TxDetails, SwapEstimate, SwapOutput, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
-    LiquidityPosition, Block, PostionDepositValue
+    LiquidityPosition, Block, PostionDepositValue, PoolRatios, WithdrawLiquidityPosition, EstimateWithdrawLP
 
 
 class THORChainQuery:
@@ -351,6 +351,101 @@ class THORChainQuery:
             f'{current_lp_growth:.2f} %',
             impermanent_loss_protection
         )
+
+    async def get_pool_ratio(self, asset: Asset) -> PoolRatios:
+        """
+        Gets the pool ratio for a given asset
+        Do not send assetNativeRune, There is no pool for it.
+        :param asset: asset required to find the pool
+        :return: object type ratios
+        """
+        asset_pool = await self.cache.get_pool_for_asset(asset)
+        return PoolRatios(
+            asset_to_rune=asset_pool.asset_to_rune_ratio,
+            rune_to_asset=asset_pool.rune_to_asset_ratio,
+        )
+
+    async def estimate_withdraw_lp(self, param: WithdrawLiquidityPosition) -> EstimateWithdrawLP:
+        """
+        Estimate the withdrawal of liquidity
+        :param param: WithdrawLiquidityPosition
+        :return:
+        """
+        # Caution Dust Limits: BTC, BCH, LTC chains 10k sats; DOGE 1m Sats; ETH 0 wei; THOR 0 RUNE.
+        asset_or_rune_address = param.rune_address if param.rune_address else param.asset_address
+        member_detail = await self.check_liquidity_position(param.asset, asset_or_rune_address)
+        dust_values = DEFAULT_CHAIN_ATTRS[param.asset.chain].dust
+        asset_pool = await self.cache.get_pool_for_asset(param.asset)
+
+        # get pool share from unit data
+        pool_share = get_pool_share(
+            UnitData(
+                liquidity_units=int(member_detail.position.units),
+                total_units=int(asset_pool.pool.liquidity_units),
+            ),
+            asset_pool,
+        )
+
+        # get slip on liquidity removal
+        slip = get_slip_on_liquidity(pool_share, asset_pool)
+
+        # TODO make sure we compare wait times for withdrawing both rune and asset OR just rune OR just asset
+        wait_time_sec_for_asset, wait_time_sec_for_rune = await asyncio.gather(
+            self.get_confirmation_counting(pool_share.asset / (param.percentage / 100.0)),
+            self.get_confirmation_counting(pool_share.rune / (param.percentage / 100.0))
+        )
+
+        wait_time_in_sec = 0
+        # todo: is it cacao for maya?
+        if member_detail.position.rune_address and member_detail.position.asset_address:
+            wait_time_in_sec = max(wait_time_sec_for_asset, wait_time_sec_for_rune)
+        elif member_detail.position.rune_address:
+            wait_time_in_sec = wait_time_sec_for_rune
+        else:
+            wait_time_in_sec = wait_time_sec_for_asset
+
+        all_inbound_details = await self.cache.get_inbound_details()
+        inbound_details = all_inbound_details.get(param.asset.chain, None)
+
+        rune_inbound = calc_network_fee(self.cache.native_asset, inbound_details)
+        asset_inbound = calc_network_fee(param.asset, inbound_details)
+        rune_outbound = calc_outbound_fee(self.cache.native_asset, inbound_details)
+        asset_outbound = calc_outbound_fee(param.asset, inbound_details)
+
+        # todo cacao?
+        total_dust_in_rune, in_asset_fee_in_rune, out_asset_fee_in_rune = await asyncio.gather(
+            self.cache.convert(dust_values.asset, self.cache.native_asset),
+            self.cache.convert(asset_inbound, self.cache.native_asset),
+            self.cache.convert(asset_outbound, self.cache.native_asset),
+        )
+
+        return EstimateWithdrawLP(
+            member_detail.position.asset_address,
+            member_detail.position.rune_address,
+            slip_percent=slip * 100.0,
+            inbound_fee=LPAmountTotal(
+                rune_inbound,
+                asset_inbound,
+                in_asset_fee_in_rune + rune_inbound
+            ),
+            inbound_min_to_send=LPAmountTotal(
+                dust_values.rune,
+                dust_values.asset,
+                total_dust_in_rune + dust_values.rune
+            ),
+            outbound_fee=LPAmountTotal(
+                rune_outbound,
+                asset_outbound,
+                out_asset_fee_in_rune + rune_outbound
+            ),
+            asset_amount=pool_share.asset,
+            rune_amount=pool_share.rune,
+            lp_growth=member_detail.lp_growth,
+            estimated_wait_seconds=wait_time_in_sec,
+            impermanent_loss_protection=member_detail.impermanent_loss_protection,
+            asset_pool=asset_pool.pool.asset,
+        )
+
 
     # ---- previous code ----
 
