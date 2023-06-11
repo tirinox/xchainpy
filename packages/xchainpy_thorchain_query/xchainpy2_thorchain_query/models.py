@@ -23,9 +23,10 @@ class TotalFees(NamedTuple):
 
 class SwapEstimate(NamedTuple):
     total_fees: TotalFees
-    slip_percentage: Decimal
+    slip_bps: int
     net_output: CryptoAmount
-    wait_time_seconds: int
+    inbound_confirmation_seconds: float
+    outbound_delay_seconds: float
     can_swap: bool
     errors: List[str]
 
