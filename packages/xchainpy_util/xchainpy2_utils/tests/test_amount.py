@@ -4,7 +4,7 @@ from xchainpy2_utils import *
 
 
 def test_amount_general():
-    assert ASSET_DECIMAL == 8
+    assert DEFAULT_ASSET_DECIMAL == 8
 
 
 def test_amount_create():

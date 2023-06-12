@@ -2,18 +2,19 @@ import asyncio
 import math
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Union
+from typing import Union, List
 
-from xchainpy2_thornode import QuoteSwapResponse, QueueResponse
+from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, Address, RUNE_DECIMAL, Amount, MAX_BASIS_POINTS, \
-    Chain, AssetRUNE
+    Chain, AssetRUNE, DEFAULT_ASSET_DECIMAL
 from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
     is_gas_asset, get_chain_gas_asset
 from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity, get_liquidity_protection_data
 from .models import TxDetails, SwapEstimate, SwapOutput, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
-    LiquidityPosition, Block, PostionDepositValue, PoolRatios, WithdrawLiquidityPosition, EstimateWithdrawLP
+    LiquidityPosition, Block, PostionDepositValue, PoolRatios, WithdrawLiquidityPosition, EstimateWithdrawLP, \
+    EstimateAddSaver, SaverFees
 
 
 class THORChainQuery:
@@ -60,7 +61,7 @@ class THORChainQuery:
         errors = []
         from_asset = str(from_asset) if isinstance(from_asset, Asset) else from_asset
         destination_asset = str(destination_asset) if isinstance(destination_asset, Asset) else destination_asset
-        input_amount = get_base_amount_with_diff_decimals(amount, 8)
+        input_amount = get_base_amount_with_diff_decimals(amount, DEFAULT_ASSET_DECIMAL)
 
         try:
             swap_quote: QuoteSwapResponse
@@ -446,6 +447,115 @@ class THORChainQuery:
             asset_pool=asset_pool.pool.asset,
         )
 
+    async def estimate_add_saver(self, add_amount: CryptoAmount) -> EstimateAddSaver:
+        """
+        Estimate the add liquidity with saver
+        Derrived from https://dev.thorchain.org/thorchain-dev/connection-guide/savers-guide
+        :param add_amount: CryptoAmount
+        :return:
+        """
+        # check for errors before sending quote
+        errors = await self.get_add_savers_estimate_errors(add_amount)
+
+        # request param amount should always be in 1e8 which is why we pass in adjusted decimals if chain decimals != 8
+        if add_amount.amount.decimals != DEFAULT_ASSET_DECIMAL:
+            new_add_amount = get_base_amount_with_diff_decimals(add_amount, DEFAULT_ASSET_DECIMAL)
+        else:
+            new_add_amount = add_amount.amount.as_base
+
+        deposit_quote: QuoteSaverDepositResponse = await self.cache.quote_api.quotesaverdeposit(
+            asset=new_add_amount,
+            amount=''
+        )
+
+        if not deposit_quote:
+            errors.append(f"Thornode request quote failed")
+        if hasattr(deposit_quote, 'error'):
+            errors.append(f"Thornode request quote failed: {deposit_quote.error}")
+
+        # Error handling
+        if errors:
+            return EstimateAddSaver(
+                add_amount,
+                CryptoAmount.zero_from(add_amount),
+                -1,
+                SaverFees(
+                    CryptoAmount.zero_from(add_amount),
+                    add_amount.asset,
+                    CryptoAmount.zero_from(add_amount),
+                ),
+                datetime.fromtimestamp(0),
+                to_address='',
+                memo='',
+                saver_cap_filled_percent=-1,
+                estimated_wait_time=-1,
+                can_add_saver=False,
+                errors=errors
+            )
+
+        # Calculate transaction expiry time of the vault address
+        current_date_time = datetime.now()
+        minutes_to_add = 15
+        expiry_date_time = current_date_time + timedelta(minutes=minutes_to_add)
+        # Calculate seconds
+
+        if deposit_quote.inbound_confirmation_seconds:
+            estimated_wait = deposit_quote.inbound_confirmation_seconds
+        else:
+            estimated_wait = await self.get_confirmation_counting(add_amount)
+
+        pool_details = await self.cache.get_pool_for_asset(add_amount.asset)
+        pool = pool_details.pool
+
+        # Organise fees
+        saver_fees = SaverFees(
+            affiliate=CryptoAmount.from_base(deposit_quote.fees.affiliate, add_amount.asset),
+            asset=add_amount.asset,
+            outbound=CryptoAmount.from_base(deposit_quote.fees.outbound, add_amount.asset)
+        )
+
+        # Define savers filled capacity
+        saver_cap_filled_percent = int(pool.synth_supply) / int(pool.asset_depth) * 100
+
+        # Return object
+        return EstimateAddSaver(
+            asset_amount=CryptoAmount.from_base(deposit_quote.expected_amount_out, add_amount.asset),
+            estimated_deposit_value=CryptoAmount.from_base(deposit_quote.expected_amount_out, add_amount.asset),
+            fee=saver_fees,
+            expiry=expiry_date_time,
+            to_address=deposit_quote.inbound_address,
+            memo=deposit_quote.memo,
+            estimated_wait_time=estimated_wait,
+            can_add_saver=(not errors),
+            slip_basis_points=int(deposit_quote.slippage_bps),
+            saver_cap_filled_percent=saver_cap_filled_percent,
+            errors=errors
+        )
+
+    async def get_add_savers_estimate_errors(self, add_amount: CryptoAmount) -> List[str]:
+        errors = []
+
+        pools = await self.cache.get_pools()
+        saver_pools = [pool for pool in pools.values() if pool.thornode_details.savers_depth != "0"]
+        saver_pool = next((pool for pool in saver_pools if pool.asset == add_amount.asset), None)
+        if not saver_pool:
+            errors.append(f"{add_amount.asset} does not have a saver's pool")
+
+        inbound_details = await self.cache.get_inbound_details()
+        inbound = inbound_details.get(add_amount.asset.chain)
+        if inbound is None:
+            errors.append(f"no inbound details for chain {add_amount.asset.chain}")
+        if inbound.halted_chain:
+            errors.append(f"{add_amount.asset.chain} is halted, cannot add")
+
+        pool = pools.get(str(add_amount.asset))
+        if pool.pool.status.lower() != pool.AVAILABLE:
+            errors.append(f"Pool is not available for this asset {add_amount.asset}")
+
+        inbound_fee = calc_network_fee(add_amount.asset, inbound)
+        if add_amount < inbound_fee:
+            errors.append(f"Add amount does not cover fees")
+        return errors
 
     # ---- previous code ----
 
@@ -744,7 +854,7 @@ class THORChainQuery:
                 # else allowed slip is 100%
             # Lim should allways be 1e8
             lim_asset_amount: CryptoAmount = swap_estimate.net_output * lim_percentage
-            lim_asset_amount_8 = get_base_amount_with_diff_decimals(lim_asset_amount, 8)
+            lim_asset_amount_8 = get_base_amount_with_diff_decimals(lim_asset_amount, DEFAULT_ASSET_DECIMAL)
 
             inbound_delay = await self.get_confirmation_counting(input_coin)
             outbound_delay = await self.get_outbound_delay(lim_asset_amount)

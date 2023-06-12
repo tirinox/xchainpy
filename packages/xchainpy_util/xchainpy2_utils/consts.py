@@ -2,7 +2,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import NamedTuple
 
-from .amount import CryptoAmount, Amount
+from .amount import CryptoAmount, Amount, DEFAULT_ASSET_DECIMAL
 from .asset import AssetBNB, AssetBTC, AssetLTC, AssetBCH, AssetETH, AssetRUNE, AssetATOM, AssetDOGE, AssetAVAX, \
     AssetBSC, AssetCACAO
 
@@ -45,7 +45,7 @@ class ChainAttributes(NamedTuple):
     dust: DustAmount
 
 
-AMOUNT_10K_SAT = Amount.from_asset(Decimal("0.0001"), 8)
+AMOUNT_10K_SAT = Amount.from_asset(Decimal("0.0001"), DEFAULT_ASSET_DECIMAL)
 
 DEFAULT_CHAIN_ATTRS = {
     Chain.Bitcoin: ChainAttributes(

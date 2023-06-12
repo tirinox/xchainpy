@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from xchainpy2_thorchain_query.models import LiquidityPool, LPAmount, UnitData, Block, ILProtectionData, \
     PostionDepositValue
-from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE, Asset, calculate_days_from_blocks
+from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE, Asset, calculate_days_from_blocks, DEFAULT_ASSET_DECIMAL
 from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, get_decimal
 
 
@@ -13,7 +13,7 @@ def get_liquidity_units(liquidity: LPAmount, pool: LiquidityPool) -> int:
     :param pool: pool depths
     :return: liquidity units - ownership of pool
     """
-    base_amount_8_decimals = get_base_amount_with_diff_decimals(liquidity.asset, 8)
+    base_amount_8_decimals = get_base_amount_with_diff_decimals(liquidity.asset, DEFAULT_ASSET_DECIMAL)
     P = Decimal(pool.pool.liquidity_units)
     r = liquidity.rune.amount.as_decimal
     a = base_amount_8_decimals
@@ -53,7 +53,7 @@ def get_slip_on_liquidity(stake: LPAmount, pool: LiquidityPool) -> Decimal:
     :param pool: Pool that the asset is attached to
     :return: returns bignumber representing a slip percentage
     """
-    base_amount_8_decimals = get_base_amount_with_diff_decimals(stake.asset, 8)
+    base_amount_8_decimals = get_base_amount_with_diff_decimals(stake.asset, DEFAULT_ASSET_DECIMAL)
     r = stake.rune.amount.as_decimal
     t = base_amount_8_decimals
     R = pool.rune_balance.as_decimal

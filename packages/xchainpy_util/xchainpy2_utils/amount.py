@@ -17,12 +17,12 @@ class Denomination(Enum):
     ASSET = 'asset'
 
 
-ASSET_DECIMAL = 8
+DEFAULT_ASSET_DECIMAL = 8
 
 
 class Amount(NamedTuple):
     internal_amount: int
-    decimals: int = ASSET_DECIMAL
+    decimals: int = DEFAULT_ASSET_DECIMAL
     denom: Denomination = Denomination.ASSET
 
     @property
@@ -91,11 +91,11 @@ class Amount(NamedTuple):
         return self.internal_amount >= other.internal_amount
 
     @classmethod
-    def zero(cls, decimals=ASSET_DECIMAL, denom=Denomination.ASSET):
+    def zero(cls, decimals=DEFAULT_ASSET_DECIMAL, denom=Denomination.ASSET):
         return cls(0, decimals, denom)
 
     @classmethod
-    def from_base(cls, base_amount: Union[str, int, Decimal], decimals=ASSET_DECIMAL):
+    def from_base(cls, base_amount: Union[str, int, Decimal], decimals=DEFAULT_ASSET_DECIMAL):
         base_amount = int(base_amount)
         return cls(base_amount, decimals, Denomination.BASE)
 
@@ -107,7 +107,7 @@ class Amount(NamedTuple):
         return Amount(int(a), new_decimals, Denomination.BASE)
 
     @classmethod
-    def from_asset(cls, asset_amount: Union[float, str, int, Decimal], decimals=ASSET_DECIMAL, context=DC):
+    def from_asset(cls, asset_amount: Union[float, str, int, Decimal], decimals=DEFAULT_ASSET_DECIMAL, context=DC):
         v = int(
             Decimal(asset_amount, context) *
             decimal_power_10(decimals, context)
@@ -115,7 +115,7 @@ class Amount(NamedTuple):
         return cls(v, decimals)
 
     @classmethod
-    def automatic(cls, x, decimals=ASSET_DECIMAL, context=DC):
+    def automatic(cls, x, decimals=DEFAULT_ASSET_DECIMAL, context=DC):
         if isinstance(x, Amount):
             return x if x.decimals == decimals else cls(x.internal_amount, decimals, x.denom)
         elif isinstance(x, int):
@@ -231,8 +231,16 @@ class CryptoAmount(NamedTuple):
                 raise ValueError(f"Cannot perform math on 2 different assets: {self.asset} and {a.asset}")
 
     @classmethod
-    def zero(cls, asset, decimals=ASSET_DECIMAL):
+    def zero(cls, asset, decimals=DEFAULT_ASSET_DECIMAL):
         return cls(Amount.zero(decimals), asset)
+
+    @classmethod
+    def zero_from(cls, amount: 'CryptoAmount') -> 'CryptoAmount':
+        return cls.zero(amount.asset, amount.amount.decimals)
+
+    @classmethod
+    def from_base(cls, amount, asset: Asset = None, decimals=DEFAULT_ASSET_DECIMAL, ) -> 'CryptoAmount':
+        return CryptoAmount(Amount.from_base(amount, decimals), asset)
 
 
 def bn(s: str, context=DECIMAL_CONTEXT) -> Decimal:
