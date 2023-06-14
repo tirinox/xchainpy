@@ -51,6 +51,13 @@ class Asset(NamedTuple):
             name, tag = cls.get_name_and_contract(data[1])
             return cls(data[0], name, tag, is_synth)
 
+    @classmethod
+    def from_string_exc(cls, s) -> Optional['Asset']:
+        a = cls.from_string(s)
+        if a is None:
+            raise ValueError(f'Invalid asset string: {s}')
+        return a
+
     @property
     def as_native(self):
         # noinspection PyArgumentEqualDefault

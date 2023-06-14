@@ -2,19 +2,19 @@ import asyncio
 import math
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Union, List
+from typing import Union, List, Optional
 
-from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse
+from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, Saver
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, Address, RUNE_DECIMAL, Amount, MAX_BASIS_POINTS, \
-    Chain, AssetRUNE, DEFAULT_ASSET_DECIMAL
+    Chain, AssetRUNE, DEFAULT_ASSET_DECIMAL, YEAR
 from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
     is_gas_asset, get_chain_gas_asset
 from .cache import THORChainCache
-from .const import DEFAULT_INTERFACE_ID, Mimir
+from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity, get_liquidity_protection_data
 from .models import TxDetails, SwapEstimate, SwapOutput, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
     LiquidityPosition, Block, PostionDepositValue, PoolRatios, WithdrawLiquidityPosition, EstimateWithdrawLP, \
-    EstimateAddSaver, SaverFees
+    EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails
 
 
 class THORChainQuery:
@@ -89,7 +89,7 @@ class THORChainQuery:
                 )
             )
 
-        fee_asset = Asset.from_string(swap_quote.fees.asset)
+        fee_asset = Asset.from_string_exc(swap_quote.fees.asset)
 
         return TxDetails(
             memo=self.construct_swap_memo(swap_quote.memo, interface_id),
@@ -423,7 +423,7 @@ class THORChainQuery:
         return EstimateWithdrawLP(
             member_detail.position.asset_address,
             member_detail.position.rune_address,
-            slip_percent=slip * 100.0,
+            slip_percent=float(slip) * 100.0,
             inbound_fee=LPAmountTotal(
                 rune_inbound,
                 asset_inbound,
@@ -495,10 +495,10 @@ class THORChainQuery:
 
         # Calculate transaction expiry time of the vault address
         current_date_time = datetime.now()
-        minutes_to_add = 15
+        minutes_to_add = DEFAULT_EXTRA_ADD_MINUTES
         expiry_date_time = current_date_time + timedelta(minutes=minutes_to_add)
-        # Calculate seconds
 
+        # Calculate seconds
         if deposit_quote.inbound_confirmation_seconds:
             estimated_wait = deposit_quote.inbound_confirmation_seconds
         else:
@@ -556,6 +556,148 @@ class THORChainQuery:
         if add_amount < inbound_fee:
             errors.append(f"Add amount does not cover fees")
         return errors
+
+    async def estimate_withdraw_saver(self,
+                                      asset: Asset,
+                                      address: str,
+                                      withdraw_bps: int,
+                                      height: int = 0) -> EstimateWithdrawSaver:
+        """
+        Estimate the withdrawal liquidity with saver (query THORChain node)
+        :param asset: asset to withdraw
+        :param address: address to withdraw to
+        :param withdraw_bps: basis points to withdraw 0..10k (0..100%)
+        :param height: block height to query (optional)
+        :return: EstimateWithdrawSaver
+        """
+        errors = []
+        if asset == self.native_asset or asset.synth:
+            errors.append(f"Native Rune and synth assets are not supported only L1's")
+
+        inbound_details = await self.cache.get_inbound_details()
+
+        # Check to see if there is a position before calling withdraw quote
+        check_position = await self.get_saver_position(asset, address)
+
+        default_dummy_response = EstimateWithdrawSaver(
+            CryptoAmount.zero(asset),
+            fee=SaverFees(
+                CryptoAmount.zero(asset),
+                asset,
+                check_position.outbound_fee,
+            ),
+            expiry=datetime.fromtimestamp(0),
+            to_address='',
+            memo='',
+            estimated_wait_time=-1,
+            slip_basis_points=-1,
+            dust_amount=CryptoAmount.zero(asset),
+            errors=errors
+        )
+
+        if check_position.errors:
+            default_dummy_response.errors.extend(check_position.errors)
+            return default_dummy_response
+
+        # Request withdraw quote
+        withdraw_quote = await self.cache.quote_api.quotesaverwithdraw(
+            height=height,
+            asset=str(asset),
+            address=address,
+            withdraw_bps=withdraw_bps
+        )
+
+        if hasattr(withdraw_quote, 'error'):
+            errors.append(f"Thornode request quote failed: {withdraw_quote.error}")
+
+        if errors:
+            default_dummy_response.errors.extend(errors)
+            return default_dummy_response
+
+        # Calculate transaction expiry time of the vault address
+        current_date_time = datetime.now()
+        minutes_to_add = DEFAULT_EXTRA_ADD_MINUTES
+        expiry_date_time = current_date_time + timedelta(minutes=minutes_to_add)
+        estimated_wait = int(withdraw_quote.outbound_delay_seconds)
+        withdraw_asset = Asset.from_string_exc(withdraw_quote.fees.asset)
+
+        return EstimateWithdrawSaver(
+            CryptoAmount.from_base(withdraw_quote.expected_amount_out, asset),
+            fee=SaverFees(
+                CryptoAmount.from_base(withdraw_quote.fees.affiliate, withdraw_asset),
+                withdraw_asset,
+                CryptoAmount.from_base(withdraw_quote.fees.outbound, withdraw_asset)
+            ),
+            expiry=expiry_date_time,
+            to_address=withdraw_quote.inbound_address,
+            memo=withdraw_quote.memo,
+            estimated_wait_time=estimated_wait,
+            slip_basis_points=int(withdraw_quote.slippage_bps),
+            dust_amount=CryptoAmount.from_base(withdraw_quote.dust_amount, withdraw_asset),
+            errors=errors
+        )
+
+    async def get_saver_position(self, asset: Asset, address: str, height: int = 0,
+                                 inbound_details: Optional[InboundDetails] = None
+                                 ) -> Optional[SaversPosition]:
+        """
+        Get the position of a saver
+        :param asset: asset (pool) to check
+        :param address: saver's address
+        :param height: optional height (default is the last block)
+        :return:
+        """
+        errors = []
+        if not inbound_details:
+            inbound_details = await self.cache.get_inbound_details()
+
+        block_data = await self.cache.get_last_block()
+        block = next((item for item in block_data if item.chain == asset.chain), None)
+        native_block = self.cache.get_native_block(block)
+
+        pool_details = await self.cache.get_pool_for_asset(asset)
+
+        all_savers: List[Saver] = self.cache.saver_api.savers(str(asset))  # todo: check if this is correct
+        this_saver = next((item for item in all_savers if item.asset_address == address), None)
+
+        if not pool_details or not pool_details.pool:
+            errors.append(f"Could not get pool details for {asset}")
+
+        if not block or not native_block:
+            errors.append(f"Could not get thorchain block height for {asset.chain}")
+
+        if not this_saver or not this_saver.last_add_height:
+            errors.append(f"Could not find position for {address}")
+
+        outbound_fee = calc_outbound_fee(asset, inbound_details[asset.chain])
+        outbound_fee_8 = get_base_amount_with_diff_decimals(outbound_fee, DEFAULT_ASSET_DECIMAL)
+
+        # For comparison use 1e8 since asset_redeem_value is returned in 1e8
+        if int(this_saver.asset_redeem_value) < int(outbound_fee_8):
+            errors.append(f"Unlikely to withdraw balance as outbound fee is greater than redeemable amount"
+                          f"{this_saver.asset_redeem_value} < {outbound_fee_8}")
+
+        owner_units = int(this_saver.units)
+        last_added = int(this_saver.last_add_height)
+        saver_units = int(pool_details.thornode_details.savers_units)
+        asset_depth = int(pool_details.thornode_details.savers_depth)
+        redeemable_value = (owner_units / saver_units) * asset_depth
+        deposit_amount = CryptoAmount.from_base(this_saver.asset_deposit_value, asset)
+        redeemable_asset_amount = CryptoAmount.from_base(redeemable_value, asset)
+
+        savers_age = (int(native_block) - last_added) / (YEAR / self.native_block_time)
+        saver_growth = (redeemable_asset_amount - deposit_amount) / deposit_amount * 100.0
+
+        return SaversPosition(
+            deposit_amount,
+            redeemable_asset_amount,
+            int(this_saver.last_add_height),
+            float(saver_growth.amount.as_asset.amount),
+            float(savers_age),
+            float(savers_age * 365),
+            errors,
+            outbound_fee
+        )
 
     # ---- previous code ----
 
@@ -684,6 +826,7 @@ class THORChainQuery:
         net_output_in_asset = swap_out_in_dest_asset.output - outbound_fee_in_dest_asset
 
         total_fees = TotalFees(
+            # todo
             inbound_fee=inbound_fee_in_inbound_gas_asset,
             swap_fee=swap_out_in_dest_asset.swap_fee,
             outbound_fee=outbound_fee_in_outbound_gas_asset,
@@ -769,6 +912,10 @@ class THORChainQuery:
     def native_asset(self):
         return self.cache.native_asset
 
+    @property
+    def native_block_time(self):
+        return self.chain_attributes[self.native_asset.chain].block_time
+
     @staticmethod
     def abbreviate_asset_string(asset: Asset, max_length=5):
         if asset.contract and len(asset.contract) > max_length:
@@ -812,7 +959,7 @@ class THORChainQuery:
 
         # Calculate transaction expiry time
         current_datetime = datetime.now()
-        minutes_to_add = 15
+        minutes_to_add = DEFAULT_EXTRA_ADD_MINUTES
         expiry = current_datetime + timedelta(minutes=minutes_to_add)
 
         # Check for errors

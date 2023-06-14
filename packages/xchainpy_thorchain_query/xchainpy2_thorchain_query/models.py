@@ -180,7 +180,7 @@ class EstimateAddLP(NamedTuple):
 class EstimateWithdrawLP(NamedTuple):
     asset_address: Optional[str]
     rune_address: Optional[str]
-    slip_percent: Decimal
+    slip_percent: float
     inbound_fee: LPAmountTotal
     inbound_min_to_send: LPAmountTotal
     outbound_fee: LPAmountTotal
@@ -190,6 +190,24 @@ class EstimateWithdrawLP(NamedTuple):
     impermanent_loss_protection: ILProtectionData
     estimated_wait_seconds: int
     asset_pool: str
+
+
+class SaverFees(NamedTuple):
+    affiliate: CryptoAmount
+    asset: Asset
+    outbound: CryptoAmount
+
+
+class EstimateWithdrawSaver(NamedTuple):
+    expected_asset_amount: CryptoAmount
+    fee: SaverFees
+    expiry: datetime
+    to_address: Address
+    memo: str
+    estimated_wait_time: float
+    slip_basis_points: float
+    dust_amount: CryptoAmount
+    errors: List[str]
 
 
 class WithdrawLiquidityPosition(NamedTuple):
@@ -217,12 +235,6 @@ class GetSaver(NamedTuple):
     height: Optional[int] = None
 
 
-class SaverFees(NamedTuple):
-    affiliate: CryptoAmount
-    asset: Asset
-    outbound: CryptoAmount
-
-
 class EstimateAddSaver(NamedTuple):
     asset_amount: CryptoAmount
     estimated_deposit_value: CryptoAmount
@@ -231,7 +243,7 @@ class EstimateAddSaver(NamedTuple):
     expiry: datetime
     to_address: str
     memo: str
-    saver_cap_filled_percent: int
+    saver_cap_filled_percent: float
     estimated_wait_time: int
     can_add_saver: bool
     errors: List[str]
@@ -241,16 +253,11 @@ class SaversPosition(NamedTuple):
     deposit_value: CryptoAmount
     redeemable_value: CryptoAmount
     last_add_height: int
-    percentage_growth: Decimal
+    percentage_growth: float
     age_in_years: float
     age_in_days: float
-
-
-class SaversWithdraw(NamedTuple):
-    height: int
-    asset: str
-    address: str
-    withdraw_bps: int
+    errors: List[str]
+    outbound_fee: CryptoAmount
 
 
 class SwapOutput(NamedTuple):

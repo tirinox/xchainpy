@@ -99,6 +99,7 @@ Address = str
 MAX_BASIS_POINTS = 10_0000
 
 DAY = 24 * 60 * 60
+YEAR = 365 * DAY
 
 
 def calculate_time_from_blocks(blocks: int, chain: Chain = Chain.THORChain) -> float:

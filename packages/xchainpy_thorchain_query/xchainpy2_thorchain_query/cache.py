@@ -73,7 +73,7 @@ class THORChainCache:
         self.network = network
 
         self.midgard_api = MidgardAPI(midgard_client)
-        self.saver_api: Optional[SaversApi] = None
+
         if native_asset == AssetRUNE:
             self.t_pool_api = PoolsApi(thornode_client)
             self.mimir_api = MimirApi(thornode_client)
@@ -98,6 +98,8 @@ class THORChainCache:
             self.native_decimals = CACAO_DECIMAL
         else:
             raise ValueError('Invalid native asset. Must be RUNE or CACAO')
+
+        self.saver_api: Optional[SaversApi] = None
 
     def is_native_asset(self, a: Asset):
         return a == self.native_asset
