@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Union, List, Optional
 
-from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, Saver
+from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, Saver, QuoteFees
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, Address, RUNE_DECIMAL, Amount, MAX_BASIS_POINTS, \
     Chain, AssetRUNE, DEFAULT_ASSET_DECIMAL, YEAR
 from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
@@ -14,7 +14,8 @@ from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity, get_liquidity_protection_data
 from .models import TxDetails, SwapEstimate, SwapOutput, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
     LiquidityPosition, Block, PostionDepositValue, PoolRatios, WithdrawLiquidityPosition, EstimateWithdrawLP, \
-    EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails
+    EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails, LoanOpenQuote, BlockInformation, \
+    LoanCloseQuote
 
 
 class THORChainQuery:
@@ -699,6 +700,160 @@ class THORChainQuery:
             outbound_fee
         )
 
+    async def get_loan_quote_open(self, amount: CryptoAmount, target_asset: Asset,
+                                  destination: str, min_out: Amount, affiliate_bps: int = 0,
+                                  affiliate: str = '', height: int = 0) -> LoanOpenQuote:
+        """
+        Get a quote for opening a loan
+        :param int amount: the asset amount in 1e8 decimals and the asset used to repay the loan
+        :param Asset target_asset: the target asset to receive (loan denominated in TOR regardless)
+        :param str destination: the destination address, required to generate memo
+        :param Amount min_out: the minimum amount of the target asset to accept
+        :param str affiliate_bps: the affiliate fee in basis points
+        :param int affiliate: the affiliate (address or thorname)
+        :param height: optional height (default is the last block)
+        :return: LoanOpenQuote
+        """
+        errors = []
+
+        resp = await self.cache.quote_api.quoteloanopen(
+            asset=str(amount.asset),
+            amount=amount.amount.as_base.amount,
+            target_asset=str(target_asset),
+            destination=destination,
+            min_out=min_out.as_base.amount,
+            affiliate_bps=int(affiliate_bps),
+            affiliate=affiliate,
+            height=height
+        )
+        if hasattr(resp, 'error'):
+            errors.append(f"Thornode request quote failed: {resp.error}")
+
+        if errors:
+            # Todo: convenience type conversion
+            return LoanOpenQuote(
+                inbound_address='',
+                expected_wait_time=BlockInformation(),
+                fees=QuoteFees(),
+                slippage_bps=-1,
+                router='',
+                expiry=-1,
+                warning='',
+                notes='',
+                dust_threshold=0,
+                memo='',
+                expected_amount_out=0,
+                expected_debt_up=0,
+                expected_collateral_up=0,
+                expected_collateralization_ratio=0,
+                errors=errors
+            )
+
+        # Todo: convenience type conversion
+        return LoanOpenQuote(
+            inbound_address=resp.inbound_address,
+            expected_wait_time=BlockInformation(
+                outbound_delay_blocks=int(resp.expected_delay_blocks),
+                outbound_delay_seconds=float(resp.outbound_delay_seconds),
+            ),
+            fees=QuoteFees(
+                asset=Asset.from_string(resp.fees.asset),
+                affiliate=int(resp.fees.affiliate),
+                outbound=int(resp.fees.outbound),
+                total_bps=int(resp.fees.total_bps),
+            ),
+            slippage_bps=int(resp.slippage_bps),
+            router=resp.router,
+            expiry=int(resp.expiry),
+            warning=resp.warning,
+            notes=resp.notes,
+            dust_threshold=int(resp.dust_threshold),
+            memo=resp.memo,
+            expected_amount_out=int(resp.expected_amount_out),
+            expected_debt_up=int(resp.expected_debt_up),
+            expected_collateral_up=int(resp.expected_collateral_up),
+            expected_collateralization_ratio=float(resp.expected_collateralization_ratio),
+            errors=errors
+        )
+
+    async def get_loan_quote_close(self, amount: CryptoAmount, from_address: str,
+                                   loan_asset: Asset, loan_owner: str,
+                                   min_out: Amount, height: int = 0) -> LoanCloseQuote:
+        """
+        Get a quote for closing a loan
+        :param amount: CryptoAmount (the asset amount in 1e8 decimals and asset the asset used to repay the loan)
+        :param from_address: the address that is paying off the loan
+        :param loan_asset: the collateral asset of the loan
+        :param loan_owner: the owner of the loan collateral
+        :param min_out: minimal threshold for output amount
+        :param height: optional block height, defaults to current tip
+        :return:
+        """
+        errors = []
+
+        resp = await self.cache.quote_api.quoteloanclose(
+            height=height,
+            asset=str(amount.asset),
+            amount=amount.amount.as_base.amount,
+            from_address=from_address,
+            loan_asset=str(loan_asset),
+            loan_owner=loan_owner,
+            min_out=min_out.as_base.amount
+        )
+
+        if hasattr(resp, 'error'):
+            errors.append(f"Thornode request quote failed: {resp.error}")
+
+        if errors:
+            return LoanCloseQuote(
+                inbound_address='',
+                expected_wait_time=BlockInformation(),
+                fees=QuoteFees(),
+                slippage_bps=-1,
+                router='',
+                expiry=-1,
+                warning='',
+                notes='',
+                dust_threshold=0,
+                memo='',
+                expected_amount_out=0,
+                expected_collateral_down=0,
+                expected_debt_down=0,
+                errors=errors
+            )
+
+        return LoanCloseQuote(
+            inbound_address=resp.inbound_address,
+            expected_wait_time=BlockInformation(
+                outbound_delay_blocks=int(resp.outbound_delay_blocks),
+                outbound_delay_seconds=float(resp.outbound_delay_seconds),
+            ),
+            fees=QuoteFees(
+                asset=Asset.from_string(resp.fees.asset),
+                liquidity=int(resp.fees.liquidity),
+                outbound=int(resp.fees.outbound),
+                total_bps=int(resp.fees.total_bps),
+            ),
+            slippage_bps=int(resp.slippage_bps),
+            router=resp.router,
+            expiry=int(resp.expiry),
+            warning=resp.warning,
+            notes=resp.notes,
+            dust_threshold=int(resp.dust_threshold),
+            memo=resp.memo,
+            expected_amount_out=int(resp.expected_amount_out),
+            expected_collateral_down=int(resp.expected_collateral_down),
+            expected_debt_down=int(resp.expected_debt_down),
+            errors=errors
+        )
+
+    # ---- previous code ----
+    # ---- previous code ----
+    # ---- previous code ----
+    # ---- previous code ----
+    # ---- previous code ----
+    # ---- previous code ----
+    # ---- previous code ----
     # ---- previous code ----
 
     async def is_swap_valid(self,

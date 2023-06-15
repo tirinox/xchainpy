@@ -5,7 +5,7 @@ from enum import Enum
 from typing import NamedTuple, List, Dict, Optional
 
 from xchainpy2_midgard import PoolDetail
-from xchainpy2_thornode import Pool, LiquidityProviderSummary, Saver
+from xchainpy2_thornode import Pool, LiquidityProviderSummary, Saver, QuoteFees
 from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
 
 
@@ -393,3 +393,45 @@ class TxProgress(NamedTuple):
     withdraw_lp_info: Optional[WithdrawInfo] = None
     withdraw_saver_info: Optional[WithdrawInfo] = None
     refund_info: Optional[RefundInfo] = None
+
+
+class BlockInformation(NamedTuple):
+    inbound_confirmation_blocks: int = 0
+    inbound_confirmation_seconds: float = 0.0
+    outbound_delay_blocks: int = 0
+    outbound_delay_seconds: float = 0.0
+
+
+class LoanOpenQuote(NamedTuple):
+    inbound_address: str
+    expected_wait_time: BlockInformation
+    fees: QuoteFees
+    slippage_bps: int
+    router: str
+    expiry: int
+    warning: str
+    notes: str
+    dust_threshold: int
+    memo: str
+    expected_amount_out: int
+    expected_collateralization_ratio: float
+    expected_collateral_up: int
+    expected_debt_up: int
+    errors: List[str]
+
+
+class LoanCloseQuote(NamedTuple):
+    inbound_address: str
+    expected_wait_time: BlockInformation
+    fees: QuoteFees
+    slippage_bps: int
+    router: str
+    expiry: int
+    warning: str
+    notes: str
+    dust_threshold: int
+    memo: str
+    expected_amount_out: int
+    expected_collateral_down: int
+    expected_debt_down: int
+    errors: List[str]
