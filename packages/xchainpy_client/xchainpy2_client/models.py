@@ -3,12 +3,17 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, List, NamedTuple, Dict
 
-from xchainpy2_utils import Asset, Amount, NetworkType, CryptoAmount, Address
+from xchainpy2_utils import Asset, Amount, NetworkType, CryptoAmount, Address, DEFAULT_ASSET_DECIMAL
 
 
 class TxType(Enum):
     TRANSFER = 'transfer'
     UNKNOWN = 'unknown'
+
+
+class AssetInfo(NamedTuple):
+    asset: Asset
+    decimals: int = DEFAULT_ASSET_DECIMAL
 
 
 class TxTo(NamedTuple):
@@ -46,15 +51,6 @@ class TxHistoryPage(NamedTuple):
     offset: int = 0
     limit: int = 0
     start_time: Optional[datetime] = None
-    asset: Optional[Asset] = None
-
-
-class TxHistoryParams(NamedTuple):
-    address: str
-    offset: int = 0
-    limit: int = 0
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
     asset: Optional[Asset] = None
 
 
@@ -117,7 +113,12 @@ class OnlineDataProvider(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_transactions(self, params: TxHistoryParams) -> TxPage:
+    async def get_transactions(self, address: str,
+                               offset: int = 0,
+                               limit: int = 0,
+                               start_time: Optional[datetime] = None,
+                               end_time: Optional[datetime] = None,
+                               asset: Optional[Asset] = None) -> TxPage:
         pass
 
     @abc.abstractmethod

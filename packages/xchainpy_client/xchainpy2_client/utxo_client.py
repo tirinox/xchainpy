@@ -1,13 +1,14 @@
 import abc
 import logging
+from datetime import datetime
 from typing import List, Optional, Dict
 
-from xchainpy2_utils import Chain, Address, CryptoAmount, NetworkType
+from xchainpy2_utils import Chain, Address, CryptoAmount, NetworkType, Asset
 from .base_client import XChainClient
 from .explorer import ExplorerProvider
 from .fees import calc_fees_async, standard_fee_rates
 from .models import XChainClientParams, UTXOOnlineDataProviders, FeeRates, \
-    FeeRate, TxHistoryParams, TxPage, XcTx, UTXO, FeesWithRates, FeeOption, Fees, Fee, FeeBounds, RootDerivationPaths
+    FeeRate, TxPage, XcTx, UTXO, FeesWithRates, FeeOption, Fees, Fee, FeeBounds, RootDerivationPaths
 
 
 class UTXOClientParams(XChainClientParams):
@@ -64,17 +65,25 @@ class UTXOClient(XChainClient, abc.ABC):
         """
         return self.explorer_providers[self.network].get_address_url(address)
 
-    async def get_transactions(self, params: Optional[TxHistoryParams]) -> TxPage:
+    async def get_transactions(self, address: str,
+                               offset: int = 0,
+                               limit: int = 0,
+                               start_time: Optional[datetime] = None,
+                               end_time: Optional[datetime] = None,
+                               asset: Optional[Asset] = None, ) -> TxPage:
         """
         Get transaction history of a given address with pagination options.
         By default, it will return the transaction history of the current wallet.
-        :param params: The options to get transaction history. (optional)
+        :param address: The address to get the transaction history. (#0 by default)
+        :param offset: The offset to start getting the transaction history. (0 by default)
+        :param limit: The number of transaction history to get. (10 by default)
+        :param start_time: The start time of the transaction history. (optional)
+        :param end_time: The end time of the transaction history. (optional)
+        :param asset: The asset to get the transaction history. (optional)
         :return: The transaction history.
         """
-        params = params or TxHistoryParams(
-            address=self.get_address(),
-        )
-        return await self._round_robin('get_transactions', params)
+
+        return await self._round_robin('get_transactions', address, offset, limit, start_time, end_time, asset)
 
     async def get_transaction_data(self, tx_id: str, asset_address: Optional[Address] = None) -> XcTx:
         """

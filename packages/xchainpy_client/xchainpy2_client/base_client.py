@@ -1,10 +1,11 @@
 import abc
+from datetime import datetime
 from typing import Optional, List
 
-from packages.xchainpy_client.xchainpy2_client.models import TxParams, XcTx, Fees, TxHistoryParams, TxPage, \
-    FeeBounds, Fee, RootDerivationPaths
+from packages.xchainpy_client.xchainpy2_client.models import TxParams, XcTx, Fees, TxPage, \
+    FeeBounds, Fee, RootDerivationPaths, AssetInfo
 from xchainpy2_crypto import validate_mnemonic
-from xchainpy2_utils import Address, CryptoAmount, Chain, NetworkType
+from xchainpy2_utils import Address, CryptoAmount, Chain, NetworkType, Asset
 
 INF_FEE = Fee(1_000_000_000_000_000_000)
 
@@ -95,7 +96,12 @@ class XChainClient(abc.ABC):
         return ''
 
     @abc.abstractmethod
-    async def get_transactions(self, params: Optional[TxHistoryParams]) -> TxPage:
+    async def get_transactions(self, address: str,
+                               offset: int = 0,
+                               limit: int = 0,
+                               start_time: Optional[datetime] = None,
+                               end_time: Optional[datetime] = None,
+                               asset: Optional[Asset] = None) -> TxPage:
         pass
 
     @abc.abstractmethod
@@ -113,3 +119,7 @@ class XChainClient(abc.ABC):
     @abc.abstractmethod
     async def broadcast_tx(self, tx_hex: str) -> str:
         pass
+
+    @abc.abstractmethod
+    def get_asset_info(self) -> AssetInfo:
+        raise NotImplementedError()
