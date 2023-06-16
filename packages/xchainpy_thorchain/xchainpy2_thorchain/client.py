@@ -1,4 +1,6 @@
 import asyncio
+from datetime import datetime
+from math import ceil
 from typing import Optional, List
 
 from bip_utils import Bech32ChecksumError
@@ -7,11 +9,13 @@ from cosmpy.aerial.config import NetworkConfig
 from cosmpy.aerial.wallet import LocalWallet
 
 from packages.xchainpy_client.xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, TxParams, XcTx, \
-    Fees, TxHistoryParams, TxPage
+    Fees, TxPage
+from xchainpy2_client import AssetInfo
 from xchainpy2_crypto import derive_private_key, derive_address, decode_address
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DECIMAL, Asset
+from . import ThorTxFilterFunc
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
-    THOR_EXPLORERS
+    THOR_EXPLORERS, MAX_TX_COUNT_PER_PAGE, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_FUNCTION_CALL
 from .utils import get_thor_address_prefix, convert_coin_to_crypto_amount
 
 
@@ -199,8 +203,29 @@ class THORChainClient(XChainClient):
                 return
             raise e
 
-    async def get_transactions(self, params: Optional[TxHistoryParams]) -> TxPage:
-        pass
+    async def get_transactions(self, address: str,
+                               offset: int = 0,
+                               limit: int = 0,
+                               start_time: Optional[datetime] = None,
+                               end_time: Optional[datetime] = None,
+                               asset: Optional[Asset] = None,
+                               filter_function: ThorTxFilterFunc = None) -> TxPage:
+        message_action = None
+
+        offset = offset if offset is None else 0
+        limit = limit if limit else 10
+        address = address if address else self.get_address()
+        tx_min_height = None
+        tx_max_height = None
+
+        if limit + offset > MAX_PAGES_PER_FUNCTION_CALL * MAX_TX_COUNT_PER_PAGE:
+            raise ValueError(
+                f"limit plus offset can not be grater than {MAX_PAGES_PER_FUNCTION_CALL * MAX_TX_COUNT_PER_PAGE}")
+
+        if limit > MAX_TX_COUNT_PER_FUNCTION_CALL:
+            raise ValueError(f"Maximum number of transaction per call is {MAX_TX_COUNT_PER_FUNCTION_CALL}")
+
+        pages_number = int(ceil((limit + offset) / MAX_TX_COUNT_PER_PAGE))
 
     async def get_transaction_data(self, tx_id: str, asset_address: Optional[str]) -> XcTx:
         pass
@@ -213,3 +238,8 @@ class THORChainClient(XChainClient):
 
     async def broadcast_tx(self, tx_hex: str) -> str:
         pass
+
+    def get_asset_info(self) -> AssetInfo:
+        return AssetInfo(
+            AssetRUNE, RUNE_DECIMAL
+        )

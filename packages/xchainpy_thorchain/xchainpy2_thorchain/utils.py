@@ -1,3 +1,5 @@
+from typing import Callable
+
 from cosmpy.aerial.client import Coin
 
 from xchainpy2_utils import NetworkType, CryptoAmount, Amount, RUNE_DECIMAL, Asset
