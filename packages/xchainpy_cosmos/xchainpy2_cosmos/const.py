@@ -1,5 +1,7 @@
 # The decimal for cosmos chain.
-from xchainpy2_client import Fees, FeeType, FeeOption
+from typing import Optional, Callable
+
+from xchainpy2_client import Fees, FeeType, FeeOption, ExplorerProvider
 from xchainpy2_utils import Amount, NetworkType
 
 COSMOS_DECIMAL = 6
@@ -25,7 +27,7 @@ COSMOS_ROOT_DERIVATION_PATHS = {
 }
 
 # Prefix
-COSMOS_PREFIX = 'cosmos'
+COSMOS_ADDR_PREFIX = 'cosmos'
 
 
 def get_default_fees() -> Fees:
@@ -56,3 +58,29 @@ COSMOS_CHAIN_IDS = {
     NetworkType.STAGENET: 'cosmoshub-4',
     NetworkType.TESTNET: 'theta-testnet-001',
 }
+
+TEST_EXPLORER_URL = 'https://explorer.theta-testnet.polypore.xyz'
+DEFAULT_EXPLORER_URL = 'https://bigdipper.live/cosmos'
+
+
+def make_explorer(path):
+    return ExplorerProvider(
+        path.format(path=''),
+        path.format(path='/accounts/{address}'),
+        path.format(path='/transactions/{tx_id}'),
+    )
+
+
+DEFAULT_EXPLORER_PROVIDER = {
+    NetworkType.MAINNET: make_explorer(DEFAULT_EXPLORER_URL),
+    NetworkType.STAGENET: make_explorer(DEFAULT_EXPLORER_URL),
+    NetworkType.TESTNET: make_explorer(TEST_EXPLORER_URL),
+}
+
+TxFilterFunc = Optional[Callable[[object], bool]]
+
+MAX_TX_COUNT_PER_PAGE = 100
+
+MAX_TX_COUNT_PER_FUNCTION_CALL = 500
+
+MAX_PAGES_PER_FUNCTION_CALL = 15
