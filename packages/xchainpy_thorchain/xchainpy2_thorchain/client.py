@@ -100,6 +100,7 @@ class THORChainClient(XChainClient):
 
     def purge_client(self):
         super().purge_client()
+        self._client = None
 
     @property
     def explorer(self):

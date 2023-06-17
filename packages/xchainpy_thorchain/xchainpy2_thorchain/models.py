@@ -29,6 +29,3 @@ class RPCTxResult(NamedTuple):
     index: int
     tx_results: RPCTxResultInner
     tx: str
-
-
-ThorTxFilterFunc = Optional[Callable[[RPCTxResult], bool]]

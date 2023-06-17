@@ -24,7 +24,7 @@ DEFAULT_EXPLORER_URL = 'https://viewblock.io/thorchain{path}{network_tag}'
 def make_explorer_object(network_tag: str):
     return ExplorerProvider(
         DEFAULT_EXPLORER_URL.format(network_tag=network_tag, path=''),
-        DEFAULT_EXPLORER_URL.format(network_tag=network_tag, path='/tx/{address}'),
+        DEFAULT_EXPLORER_URL.format(network_tag=network_tag, path='/address/{address}'),
         DEFAULT_EXPLORER_URL.format(network_tag=network_tag, path='/tx/{tx_id}'),
     )
 
