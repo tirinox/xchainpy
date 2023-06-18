@@ -17,6 +17,9 @@ DEFAULT_FEE = Amount.from_base(5000, COSMOS_DECIMAL)
 # Chain identifier for Cosmos chain
 GAIA_CHAIN_KEY = 'GAIA'
 
+# Cosmos denomination
+COSMOS_DENOM = 'uatom'
+
 # Default derivation path for Cosmos chain
 DEFAULT_DERIVATION_PATH = "44'/118'/0'/0/"
 

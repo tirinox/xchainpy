@@ -13,10 +13,10 @@ from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, TxPar
     Fees, TxPage, AssetInfo
 from xchainpy2_crypto import derive_private_key, derive_address
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DECIMAL, Asset, Amount
-from .models import TxHistoryResponse
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_DERIVATION_PATHS, COSMOS_ADDR_PREFIX, \
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
-    MAX_TX_COUNT_PER_FUNCTION_CALL
+    MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM
+from .models import TxHistoryResponse
 
 
 class CosmosGaiaClient(XChainClient):
@@ -45,6 +45,10 @@ class CosmosGaiaClient(XChainClient):
 
         self.explorer_providers = explorer_providers.copy() \
             if explorer_providers else DEFAULT_EXPLORER_PROVIDER.copy()
+
+        if isinstance(client_urls, str):
+            client_urls = {NetworkType.MAINNET: client_urls}
+
         self.client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
         self.chain_ids = chain_ids.copy() if chain_ids else COSMOS_CHAIN_IDS.copy()
 
@@ -65,8 +69,8 @@ class CosmosGaiaClient(XChainClient):
         self._client = LedgerClient(NetworkConfig(
             chain_id=self.chain_ids[self.network],
             url=rest_url,
-            fee_denomination='uatom',
-            staking_denomination='uatom',
+            fee_denomination=COSMOS_DENOM,
+            staking_denomination=COSMOS_DENOM,
             fee_minimum_gas_price=0,
         ))
 
@@ -256,53 +260,9 @@ class CosmosGaiaClient(XChainClient):
         if limit:
             query_parameter['limit'] = limit
 
-        # url = `${this.server}/cosmos/tx/v1beta1/txs?${getQueryString(queryParameter)}`,
         url = f"{self.server_url}/cosmos/tx/v1beta1/txs?{urlencode(query_parameter)}"
-
-        self._client
-
-        response = await asyncio.get_event_loop().run_in_executor(
-            None,
-            self._client.txs.rest_client._session.get,
-            url,
-        )
-        j = response.json()
-        return TxHistoryResponse(**j)
-
-        """
-        async searchTx({ messageAction, messageSender, page, limit }: SearchTxParams): Promise<TxHistoryResponse> {
-    const queryParameter: APIQueryParam = {}
-
-    if (!messageAction && !messageSender) {
-      throw new Error('One of messageAction or messageSender must be specified')
-    }
-
-    let eventsParam = ''
-
-    if (messageAction !== undefined) {
-      eventsParam = `message.action='${messageAction}'`
-    }
-    if (messageSender !== undefined) {
-      const prefix = eventsParam.length > 0 ? ',' : ''
-      eventsParam = `${eventsParam}${prefix}message.sender='${messageSender}'`
-    }
-    if (page !== undefined) {
-      queryParameter['page'] = page.toString()
-    }
-    if (limit !== undefined) {
-      queryParameter['limit'] = limit.toString()
-    }
-
-    queryParameter['events'] = eventsParam
-
-    this.setPrefix()
-
-    const { data } = await axios.get<TxHistoryParams, { data: TxHistoryResponse }>(
-      `${this.server}/cosmos/tx/v1beta1/txs?${getQueryString(queryParameter)}`,
-    )
-
-    return data
-  }"""
+        j = await self._get_json(url)
+        return TxHistoryResponse.from_rpc_json(j)
 
     async def get_transaction_data(self, tx_id: str, asset_address: Optional[str]) -> XcTx:
         pass
@@ -320,3 +280,22 @@ class CosmosGaiaClient(XChainClient):
         return AssetInfo(
             AssetRUNE, RUNE_DECIMAL
         )
+
+    async def get_chain_id(self, server='') -> str:
+        """
+        Helper to get Cosmos' chain id
+        :return:
+        """
+        url = f"{server or self.server_url}/node_info"
+        j = await self._get_json(url)
+        return j['node_info']['network']
+
+    async def _get_json(self, url):
+        response = await asyncio.get_event_loop().run_in_executor(
+            None,
+            self._client.txs.rest_client._session.get,
+            url,
+        )
+        if response.status_code != 200:
+            raise Exception(f"Error getting {url}: {response.status_code} {response.text}")
+        return response.json()
