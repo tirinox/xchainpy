@@ -390,3 +390,17 @@ class THORChainCache:
                      if lp.asset_address == address or
                      self.get_rune_address(lp) == address),
                     None)
+
+    async def get_fee_rates(self, chain: Chain) -> int:
+        """
+        Returns the fee rate for a given chain
+        :param chain: Chain
+        :return:
+        """
+        inbound = await self.get_inbound_details()
+        if not inbound:
+            raise Exception('Could not get inbound details')
+
+        for chain_details in inbound.values():
+            if chain_details.chain == chain.value:
+                return int(chain_details.outbound_fee)
