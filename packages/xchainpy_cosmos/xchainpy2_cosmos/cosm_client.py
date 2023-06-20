@@ -10,13 +10,15 @@ from cosmpy.aerial.wallet import LocalWallet
 from cosmpy.crypto.address import Address
 
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, TxParams, XcTx, \
-    Fees, TxPage, AssetInfo
+    Fees, TxPage, AssetInfo, FeeType
+from xchainpy2_client.fees import single_fee
 from xchainpy2_crypto import derive_private_key, derive_address
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DECIMAL, Asset, Amount
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DECIMAL, Asset, Amount, AssetATOM
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_DERIVATION_PATHS, COSMOS_ADDR_PREFIX, \
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
-    MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM
-from .models import TxHistoryResponse
+    MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE
+from .models import TxHistoryResponse, TxResponse
+from .utils import parse_tx_response, get_asset
 
 
 class CosmosGaiaClient(XChainClient):
@@ -56,6 +58,7 @@ class CosmosGaiaClient(XChainClient):
         self._recreate_client()
 
         self._wallet: Optional[LocalWallet] = None
+        self.native_asset = AssetATOM
 
     def get_client(self) -> LedgerClient:
         return self._client
@@ -227,11 +230,10 @@ class CosmosGaiaClient(XChainClient):
                                filter_function: TxFilterFunc = None) -> TxPage:
         message_action = None
 
-        offset = offset if offset is None else 0
-        limit = limit if limit else 10
         address = address if address else self.get_address()
         tx_min_height = None
         tx_max_height = None
+        asset = get_asset(asset) if asset else AssetATOM
 
         if limit + offset > MAX_PAGES_PER_FUNCTION_CALL * MAX_TX_COUNT_PER_PAGE:
             raise ValueError(
@@ -247,17 +249,17 @@ class CosmosGaiaClient(XChainClient):
             raise ValueError('One of message_action or message_sender must be specified')
 
         events_param = ''
-        if message_action:
+        if message_action is not None:
             events_param = f"message.action='{message_action}'"
-        if message_sender:
+        if message_sender is not None:
             prefix = ',' if events_param else ''
             events_param += f"{prefix}message.sender='{message_sender}'"
 
         query_parameter = {'events': events_param}
 
-        if page:
+        if page is not None:
             query_parameter['page'] = page
-        if limit:
+        if limit is not None:
             query_parameter['limit'] = limit
 
         url = f"{self.server_url}/cosmos/tx/v1beta1/txs?{urlencode(query_parameter)}"
@@ -265,10 +267,35 @@ class CosmosGaiaClient(XChainClient):
         return TxHistoryResponse.from_rpc_json(j)
 
     async def get_transaction_data(self, tx_id: str, asset_address: Optional[str]) -> XcTx:
-        pass
+        """
+        Get the transaction data for the given transaction id.
+        :param tx_id:
+        :param asset_address:
+        :return:
+        """
+        url = f"{self.server_url}/cosmos/tx/v1beta1/txs/{tx_id}"
+        j = await self._get_json(url)
 
-    async def get_fees(self) -> Fees:
-        pass
+        return parse_tx_response(TxResponse.from_rpc_json(j), self.native_asset)
+
+    async def get_fees(self, cache=None, tc_fee_rate=None) -> Fees:
+        """
+        Returns fees.
+        It tries to get chain fees from THORChain `inbound_addresses` first
+        :param cache: THORChainCache from the query module
+        :param tc_fee_rate: You can externally pass the fee rate having 8 decimals. (optional)
+        :return:
+        """
+        if tc_fee_rate is None:
+            tc_fee_rate = await cache.get_fee_rates(self.chain)
+        else:
+            return single_fee(FeeType.FLAT_FEE, DEFAULT_FEE)
+
+        # convert decimal: 1e8 (THORChain) to 1e6 (COSMOS)
+        # Similar to `fromCosmosToThorchain` in THORNode
+        decimal_diff = COSMOS_DECIMAL - RUNE_DECIMAL
+        fee_rate = Amount.from_base(tc_fee_rate * 10 ** decimal_diff, COSMOS_DECIMAL)
+        return single_fee(FeeType.FLAT_FEE, fee_rate)
 
     async def transfer(self, params: TxParams) -> XcTx:
         pass
