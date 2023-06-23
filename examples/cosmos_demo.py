@@ -1,18 +1,20 @@
 import asyncio
+import logging
+from pprint import pprint
 
 from xchainpy2_cosmos import CosmosGaiaClient
 
 
 async def demo_read_txs():
-    demo_addy = 'cosmos1f9ta55rme2mwy9nwugzp5r9rl9h54a70yf8nfz'
+    demo_addy = 'cosmos1lxum6akwxgmvkcj5gut6vn85an2r428v7n92u5'
 
-    client = CosmosGaiaClient(client_urls='https://api.cosmos.network')
+    client = CosmosGaiaClient()
 
     balance = await client.get_balance(demo_addy)
-    print(balance)
+    pprint(balance)
 
     txs = await client.search_tx(message_sender=demo_addy)
-    print('txs', txs)
+    print(txs)
 
 
 async def main():
@@ -20,4 +22,5 @@ async def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     asyncio.run(main())

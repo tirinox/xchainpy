@@ -44,14 +44,14 @@ def get_default_fees() -> Fees:
     )
 
 
-# MAIN_CLIENT_URL = 'https://api.cosmos.network/'
-
+CLIENT_URL_KEPLR = 'https://lcd-cosmoshub.keplr.app'
+CLIENT_URL_COSMOSTATION = 'https://lcd-cosmos.cosmostation.io/'
 # The only one that works for me
-MAIN_CLIENT_URL = 'https://lcd-cosmoshub.keplr.app'
+CLIENT_URL_COSMOS_DIRECTORY = 'https://rest.cosmos.directory/cosmoshub'
 
 DEFAULT_CLIENT_URLS = {
-    NetworkType.MAINNET: MAIN_CLIENT_URL,
-    NetworkType.STAGENET: MAIN_CLIENT_URL,
+    NetworkType.MAINNET: CLIENT_URL_COSMOSTATION,
+    NetworkType.STAGENET: CLIENT_URL_COSMOSTATION,
     # Note: In case anyone facing into CORS issue, try the following URLs
     #   // https://lcd-cosmos.cosmostation.io/
     #   // https://lcd-cosmoshub.keplr.app/

@@ -260,7 +260,7 @@ class CosmosGaiaClient(XChainClient):
         if message_sender is not None:
             events_param.append(f"message.sender='{message_sender}'")
 
-        query_parameter = {'events': events_param}
+        query_parameter = {'events': ','.join(events_param)}
 
         if offset is not None:
             query_parameter['pagination.offset'] = offset
