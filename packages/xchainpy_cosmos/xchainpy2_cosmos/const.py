@@ -44,7 +44,10 @@ def get_default_fees() -> Fees:
     )
 
 
-MAIN_CLIENT_URL = 'https://rest.cosmos.directory/cosmoshub'
+# MAIN_CLIENT_URL = 'https://api.cosmos.network/'
+
+# The only one that works for me
+MAIN_CLIENT_URL = 'https://lcd-cosmoshub.keplr.app'
 
 DEFAULT_CLIENT_URLS = {
     NetworkType.MAINNET: MAIN_CLIENT_URL,

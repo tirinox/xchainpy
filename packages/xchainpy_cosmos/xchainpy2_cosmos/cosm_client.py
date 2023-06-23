@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import datetime
 from math import ceil
 from typing import Optional, List
@@ -19,6 +20,8 @@ from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_D
     MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE
 from .models import TxHistoryResponse, TxResponse
 from .utils import parse_tx_response, get_asset
+
+logger = logging.getLogger(__name__)
 
 
 class CosmosGaiaClient(XChainClient):
@@ -183,6 +186,9 @@ class CosmosGaiaClient(XChainClient):
             address = self.get_address()
 
         address = Address(address)
+
+        # balances = await self._get_json(f'{self.server_url}/cosmos/bank/v1beta1/balances/{address}')
+
         balances = await asyncio.get_event_loop().run_in_executor(
             None,
             self._client.query_bank_all_balances,
@@ -244,23 +250,22 @@ class CosmosGaiaClient(XChainClient):
 
         pages_number = int(ceil((limit + offset) / MAX_TX_COUNT_PER_PAGE))
 
-    async def search_tx(self, message_action=None, message_sender=None, page=0, limit=50):
+    async def search_tx(self, message_action=None, message_sender=None, offset=0, limit=50):
         if not message_action and not message_sender:
             raise ValueError('One of message_action or message_sender must be specified')
 
-        events_param = ''
+        events_param = []
         if message_action is not None:
-            events_param = f"message.action='{message_action}'"
+            events_param.append(f"message.action='{message_action}'")
         if message_sender is not None:
-            prefix = ',' if events_param else ''
-            events_param += f"{prefix}message.sender='{message_sender}'"
+            events_param.append(f"message.sender='{message_sender}'")
 
         query_parameter = {'events': events_param}
 
-        if page is not None:
-            query_parameter['page'] = page
+        if offset is not None:
+            query_parameter['pagination.offset'] = offset
         if limit is not None:
-            query_parameter['limit'] = limit
+            query_parameter['pagination.limit'] = limit
 
         url = f"{self.server_url}/cosmos/tx/v1beta1/txs?{urlencode(query_parameter)}"
         j = await self._get_json(url)
@@ -308,7 +313,7 @@ class CosmosGaiaClient(XChainClient):
             AssetRUNE, RUNE_DECIMAL
         )
 
-    async def get_chain_id(self, server='') -> str:
+    async def fetch_chain_id(self, server='') -> str:
         """
         Helper to get Cosmos' chain id
         :return:
@@ -318,6 +323,7 @@ class CosmosGaiaClient(XChainClient):
         return j['node_info']['network']
 
     async def _get_json(self, url):
+        logger.debug(f"GET {url}")
         response = await asyncio.get_event_loop().run_in_executor(
             None,
             self._client.txs.rest_client._session.get,

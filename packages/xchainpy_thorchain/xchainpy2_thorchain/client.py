@@ -231,7 +231,7 @@ class THORChainClient(XChainClient):
     async def get_transaction_data(self, tx_id: str, asset_address: Optional[str]) -> XcTx:
         pass
 
-    async def get_fees(self) -> Fees:
+    async def get_fees(self, **kwargs) -> Fees:
         pass
 
     async def transfer(self, params: TxParams) -> XcTx:
