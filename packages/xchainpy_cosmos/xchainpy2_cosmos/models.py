@@ -84,3 +84,17 @@ class TxLog(NamedTuple):
             j['log'],
             [TxEvent.from_rpc_json(event) for event in j['events']]
         )
+
+
+class RPCResponse(NamedTuple):
+    jsonrpc: str
+    id: int
+    result: dict
+
+    @classmethod
+    def from_rpc_json(cls, j):
+        return cls(
+            j['jsonrpc'],
+            j['id'],
+            j['result']
+        )

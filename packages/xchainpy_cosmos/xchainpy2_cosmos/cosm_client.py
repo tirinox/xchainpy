@@ -271,6 +271,48 @@ class CosmosGaiaClient(XChainClient):
         j = await self._get_json(url)
         return TxHistoryResponse.from_rpc_json(j)
 
+    async def search_tx_from_rpc(
+            self,
+            message_action=None,
+            message_sender=None,
+            transfer_sender=None,
+            transfer_recipient=None,
+            page=None,
+            limit=None,
+            tx_min_height=None,
+            tx_max_height=None,
+            rpc_endpoint=None
+    ):
+        query_parameter = []
+        if message_action is not None:
+            query_parameter.append(f"message.action='{message_action}'")
+        if message_sender is not None:
+            query_parameter.append(f"message.sender='{message_sender}'")
+        if transfer_sender is not None:
+            query_parameter.append(f"transfer.sender='{transfer_sender}'")
+        if transfer_recipient is not None:
+            query_parameter.append(f"transfer.recipient='{transfer_recipient}'")
+        if tx_min_height is not None:
+            query_parameter.append(f"tx.height>='{tx_min_height}'")
+        if tx_max_height is not None:
+            query_parameter.append(f"tx.height<='{tx_max_height}'")
+
+        search_parameters = []
+        if query_parameter:
+            query = ' AND '.join(query_parameter)
+            search_parameters.append(f'query="{query}"')
+
+        if page is not None:
+            search_parameters.append(f'page="{page}"')
+        if limit is not None:
+            search_parameters.append(f'limit="{limit}"')
+        search_parameters.append('order_by="desc"')
+
+        params_joined = '&'.join(search_parameters)
+        url = f"{rpc_endpoint}/tx_search?{params_joined}"
+
+        return await self._get_json(url)
+
     async def get_transaction_data(self, tx_id: str, asset_address: Optional[str] = None) -> XcTx:
         """
         Get the transaction data for the given transaction id.
