@@ -15,7 +15,7 @@ class TxResponse(NamedTuple):
     @classmethod
     def from_rpc_json(cls, j):
         return cls(
-            j['height'],
+            int(j['height']),
             j['txhash'],
             j['data'],
             j['raw_log'],

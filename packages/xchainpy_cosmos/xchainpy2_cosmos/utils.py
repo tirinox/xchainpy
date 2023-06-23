@@ -61,14 +61,15 @@ def get_asset(denom: str) -> Optional[Asset]:
 
 def get_coin_amount(coins) -> Amount:
     return sum(
-        Amount.from_base(int(coin.amount), COSMOS_DECIMAL) for coin in coins
+        (Amount.from_base(int(key_attr_getter(coin, 'amount')), COSMOS_DECIMAL) for coin in coins),
+        Amount.from_base(0, COSMOS_DECIMAL)
     )
 
 
 def get_coins_by_asset(coins, asset: Asset):
     return [
         coin for coin in coins
-        if get_asset(coin.denom) == asset
+        if get_asset(key_attr_getter(coin, 'denom')) == asset
     ]
 
 
@@ -79,38 +80,45 @@ def parse_tx_response(tx: TxResponse, asset: Asset) -> XcTx:
 
     for msg in messages:
         if is_msg_send(msg):
-            coins = get_coins_by_asset(msg.amount, asset)
+            coins = get_coins_by_asset(key_attr_getter(msg, 'amount'), asset)
             amount = get_coin_amount(coins)
 
-            from_already = from_txs.get(msg.from_address)
+            from_a = key_attr_getter(msg, 'from_address')
+            from_already = from_txs.get(from_a)
             if from_already:
-                from_txs[msg.from_address] = from_already._replace(
+                from_txs[from_a] = from_already._replace(
                     amount=from_already.amount + amount
                 )
             else:
-                from_txs[msg.from_address] = TxFrom(
-                    from_address=msg.from_address,
+                from_txs[from_a] = TxFrom(
+                    from_address=from_a,
                     from_tx_hash=tx.txhash,
                     amount=amount,
                 )
 
-            to_already = to_txs.get(msg.to_address)
+            to_a = key_attr_getter(msg, 'to_address')
+            to_already = to_txs.get(to_a)
             if to_already:
-                to_txs[msg.to_address] = to_already._replace(
+                to_txs[to_a] = to_already._replace(
                     amount=to_already.amount + amount
                 )
             else:
-                to_txs[msg.to_address] = TxFrom(
-                    from_address=msg.to_address,
+                to_txs[to_a] = TxFrom(
+                    from_address=to_a,
                     from_tx_hash=tx.txhash,
                     amount=amount,
                 )
+
+    try:
+        dt = datetime.fromtimestamp(int(tx.timestamp))
+    except ValueError:
+        dt = datetime.strptime(tx.timestamp, "%Y-%m-%dT%H:%M:%SZ")
 
     return XcTx(
         asset=asset,
         from_txs=list(from_txs.values()),
         to_txs=list(to_txs.values()),
-        date=datetime.fromtimestamp(int(tx.timestamp)),
+        date=dt,
         type=TxType.TRANSFER if from_txs or to_txs else TxType.UNKNOWN,
         hash=tx.txhash,
     )

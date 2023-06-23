@@ -271,17 +271,28 @@ class CosmosGaiaClient(XChainClient):
         j = await self._get_json(url)
         return TxHistoryResponse.from_rpc_json(j)
 
-    async def get_transaction_data(self, tx_id: str, asset_address: Optional[str]) -> XcTx:
+    async def get_transaction_data(self, tx_id: str, asset_address: Optional[str] = None) -> XcTx:
         """
         Get the transaction data for the given transaction id.
         :param tx_id:
         :param asset_address:
         :return:
         """
+
+        #
+        # tx = await asyncio.get_event_loop().run_in_executor(
+        #     None,
+        #     self._client.query_tx,
+        #     tx_id
+        # )
+
         url = f"{self.server_url}/cosmos/tx/v1beta1/txs/{tx_id}"
         j = await self._get_json(url)
 
-        return parse_tx_response(TxResponse.from_rpc_json(j), self.native_asset)
+        return parse_tx_response(
+            TxResponse.from_rpc_json(j['tx_response']),
+            self.native_asset
+        )
 
     async def get_fees(self, cache=None, tc_fee_rate=None) -> Fees:
         """
@@ -329,6 +340,11 @@ class CosmosGaiaClient(XChainClient):
             self._client.txs.rest_client._session.get,
             url,
         )
+
         if response.status_code != 200:
             raise Exception(f"Error getting {url}: {response.status_code} {response.text}")
         return response.json()
+
+    @property
+    def sdk_client(self) -> LedgerClient:
+        return self._client
