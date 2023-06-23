@@ -16,6 +16,15 @@ from .models import TxDetails, SwapEstimate, TotalFees, LPAmount, EstimateAddLP,
     EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails, LoanOpenQuote, BlockInformation, \
     LoanCloseQuote
 
+# Todo: New recommended_min_amount_in Value on Quote Endpoints
+"""
+Interfaces are recommended to start using the recommended_min_amount_in value returned from all the quote endpoints. 
+This value will be the minimum input value for the requested operation. 
+For swap quotes this value will be 4x MAX(outbound_fee(src_chain), outbound_fee(dest_chain)) 
+(priced in the input asset). 
+Interfaces should use this value as the strict minimum amount they allow to be swapped for a quoted pair, 
+which should greatly reduce failed refunds and refunds caused by outputs not being enough to cover fees."""
+
 
 class THORChainQuery:
     def __init__(self,
