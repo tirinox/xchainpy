@@ -54,7 +54,7 @@ class TxHistoryPage(NamedTuple):
     asset: Optional[Asset] = None
 
 
-class TxParams(NamedTuple):
+class TransferParams(NamedTuple):
     asset: Asset
     amount: Amount
     recipient: str

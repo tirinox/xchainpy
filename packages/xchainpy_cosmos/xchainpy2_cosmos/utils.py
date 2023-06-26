@@ -2,15 +2,9 @@ from datetime import datetime
 from typing import Optional, List
 
 from xchainpy2_client import XcTx, TxFrom, TxType
-from xchainpy2_utils import Asset, AssetATOM, Chain, Amount
+from xchainpy2_utils import Asset, AssetATOM, Chain, Amount, key_attr_getter
 from .const import COSMOS_DENOM, COSMOS_DECIMAL
 from .models import TxResponse
-
-
-def key_attr_getter(msg, key):
-    if hasattr(msg, key):
-        return getattr(msg, key)
-    return dict.__getitem__(msg, key)
 
 
 def is_msg_multi_send(msg):

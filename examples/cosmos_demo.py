@@ -7,9 +7,12 @@ from xchainpy2_cosmos import CosmosGaiaClient
 
 async def demo_read_txs():
     # random address from the explorer
-    demo_addy = 'cosmos1vcj2afqy7yv2dzk0v5g6rt9z6lzzzp9vf3vmy4'
+    demo_addy = 'cosmos1vmnszddr75huvt7fcvx7nuvk7vje4qmxe9zc0u'
 
     client = CosmosGaiaClient()
+
+    account = await client.get_account(demo_addy)
+    pprint(account)
 
     balance = await client.get_balance(demo_addy)
     pprint(balance)

@@ -2,6 +2,7 @@ import asyncio
 import logging
 from datetime import datetime
 from math import ceil
+from operator import itemgetter
 from typing import Optional, List
 from urllib.parse import urlencode
 
@@ -9,17 +10,19 @@ from cosmpy.aerial.client import LedgerClient, Account
 from cosmpy.aerial.config import NetworkConfig
 from cosmpy.aerial.wallet import LocalWallet
 from cosmpy.crypto.address import Address
+from cosmpy.protos.cosmos.tx.v1beta1.service_pb2 import BroadcastTxRequest, BroadcastMode
 
-from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, TxParams, XcTx, \
-    Fees, TxPage, AssetInfo, FeeType
+from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, TransferParams, XcTx, \
+    Fees, TxPage, AssetInfo, FeeType, FeeOption
 from xchainpy2_client.fees import single_fee
 from xchainpy2_crypto import derive_private_key, derive_address
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DECIMAL, Asset, Amount, AssetATOM
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DECIMAL, Asset, Amount, AssetATOM, \
+    unique_by_key, batched
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_DERIVATION_PATHS, COSMOS_ADDR_PREFIX, \
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
-    MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE
+    MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE, DEFAULT_GAS_LIMIT
 from .models import TxHistoryResponse, TxResponse
-from .utils import parse_tx_response, get_asset
+from .utils import parse_tx_response, get_asset, get_denom
 
 logger = logging.getLogger(__name__)
 
@@ -233,13 +236,19 @@ class CosmosGaiaClient(XChainClient):
                                start_time: Optional[datetime] = None,
                                end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None,
-                               filter_function: TxFilterFunc = None) -> TxPage:
+                               filter_function: TxFilterFunc = None,
+                               batch_size=10,
+                               batch_delay_sec=2) -> TxPage:
         message_action = None
 
         address = address if address else self.get_address()
         tx_min_height = None
         tx_max_height = None
-        asset = get_asset(asset) if asset else AssetATOM
+
+        if asset is None:
+            asset = AssetATOM
+        elif isinstance(asset, str):
+            asset = get_asset(asset)
 
         if limit + offset > MAX_PAGES_PER_FUNCTION_CALL * MAX_TX_COUNT_PER_PAGE:
             raise ValueError(
@@ -249,6 +258,57 @@ class CosmosGaiaClient(XChainClient):
             raise ValueError(f"Maximum number of transaction per call is {MAX_TX_COUNT_PER_FUNCTION_CALL}")
 
         pages_number = int(ceil((limit + offset) / MAX_TX_COUNT_PER_PAGE))
+
+        all_tx_incoming_history = []
+        all_tx_outgoing_history = []
+
+        for page in range(1, pages_number + 1):
+            call = self.search_tx_from_rpc(
+                message_action=message_action,
+                transfer_recipient=address,
+                page=page,
+                limit=MAX_TX_COUNT_PER_PAGE,
+                tx_max_height=tx_max_height,
+                tx_min_height=tx_min_height,
+                rpc_endpoint=self.server_url,
+            )
+            all_tx_incoming_history.append(call)
+
+            call = self.search_tx_from_rpc(
+                message_action=message_action,
+                transfer_sender=address,
+                page=page,
+                limit=MAX_TX_COUNT_PER_PAGE,
+                tx_max_height=tx_max_height,
+                tx_min_height=tx_min_height,
+                rpc_endpoint=self.server_url,
+            )
+            all_tx_incoming_history.append(call)
+
+        incoming_results = await asyncio.gather(*all_tx_incoming_history)
+        outgoing_results = await asyncio.gather(*all_tx_outgoing_history)
+
+        all_results = incoming_results + outgoing_results
+
+        results = [results['txs'] for results in all_results]
+
+        results = unique_by_key(results, itemgetter('hash'))
+
+        results.sort(key=lambda x: int(x['height']), reverse=True)
+
+        if filter_function:
+            results = filter(filter_function, results)
+
+        all_txs = []
+        for batch in batched(results, batch_size):
+            txs = await asyncio.gather(*[self.get_transaction_data(tx['hash']) for tx in batch])
+            all_txs.extend(txs)
+            await asyncio.sleep(batch_delay_sec)
+
+        return TxPage(
+            txs=all_txs,
+            total=len(all_txs)
+        )
 
     async def search_tx(self, message_action=None, message_sender=None, offset=0, limit=50):
         if not message_action and not message_sender:
@@ -355,11 +415,38 @@ class CosmosGaiaClient(XChainClient):
         fee_rate = Amount.from_base(tc_fee_rate * 10 ** decimal_diff, COSMOS_DECIMAL)
         return single_fee(FeeType.FLAT_FEE, fee_rate)
 
-    async def transfer(self, params: TxParams) -> XcTx:
-        pass
+    async def transfer(self, params: TransferParams) -> str:
+        """
+        Transfer coins.
+        :param params:
+        :return: str tx hash
+        """
+        response = await asyncio.get_event_loop().run_in_executor(
+            None,
+            self._client.send_tokens,
+            Address(params.recipient),
+            params.amount.amount,
+            get_denom(params.asset),
+            self._wallet,
+            params.memo,
+            DEFAULT_GAS_LIMIT,
+        )
+        return response.tx_hash
 
-    async def broadcast_tx(self, tx_hex: str) -> str:
-        pass
+    def broadcast_tx(self, tx_hex: str) -> str:
+        broadcast_req = BroadcastTxRequest(
+            tx_bytes=tx_hex.encode('utf-8'), mode=BroadcastMode.BROADCAST_MODE_SYNC
+        )
+
+        # broadcast the transaction
+        resp = self._client.txs.BroadcastTx(broadcast_req)
+        tx_digest = resp.tx_response.txhash
+
+        # check that the response is successful
+        initial_tx_response = self._client._parse_tx_response(resp.tx_response)
+        initial_tx_response.ensure_successful()
+
+        return tx_digest
 
     def get_asset_info(self) -> AssetInfo:
         return AssetInfo(
@@ -390,3 +477,35 @@ class CosmosGaiaClient(XChainClient):
     @property
     def sdk_client(self) -> LedgerClient:
         return self._client
+
+    async def build_deposit_tx(self, amount: CryptoAmount, memo: str = '', wallet_index: int = 0,
+                               sequence: int = -1, check_balance: bool = True) -> str:
+        address = self.get_address(wallet_index)
+
+        if sequence < 0:
+            acc = await self.get_account(address)
+            sequence = acc.sequence
+
+        fees = await self.get_fees()
+        fee = fees.fees[FeeOption.AVERAGE]
+
+        if check_balance:
+            balances = await self.get_balance(address)
+
+            asset_balance = None
+            native_balance = None
+
+            for balance in balances:
+                if balance.asset == amount.asset:
+                    asset_balance = balance
+                elif balance.asset == self.native_asset:
+                    native_balance = balance
+
+            is_native = amount.asset == self.native_asset
+            extra_fee = fee.amount if is_native else Amount.from_base(0, COSMOS_DECIMAL)
+
+            if asset_balance is None or asset_balance.amount < amount.amount + extra_fee:
+                raise ValueError(f"Insufficient funds: {amount.amount} {amount.asset}")
+
+            if native_balance is None or native_balance.amount < fee.amount:
+                raise ValueError(f"Insufficient funds to pay fee: {fee.amount} {self.native_asset}")
