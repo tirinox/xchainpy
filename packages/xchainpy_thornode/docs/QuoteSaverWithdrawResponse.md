@@ -15,6 +15,7 @@ Name | Type | Description | Notes
 **warning** | **str** | static warning message | 
 **notes** | **str** | chain specific quote notes | 
 **dust_threshold** | **str** | Defines the minimum transaction size for the chain in base units (sats, wei, uatom). Transctions with asset amounts lower than the dust_threshold are ignored. | [optional] 
+**recommended_min_amount_in** | **str** | The recommended minimum inbound amount for this transaction type &amp; inbound asset. Sending less than this amount could result in failed refunds. | [optional] 
 **memo** | **str** | generated memo for the withdraw, the client can use this OR send the dust amount | 
 **dust_amount** | **str** | the dust amount of the target asset the user should send to initialize the withdraw, the client can send this OR provide the memo | 
 **expected_amount_out** | **str** | the amount of the target asset the user can expect to withdraw after fees in 1e8 decimals | 

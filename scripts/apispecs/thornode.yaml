@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Thornode API
-  version: 1.110.0
+  version: 1.114.0
   contact:
     email: devs@thorchain.org
   description: Thornode REST API.
@@ -923,12 +923,6 @@ paths:
         type: integer
         format: int64
         example: 1000000
-    - name: from_address
-      in: query
-      description: the address that is paying off the loan
-      schema:
-        type: string
-        example: btc1xxxxxxxxxxxxx
     - name: loan_asset
       in: query
       description: the collateral asset of the loan
@@ -2192,12 +2186,17 @@ components:
       required:
       - asgard
       - yggdrasil
+      - inactive
       properties:
         asgard:
           type: array
           items:
             $ref: '#/components/schemas/VaultInfo'
         yggdrasil:
+          type: array
+          items:
+            $ref: '#/components/schemas/VaultInfo'
+        inactive:
           type: array
           items:
             $ref: '#/components/schemas/VaultInfo'
@@ -2212,6 +2211,10 @@ components:
       - vaults_migrating
       - gas_spent_rune
       - gas_withheld_rune
+      - outbound_tx_fee_rune
+      - native_tx_fee_rune
+      - tns_register_fee_rune
+      - tns_fee_per_block_rune
       properties:
         bond_reward_rune:
           type: string
@@ -2250,6 +2253,26 @@ components:
           type: string
           example: '15000'
           description: Current outbound fee multiplier, in basis points
+        outbound_tx_fee_rune:
+          type: string
+          example: '100000000'
+          description: the outbound transaction fee in rune, converted from the OutboundTransactionFeeUSD
+            mimir
+        native_tx_fee_rune:
+          type: string
+          example: '100000000'
+          description: the native transaction fee in rune, converted from the NativeTransactionFeeUSD
+            mimir
+        tns_register_fee_rune:
+          type: string
+          example: '1000000000'
+          description: the thorname register fee in rune, converted from the TNSRegisterFeeUSD
+            mimir
+        tns_fee_per_block_rune:
+          type: string
+          example: '20'
+          description: the thorname fee per block in rune, converted from the TNSFeePerBlockUSD
+            mimir
     POLResponse:
       type: object
       required:
@@ -2525,10 +2548,15 @@ components:
           description: Defines the minimum transaction size for the chain in base
             units (sats, wei, uatom). Transctions with asset amounts lower than the
             dust_threshold are ignored.
+        recommended_min_amount_in: &id028
+          type: string
+          description: The recommended minimum inbound amount for this transaction
+            type & inbound asset. Sending less than this amount could result in failed
+            refunds.
+          example: '15000'
     QuoteSwapResponse:
       type: object
       required:
-      - inbound_address
       - expected_amount_out
       - outbound_delay_blocks
       - outbound_delay_seconds
@@ -2550,6 +2578,7 @@ components:
         warning: *id025
         notes: *id026
         dust_threshold: *id027
+        recommended_min_amount_in: *id028
         memo:
           type: string
           description: generated memo for the swap
@@ -2564,7 +2593,7 @@ components:
       required:
       - memo
       - inbound_address
-      - expected_amount_out
+      - expected_amount_deposit
       - fees
       - slippage_bps
       - warning
@@ -2583,13 +2612,15 @@ components:
         warning: *id025
         notes: *id026
         dust_threshold: *id027
+        recommended_min_amount_in: *id028
         memo:
           type: string
           description: generated memo for the deposit
           example: +:ETH/ETH::thor17gw75axcnr8747pkanye45pnrwk7p9c3cqncsv:100
         expected_amount_out:
           type: string
-          description: migrate to expected_amount_deposit (will be deprecated in v1.104)
+          description: same as expected_amount_deposit, to be deprecated in favour
+            of expected_amount_deposit
           example: '10000'
         expected_amount_deposit:
           type: string
@@ -2623,6 +2654,7 @@ components:
         warning: *id025
         notes: *id026
         dust_threshold: *id027
+        recommended_min_amount_in: *id028
         memo:
           type: string
           description: generated memo for the withdraw, the client can use this OR
@@ -2641,7 +2673,6 @@ components:
     QuoteLoanOpenResponse:
       type: object
       required:
-      - inbound_address
       - expected_amount_out
       - expected_collateralization_ratio
       - expected_collateral_up
@@ -2665,6 +2696,7 @@ components:
         warning: *id025
         notes: *id026
         dust_threshold: *id027
+        recommended_min_amount_in: *id028
         memo:
           type: string
           description: generated memo for the loan open
@@ -2689,7 +2721,6 @@ components:
     QuoteLoanCloseResponse:
       type: object
       required:
-      - inbound_address
       - expected_amount_out
       - expected_collateral_down
       - expected_debt_down
@@ -2713,6 +2744,7 @@ components:
         warning: *id025
         notes: *id026
         dust_threshold: *id027
+        recommended_min_amount_in: *id028
         memo:
           type: string
           description: generated memo for the loan close
