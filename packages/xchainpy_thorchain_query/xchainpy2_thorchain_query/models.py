@@ -29,6 +29,7 @@ class SwapEstimate(NamedTuple):
     outbound_delay_seconds: float
     can_swap: bool
     errors: List[str]
+    recommended_min_amount_in: int
 
 
 class LiquidityPool(NamedTuple):
@@ -175,6 +176,7 @@ class EstimateAddLP(NamedTuple):
     estimated_wait_seconds: int
     errors: List[str]
     can_add: bool
+    recommended_min_amount_in: int
 
 
 class EstimateWithdrawLP(NamedTuple):
@@ -247,6 +249,7 @@ class EstimateAddSaver(NamedTuple):
     estimated_wait_time: int
     can_add_saver: bool
     errors: List[str]
+    recommended_min_amount_in: int
 
 
 class SaversPosition(NamedTuple):
@@ -418,6 +421,7 @@ class LoanOpenQuote(NamedTuple):
     expected_collateral_up: int
     expected_debt_up: int
     errors: List[str]
+    recommended_min_amount_in: int
 
 
 class LoanCloseQuote(NamedTuple):
@@ -435,3 +439,4 @@ class LoanCloseQuote(NamedTuple):
     expected_collateral_down: int
     expected_debt_down: int
     errors: List[str]
+    recommended_min_amount_in: int

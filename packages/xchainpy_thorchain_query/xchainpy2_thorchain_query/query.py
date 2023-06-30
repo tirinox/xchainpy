@@ -13,17 +13,8 @@ from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity, get_liquidity_protection_data
 from .models import TxDetails, SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
     LiquidityPosition, Block, PostionDepositValue, PoolRatios, WithdrawLiquidityPosition, EstimateWithdrawLP, \
-    EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails, LoanOpenQuote, BlockInformation, \
-    LoanCloseQuote
-
-# Todo: New recommended_min_amount_in Value on Quote Endpoints
-"""
-Interfaces are recommended to start using the recommended_min_amount_in value returned from all the quote endpoints. 
-This value will be the minimum input value for the requested operation. 
-For swap quotes this value will be 4x MAX(outbound_fee(src_chain), outbound_fee(dest_chain)) 
-(priced in the input asset). 
-Interfaces should use this value as the strict minimum amount they allow to be swapped for a quoted pair, 
-which should greatly reduce failed refunds and refunds caused by outputs not being enough to cover fees."""
+    EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails, LoanOpenQuote, \
+    BlockInformation, LoanCloseQuote
 
 
 class THORChainQuery:
@@ -94,7 +85,8 @@ class THORChainQuery:
                     zero,
                     0, 0,
                     can_swap=False,
-                    errors=errors
+                    errors=errors,
+                    recommended_min_amount_in=0
                 )
             )
 
@@ -115,7 +107,8 @@ class THORChainQuery:
                 outbound_delay_seconds=swap_quote.outbound_delay_seconds,
                 inbound_confirmation_seconds=swap_quote.inbound_confirmation_seconds,
                 can_swap=True,
-                errors=errors
+                errors=errors,
+                recommended_min_amount_in=int(swap_quote.recommended_min_amount_in)
             )
         )
 
@@ -291,6 +284,7 @@ class THORChainQuery:
             estimated_wait_seconds=wait_time_sec,
             errors=errors,
             can_add=(not errors),
+            recommended_min_amount_in=0,
         )
 
     async def check_liquidity_position(self, asset: Asset, asset_or_rune_address: str) -> LiquidityPosition:
@@ -499,7 +493,8 @@ class THORChainQuery:
                 saver_cap_filled_percent=-1,
                 estimated_wait_time=-1,
                 can_add_saver=False,
-                errors=errors
+                errors=errors,
+                recommended_min_amount_in=0
             )
 
         # Calculate transaction expiry time of the vault address
@@ -538,7 +533,8 @@ class THORChainQuery:
             can_add_saver=(not errors),
             slip_basis_points=int(deposit_quote.slippage_bps),
             saver_cap_filled_percent=saver_cap_filled_percent,
-            errors=errors
+            errors=errors,
+            recommended_min_amount_in=int(deposit_quote.recommended_min_amount_in),
         )
 
     async def get_add_savers_estimate_errors(self, add_amount: CryptoAmount) -> List[str]:
@@ -754,7 +750,8 @@ class THORChainQuery:
                 expected_debt_up=0,
                 expected_collateral_up=0,
                 expected_collateralization_ratio=0,
-                errors=errors
+                errors=errors,
+                recommended_min_amount_in=0,
             )
 
         # Todo: convenience type conversion
@@ -781,7 +778,8 @@ class THORChainQuery:
             expected_debt_up=int(resp.expected_debt_up),
             expected_collateral_up=int(resp.expected_collateral_up),
             expected_collateralization_ratio=float(resp.expected_collateralization_ratio),
-            errors=errors
+            errors=errors,
+            recommended_min_amount_in=int(resp.recommended_min_amount_in),
         )
 
     async def get_loan_quote_close(self, amount: CryptoAmount, from_address: str,
@@ -827,7 +825,8 @@ class THORChainQuery:
                 expected_amount_out=0,
                 expected_collateral_down=0,
                 expected_debt_down=0,
-                errors=errors
+                errors=errors,
+                recommended_min_amount_in=0,
             )
 
         return LoanCloseQuote(
@@ -852,17 +851,9 @@ class THORChainQuery:
             expected_amount_out=int(resp.expected_amount_out),
             expected_collateral_down=int(resp.expected_collateral_down),
             expected_debt_down=int(resp.expected_debt_down),
-            errors=errors
+            errors=errors,
+            recommended_min_amount_in=int(resp.recommended_min_amount_in),
         )
-
-    # ---- previous code ----
-    # ---- previous code ----
-    # ---- previous code ----
-    # ---- previous code ----
-    # ---- previous code ----
-    # ---- previous code ----
-    # ---- previous code ----
-    # ---- previous code ----
 
     @property
     def native_chain_attributes(self):
