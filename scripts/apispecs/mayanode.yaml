@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Mayanode API
-  version: 1.104.0
+  version: 1.104.1
   contact:
     email: devs@mayachain.org
   description: Mayanode REST API.
