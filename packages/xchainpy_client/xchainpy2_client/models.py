@@ -54,14 +54,6 @@ class TxHistoryPage(NamedTuple):
     asset: Optional[Asset] = None
 
 
-class TransferParams(NamedTuple):
-    asset: Asset
-    amount: Amount
-    recipient: str
-    memo: Optional[str] = None
-    fee_rate: Optional[int] = None
-
-
 class FeeOption(Enum):
     AVERAGE = 'average'
     FAST = 'fast'

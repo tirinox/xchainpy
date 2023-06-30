@@ -8,7 +8,7 @@ from cosmpy.aerial.client import LedgerClient, Address, Account
 from cosmpy.aerial.config import NetworkConfig
 from cosmpy.aerial.wallet import LocalWallet
 
-from packages.xchainpy_client.xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, TransferParams, XcTx, \
+from packages.xchainpy_client.xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx, \
     Fees, TxPage
 from xchainpy2_client import AssetInfo
 from xchainpy2_crypto import derive_private_key, derive_address, decode_address
@@ -234,7 +234,11 @@ class THORChainClient(XChainClient):
     async def get_fees(self, **kwargs) -> Fees:
         pass
 
-    async def transfer(self, params: TransferParams) -> XcTx:
+    async def transfer(self, what: CryptoAmount,
+                       recipient: str,
+                       memo: Optional[str] = None,
+                       fee_rate: Optional[int] = None
+                       ) -> XcTx:
         pass
 
     async def broadcast_tx(self, tx_hex: str) -> str:

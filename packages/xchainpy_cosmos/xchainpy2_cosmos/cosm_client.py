@@ -10,9 +10,10 @@ from cosmpy.aerial.client import LedgerClient, Account
 from cosmpy.aerial.config import NetworkConfig
 from cosmpy.aerial.wallet import LocalWallet
 from cosmpy.crypto.address import Address
+from cosmpy.crypto.keypairs import PrivateKey
 from cosmpy.protos.cosmos.tx.v1beta1.service_pb2 import BroadcastTxRequest, BroadcastMode
 
-from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, TransferParams, XcTx, \
+from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx, \
     Fees, TxPage, AssetInfo, FeeType, FeeOption
 from xchainpy2_client.fees import single_fee
 from xchainpy2_crypto import derive_private_key, derive_address
@@ -65,6 +66,7 @@ class CosmosGaiaClient(XChainClient):
 
         self._wallet: Optional[LocalWallet] = None
         self.native_asset = AssetATOM
+        self._prefix = COSMOS_ADDR_PREFIX
 
     def get_client(self) -> LedgerClient:
         return self._client
@@ -152,7 +154,7 @@ class CosmosGaiaClient(XChainClient):
         if not address:
             return False
 
-        if not address.startswith(COSMOS_ADDR_PREFIX):
+        if not address.startswith(self._prefix):
             return False
 
         try:
@@ -169,7 +171,7 @@ class CosmosGaiaClient(XChainClient):
         """
         return derive_address(self.phrase,
                               self.get_full_derivation_path(wallet_index),
-                              prefix=COSMOS_ADDR_PREFIX)
+                              prefix=self._prefix)
 
     def get_private_key(self, wallet_index=0) -> str:
         """
@@ -415,31 +417,46 @@ class CosmosGaiaClient(XChainClient):
         fee_rate = Amount.from_base(tc_fee_rate * 10 ** decimal_diff, COSMOS_DECIMAL)
         return single_fee(FeeType.FLAT_FEE, fee_rate)
 
-    async def transfer(self, params: TransferParams) -> str:
+    async def transfer(self, what: CryptoAmount,
+                       recipient: str,
+                       memo: Optional[str] = None,
+                       fee_rate: Optional[int] = None,
+                       check_balance: bool = True,
+                       wallet_index=0) -> str:
         """
         Transfer coins.
-        :param params:
+        :param what: CryptoAmount
+        :param recipient: str
+        :param memo: str
+        :param fee_rate: int
         :return: str tx hash
         """
+        self._make_wallet(wallet_index)
+        if check_balance:
+            await self.check_balance(str(self._wallet.address()), what)
+
         response = await asyncio.get_event_loop().run_in_executor(
             None,
             self._client.send_tokens,
-            Address(params.recipient),
-            params.amount.amount,
-            get_denom(params.asset),
+            Address(recipient),
+            what.amount,
+            get_denom(what.asset),
             self._wallet,
-            params.memo,
+            memo,
             DEFAULT_GAS_LIMIT,
         )
         return response.tx_hash
 
-    def broadcast_tx(self, tx_hex: str) -> str:
+    async def broadcast_tx(self, tx_hex: str) -> str:
         broadcast_req = BroadcastTxRequest(
             tx_bytes=tx_hex.encode('utf-8'), mode=BroadcastMode.BROADCAST_MODE_SYNC
         )
 
         # broadcast the transaction
-        resp = self._client.txs.BroadcastTx(broadcast_req)
+        resp = await asyncio.get_event_loop().run_in_executor(
+            None,
+            self._client.txs.BroadcastTx,
+            broadcast_req)
         tx_digest = resp.tx_response.txhash
 
         # check that the response is successful
@@ -478,34 +495,35 @@ class CosmosGaiaClient(XChainClient):
     def sdk_client(self) -> LedgerClient:
         return self._client
 
-    async def build_deposit_tx(self, amount: CryptoAmount, memo: str = '', wallet_index: int = 0,
-                               sequence: int = -1, check_balance: bool = True) -> str:
-        address = self.get_address(wallet_index)
+    @property
+    def prefix(self) -> str:
+        return self._prefix
 
-        if sequence < 0:
-            acc = await self.get_account(address)
-            sequence = acc.sequence
-
+    async def check_balance(self, address, amount: CryptoAmount):
         fees = await self.get_fees()
         fee = fees.fees[FeeOption.AVERAGE]
 
-        if check_balance:
-            balances = await self.get_balance(address)
+        balances = await self.get_balance(address)
 
-            asset_balance = None
-            native_balance = None
+        asset_balance = None
+        native_balance = None
 
-            for balance in balances:
-                if balance.asset == amount.asset:
-                    asset_balance = balance
-                elif balance.asset == self.native_asset:
-                    native_balance = balance
+        for balance in balances:
+            if balance.asset == amount.asset:
+                asset_balance = balance
+            elif balance.asset == self.native_asset:
+                native_balance = balance
 
-            is_native = amount.asset == self.native_asset
-            extra_fee = fee.amount if is_native else Amount.from_base(0, COSMOS_DECIMAL)
+        is_native = amount.asset == self.native_asset
+        extra_fee = fee.amount if is_native else Amount.from_base(0, COSMOS_DECIMAL)
 
-            if asset_balance is None or asset_balance.amount < amount.amount + extra_fee:
-                raise ValueError(f"Insufficient funds: {amount.amount} {amount.asset}")
+        if asset_balance is None or asset_balance.amount < amount.amount + extra_fee:
+            raise ValueError(f"Insufficient funds: {amount.amount} {amount.asset}")
 
-            if native_balance is None or native_balance.amount < fee.amount:
-                raise ValueError(f"Insufficient funds to pay fee: {fee.amount} {self.native_asset}")
+        if native_balance is None or native_balance.amount < fee.amount:
+            raise ValueError(f"Insufficient funds to pay fee: {fee.amount} {self.native_asset}")
+
+    def _make_wallet(self, wallet_index: int = 0) -> LocalWallet:
+        pk = PrivateKey(bytes.fromhex(self.get_private_key(wallet_index)))
+        self._wallet = LocalWallet(pk, self._prefix)
+        return self._wallet

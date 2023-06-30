@@ -2,7 +2,7 @@ import abc
 from datetime import datetime
 from typing import Optional, List
 
-from packages.xchainpy_client.xchainpy2_client.models import TransferParams, XcTx, Fees, TxPage, \
+from packages.xchainpy_client.xchainpy2_client.models import XcTx, Fees, TxPage, \
     FeeBounds, Fee, RootDerivationPaths, AssetInfo
 from xchainpy2_crypto import validate_mnemonic
 from xchainpy2_utils import Address, CryptoAmount, Chain, NetworkType, Asset
@@ -113,7 +113,11 @@ class XChainClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def transfer(self, params: TransferParams) -> XcTx:
+    async def transfer(self, what: CryptoAmount,
+                       recipient: str,
+                       memo: Optional[str] = None,
+                       fee_rate: Optional[int] = None
+                       ) -> XcTx:
         pass
 
     @abc.abstractmethod
