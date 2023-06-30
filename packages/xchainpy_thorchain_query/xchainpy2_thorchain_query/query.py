@@ -90,6 +90,10 @@ class THORChainQuery:
                 )
             )
 
+        if int(swap_quote.recommended_min_amount_in) and int(input_amount) < int(swap_quote.recommended_min_amount_in):
+            errors.append(f'Input amount {amount.amount} is less than recommended min amount in '
+                          f'{swap_quote.recommended_min_amount_in}')
+
         fee_asset = Asset.from_string_exc(swap_quote.fees.asset)
 
         return TxDetails(
@@ -476,6 +480,13 @@ class THORChainQuery:
         if hasattr(deposit_quote, 'error'):
             errors.append(f"Thornode request quote failed: {deposit_quote.error}")
 
+        # The recommended minimum inbound amount for this transaction type & inbound asset.
+        # Sending less than this amount could result in failed refunds
+        if int(deposit_quote.recommended_min_amount_in) and \
+                int(new_add_amount.amount) < int(deposit_quote.recommended_min_amount_in):
+            errors.append(f"Amount {new_add_amount.amount} is less than recommended min amount in "
+                          f"{deposit_quote.recommended_min_amount_in}")
+
         # Error handling
         if errors:
             return EstimateAddSaver(
@@ -578,8 +589,6 @@ class THORChainQuery:
         errors = []
         if asset == self.native_asset or asset.synth:
             errors.append(f"Native Rune and synth assets are not supported only L1's")
-
-        inbound_details = await self.cache.get_inbound_details()
 
         # Check to see if there is a position before calling withdraw quote
         check_position = await self.get_saver_position(asset, address)
@@ -732,6 +741,9 @@ class THORChainQuery:
         )
         if hasattr(resp, 'error'):
             errors.append(f"Thornode request quote failed: {resp.error}")
+
+        if resp.recommended_min_amount_in and amount.amount.as_base.amount < resp.recommended_min_amount_in:
+            errors.append(f"Amount is less than recommended minimum amount in: {resp.recommended_min_amount_in}")
 
         if errors:
             # Todo: convenience type conversion
