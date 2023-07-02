@@ -68,6 +68,10 @@ class CosmosGaiaClient(XChainClient):
         self.native_asset = AssetATOM
         self._prefix = COSMOS_ADDR_PREFIX
 
+        self._denom = COSMOS_DENOM
+        self._decimal = COSMOS_DECIMAL
+        self._gas_limit = DEFAULT_GAS_LIMIT
+
     def get_client(self) -> LedgerClient:
         return self._client
 
@@ -80,8 +84,8 @@ class CosmosGaiaClient(XChainClient):
         self._client = LedgerClient(NetworkConfig(
             chain_id=self.chain_ids[self.network],
             url=rest_url,
-            fee_denomination=COSMOS_DENOM,
-            staking_denomination=COSMOS_DENOM,
+            fee_denomination=self._denom,
+            staking_denomination=self._denom,
             fee_minimum_gas_price=0,
         ))
 
@@ -202,7 +206,7 @@ class CosmosGaiaClient(XChainClient):
 
         our_balances = [
             CryptoAmount(
-                Amount.from_base(balance.amount, COSMOS_DECIMAL),
+                Amount.from_base(balance.amount, self._decimal),
                 Asset(Chain.Cosmos.value, balance.denom.upper())
             )
             for balance in balances
@@ -375,11 +379,10 @@ class CosmosGaiaClient(XChainClient):
 
         return await self._get_json(url)
 
-    async def get_transaction_data(self, tx_id: str, asset_address: Optional[str] = None) -> XcTx:
+    async def get_transaction_data(self, tx_id: str) -> XcTx:
         """
         Get the transaction data for the given transaction id.
         :param tx_id:
-        :param asset_address:
         :return:
         """
 
@@ -406,15 +409,15 @@ class CosmosGaiaClient(XChainClient):
         :param tc_fee_rate: You can externally pass the fee rate having 8 decimals. (optional)
         :return:
         """
-        if tc_fee_rate is None:
-            tc_fee_rate = await cache.get_fee_rates(self.chain)
-        else:
+        if tc_fee_rate is not None:
             return single_fee(FeeType.FLAT_FEE, DEFAULT_FEE)
+
+        tc_fee_rate = await cache.get_fee_rates(self.chain)
 
         # convert decimal: 1e8 (THORChain) to 1e6 (COSMOS)
         # Similar to `fromCosmosToThorchain` in THORNode
-        decimal_diff = COSMOS_DECIMAL - RUNE_DECIMAL
-        fee_rate = Amount.from_base(tc_fee_rate * 10 ** decimal_diff, COSMOS_DECIMAL)
+        decimal_diff = self._decimal - RUNE_DECIMAL
+        fee_rate = Amount.from_base(tc_fee_rate * 10 ** decimal_diff, self._decimal)
         return single_fee(FeeType.FLAT_FEE, fee_rate)
 
     async def transfer(self, what: CryptoAmount,
@@ -425,13 +428,15 @@ class CosmosGaiaClient(XChainClient):
                        wallet_index=0) -> str:
         """
         Transfer coins.
-        :param what: CryptoAmount
-        :param recipient: str
+        :param wallet_index: Wallet index
+        :param what: CryptoAmount (amount and asset to transfer)
+        :param recipient: str recepient address
         :param memo: str
         :param fee_rate: int
         :return: str tx hash
         """
         self._make_wallet(wallet_index)
+
         if check_balance:
             await self.check_balance(str(self._wallet.address()), what)
 
@@ -443,7 +448,7 @@ class CosmosGaiaClient(XChainClient):
             get_denom(what.asset),
             self._wallet,
             memo,
-            DEFAULT_GAS_LIMIT,
+            self._gas_limit,
         )
         return response.tx_hash
 
@@ -515,7 +520,7 @@ class CosmosGaiaClient(XChainClient):
                 native_balance = balance
 
         is_native = amount.asset == self.native_asset
-        extra_fee = fee.amount if is_native else Amount.from_base(0, COSMOS_DECIMAL)
+        extra_fee = fee.amount if is_native else Amount.from_base(0, self._decimal)
 
         if asset_balance is None or asset_balance.amount < amount.amount + extra_fee:
             raise ValueError(f"Insufficient funds: {amount.amount} {amount.asset}")

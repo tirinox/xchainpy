@@ -18,7 +18,7 @@ REQUIRES = [
     "xchainpy2_util",
     "xchainpy2_crypto",
     "xchainpy2_client",
-    "cosmpy",
+    "cosmpy>=0.8.0",
 ]
 
 

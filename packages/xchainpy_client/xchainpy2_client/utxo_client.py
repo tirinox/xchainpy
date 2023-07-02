@@ -85,7 +85,7 @@ class UTXOClient(XChainClient, abc.ABC):
 
         return await self._round_robin('get_transactions', address, offset, limit, start_time, end_time, asset)
 
-    async def get_transaction_data(self, tx_id: str, asset_address: Optional[Address] = None) -> XcTx:
+    async def get_transaction_data(self, tx_id: str) -> XcTx:
         """
         Get the transaction details of a given transaction id.
         :param tx_id: The transaction id.

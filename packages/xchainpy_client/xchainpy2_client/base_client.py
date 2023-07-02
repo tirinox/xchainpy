@@ -105,7 +105,7 @@ class XChainClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_transaction_data(self, tx_id: str, asset_address: Optional[Address]) -> XcTx:
+    async def get_transaction_data(self, tx_id: str) -> XcTx:
         pass
 
     @abc.abstractmethod
@@ -116,8 +116,8 @@ class XChainClient(abc.ABC):
     async def transfer(self, what: CryptoAmount,
                        recipient: str,
                        memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None
-                       ) -> XcTx:
+                       fee_rate: Optional[int] = None,
+                       wallet_index: int = 0, **kwargs) -> str:
         pass
 
     @abc.abstractmethod
