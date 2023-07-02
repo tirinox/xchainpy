@@ -61,6 +61,15 @@ DEFAULT_CLIENT_URLS = {
     NetworkType.TESTNET: NodeURL('deprecated', 'deprecated'),
 }
 
+CALLBACK_CLIENT_URLS = {
+    NetworkType.MAINNET: [
+        NodeURL('https://thornode-v1.ninerealms.com', 'https://rpc-v1.ninerealms.com'),
+        NodeURL('https://thornode.thorswap.net/', 'https://rpc.thorswap.net')
+    ],
+    NetworkType.STAGENET: [DEFAULT_CLIENT_URLS[NetworkType.STAGENET]],
+    NetworkType.TESTNET: []
+}
+
 # Base "chain" asset for RUNE-67C on Binance test net.
 AssetRuneBNBTestnet = Asset.from_string('BNB.RUNE-67C')
 
