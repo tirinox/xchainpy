@@ -7,10 +7,14 @@
 DEFAULT_TC_PATH="$HOME/Downloads/thornode-release-1.114.0"
 TC_PATH="${1:-$DEFAULT_TC_PATH}"
 
-OUT_PATH="../packages/xchainpy_thorchain/xchainpy2_thorchain"
+OUT_PATH="../packages/xchainpy_thorchain/xchainpy2_thorchain/proto"
 
 python3 -m grpc_tools.protoc --proto_path="${TC_PATH}/proto" \
   --proto_path="${TC_PATH}/third_party/proto" \
-  --python_out="${OUT_PATH}" \
+  --python_out="${OUT_PATH}" --grpc_python_out="${OUT_PATH}" \
   "thorchain/v1/x/thorchain/types/msg_deposit.proto" \
   "thorchain/v1/common/common.proto" "gogoproto/gogo.proto"
+
+find "$OUT_PATH/" -type d -exec echo {} \;
+# restore root __init__.py as it contains code to have the proto files module available
+git restore "$(OUT_PATH)/__init__.py"
