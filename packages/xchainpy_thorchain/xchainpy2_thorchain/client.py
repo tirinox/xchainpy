@@ -9,6 +9,8 @@ from xchainpy2_crypto import decode_address
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE
+# noinspection PyUnresolvedReferences
+from .proto.thorchain.v1.x.thorchain.types.msg_deposit_pb2 import MsgDeposit
 from .utils import get_thor_address_prefix
 
 
@@ -32,9 +34,19 @@ class THORChainClient(CosmosGaiaClient):
         :param chain_ids: Dictionary of chain ids for each network type. See: DEFAULT_CHAIN_IDS
         :param explorer_providers: Dictionary of explorer providers for each network type. See: THOR_EXPLORERS
         """
+        self.explorer_providers = explorer_providers.copy() if explorer_providers else THOR_EXPLORERS.copy()
+
+        if isinstance(client_urls, NodeURL):
+            client_urls = {network: client_urls}
+
+        self.client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
+
+        self.chain_ids = chain_ids.copy() if chain_ids else DEFAULT_CHAIN_IDS.copy()
+
         root_derivation_paths = root_derivation_paths.copy() if root_derivation_paths else ROOT_DERIVATION_PATHS.copy()
         super().__init__(
-            network, phrase, fee_bound, root_derivation_paths
+            network, phrase, fee_bound, root_derivation_paths,
+            self.client_urls, self.chain_ids, self.explorer_providers
         )
 
         # Tune for THORChain
@@ -46,12 +58,7 @@ class THORChainClient(CosmosGaiaClient):
         self._gas_limit = DEFAULT_GAS_LIMIT_VALUE
         self._deposit_gas_limit = DEPOSIT_GAS_LIMIT_VALUE
 
-        if isinstance(client_urls, NodeURL):
-            client_urls = {network: client_urls}
-
-        self.explorer_providers = explorer_providers.copy() if explorer_providers else THOR_EXPLORERS.copy()
-        self.client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
-        self.chain_ids = chain_ids.copy() if chain_ids else DEFAULT_CHAIN_IDS.copy()
+        self._recreate_client()
 
     @property
     def server_url(self):
@@ -108,7 +115,5 @@ class THORChainClient(CosmosGaiaClient):
         if sequence is None:
             account = await self.get_account(address)
             sequence = account.sequence
-
-
 
         return 'todo!'

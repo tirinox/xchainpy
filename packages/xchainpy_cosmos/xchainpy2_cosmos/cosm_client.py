@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from datetime import datetime
-from math import ceil
 from operator import itemgetter
 from typing import Optional, List
 from urllib.parse import urlencode
@@ -12,6 +11,7 @@ from cosmpy.aerial.wallet import LocalWallet
 from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PrivateKey
 from cosmpy.protos.cosmos.tx.v1beta1.service_pb2 import BroadcastTxRequest, BroadcastMode
+from math import ceil
 
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx, \
     Fees, TxPage, AssetInfo, FeeType, FeeOption
@@ -61,16 +61,17 @@ class CosmosGaiaClient(XChainClient):
         self.client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
         self.chain_ids = chain_ids.copy() if chain_ids else COSMOS_CHAIN_IDS.copy()
 
-        self._client: Optional[LedgerClient] = None
-        self._recreate_client()
-
-        self._wallet: Optional[LocalWallet] = None
         self.native_asset = AssetATOM
         self._prefix = COSMOS_ADDR_PREFIX
 
         self._denom = COSMOS_DENOM
         self._decimal = COSMOS_DECIMAL
         self._gas_limit = DEFAULT_GAS_LIMIT
+
+        self._client: Optional[LedgerClient] = None
+        self._recreate_client()
+
+        self._wallet: Optional[LocalWallet] = None
 
     def get_client(self) -> LedgerClient:
         return self._client
