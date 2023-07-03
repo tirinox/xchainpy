@@ -9,7 +9,7 @@ from cosmpy.aerial.client import LedgerClient, Account
 from cosmpy.aerial.config import NetworkConfig
 from cosmpy.aerial.wallet import LocalWallet
 from cosmpy.crypto.address import Address
-from cosmpy.crypto.keypairs import PrivateKey
+from cosmpy.crypto.keypairs import PrivateKey, PublicKey
 from cosmpy.protos.cosmos.tx.v1beta1.service_pb2 import BroadcastTxRequest, BroadcastMode
 from math import ceil
 
@@ -186,6 +186,13 @@ class CosmosGaiaClient(XChainClient):
         """
         return derive_private_key(self.phrase, self.get_full_derivation_path(wallet_index)).hex()
 
+    def get_public_key(self, wallet_index=0) -> PublicKey:
+        return self.get_private_key_cosmos(wallet_index).public_key
+
+    def get_private_key_cosmos(self, wallet_index=0) -> PrivateKey:
+        pk = self.get_private_key(wallet_index)
+        return PrivateKey(bytes.fromhex(pk))
+
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         """
         Get the balance of a given address.
@@ -215,14 +222,18 @@ class CosmosGaiaClient(XChainClient):
 
         return our_balances
 
-    async def get_account(self, address: str) -> Optional[Account]:
+    async def get_account(self, address: str = None, wallet_index=0) -> Optional[Account]:
         """
         Get the account information for the given address: number and sequence.
         It there is no account, it will return None.
         It will throw an exception for special addresses (like Reserve)
+        :param wallet_index: Optional wallet_index if no address specified
         :param address: By default, it will return the account of the current wallet. (optional)
         :return:
         """
+        if address is None:
+            address = self.get_address(wallet_index)
+
         address = Address(address)
 
         try:
@@ -533,3 +544,6 @@ class CosmosGaiaClient(XChainClient):
         pk = PrivateKey(bytes.fromhex(self.get_private_key(wallet_index)))
         self._wallet = LocalWallet(pk, self._prefix)
         return self._wallet
+
+    def get_amount_string(self, amount):
+        return f"{int(amount)}{self._denom}"
