@@ -1,6 +1,8 @@
+import asyncio
 from typing import Optional, Union
 
 from bip_utils import Bech32ChecksumError
+from cosmpy.aerial.tx_helpers import SubmittedTx
 
 from packages.xchainpy_client.xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_client import AssetInfo
@@ -9,9 +11,7 @@ from xchainpy2_crypto import decode_address
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE
-# noinspection PyUnresolvedReferences
-from .proto.thorchain.v1.x.thorchain.types.msg_deposit_pb2 import MsgDeposit
-from .utils import get_thor_address_prefix
+from .utils import get_thor_address_prefix, build_deposit_tx_unsigned
 
 
 class THORChainClient(CosmosGaiaClient):
@@ -85,19 +85,28 @@ class THORChainClient(CosmosGaiaClient):
     async def deposit(self,
                       what: Union[CryptoAmount, Amount, int, float],
                       memo: str,
+                      second_asset: Optional[CryptoAmount] = None,
                       gas_limit: Optional[int] = None,
                       sequence: int = None,
+                      account_number: int = None,
                       check_balance: bool = True,
-                      wallet_index: int = 0) -> str:
+                      fee=None,
+                      wallet_index: int = 0,
+                      return_full_response=False) -> Union[SubmittedTx, str]:
         """
         Send deposit transaction
         :param what: Amount and Asset
+        :param second_asset: optional second asset if needed
         :param memo: Memo string (usually a command to the AMM)
         :param gas_limit: if not specified, we'll use the default value
         :param sequence: sequence number. If it is None, it will be fetched automatically
         :param check_balance: Flag to check the balance before sending Tx
-        :param wallet_index: Wallet index, default 0
-        :return:
+        :param wallet_index: Wallet index, default is 0
+        :param fee: string like "0rune", default is 0
+        :param account_number: Your account number. If it is none, we will fetch it
+        :param return_full_response: when it is not enough to have just tx hash
+
+        :return: submitted tx hash or full response (SubmittedTt object) if requested
         """
         if isinstance(what, Amount):
             what = CryptoAmount(what, self.native_asset)
@@ -112,8 +121,35 @@ class THORChainClient(CosmosGaiaClient):
         if gas_limit is None:
             gas_limit = self._deposit_gas_limit
 
-        if sequence is None:
+        if sequence is None or account_number is None:
             account = await self.get_account(address)
             sequence = account.sequence
+            account_number = account.number
 
-        return 'todo!'
+        public_key = self.get_public_key(wallet_index)
+
+        tx = build_deposit_tx_unsigned(
+            what, memo,
+            public_key,
+            fee=fee or self.get_amount_string(0),
+            prefix=self.prefix,
+            sequence_num=sequence,
+            gas_limit=gas_limit,
+            second_asset=second_asset,
+        )
+
+        tx.sign(
+            self.get_private_key_cosmos(wallet_index),
+            self.get_chain_id(),
+            account_number=account_number
+        )
+
+        tx.complete()
+
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            self._client.broadcast_tx,
+            tx
+        )
+
+        return result if return_full_response else result.tx_hash
