@@ -77,6 +77,14 @@ class Asset(NamedTuple):
         elif p == XChainProtocol.MAYA:
             return self == AssetCACAO
 
+    @property
+    def ticker(self):
+        return self.symbol
+
+    @property
+    def full_symbol(self):
+        return f"{self.symbol}-{self.contract}" if self.contract else self.symbol
+
 
 AssetBTC = Asset.from_string('BTC.BTC')
 AssetETH = Asset.from_string('ETH.ETH')
