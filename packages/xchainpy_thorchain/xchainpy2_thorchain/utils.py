@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, NamedTuple
 
 from cosmpy.aerial.client import Coin as CosmosCoin
 from cosmpy.aerial.tx import Transaction, SigningCfg
