@@ -11,20 +11,20 @@ class MidgardAPIClient(mdg.ApiClient):
     def __init__(self, configuration: Optional[ConfigurationEx] = None,
                  header_name=NINE_REALMS_CLIENT_HEADER,
                  header_value=XCHAINPY_IDENTIFIER,
-                 cookie=None):
+                 cookie=None, pool_processes=None, user_agent=DEFAULT_USER_AGENT):
         if configuration is None:
             configuration = ConfigurationEx()
         self.configuration = configuration
 
-        self.pool = ThreadPool()
+        self.pool = ThreadPool(pool_processes)
 
         self.default_headers = {}
         if header_name is not None:
             self.default_headers[header_name] = header_value
         self.cookie = cookie
 
-        # Set default User-Agent.
-        self.user_agent = DEFAULT_USER_AGENT
+        # Set User-Agent.
+        self.user_agent = user_agent
 
         # Patch REST client with additional retry logic and backup hosts
         self.rest_client = None
