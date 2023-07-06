@@ -10,7 +10,7 @@ from xchainpy2_cosmos import CosmosGaiaClient
 from xchainpy2_crypto import decode_address
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
-    THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE
+    THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS
 from .utils import get_thor_address_prefix, build_deposit_tx_unsigned
 
 
@@ -21,6 +21,7 @@ class THORChainClient(CosmosGaiaClient):
                  fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  client_urls=DEFAULT_CLIENT_URLS,
+                 fallback_client_urls=FALLBACK_CLIENT_URLS,
                  chain_ids=DEFAULT_CHAIN_IDS,
                  explorer_providers=THOR_EXPLORERS,
                  ):
@@ -40,6 +41,7 @@ class THORChainClient(CosmosGaiaClient):
             client_urls = {network: client_urls}
 
         self.client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
+        self.fallback_client_urls = fallback_client_urls.copy() if fallback_client_urls else None
 
         self.chain_ids = chain_ids.copy() if chain_ids else DEFAULT_CHAIN_IDS.copy()
 
@@ -76,11 +78,6 @@ class THORChainClient(CosmosGaiaClient):
         return AssetInfo(
             AssetRUNE, RUNE_DECIMAL
         )
-
-    # todo: use fallback urls to fetch the transaction?
-
-    # todo: getTransactionDataThornode
-    # todo: getDepositTransaction (`${this.getClientUrl().node}/thorchain/tx/${txId}`))
 
     async def deposit(self,
                       what: Union[CryptoAmount, Amount, int, float],
@@ -153,3 +150,24 @@ class THORChainClient(CosmosGaiaClient):
         )
 
         return result if return_full_response else result.tx_hash
+
+    async def fetch_transaction_from_thornode(self, tx_hash: str) -> dict:
+        """
+        Fetch transaction from THORNode, try to use fallback client if main client is not available
+        :param tx_hash:
+        :return:
+        """
+        clients = [self.client_urls[self.network]]
+        if self.fallback_client_urls:
+            clients.append(self.fallback_client_urls[self.network])
+
+        e = None
+        for client in clients:
+            try:
+                url = self.url_to_fetch_tx_data(tx_hash, server_url=client.node)
+                j = await self._get_json(url)
+                return j
+            except Exception as e:
+                continue
+        if e:
+            raise e
