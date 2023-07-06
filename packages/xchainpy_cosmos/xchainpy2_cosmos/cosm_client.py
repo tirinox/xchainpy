@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime
+from math import ceil
 from operator import itemgetter
 from typing import Optional, List
 from urllib.parse import urlencode
@@ -11,7 +12,6 @@ from cosmpy.aerial.wallet import LocalWallet
 from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PrivateKey, PublicKey
 from cosmpy.protos.cosmos.tx.v1beta1.service_pb2 import BroadcastTxRequest, BroadcastMode
-from math import ceil
 
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx, \
     Fees, TxPage, AssetInfo, FeeType, FeeOption
@@ -391,6 +391,10 @@ class CosmosGaiaClient(XChainClient):
 
         return await self._get_json(url)
 
+    def url_to_fetch_tx_data(self, tx_id, server_url=None):
+        server_url = server_url or self.server_url
+        return f"{server_url}/cosmos/tx/v1beta1/txs/{tx_id}"
+
     async def get_transaction_data(self, tx_id: str) -> XcTx:
         """
         Get the transaction data for the given transaction id.
@@ -405,13 +409,17 @@ class CosmosGaiaClient(XChainClient):
         #     tx_id
         # )
 
-        url = f"{self.server_url}/cosmos/tx/v1beta1/txs/{tx_id}"
+        url = self.url_to_fetch_tx_data(tx_id)
         j = await self._get_json(url)
 
         return parse_tx_response(
             TxResponse.from_rpc_json(j['tx_response']),
             self.native_asset
         )
+
+    async def get_transaction_data_raw(self, tx_id: str) -> dict:
+        url = self.url_to_fetch_tx_data(tx_id)
+        return await self._get_json(url)
 
     async def get_fees(self, cache=None, tc_fee_rate=None) -> Fees:
         """
