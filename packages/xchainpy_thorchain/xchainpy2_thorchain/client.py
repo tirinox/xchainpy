@@ -1,14 +1,15 @@
 import asyncio
+import datetime
 from typing import Optional, Union
 
 from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
 from packages.xchainpy_client.xchainpy2_client import RootDerivationPaths, FeeBounds
-from xchainpy2_client import AssetInfo
+from xchainpy2_client import AssetInfo, XcTx, TxFrom, TxTo, TxType
 from xchainpy2_cosmos import CosmosGaiaClient
 from xchainpy2_crypto import decode_address
-from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount
+from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, Asset
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS
 from .utils import get_thor_address_prefix, build_deposit_tx_unsigned
@@ -151,11 +152,12 @@ class THORChainClient(CosmosGaiaClient):
 
         return result if return_full_response else result.tx_hash
 
-    async def fetch_transaction_from_thornode(self, tx_hash: str) -> dict:
+    async def fetch_transaction_from_thornode_raw(self, tx_hash: str) -> dict:
         """
         Fetch transaction from THORNode, try to use fallback client if main client is not available
-        :param tx_hash:
-        :return:
+        Url: https://node/thorchain/tx/{tx_hash}
+        :param tx_hash: Tx Hash
+        :return: Transaction data (raw, unparsed)
         """
         clients = [self.client_urls[self.network]]
         if self.fallback_client_urls:
@@ -164,10 +166,78 @@ class THORChainClient(CosmosGaiaClient):
         e = None
         for client in clients:
             try:
-                url = self.url_to_fetch_tx_data(tx_hash, server_url=client.node)
+                url = f"{client.node}/thorchain/tx/{tx_hash}"
                 j = await self._get_json(url)
                 return j
             except Exception as e:
                 continue
         if e:
             raise e
+
+    async def get_transaction_data_thornode(self, tx_id: str) -> XcTx:
+        """
+        Fetch transaction data from THORNode (parsed to XcTx)
+        Parsing "observed_tx" object
+        # todo: parse heights and other data
+        Url: https://node/thorchain/tx/{tx_hash}
+        :param tx_id: Tx Hash
+        :return: XcTx result
+        """
+        if not tx_id:
+            raise Exception("tx_id is not specified")
+
+        # Remove 0x prefix if exists
+        tx_id = remove_0x_prefix(tx_id)
+
+        raw_data = await self.fetch_transaction_from_thornode_raw(tx_id)
+
+        if not raw_data:
+            raise Exception(f"Could not fetch transaction data from THORNode {tx_id}")
+
+        observed_tx = raw_data.get("observed_tx")
+        if not observed_tx:
+            raise Exception(f"Could not fetch transaction data from THORNode {tx_id} (observed_tx is not found)")
+
+        tx = observed_tx["tx"]
+
+        # fixme: do we always have 1 coin?
+        coin0 = tx["coins"][0]
+        sender_asset = Asset.from_string_exc(coin0["asset"])
+        from_address = tx["from_address"]
+
+        from_txs = [
+            TxFrom(from_address, tx_id, Amount.from_base(coin0["amount"], self._decimal), sender_asset)
+        ]
+
+        memo = tx["memo"]
+        if not memo:
+            raise Exception(f"Could not fetch transaction data from THORNode {tx_id} (memo is not found)")
+
+        split_memo = memo.split(":")
+
+        if split_memo[0] == 'OUT':
+            asset = coin0["asset"]
+            amount = coin0["amount"]
+            to_address = tx.get("to_address")
+            to_txs = [
+                TxTo(to_address, Amount.from_base(amount, self._decimal), Asset.from_string_exc(asset))
+            ]
+            return XcTx(
+                sender_asset,
+                from_txs, to_txs,
+                datetime.datetime.fromtimestamp(0),
+                TxType.TRANSFER, tx_id
+            )
+        else:
+            receiver_asset = Asset.from_string_exc(split_memo[1])
+            address = split_memo[2]
+            amount = Amount.from_base(split_memo[3], self._decimal)
+            to_txs = [
+                TxTo(address, amount, receiver_asset)
+            ]
+            return XcTx(
+                sender_asset,
+                from_txs, to_txs,
+                datetime.datetime.fromtimestamp(0),
+                TxType.TRANSFER, tx_id
+            )
