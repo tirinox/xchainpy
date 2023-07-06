@@ -1,7 +1,7 @@
 from packages.xchainpy_client.xchainpy2_client import ExplorerProvider
 from packages.xchainpy_thorchain.xchainpy2_thorchain.models import NodeURL
-from xchainpy2_utils import Asset
-from xchainpy2_utils.consts import NetworkType
+from xchainpy2_utils import Asset, Amount
+from xchainpy2_utils.consts import NetworkType, RUNE_DECIMAL
 
 DEFAULT_GAS_ADJUSTMENT = 2
 
@@ -17,6 +17,9 @@ MAX_PAGES_PER_FUNCTION_CALL = 15
 
 RUNE_SYMBOL = 'ᚱ'
 RUNE_TICKER = 'RUNE'
+
+DEFAULT_RUNE_FEE = Amount.from_asset(0.02, RUNE_DECIMAL)
+
 
 DEFAULT_EXPLORER_URL = 'https://viewblock.io/thorchain{path}{network_tag}'
 
@@ -61,10 +64,11 @@ DEFAULT_CLIENT_URLS = {
     NetworkType.TESTNET: NodeURL('deprecated', 'deprecated'),
 }
 
-CALLBACK_CLIENT_URLS = {
+FALLBACK_CLIENT_URLS = {
     NetworkType.MAINNET: [
         NodeURL('https://thornode-v1.ninerealms.com', 'https://rpc-v1.ninerealms.com'),
-        NodeURL('https://thornode.thorswap.net/', 'https://rpc.thorswap.net')
+        NodeURL('https://thornode.thorswap.net/', 'https://rpc.thorswap.net'),
+        NodeURL('https://thornode-v0.ninerealms.com', 'https://rpc-v0.ninerealms.com'),
     ],
     NetworkType.STAGENET: [DEFAULT_CLIENT_URLS[NetworkType.STAGENET]],
     NetworkType.TESTNET: []

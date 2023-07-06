@@ -85,6 +85,10 @@ class Asset(NamedTuple):
     def full_symbol(self):
         return f"{self.symbol}-{self.contract}" if self.contract else self.symbol
 
+    @classmethod
+    def dummy(cls):
+        return cls('', '')
+
 
 AssetBTC = Asset.from_string('BTC.BTC')
 AssetETH = Asset.from_string('ETH.ETH')
