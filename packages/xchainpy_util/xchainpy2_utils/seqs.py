@@ -36,4 +36,7 @@ def key_attr_getter(msg, key: str):
     """
     if hasattr(msg, key):
         return getattr(msg, key)
-    return dict.__getitem__(msg, key)
+    elif isinstance(msg, dict):
+        return dict.__getitem__(msg, key)
+    else:
+        raise LookupError()
