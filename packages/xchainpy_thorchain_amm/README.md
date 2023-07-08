@@ -1,3 +1,3 @@
-# `@xchainjs/xchain-thorchain`
+# `@xchainjs/xchain-thorchain-amm`
 
-Thorchain Module for XChainPY Clients
+THORChain Automatic Market Maker interface for Python
