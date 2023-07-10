@@ -1,4 +1,7 @@
+import pytest
+
 from xchainpy2_utils import *
+
 
 def test_asset_rune():
     assert AssetRUNE.chain == Chain.THORChain.value
@@ -6,8 +9,8 @@ def test_asset_rune():
 
 
 def test_asset_equals():
-    asset = Asset('BNB', 'BNB', 'BNB')
-    asset2 = Asset('BNB', 'BNB', 'BNB')
+    asset = Asset('BNB', 'BNB')
+    asset2 = Asset('BNB', 'BNB')
     assert asset == asset2
 
     assert AssetBNB == asset
@@ -44,6 +47,17 @@ def test_asset_from_string():
     assert asset.synth
     assert str(asset) == 'BTC/BTC'
 
+    asset = Asset.from_string('AVAX')
+    assert asset.chain == 'AVAX'
+    assert asset.symbol == 'AVAX'
+    assert not asset.synth
+
+    with pytest.raises(ValueError):
+        Asset.from_string_exc('')
+
+    with pytest.raises(ValueError):
+        Asset.from_string_exc('x.y.z.w')
+
 
 def test_convert_synth():
     asset = Asset.from_string('BTC.BTC')
@@ -54,3 +68,17 @@ def test_convert_synth():
     assert str(asset.as_native) == 'BTC.BTC'
     assert asset.as_synth == asset
     assert asset.as_synth.as_native == Asset('BTC', 'BTC')
+
+
+def test_well_known_assets():
+    assert AssetRUNE != AssetBTC != AssetETH
+
+    assert AssetRUNE.chain == 'THOR' and AssetRUNE.symbol == 'RUNE' and AssetRUNE.contract == '' and not AssetRUNE.synth
+    assert AssetCACAO.chain == 'MAYA' and AssetCACAO.symbol == 'CACAO' and AssetCACAO.contract == '' \
+           and not AssetCACAO.synth
+    assert AssetBTC.chain == 'BTC' == AssetBTC.symbol and AssetBTC.contract == '' and not AssetBTC.synth
+    assert AssetETH.chain == 'ETH' == AssetETH.symbol and AssetETH.contract == '' and not AssetETH.synth
+    assert AssetBNB.chain == 'BNB' == AssetBNB.symbol and AssetBNB.contract == '' and not AssetBNB.synth
+
+    for asset in (AssetBNB, AssetRUNE, AssetBTC, AssetATOM, AssetAVAX, AssetBCH, AssetCACAO, AssetDOGE, AssetLTC):
+        assert asset.is_valid

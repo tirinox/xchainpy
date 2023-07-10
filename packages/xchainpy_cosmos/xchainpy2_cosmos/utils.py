@@ -122,7 +122,3 @@ def get_txs_from_history(txs: TxResponse, asset: Asset) -> List[XcTx]:
     # order list to have latest txs first in list
     txs = sorted(txs, key=lambda tx: tx.timestamp, reverse=True)
     return [parse_tx_response(tx, asset) for tx in txs]
-
-
-async def build_deposit_tx():
-    ...

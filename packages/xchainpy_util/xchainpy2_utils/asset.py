@@ -43,10 +43,9 @@ class Asset(NamedTuple):
         is_synth = SYNTH_DELIMITER in s
         data = s.split(get_delimiter(is_synth))
         n = len(data)
-        if n < 1:
-            return None
-        elif n == 1:
-            return cls(data[0], data[0])
+        if n == 1:
+            if symbol := data[0]:
+                return cls(symbol, symbol)
         elif n == 2:
             name, tag = cls.get_name_and_contract(data[1])
             return cls(data[0], name, tag, is_synth)
