@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Optional, List
 
-from xchainpy2_client import XcTx, TxFrom, TxType
+from xchainpy2_client import XcTx, TxFrom, TxType, TxTo
 from xchainpy2_utils import Asset, AssetATOM, Chain, Amount, key_attr_getter
-from .const import COSMOS_DENOM, COSMOS_DECIMAL
+from .const import COSMOS_DENOM
 from .models import TxResponse
 
 
@@ -28,14 +28,16 @@ def get_denom(asset: Asset) -> str:
     return ''
 
 
-def get_asset(denom: str) -> Optional[Asset]:
+def get_asset(denom: str, native_denom=COSMOS_DENOM, native_asset=AssetATOM) -> Optional[Asset]:
     """
     Get Asset from denomination - currently `ATOM` supported only
     :param denom:
+    :param native_asset:
+    :param native_denom:
     :return: The asset of the given denomination.
     """
-    if denom == COSMOS_DENOM:
-        return AssetATOM
+    if denom == native_denom:
+        return native_asset
 
     # IBC assets
     if denom.startswith('ibc/'):
@@ -53,29 +55,29 @@ def get_asset(denom: str) -> Optional[Asset]:
     return None
 
 
-def get_coin_amount(coins) -> Amount:
+def get_coin_amount(coins, decimals) -> Amount:
     return sum(
-        (Amount.from_base(int(key_attr_getter(coin, 'amount')), COSMOS_DECIMAL) for coin in coins),
-        Amount.from_base(0, COSMOS_DECIMAL)
+        (Amount.from_base(int(key_attr_getter(coin, 'amount')), decimals) for coin in coins),
+        Amount.from_base(0, decimals)
     )
 
 
-def get_coins_by_asset(coins, asset: Asset):
+def get_coins_by_asset(coins, search_asset: Asset, native_denom: str, native_asset: Asset):
     return [
         coin for coin in coins
-        if get_asset(key_attr_getter(coin, 'denom')) == asset
+        if get_asset(key_attr_getter(coin, 'denom'), native_denom, native_asset) == search_asset
     ]
 
 
-def parse_tx_response(tx: TxResponse, asset: Asset) -> XcTx:
+def parse_tx_response(tx: TxResponse, asset: Asset, native_denom: str, decimals) -> XcTx:
     messages = tx.tx['body']['messages']
     from_txs = {}
     to_txs = {}
 
     for msg in messages:
         if is_msg_send(msg):
-            coins = get_coins_by_asset(key_attr_getter(msg, 'amount'), asset)
-            amount = get_coin_amount(coins)
+            coins = get_coins_by_asset(key_attr_getter(msg, 'amount'), asset, native_denom, asset)
+            amount = get_coin_amount(coins, decimals)
 
             from_a = key_attr_getter(msg, 'from_address')
             from_already = from_txs.get(from_a)
@@ -97,9 +99,9 @@ def parse_tx_response(tx: TxResponse, asset: Asset) -> XcTx:
                     amount=to_already.amount + amount
                 )
             else:
-                to_txs[to_a] = TxFrom(
-                    from_address=to_a,
-                    from_tx_hash=tx.txhash,
+                to_txs[to_a] = TxTo(
+                    address=to_a,
+                    asset=asset,
                     amount=amount,
                 )
 
@@ -115,10 +117,11 @@ def parse_tx_response(tx: TxResponse, asset: Asset) -> XcTx:
         date=dt,
         type=TxType.TRANSFER if from_txs or to_txs else TxType.UNKNOWN,
         hash=tx.txhash,
+        height=tx.height
     )
 
 
-def get_txs_from_history(txs: TxResponse, asset: Asset) -> List[XcTx]:
+def get_txs_from_history(txs: TxResponse, asset: Asset, native_denom, decimals) -> List[XcTx]:
     # order list to have latest txs first in list
     txs = sorted(txs, key=lambda tx: tx.timestamp, reverse=True)
-    return [parse_tx_response(tx, asset) for tx in txs]
+    return [parse_tx_response(tx, asset, native_denom, decimals) for tx in txs]

@@ -39,6 +39,7 @@ class XcTx(NamedTuple):
     date: datetime
     type: TxType
     hash: str
+    height: int
 
 
 class TxPage(NamedTuple):

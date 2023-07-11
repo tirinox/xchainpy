@@ -414,7 +414,8 @@ class CosmosGaiaClient(XChainClient):
 
         return parse_tx_response(
             TxResponse.from_rpc_json(j['tx_response']),
-            self.native_asset
+            self.native_asset,
+            self._denom, self._decimal
         )
 
     async def get_transaction_data_raw(self, tx_id: str) -> dict:

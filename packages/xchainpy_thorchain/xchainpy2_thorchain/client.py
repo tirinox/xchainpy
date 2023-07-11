@@ -215,6 +215,8 @@ class THORChainClient(CosmosGaiaClient):
 
         split_memo = memo.split(":")
 
+        height = int(raw_data.get('finalised_height', 0))
+
         if split_memo[0] == 'OUT':
             asset = coin0["asset"]
             amount = coin0["amount"]
@@ -226,7 +228,8 @@ class THORChainClient(CosmosGaiaClient):
                 sender_asset,
                 from_txs, to_txs,
                 datetime.datetime.fromtimestamp(0),
-                TxType.TRANSFER, tx_id
+                TxType.TRANSFER, tx_id,
+                height
             )
         else:
             receiver_asset = Asset.from_string_exc(split_memo[1])
@@ -239,5 +242,6 @@ class THORChainClient(CosmosGaiaClient):
                 sender_asset,
                 from_txs, to_txs,
                 datetime.datetime.fromtimestamp(0),
-                TxType.TRANSFER, tx_id
+                TxType.TRANSFER, tx_id,
+                height
             )

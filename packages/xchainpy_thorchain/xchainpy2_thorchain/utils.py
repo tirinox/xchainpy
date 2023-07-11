@@ -92,7 +92,7 @@ def get_deposit_tx_from_logs(logs: List[TxLog],
                              sender_asset: Optional[Asset],
                              receiver_address: Optional[Address],
                              decimals=8,
-                             denom='rune') -> XcTx:
+                             denom='rune', height=0) -> XcTx:
     if not logs:
         raise ValueError('No logs available')
 
@@ -138,4 +138,6 @@ def get_deposit_tx_from_logs(logs: List[TxLog],
             sender_asset
         ))
 
-    return XcTx(Asset.dummy(), from_txs, to_txs, datetime.fromtimestamp(0), TxType.TRANSFER, '')
+    return XcTx(Asset.dummy(), from_txs, to_txs,
+                datetime.fromtimestamp(0), TxType.TRANSFER, '',
+                height=height)
