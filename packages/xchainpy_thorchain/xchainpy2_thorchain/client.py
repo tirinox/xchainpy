@@ -161,18 +161,19 @@ class THORChainClient(CosmosGaiaClient):
         """
         clients = [self.client_urls[self.network]]
         if self.fallback_client_urls:
-            clients.append(self.fallback_client_urls[self.network])
+            clients.extend(self.fallback_client_urls[self.network])
 
-        e = None
+        exc = None
         for client in clients:
             try:
                 url = f"{client.node}/thorchain/tx/{tx_hash}"
                 j = await self._get_json(url)
                 return j
             except Exception as e:
+                exc = e
                 continue
-        if e:
-            raise e
+        if exc:
+            raise exc
 
     async def get_transaction_data_thornode(self, tx_id: str) -> XcTx:
         """

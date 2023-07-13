@@ -14,11 +14,10 @@ EXAMPLE_TX_BOND = '729A5F240A183C91A94D0D0D6C9AD87E73778DF935DFFEFAE66ADB6F465B9
 EXAMPLE_TX_SWAP = 'A24A2F707A8B030519194170809107391AE4DC45F70A7E259FE4917AAF279EEE'
 
 
-async def main(phrase=None):
-    phrase = phrase or generate_mnemonic()
-    client = THORChainClient(phrase=phrase)
+async def tx_test_send(client):
+    tx_id = EXAMPLE_TX_SEND
 
-    tx_data = await client.get_transaction_data(EXAMPLE_TX_SEND)
+    tx_data = await client.get_transaction_data(tx_id)
     print(tx_data)
     assert tx_data
     assert tx_data.height == 11_689_548
@@ -39,7 +38,14 @@ async def main(phrase=None):
 
     assert tx_data.type == TxType.TRANSFER
 
+    tx_thor = await client.get_transaction_data_thornode(tx_id)
+    print(tx_thor)
 
+
+async def main(phrase=None):
+    phrase = phrase or generate_mnemonic()
+    client = THORChainClient(phrase=phrase)
+    await tx_test_send(client)
 
 
 if __name__ == "__main__":
