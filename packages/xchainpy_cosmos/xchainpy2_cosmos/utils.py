@@ -90,6 +90,7 @@ def parse_tx_response(tx: TxResponse, asset: Asset, native_denom: str, decimals)
                     from_address=from_a,
                     from_tx_hash=tx.txhash,
                     amount=amount,
+                    asset=asset,
                 )
 
             to_a = key_attr_getter(msg, 'to_address')
