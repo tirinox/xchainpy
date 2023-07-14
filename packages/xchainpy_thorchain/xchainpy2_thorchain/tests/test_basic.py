@@ -35,3 +35,16 @@ def test_validate_address(client, stagenet_client):
     assert stagenet_client.validate_address('sthor16zj3wfurvc6j6sny8s6gt2s3st9yjypqfjegy2')
     assert stagenet_client.validate_address('sthor1g6pnmnyeg48yc3lg796plt0uw50qpp7humfggz')
     assert stagenet_client.validate_address('sthor1g6pnmnyeg48yc3lg796plt0uw50qpp7humfggz'.upper())
+
+
+def test_address(client, stagenet_client):
+    for i in range(100):
+        address = client.get_address(i)
+        assert client.validate_address(address)
+
+        assert len(client.get_private_key(i)) == 64
+
+        s_addr = stagenet_client.get_address(i)
+        assert s_addr.removeprefix(address)
+
+        assert len(stagenet_client.get_private_key(i)) == 64
