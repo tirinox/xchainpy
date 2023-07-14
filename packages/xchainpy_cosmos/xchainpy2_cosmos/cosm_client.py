@@ -80,6 +80,8 @@ class CosmosGaiaClient(XChainClient):
         Underlying library is cosmpy (https://github.com/fetchai/cosmpy)
         :return: LedgerClient
         """
+        if not self._client:
+            self._recreate_client()
         return self._client
 
     @property
@@ -87,6 +89,10 @@ class CosmosGaiaClient(XChainClient):
         return self.client_urls[self.network]
 
     def _recreate_client(self):
+        # Guard for preventing early client creation before all necessary fields are set.
+        if not hasattr(self, '_denom'):
+            return
+
         rest_url = f'rest+{self.server_url}'
         self._client = LedgerClient(NetworkConfig(
             chain_id=self.chain_ids[self.network],

@@ -2,7 +2,7 @@ import asyncio
 import os
 
 from xchainpy2_thorchain import THORChainClient
-from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE, RUNE_DECIMAL, Asset
+from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE, RUNE_DECIMAL, Asset, NetworkType
 
 SYNTH_BTC = Asset.from_string('BTC/BTC')
 
@@ -82,6 +82,9 @@ if __name__ == "__main__":
     if not phrase:
         raise ValueError("PHRASE env var is empty!")
 
-    client = THORChainClient(phrase=phrase)
+    # network = NetworkType.STAGENET
+    network = NetworkType.MAINNET
+
+    client = THORChainClient(phrase=phrase, network=network)
 
     asyncio.run(main())
