@@ -48,7 +48,7 @@ async def check_for_synth_btc_balance() -> int:
 
 async def demo_simple_deposit():
     # Swap 0.1 RUNE to BTC/BTC
-    # await swap_rune_to_synth_btc(0.1)
+    await swap_rune_to_synth_btc(0.1)
 
     # Wait until it is done
     while True:
@@ -57,6 +57,9 @@ async def demo_simple_deposit():
         satoshi = await check_for_synth_btc_balance()
         if satoshi:
             break
+
+    # A little bit more sleep to be sure...
+    await asyncio.sleep(2.0)
 
     # Swap all BTC/BTC back to RUNE
     await swap_synth_btc_back_to_rune(satoshi)
