@@ -33,6 +33,13 @@ def standard_fee_rates(amount: FeeRate) -> FeeRates:
 
 
 def calc_fees(fee_rates: FeeRates, calc_fee: Callable[..., Fee], *args) -> Fees:
+    """
+    Apply calc_fee function to fee_rates to get Fees
+    :param fee_rates: Fee rates
+    :param calc_fee: Function like "def calc_fee(k: FeeOption, v: Amount, *args): ..."
+    :param args: Arbitrary arguments for calc_fee (optional)
+    :return:
+    """
     fees = {
         k: calc_fee(k, v, *args)
         for k, v in fee_rates.items()
@@ -44,8 +51,15 @@ def calc_fees(fee_rates: FeeRates, calc_fee: Callable[..., Fee], *args) -> Fees:
 
 
 async def calc_fees_async(fee_rates: FeeRates, calc_fee: Callable[..., Awaitable[...]], *args) -> Fees:
+    """
+    Apply async calc_fee function to fee_rates to get Fees
+    :param fee_rates: Fee rates
+    :param calc_fee: Function like "async def calc_fee(k: FeeOption, v: Amount, *args): ..."
+    :param args: Arbitrary arguments for calc_fee (optional)
+    :return:
+    """
     all_fees = await asyncio.gather(
-        calc_fee(v, *args) for v in fee_rates.values()
+        *[calc_fee(k, v, *args) for k, v in fee_rates.items()]
     )
 
     fees = {
