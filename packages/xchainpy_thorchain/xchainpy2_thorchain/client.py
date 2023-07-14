@@ -70,12 +70,13 @@ class THORChainClient(CosmosGaiaClient):
         return self.client_urls[self.network].node
 
     def validate_address(self, address: str) -> bool:
-        if super().validate_address(address):
-            try:
-                decode_address(address, self._prefix)
-            except (ValueError, Bech32ChecksumError):
-                return False
-        return True
+        if not super().validate_address(address):
+            return False
+        try:
+            decode_address(address, self._prefix)
+            return True
+        except (ValueError, Bech32ChecksumError):
+            return False
 
     def get_asset_info(self) -> AssetInfo:
         return AssetInfo(

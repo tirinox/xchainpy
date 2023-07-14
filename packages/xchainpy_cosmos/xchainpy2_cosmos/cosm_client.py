@@ -171,6 +171,8 @@ class CosmosGaiaClient(XChainClient):
         if not address:
             return False
 
+        address = address.lower()
+
         if not address.startswith(self._prefix):
             return False
 
