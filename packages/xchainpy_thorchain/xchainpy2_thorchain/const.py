@@ -1,5 +1,5 @@
-from packages.xchainpy_client.xchainpy2_client import ExplorerProvider
-from packages.xchainpy_thorchain.xchainpy2_thorchain.models import NodeURL
+from xchainpy2_client import ExplorerProvider
+from xchainpy2_thorchain.models import NodeURL
 from xchainpy2_utils import Asset, Amount
 from xchainpy2_utils.consts import NetworkType, RUNE_DECIMAL
 

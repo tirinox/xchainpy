@@ -5,7 +5,7 @@ from typing import Optional, Union
 from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
-from packages.xchainpy_client.xchainpy2_client import RootDerivationPaths, FeeBounds
+from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_client import AssetInfo, XcTx, TxFrom, TxTo, TxType, Fees, FeeType
 from xchainpy2_client.fees import single_fee
 from xchainpy2_cosmos import CosmosGaiaClient
