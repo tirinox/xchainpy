@@ -72,8 +72,14 @@ class CosmosGaiaClient(XChainClient):
         self._recreate_client()
 
         self._wallet: Optional[LocalWallet] = None
+        self.cache = None
 
     def get_client(self) -> LedgerClient:
+        """
+        Please use this getter to obtain LedgerClient for specific Cosmos calls like delegation, staking etc.
+        Underlying library is cosmpy (https://github.com/fetchai/cosmpy)
+        :return: LedgerClient
+        """
         return self._client
 
     @property
@@ -215,12 +221,18 @@ class CosmosGaiaClient(XChainClient):
         our_balances = [
             CryptoAmount(
                 Amount.from_base(balance.amount, self._decimal),
-                Asset(Chain.Cosmos.value, balance.denom.upper())
+                self.parse_denom_to_asset(balance.denom)
             )
             for balance in balances
         ]
 
         return our_balances
+
+    def parse_denom_to_asset(self, denom: str) -> Asset:
+        if denom == self._denom:
+            return self.native_asset
+        else:
+            return Asset(self.chain.value, denom.upper())
 
     async def get_account(self, address: str = None, wallet_index=0) -> Optional[Account]:
         """
@@ -395,6 +407,15 @@ class CosmosGaiaClient(XChainClient):
         server_url = server_url or self.server_url
         return f"{server_url}/cosmos/tx/v1beta1/txs/{tx_id}"
 
+    async def get_transaction_data_cosmos(self, tx_id: str) -> dict:
+        """
+        Get the transaction data for the given transaction id.
+        :param tx_id:
+        :return: raw dict object
+        """
+        url = self.url_to_fetch_tx_data(tx_id)
+        return await self._get_json(url)
+
     async def get_transaction_data(self, tx_id: str) -> XcTx:
         """
         Get the transaction data for the given transaction id.
@@ -409,8 +430,7 @@ class CosmosGaiaClient(XChainClient):
         #     tx_id
         # )
 
-        url = self.url_to_fetch_tx_data(tx_id)
-        j = await self._get_json(url)
+        j = await self.get_transaction_data_cosmos(tx_id)
 
         return parse_tx_response(
             TxResponse.from_rpc_json(j['tx_response']),
@@ -526,7 +546,7 @@ class CosmosGaiaClient(XChainClient):
         return self._prefix
 
     async def check_balance(self, address, amount: CryptoAmount):
-        fees = await self.get_fees()
+        fees = await self.get_fees(self.cache)
         fee = fees.fees[FeeOption.AVERAGE]
 
         balances = await self.get_balance(address)
@@ -537,16 +557,16 @@ class CosmosGaiaClient(XChainClient):
         for balance in balances:
             if balance.asset == amount.asset:
                 asset_balance = balance
-            elif balance.asset == self.native_asset:
+            if balance.asset == self.native_asset:
                 native_balance = balance
 
         is_native = amount.asset == self.native_asset
-        extra_fee = fee.amount if is_native else Amount.from_base(0, self._decimal)
+        extra_fee = fee if is_native else Amount.from_base(0, self._decimal)
 
         if asset_balance is None or asset_balance.amount < amount.amount + extra_fee:
             raise ValueError(f"Insufficient funds: {amount.amount} {amount.asset}")
 
-        if native_balance is None or native_balance.amount < fee.amount:
+        if native_balance is None or native_balance.amount < fee:
             raise ValueError(f"Insufficient funds to pay fee: {fee.amount} {self.native_asset}")
 
     def _make_wallet(self, wallet_index: int = 0) -> LocalWallet:

@@ -6,12 +6,14 @@ from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
 from packages.xchainpy_client.xchainpy2_client import RootDerivationPaths, FeeBounds
-from xchainpy2_client import AssetInfo, XcTx, TxFrom, TxTo, TxType
+from xchainpy2_client import AssetInfo, XcTx, TxFrom, TxTo, TxType, Fees, FeeType
+from xchainpy2_client.fees import single_fee
 from xchainpy2_cosmos import CosmosGaiaClient
 from xchainpy2_crypto import decode_address
-from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, Asset
+from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, Asset, \
+    SYNTH_DELIMITER
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
-    THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS
+    THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_RUNE_FEE
 from .utils import get_thor_address_prefix, build_deposit_tx_unsigned
 
 
@@ -203,7 +205,7 @@ class THORChainClient(CosmosGaiaClient):
 
         # fixme: do we always have 1 coin?
         coin0 = tx["coins"][0]
-        sender_asset = Asset.from_string_exc(coin0["asset"])
+        sender_asset = Asset.from_string_exc(coin0["asset"].upper())
         from_address = tx["from_address"]
 
         from_txs = [
@@ -233,7 +235,7 @@ class THORChainClient(CosmosGaiaClient):
                 height
             )
         else:
-            receiver_asset = Asset.from_string_exc(split_memo[1])
+            receiver_asset = Asset.from_string_exc(split_memo[1].upper())
             address = split_memo[2]
             amount = Amount.from_base(split_memo[3], self._decimal)
             to_txs = [
@@ -246,3 +248,15 @@ class THORChainClient(CosmosGaiaClient):
                 TxType.TRANSFER, tx_id,
                 height
             )
+
+    async def get_fees(self, cache=None, tc_fee_rate=None) -> Fees:
+        return single_fee(FeeType.FLAT_FEE, DEFAULT_RUNE_FEE)
+
+    def parse_denom_to_asset(self, denom: str) -> Asset:
+        if SYNTH_DELIMITER in denom:
+            # special case for synths
+            return Asset.from_string(denom.upper())
+        else:
+            return super().parse_denom_to_asset(denom)
+
+

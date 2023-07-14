@@ -4,7 +4,6 @@ import json
 from xchainpy2_client import TxType
 from xchainpy2_cosmos import RPCResponse, TxResponse
 from xchainpy2_cosmos.utils import parse_tx_response
-from xchainpy2_thorchain import DENOM_RUNE_NATIVE
 from xchainpy2_utils import AssetRUNE, RUNE_DECIMAL, Amount
 
 
@@ -27,7 +26,7 @@ def test_parse_tx_response():
     xctx = parse_tx_response(
         TxResponse.from_rpc_json(raw_json['tx_response']),
         AssetRUNE,
-        DENOM_RUNE_NATIVE,
+        'rune',
         RUNE_DECIMAL
     )
     assert xctx.asset == AssetRUNE
