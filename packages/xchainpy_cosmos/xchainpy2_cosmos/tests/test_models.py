@@ -1,5 +1,6 @@
 import datetime
 import json
+import pathlib
 
 from xchainpy2_client import TxType
 from xchainpy2_cosmos import RPCResponse, TxResponse
@@ -18,10 +19,15 @@ def test_rpc_response():
     assert r.jsonrpc == "foo"
 
 
+def load_example_of_tx(tx_hash):
+    path = pathlib.Path(__file__).parent.resolve() / 'samples' / f'{tx_hash}.json'
+    with open(path) as f:
+        return json.load(f)
+
+
 def test_parse_tx_response():
-    txhash = '40BD2FCF41252AD7EAEE313989DC9CB10A120CD384804DD0E9D87F1B388243BB'
-    with open(f'./samples/{txhash}.json') as f:
-        raw_json = json.load(f)
+    tx_hash = '40BD2FCF41252AD7EAEE313989DC9CB10A120CD384804DD0E9D87F1B388243BB'
+    raw_json = load_example_of_tx(tx_hash)
 
     xctx = parse_tx_response(
         TxResponse.from_rpc_json(raw_json['tx_response']),
@@ -30,7 +36,7 @@ def test_parse_tx_response():
         RUNE_DECIMAL
     )
     assert xctx.asset == AssetRUNE
-    assert xctx.hash == txhash
+    assert xctx.hash == tx_hash
     assert xctx.height == 11646005
     assert xctx.type == TxType.TRANSFER
     assert xctx.date == datetime.datetime(2023, 7, 10, 15, 49, 56)
