@@ -43,6 +43,7 @@ def test_address(client, stagenet_client):
         assert client.validate_address(address)
 
         assert len(client.get_private_key(i)) == 64
+        assert len(client.get_public_key(i).public_key_bytes) == 33
 
         s_addr = stagenet_client.get_address(i)
         assert s_addr.removeprefix(address)
