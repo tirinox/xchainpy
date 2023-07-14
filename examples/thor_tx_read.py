@@ -6,6 +6,8 @@ from xchainpy2_crypto import generate_mnemonic
 from xchainpy2_thorchain import THORChainClient
 from xchainpy2_utils import AssetRUNE
 
+client = THORChainClient(phrase=generate_mnemonic())
+
 EXAMPLE_TX_SEND = '6C346BDC87349A371463C5D0E41A4BCF5765FB62F6808366C7F494717A1E33A2'
 EXAMPLE_TX_SYNTH_SEND = 'B81A5E86501CFC4FBA5BCF940A505C94A544247A353E0BEF273359973BAEAE73'
 EXAMPLE_TX_BOND = '729A5F240A183C91A94D0D0D6C9AD87E73778DF935DFFEFAE66ADB6F465B9CF0'
@@ -13,8 +15,11 @@ EXAMPLE_TX_BOND = '729A5F240A183C91A94D0D0D6C9AD87E73778DF935DFFEFAE66ADB6F465B9
 # Rune => synth BTC
 EXAMPLE_TX_SWAP = 'A24A2F707A8B030519194170809107391AE4DC45F70A7E259FE4917AAF279EEE'
 
+# TWT => BUSD
+EXAMPLE_TX_SWAP_2 = 'DB5C52697308CA453C36A23113E732E4851495F22A9314CDCFD1846A0BE9DC45'
 
-async def tx_test_send(client):
+
+async def tx_test_send():
     tx_id = EXAMPLE_TX_SEND
 
     tx_data = await client.get_transaction_data(tx_id)
@@ -38,14 +43,17 @@ async def tx_test_send(client):
 
     assert tx_data.type == TxType.TRANSFER
 
-    tx_thor = await client.get_transaction_data_thornode(tx_id)
-    print(tx_thor)
+
+async def tx_test_swap1():
+    tx_id = EXAMPLE_TX_SWAP
+
+    tx_data = await client.get_transaction_data_thornode(tx_id)
+    print(tx_data)
 
 
 async def main(phrase=None):
-    phrase = phrase or generate_mnemonic()
-    client = THORChainClient(phrase=phrase)
-    await tx_test_send(client)
+    # await tx_test_send(client)
+    await tx_test_swap1()
 
 
 if __name__ == "__main__":
