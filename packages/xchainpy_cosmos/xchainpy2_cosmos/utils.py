@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 from xchainpy2_client import XcTx, TxFrom, TxType, TxTo
 from xchainpy2_utils import Asset, AssetATOM, Chain, Amount, key_attr_getter
@@ -126,3 +126,23 @@ def get_txs_from_history(txs: TxResponse, asset: Asset, native_denom, decimals) 
     # order list to have latest txs first in list
     txs = sorted(txs, key=lambda tx: tx.timestamp, reverse=True)
     return [parse_tx_response(tx, asset, native_denom, decimals) for tx in txs]
+
+
+def parse_cosmos_amount(amount: str) -> Tuple[int, str]:
+    """
+    Parse COSMOS amount
+    into integer amount and string denomination
+    :param amount: a string with format "123asset", like "100rune"
+    :return: (int, str)
+    """
+    for i, char in enumerate(amount):
+        if not char.isdigit():
+            pos = i
+            break
+    else:
+        raise ValueError(f'Invalid format: {amount!r} Must be like "10rune"')
+
+    return (
+        int(amount[:pos]),
+        amount[pos:]
+    )
