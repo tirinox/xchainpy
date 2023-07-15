@@ -65,23 +65,40 @@ COSMOS_CHAIN_IDS = {
     NetworkType.TESTNET: 'theta-testnet-001',
 }
 
-TEST_EXPLORER_URL = 'https://explorer.theta-testnet.polypore.xyz'
-DEFAULT_EXPLORER_URL = 'https://bigdipper.live/cosmos'
+TEST_EXPLORER_URL = 'https://explorer.theta-testnet.polypore.xyz/{path}'
+BIG_DIPPER_EXPLORER_URL = 'https://bigdipper.live/cosmos/{path}'
+MINT_SCAN_EXPLORER_URL = 'https://www.mintscan.io/cosmos/{path}'
 
 
-def make_explorer(path):
+def make_explorer(path, acc_subpath, tx_subpath):
     return ExplorerProvider(
         path.format(path=''),
-        path.format(path='/accounts/{address}'),
-        path.format(path='/transactions/{tx_id}'),
+        path.format(path=acc_subpath),
+        path.format(path=tx_subpath),
     )
 
 
-DEFAULT_EXPLORER_PROVIDER = {
-    NetworkType.MAINNET: make_explorer(DEFAULT_EXPLORER_URL),
-    NetworkType.STAGENET: make_explorer(DEFAULT_EXPLORER_URL),
-    NetworkType.TESTNET: make_explorer(TEST_EXPLORER_URL),
+def make_explorer_std(path):
+    return make_explorer(path, 'accounts/{address}', 'transactions/{tx_id}')
+
+
+def make_explorer_mint_scan():
+    return make_explorer(MINT_SCAN_EXPLORER_URL, 'account/{address}', 'txs/{tx_id}')
+
+
+MINT_SCAN_EXPLORER_PROVIDER = {
+    NetworkType.MAINNET: make_explorer_mint_scan(),
+    NetworkType.STAGENET: make_explorer_mint_scan(),
+    NetworkType.TESTNET: make_explorer_std(TEST_EXPLORER_URL),
 }
+
+BIG_DIPPER_EXPLORER_PROVIDER = {
+    NetworkType.MAINNET: make_explorer_std(BIG_DIPPER_EXPLORER_URL),
+    NetworkType.STAGENET: make_explorer_std(BIG_DIPPER_EXPLORER_URL),
+    NetworkType.TESTNET: make_explorer_std(TEST_EXPLORER_URL),
+}
+
+DEFAULT_EXPLORER_PROVIDER = MINT_SCAN_EXPLORER_PROVIDER
 
 TxFilterFunc = Optional[Callable[[object], bool]]
 
