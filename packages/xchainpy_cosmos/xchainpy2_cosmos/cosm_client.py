@@ -22,7 +22,7 @@ from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DE
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_DERIVATION_PATHS, COSMOS_ADDR_PREFIX, \
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
     MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE, DEFAULT_GAS_LIMIT
-from .models import TxHistoryResponse, TxResponse
+from .models import TxHistoryResponse, TxResponse, TxLoadException
 from .utils import parse_tx_response, get_asset, get_denom
 
 logger = logging.getLogger(__name__)
@@ -542,7 +542,7 @@ class CosmosGaiaClient(XChainClient):
         )
 
         if response.status_code != 200:
-            raise Exception(f"Error getting {url}: {response.status_code} {response.text}")
+            raise TxLoadException(f"Error getting {url!r}: code={response.status_code}; {response.text!r}")
         return response.json()
 
     @property

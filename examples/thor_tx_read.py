@@ -18,6 +18,9 @@ EXAMPLE_TX_SWAP = 'A24A2F707A8B030519194170809107391AE4DC45F70A7E259FE4917AAF279
 # TWT => BUSD
 EXAMPLE_TX_SWAP_2 = 'DB5C52697308CA453C36A23113E732E4851495F22A9314CDCFD1846A0BE9DC45'
 
+# This is ETH tx, but it's THORChain inbound, so it also must be loaded
+EXAMPLE_INBOUND_ETH_TX = 'F81B40BBCF35313702D99FB1CB1B5CEB83A2570543161E4161D5B739F2866C8E'
+
 
 async def tx_test_send():
     tx_id = EXAMPLE_TX_SEND
@@ -47,13 +50,20 @@ async def tx_test_send():
 async def tx_test_swap1():
     tx_id = EXAMPLE_TX_SWAP
 
-    tx_data = await client.get_transaction_data_thornode(tx_id)
+    tx_data = await client.get_transaction_data(tx_id)
+    print(tx_data)
+
+
+async def tx_test_swap_external():
+    tx_id = EXAMPLE_INBOUND_ETH_TX
+    tx_data = await client.get_transaction_data(tx_id)
     print(tx_data)
 
 
 async def main(phrase=None):
     # await tx_test_send(client)
     await tx_test_swap1()
+    # await tx_test_swap_external()
 
 
 if __name__ == "__main__":

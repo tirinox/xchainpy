@@ -1,6 +1,10 @@
 from typing import NamedTuple, Optional, List
 
 
+def load_logs(j_logs):
+    return [TxLog.from_rpc_json(log) for log in j_logs]
+
+
 class TxResponse(NamedTuple):
     height: int
     txhash: str
@@ -19,7 +23,7 @@ class TxResponse(NamedTuple):
             j['txhash'],
             j['data'],
             j['raw_log'],
-            [TxLog.from_rpc_json(log) for log in j['logs']],
+            load_logs(j['logs']),
             j['gas_wanted'],
             j['gas_used'],
             j['tx'],
@@ -71,6 +75,12 @@ class TxEvent(NamedTuple):
             [TxEventAttribute.from_rpc_json(attr) for attr in j['attributes']]
         )
 
+    def find_attributes(self, key):
+        return (a for a in self.attributes if a.key == key)
+
+    def find_attr_first(self, key) -> Optional[TxEventAttribute]:
+        return next(self.find_attributes(key), None)
+
 
 class TxLog(NamedTuple):
     msg_index: int
@@ -85,6 +95,9 @@ class TxLog(NamedTuple):
             [TxEvent.from_rpc_json(event) for event in j['events']]
         )
 
+    def find_events(self, event_name) -> List[TxEvent]:
+        return [e for e in self.events if e.type == event_name]
+
 
 class RPCResponse(NamedTuple):
     jsonrpc: str
@@ -98,3 +111,7 @@ class RPCResponse(NamedTuple):
             j['id'],
             j['result']
         )
+
+
+class TxLoadException(Exception):
+    pass
