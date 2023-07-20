@@ -8,8 +8,8 @@ from cosmpy.crypto.keypairs import PublicKey
 
 from xchainpy2_client import XcTx, TxType, TxTo, TxFrom
 from xchainpy2_cosmos import TxLog
-from xchainpy2_utils import NetworkType, CryptoAmount, Amount, RUNE_DECIMAL, Asset, Denomination
-from .const import DEPOSIT_GAS_LIMIT_VALUE
+from xchainpy2_utils import NetworkType, CryptoAmount, Amount, RUNE_DECIMAL, Asset, AssetRUNE
+from .const import DEPOSIT_GAS_LIMIT_VALUE, DENOM_RUNE_NATIVE
 from .proto.thorchain.v1.common.common_pb2 import Coin, Asset as THORAsset
 from .proto.thorchain.v1.x.thorchain.types.msg_deposit_pb2 import MsgDeposit
 
@@ -141,3 +141,10 @@ def get_deposit_tx_from_logs(logs: List[TxLog],
     return XcTx(Asset.dummy(), from_txs, to_txs,
                 datetime.fromtimestamp(0), TxType.TRANSFER, '',
                 height=height)
+
+
+def get_asset_from_denom(denom: str) -> Asset:
+    if denom == DENOM_RUNE_NATIVE:
+        return AssetRUNE
+    else:
+        return Asset.from_string_exc(denom.upper())
