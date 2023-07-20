@@ -5,16 +5,17 @@ from typing import Optional, Union
 from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
-from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_client import AssetInfo, XcTx, TxFrom, TxTo, TxType, Fees, FeeType
+from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_client.fees import single_fee
-from xchainpy2_cosmos import CosmosGaiaClient
+from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, load_logs
+from xchainpy2_cosmos.utils import parse_cosmos_amount
 from xchainpy2_crypto import decode_address
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, Asset, \
     SYNTH_DELIMITER
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_RUNE_FEE
-from .utils import get_thor_address_prefix, build_deposit_tx_unsigned
+from .utils import get_thor_address_prefix, build_deposit_tx_unsigned, get_deposit_tx_from_logs, get_asset_from_denom
 
 
 class THORChainClient(CosmosGaiaClient):
@@ -181,8 +182,8 @@ class THORChainClient(CosmosGaiaClient):
     async def get_transaction_data_thornode(self, tx_id: str) -> XcTx:
         """
         Fetch transaction data from THORNode (parsed to XcTx)
-        Parsing "observed_tx" object
-        # todo: parse heights and other data
+        Parsing "observed_tx" object.
+        It is called "getDepositTransaction" in xchainjs
         Url: https://node/thorchain/tx/{tx_hash}
         :param tx_id: Tx Hash
         :return: XcTx result
@@ -238,7 +239,9 @@ class THORChainClient(CosmosGaiaClient):
         else:
             receiver_asset = Asset.from_string_exc(split_memo[1].upper())
             address = split_memo[2]
-            amount = Amount.from_base(split_memo[3], self._decimal)
+
+            # todo: check whether it is correct or not
+            amount = Amount.from_base(split_memo[3] or 0, self._decimal)
             to_txs = [
                 TxTo(address, amount, receiver_asset)
             ]
@@ -250,6 +253,61 @@ class THORChainClient(CosmosGaiaClient):
                 height
             )
 
+    async def get_transaction_data(self, tx_id: str, address: str = '') -> XcTx:
+        try:
+            j = await self.get_transaction_data_cosmos(tx_id)
+            response = j.get('tx_response')
+            if not response:
+                raise TxLoadException(f'Failed to get transaction logs (tx-hash: ${tx_id}): no tx_response')
+
+            logs = load_logs(response.get('logs'))
+            if not logs:
+                raise TxLoadException(f'Failed to get transaction logs (tx-hash: ${tx_id})')
+
+            transfers = logs[0].find_events('transfer')
+            if not transfers:
+                raise TxLoadException(f'Failed to get transaction logs (tx-hash: ${tx_id})')
+
+            sender = transfers[0].find_attr_first('sender')
+            sender = sender.value if sender else None
+            sender_address = sender if sender else address
+            sender_amounts = transfers[0].find_attributes('amount')
+            sender_amount = sender_amounts[1].value if sender_amounts and len(sender_amounts) > 1 else None
+
+            amount, denom = parse_cosmos_amount(sender_amount)
+            sender_asset = get_asset_from_denom(denom)
+
+            message = logs[0].find_events('message')
+            coin_spent = logs[0].find_events('coin_spent')
+            if not message and not coin_spent:
+                raise TxLoadException(f'Failed to get transaction logs (tx-hash: {tx_id})')
+
+            action = message[0].find_attr_first('action').value
+            bonds = logs[0].find_events('bond')
+
+            height = int(response['height'])
+
+            if action == 'send' or (bonds and bonds[0].type == 'bond'):
+                # Rune only transactions
+                asset_to = self.native_asset
+            else:
+                # synths and other tx types
+                asset_name = j['tx']['body']['messages']['coins']['asset']
+                asset_to = Asset.from_string_exc(asset_name)
+
+            tx_data = get_deposit_tx_from_logs(logs, sender_address, sender_asset, asset_to,
+                                               self._decimal, self._denom)
+            date = datetime.datetime.fromisoformat(j['timestamp'])
+            return tx_data._replace(
+                asset=sender_asset,
+                date=date,
+                hash=tx_id,
+                height=height,
+            )
+
+        except TxLoadException:
+            return await self.get_transaction_data_thornode(tx_id)
+
     async def get_fees(self, cache=None, tc_fee_rate=None) -> Fees:
         return single_fee(FeeType.FLAT_FEE, DEFAULT_RUNE_FEE)
 
@@ -259,5 +317,3 @@ class THORChainClient(CosmosGaiaClient):
             return Asset.from_string(denom.upper())
         else:
             return super().parse_denom_to_asset(denom)
-
-
