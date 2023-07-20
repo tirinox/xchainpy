@@ -283,11 +283,6 @@ class CosmosGaiaClient(XChainClient):
         tx_min_height = None
         tx_max_height = None
 
-        if asset is None:
-            asset = AssetATOM
-        elif isinstance(asset, str):
-            asset = get_asset(asset)
-
         if limit + offset > MAX_PAGES_PER_FUNCTION_CALL * MAX_TX_COUNT_PER_PAGE:
             raise ValueError(
                 f"limit plus offset can not be grater than {MAX_PAGES_PER_FUNCTION_CALL * MAX_TX_COUNT_PER_PAGE}")
