@@ -89,8 +89,8 @@ class TransferDatum(NamedTuple):
 
 def get_deposit_tx_from_logs(logs: List[TxLog],
                              address: str,
-                             sender_asset: Optional[Asset],
-                             receiver_address: Optional[Address],
+                             sender_asset: Optional[Asset] = None,
+                             receiver_address: Optional[Address] = None,
                              decimals=8,
                              denom='rune', height=0) -> XcTx:
     if not logs:

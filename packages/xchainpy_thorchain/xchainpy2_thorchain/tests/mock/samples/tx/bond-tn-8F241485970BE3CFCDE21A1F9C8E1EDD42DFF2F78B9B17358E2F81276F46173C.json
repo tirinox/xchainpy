@@ -1,0 +1,423 @@
+{
+  "tx": {
+    "body": {
+      "messages": [
+        {
+          "@type": "/types.MsgDeposit",
+          "coins": [
+            {
+              "asset": "THOR.RUNE",
+              "amount": "1400000000000",
+              "decimals": "0"
+            }
+          ],
+          "memo": "BOND:thor1x2whgc2nt665y0kc44uywhynazvp0l8tp0vtu6",
+          "signer": "thor1q3x003230jsuva7g5s2lpla4ln53hv25pvd7xu"
+        }
+      ],
+      "memo": "",
+      "timeout_height": "0",
+      "extension_options": [
+      ],
+      "non_critical_extension_options": [
+      ]
+    },
+    "auth_info": {
+      "signer_infos": [
+        {
+          "public_key": {
+            "@type": "/cosmos.crypto.secp256k1.PubKey",
+            "key": "AqEUabSyJoGglt/NoPparWU7AUWVrkxDQhbx35DIWKMT"
+          },
+          "mode_info": {
+            "single": {
+              "mode": "SIGN_MODE_LEGACY_AMINO_JSON"
+            }
+          },
+          "sequence": "32"
+        }
+      ],
+      "fee": {
+        "amount": [
+        ],
+        "gas_limit": "500000000",
+        "payer": "",
+        "granter": ""
+      }
+    },
+    "signatures": [
+      "Cyy4fRWhqSmV9ntbtBXVByc507fduYHFoRDMW7/i2tE8RXL5yO9y42QnYGVb8j3eXIS39oiF2sckEAeq/1NkqA=="
+    ]
+  },
+  "tx_response": {
+    "height": "11686585",
+    "txhash": "8F241485970BE3CFCDE21A1F9C8E1EDD42DFF2F78B9B17358E2F81276F46173C",
+    "codespace": "",
+    "code": 0,
+    "data": "0A130A112F74797065732E4D73674465706F736974",
+    "raw_log": "[{\"events\":[{\"type\":\"bond\",\"attributes\":[{\"key\":\"amount\",\"value\":\"1400000000000\"},{\"key\":\"bond_type\",\"value\":\"\\u0000\"},{\"key\":\"id\",\"value\":\"8F241485970BE3CFCDE21A1F9C8E1EDD42DFF2F78B9B17358E2F81276F46173C\"},{\"key\":\"chain\",\"value\":\"THOR\"},{\"key\":\"from\",\"value\":\"thor1q3x003230jsuva7g5s2lpla4ln53hv25pvd7xu\"},{\"key\":\"to\",\"value\":\"thor17gw75axcnr8747pkanye45pnrwk7p9c3cqncsv\"},{\"key\":\"coin\",\"value\":\"1400000000000 THOR.RUNE\"},{\"key\":\"memo\",\"value\":\"BOND:thor1x2whgc2nt665y0kc44uywhynazvp0l8tp0vtu6\"}]},{\"type\":\"coin_received\",\"attributes\":[{\"key\":\"receiver\",\"value\":\"thor17gw75axcnr8747pkanye45pnrwk7p9c3cqncsv\"},{\"key\":\"amount\",\"value\":\"1400000000000rune\"}]},{\"type\":\"coin_spent\",\"attributes\":[{\"key\":\"spender\",\"value\":\"thor1q3x003230jsuva7g5s2lpla4ln53hv25pvd7xu\"},{\"key\":\"amount\",\"value\":\"1400000000000rune\"}]},{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"deposit\"},{\"key\":\"sender\",\"value\":\"thor1q3x003230jsuva7g5s2lpla4ln53hv25pvd7xu\"}]},{\"type\":\"transfer\",\"attributes\":[{\"key\":\"recipient\",\"value\":\"thor17gw75axcnr8747pkanye45pnrwk7p9c3cqncsv\"},{\"key\":\"sender\",\"value\":\"thor1q3x003230jsuva7g5s2lpla4ln53hv25pvd7xu\"},{\"key\":\"amount\",\"value\":\"1400000000000rune\"}]}]}]",
+    "logs": [
+      {
+        "msg_index": 0,
+        "log": "",
+        "events": [
+          {
+            "type": "bond",
+            "attributes": [
+              {
+                "key": "amount",
+                "value": "1400000000000"
+              },
+              {
+                "key": "bond_type",
+                "value": "\u0000"
+              },
+              {
+                "key": "id",
+                "value": "8F241485970BE3CFCDE21A1F9C8E1EDD42DFF2F78B9B17358E2F81276F46173C"
+              },
+              {
+                "key": "chain",
+                "value": "THOR"
+              },
+              {
+                "key": "from",
+                "value": "thor1q3x003230jsuva7g5s2lpla4ln53hv25pvd7xu"
+              },
+              {
+                "key": "to",
+                "value": "thor17gw75axcnr8747pkanye45pnrwk7p9c3cqncsv"
+              },
+              {
+                "key": "coin",
+                "value": "1400000000000 THOR.RUNE"
+              },
+              {
+                "key": "memo",
+                "value": "BOND:thor1x2whgc2nt665y0kc44uywhynazvp0l8tp0vtu6"
+              }
+            ]
+          },
+          {
+            "type": "coin_received",
+            "attributes": [
+              {
+                "key": "receiver",
+                "value": "thor17gw75axcnr8747pkanye45pnrwk7p9c3cqncsv"
+              },
+              {
+                "key": "amount",
+                "value": "1400000000000rune"
+              }
+            ]
+          },
+          {
+            "type": "coin_spent",
+            "attributes": [
+              {
+                "key": "spender",
+                "value": "thor1q3x003230jsuva7g5s2lpla4ln53hv25pvd7xu"
+              },
+              {
+                "key": "amount",
+                "value": "1400000000000rune"
+              }
+            ]
+          },
+          {
+            "type": "message",
+            "attributes": [
+              {
+                "key": "action",
+                "value": "deposit"
+              },
+              {
+                "key": "sender",
+                "value": "thor1q3x003230jsuva7g5s2lpla4ln53hv25pvd7xu"
+              }
+            ]
+          },
+          {
+            "type": "transfer",
+            "attributes": [
+              {
+                "key": "recipient",
+                "value": "thor17gw75axcnr8747pkanye45pnrwk7p9c3cqncsv"
+              },
+              {
+                "key": "sender",
+                "value": "thor1q3x003230jsuva7g5s2lpla4ln53hv25pvd7xu"
+              },
+              {
+                "key": "amount",
+                "value": "1400000000000rune"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "info": "",
+    "gas_wanted": "0",
+    "gas_used": "5948713",
+    "tx": {
+      "@type": "/cosmos.tx.v1beta1.Tx",
+      "body": {
+        "messages": [
+          {
+            "@type": "/types.MsgDeposit",
+            "coins": [
+              {
+                "asset": "THOR.RUNE",
+                "amount": "1400000000000",
+                "decimals": "0"
+              }
+            ],
+            "memo": "BOND:thor1x2whgc2nt665y0kc44uywhynazvp0l8tp0vtu6",
+            "signer": "thor1q3x003230jsuva7g5s2lpla4ln53hv25pvd7xu"
+          }
+        ],
+        "memo": "",
+        "timeout_height": "0",
+        "extension_options": [
+        ],
+        "non_critical_extension_options": [
+        ]
+      },
+      "auth_info": {
+        "signer_infos": [
+          {
+            "public_key": {
+              "@type": "/cosmos.crypto.secp256k1.PubKey",
+              "key": "AqEUabSyJoGglt/NoPparWU7AUWVrkxDQhbx35DIWKMT"
+            },
+            "mode_info": {
+              "single": {
+                "mode": "SIGN_MODE_LEGACY_AMINO_JSON"
+              }
+            },
+            "sequence": "32"
+          }
+        ],
+        "fee": {
+          "amount": [
+          ],
+          "gas_limit": "500000000",
+          "payer": "",
+          "granter": ""
+        }
+      },
+      "signatures": [
+        "Cyy4fRWhqSmV9ntbtBXVByc507fduYHFoRDMW7/i2tE8RXL5yO9y42QnYGVb8j3eXIS39oiF2sckEAeq/1NkqA=="
+      ]
+    },
+    "timestamp": "2023-07-13T10:58:01Z",
+    "events": [
+      {
+        "type": "tx",
+        "attributes": [
+          {
+            "key": "ZmVl",
+            "value": null,
+            "index": true
+          }
+        ]
+      },
+      {
+        "type": "coin_spent",
+        "attributes": [
+          {
+            "key": "c3BlbmRlcg==",
+            "value": "dGhvcjFxM3gwMDMyMzBqc3V2YTdnNXMybHBsYTRsbjUzaHYyNXB2ZDd4dQ==",
+            "index": true
+          },
+          {
+            "key": "YW1vdW50",
+            "value": "MjAwMDAwMHJ1bmU=",
+            "index": true
+          }
+        ]
+      },
+      {
+        "type": "coin_received",
+        "attributes": [
+          {
+            "key": "cmVjZWl2ZXI=",
+            "value": "dGhvcjFkaGV5Y2RldnEzOXFsa3hzMmE2d3V1enluNGFxeGh2ZTRxeHR4dA==",
+            "index": true
+          },
+          {
+            "key": "YW1vdW50",
+            "value": "MjAwMDAwMHJ1bmU=",
+            "index": true
+          }
+        ]
+      },
+      {
+        "type": "transfer",
+        "attributes": [
+          {
+            "key": "cmVjaXBpZW50",
+            "value": "dGhvcjFkaGV5Y2RldnEzOXFsa3hzMmE2d3V1enluNGFxeGh2ZTRxeHR4dA==",
+            "index": true
+          },
+          {
+            "key": "c2VuZGVy",
+            "value": "dGhvcjFxM3gwMDMyMzBqc3V2YTdnNXMybHBsYTRsbjUzaHYyNXB2ZDd4dQ==",
+            "index": true
+          },
+          {
+            "key": "YW1vdW50",
+            "value": "MjAwMDAwMHJ1bmU=",
+            "index": true
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "attributes": [
+          {
+            "key": "c2VuZGVy",
+            "value": "dGhvcjFxM3gwMDMyMzBqc3V2YTdnNXMybHBsYTRsbjUzaHYyNXB2ZDd4dQ==",
+            "index": true
+          }
+        ]
+      },
+      {
+        "type": "tx",
+        "attributes": [
+          {
+            "key": "YWNjX3NlcQ==",
+            "value": "dGhvcjFxM3gwMDMyMzBqc3V2YTdnNXMybHBsYTRsbjUzaHYyNXB2ZDd4dS8zMg==",
+            "index": true
+          }
+        ]
+      },
+      {
+        "type": "tx",
+        "attributes": [
+          {
+            "key": "c2lnbmF0dXJl",
+            "value": "Q3l5NGZSV2hxU21WOW50YnRCWFZCeWM1MDdmZHVZSEZvUkRNVzcvaTJ0RThSWEw1eU85eTQyUW5ZR1ZiOGozZVhJUzM5b2lGMnNja0VBZXEvMU5rcUE9PQ==",
+            "index": true
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "attributes": [
+          {
+            "key": "YWN0aW9u",
+            "value": "ZGVwb3NpdA==",
+            "index": true
+          }
+        ]
+      },
+      {
+        "type": "coin_spent",
+        "attributes": [
+          {
+            "key": "c3BlbmRlcg==",
+            "value": "dGhvcjFxM3gwMDMyMzBqc3V2YTdnNXMybHBsYTRsbjUzaHYyNXB2ZDd4dQ==",
+            "index": true
+          },
+          {
+            "key": "YW1vdW50",
+            "value": "MTQwMDAwMDAwMDAwMHJ1bmU=",
+            "index": true
+          }
+        ]
+      },
+      {
+        "type": "coin_received",
+        "attributes": [
+          {
+            "key": "cmVjZWl2ZXI=",
+            "value": "dGhvcjE3Z3c3NWF4Y25yODc0N3BrYW55ZTQ1cG5yd2s3cDljM2NxbmNzdg==",
+            "index": true
+          },
+          {
+            "key": "YW1vdW50",
+            "value": "MTQwMDAwMDAwMDAwMHJ1bmU=",
+            "index": true
+          }
+        ]
+      },
+      {
+        "type": "transfer",
+        "attributes": [
+          {
+            "key": "cmVjaXBpZW50",
+            "value": "dGhvcjE3Z3c3NWF4Y25yODc0N3BrYW55ZTQ1cG5yd2s3cDljM2NxbmNzdg==",
+            "index": true
+          },
+          {
+            "key": "c2VuZGVy",
+            "value": "dGhvcjFxM3gwMDMyMzBqc3V2YTdnNXMybHBsYTRsbjUzaHYyNXB2ZDd4dQ==",
+            "index": true
+          },
+          {
+            "key": "YW1vdW50",
+            "value": "MTQwMDAwMDAwMDAwMHJ1bmU=",
+            "index": true
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "attributes": [
+          {
+            "key": "c2VuZGVy",
+            "value": "dGhvcjFxM3gwMDMyMzBqc3V2YTdnNXMybHBsYTRsbjUzaHYyNXB2ZDd4dQ==",
+            "index": true
+          }
+        ]
+      },
+      {
+        "type": "bond",
+        "attributes": [
+          {
+            "key": "YW1vdW50",
+            "value": "MTQwMDAwMDAwMDAwMA==",
+            "index": true
+          },
+          {
+            "key": "Ym9uZF90eXBl",
+            "value": "AA==",
+            "index": true
+          },
+          {
+            "key": "aWQ=",
+            "value": "OEYyNDE0ODU5NzBCRTNDRkNERTIxQTFGOUM4RTFFREQ0MkRGRjJGNzhCOUIxNzM1OEUyRjgxMjc2RjQ2MTczQw==",
+            "index": true
+          },
+          {
+            "key": "Y2hhaW4=",
+            "value": "VEhPUg==",
+            "index": true
+          },
+          {
+            "key": "ZnJvbQ==",
+            "value": "dGhvcjFxM3gwMDMyMzBqc3V2YTdnNXMybHBsYTRsbjUzaHYyNXB2ZDd4dQ==",
+            "index": true
+          },
+          {
+            "key": "dG8=",
+            "value": "dGhvcjE3Z3c3NWF4Y25yODc0N3BrYW55ZTQ1cG5yd2s3cDljM2NxbmNzdg==",
+            "index": true
+          },
+          {
+            "key": "Y29pbg==",
+            "value": "MTQwMDAwMDAwMDAwMCBUSE9SLlJVTkU=",
+            "index": true
+          },
+          {
+            "key": "bWVtbw==",
+            "value": "Qk9ORDp0aG9yMXgyd2hnYzJudDY2NXkwa2M0NHV5d2h5bmF6dnAwbDh0cDB2dHU2",
+            "index": true
+          }
+        ]
+      }
+    ]
+  }
+}

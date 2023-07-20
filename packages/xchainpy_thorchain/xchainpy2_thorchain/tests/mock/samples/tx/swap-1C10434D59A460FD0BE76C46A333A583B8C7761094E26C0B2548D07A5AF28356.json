@@ -1,0 +1,169 @@
+{
+  "tx": {
+    "body": {
+      "messages": [
+        {
+          "@type": "/types.MsgDeposit",
+          "coins": [
+            {
+              "asset": "THOR.RUNE",
+              "amount": "3600000000000",
+              "decimals": "0"
+            }
+          ],
+          "memo": "SWAP:BTC.BTC:bc1qxnvnp47605ph7udsd45c49ya4xespq4nppr9gf:737605111",
+          "signer": "thor1g3nvdxgmdte8cfhl8592lz5tuzjd9hjsglazhr"
+        }
+      ],
+      "memo": "",
+      "timeout_height": "0",
+      "extension_options": [
+      ],
+      "non_critical_extension_options": [
+      ]
+    },
+    "auth_info": {
+      "signer_infos": [
+        {
+          "public_key": {
+            "@type": "/cosmos.crypto.secp256k1.PubKey",
+            "key": "Ak59ahiPACUIGsL+/x5WJLSwLclXG3S/hM3fjWTd70ue"
+          },
+          "mode_info": {
+            "single": {
+              "mode": "SIGN_MODE_LEGACY_AMINO_JSON"
+            }
+          },
+          "sequence": "0"
+        }
+      ],
+      "fee": {
+        "amount": [
+        ],
+        "gas_limit": "20000000",
+        "payer": "",
+        "granter": ""
+      }
+    },
+    "signatures": [
+      "LeGmEvBnhBNEJjNiJVnI+tYKLZfCx0A9xhc/jFpR4gxVbTSdlDBBVuiiNz5gtjde+HbfATx9tcJASFXwMlSd2A=="
+    ]
+  },
+  "tx_response": {
+    "height": "1071825",
+    "txhash": "1C10434D59A460FD0BE76C46A333A583B8C7761094E26C0B2548D07A5AF28356",
+    "codespace": "",
+    "code": 0,
+    "data": "0A090A076465706F736974",
+    "raw_log": "[{\"events\":[{\"type\":\"message\",\"attributes\":[{\"key\":\"action\",\"value\":\"deposit\"},{\"key\":\"sender\",\"value\":\"thor1g3nvdxgmdte8cfhl8592lz5tuzjd9hjsglazhr\"},{\"key\":\"sender\",\"value\":\"thor1g3nvdxgmdte8cfhl8592lz5tuzjd9hjsglazhr\"}]},{\"type\":\"transfer\",\"attributes\":[{\"key\":\"recipient\",\"value\":\"thor1dheycdevq39qlkxs2a6wuuzyn4aqxhve4qxtxt\"},{\"key\":\"sender\",\"value\":\"thor1g3nvdxgmdte8cfhl8592lz5tuzjd9hjsglazhr\"},{\"key\":\"amount\",\"value\":\"2000000rune\"},{\"key\":\"recipient\",\"value\":\"thor1g98cy3n9mmjrpn0sxmn63lztelera37n8n67c0\"},{\"key\":\"sender\",\"value\":\"thor1g3nvdxgmdte8cfhl8592lz5tuzjd9hjsglazhr\"},{\"key\":\"amount\",\"value\":\"3600000000000rune\"}]}]}]",
+    "logs": [
+      {
+        "msg_index": 0,
+        "log": "",
+        "events": [
+          {
+            "type": "message",
+            "attributes": [
+              {
+                "key": "action",
+                "value": "deposit"
+              },
+              {
+                "key": "sender",
+                "value": "thor1g3nvdxgmdte8cfhl8592lz5tuzjd9hjsglazhr"
+              },
+              {
+                "key": "sender",
+                "value": "thor1g3nvdxgmdte8cfhl8592lz5tuzjd9hjsglazhr"
+              }
+            ]
+          },
+          {
+            "type": "transfer",
+            "attributes": [
+              {
+                "key": "recipient",
+                "value": "thor1dheycdevq39qlkxs2a6wuuzyn4aqxhve4qxtxt"
+              },
+              {
+                "key": "sender",
+                "value": "thor1g3nvdxgmdte8cfhl8592lz5tuzjd9hjsglazhr"
+              },
+              {
+                "key": "amount",
+                "value": "2000000rune"
+              },
+              {
+                "key": "recipient",
+                "value": "thor1g98cy3n9mmjrpn0sxmn63lztelera37n8n67c0"
+              },
+              {
+                "key": "sender",
+                "value": "thor1g3nvdxgmdte8cfhl8592lz5tuzjd9hjsglazhr"
+              },
+              {
+                "key": "amount",
+                "value": "3600000000000rune"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "info": "",
+    "gas_wanted": "20000000",
+    "gas_used": "432661",
+    "tx": {
+      "@type": "/cosmos.tx.v1beta1.Tx",
+      "body": {
+        "messages": [
+          {
+            "@type": "/types.MsgDeposit",
+            "coins": [
+              {
+                "asset": "THOR.RUNE",
+                "amount": "3600000000000",
+                "decimals": "0"
+              }
+            ],
+            "memo": "SWAP:BTC.BTC:bc1qxnvnp47605ph7udsd45c49ya4xespq4nppr9gf:737605111",
+            "signer": "thor1g3nvdxgmdte8cfhl8592lz5tuzjd9hjsglazhr"
+          }
+        ],
+        "memo": "",
+        "timeout_height": "0",
+        "extension_options": [
+        ],
+        "non_critical_extension_options": [
+        ]
+      },
+      "auth_info": {
+        "signer_infos": [
+          {
+            "public_key": {
+              "@type": "/cosmos.crypto.secp256k1.PubKey",
+              "key": "Ak59ahiPACUIGsL+/x5WJLSwLclXG3S/hM3fjWTd70ue"
+            },
+            "mode_info": {
+              "single": {
+                "mode": "SIGN_MODE_LEGACY_AMINO_JSON"
+              }
+            },
+            "sequence": "0"
+          }
+        ],
+        "fee": {
+          "amount": [
+          ],
+          "gas_limit": "20000000",
+          "payer": "",
+          "granter": ""
+        }
+      },
+      "signatures": [
+        "LeGmEvBnhBNEJjNiJVnI+tYKLZfCx0A9xhc/jFpR4gxVbTSdlDBBVuiiNz5gtjde+HbfATx9tcJASFXwMlSd2A=="
+      ]
+    },
+    "timestamp": "2021-06-18T12:34:01Z"
+  }
+}
