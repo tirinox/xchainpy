@@ -1,7 +1,7 @@
 .PHONY: dev_tools cli_codegen test
 
 dev_tools:
-	pip install -U pytest pytest-asyncio
+	pip install -U pytest pytest-asyncio requests-mock aioresponses
 
 cli_codegen:
 	cd scripts && \
