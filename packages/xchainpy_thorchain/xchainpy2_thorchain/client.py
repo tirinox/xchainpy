@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from collections import defaultdict
 from typing import Optional, Union
 
 from bip_utils import Bech32ChecksumError
@@ -181,9 +182,10 @@ class THORChainClient(CosmosGaiaClient):
 
     async def get_transaction_data_thornode(self, tx_id: str) -> XcTx:
         """
-        Fetch transaction data from THORNode (parsed to XcTx)
+        Fetch transaction data from THORNode (parsed to XcTx instance)
+        This function is used when in bound or outbound tx is not of THORChain.
+        It is called "getTransactionDataThornode" in xchainjs
         Parsing "observed_tx" object.
-        It is called "getDepositTransaction" in xchainjs
         Url: https://node/thorchain/tx/{tx_hash}
         :param tx_id: Tx Hash
         :return: XcTx result
@@ -199,59 +201,42 @@ class THORChainClient(CosmosGaiaClient):
         if not raw_data:
             raise Exception(f"Could not fetch transaction data from THORNode {tx_id}")
 
-        observed_tx = raw_data.get("observed_tx")
-        if not observed_tx:
-            raise Exception(f"Could not fetch transaction data from THORNode {tx_id} (observed_tx is not found)")
-
-        tx = observed_tx["tx"]
-
-        # fixme: do we always have 1 coin?
-        coin0 = tx["coins"][0]
-        sender_asset = Asset.from_string_exc(coin0["asset"].upper())
-        from_address = tx["from_address"]
-
-        from_txs = [
-            TxFrom(from_address, tx_id, Amount.from_base(coin0["amount"], self._decimal), sender_asset)
+        tx = raw_data['observed_tx']['tx']
+        coin = tx['coins']
+        sender_asset = Asset.from_string_exc(coin['asset'])
+        from_address = tx['from_address']
+        coin_amount = Amount.from_base(coin['amount'], self._decimal)
+        from_tx = [
+            TxFrom(from_address, tx['id'], coin_amount, sender_asset)
         ]
-
-        memo = tx["memo"]
-        if not memo:
-            raise Exception(f"Could not fetch transaction data from THORNode {tx_id} (memo is not found)")
-
-        split_memo = memo.split(":")
-
-        height = int(raw_data.get('finalised_height', 0))
+        split_memo = tx.get('memo', '').split(':')
+        if not split_memo:
+            raise TxLoadException('Could not parse memo')
 
         if split_memo[0] == 'OUT':
-            asset = coin0["asset"]
-            amount = coin0["amount"]
-            to_address = tx.get("to_address")
-            to_txs = [
-                TxTo(to_address, Amount.from_base(amount, self._decimal), Asset.from_string_exc(asset))
+            asset = sender_asset
+            address_to = tx.get('to_address', 'undefined')
+            to_tx = [
+                TxTo(address_to, coin_amount, asset)
             ]
-            return XcTx(
-                sender_asset,
-                from_txs, to_txs,
-                datetime.datetime.fromtimestamp(0),
-                TxType.TRANSFER, tx_id,
-                height
-            )
         else:
-            receiver_asset = Asset.from_string_exc(split_memo[1].upper())
+            asset = Asset.from_string_exc(split_memo[1])
             address = split_memo[2]
-
-            # todo: check whether it is correct or not
-            amount = Amount.from_base(split_memo[3] or 0, self._decimal)
-            to_txs = [
-                TxTo(address, amount, receiver_asset)
+            amount = Amount.from_base(split_memo[3], self._decimal)
+            to_tx = [
+                TxTo(address, amount, asset)
             ]
-            return XcTx(
-                sender_asset,
-                from_txs, to_txs,
-                datetime.datetime.fromtimestamp(0),
-                TxType.TRANSFER, tx_id,
-                height
-            )
+
+        height = int(raw_data['observed_tx'].get('finalised_height', 0))
+        
+        return XcTx(
+            sender_asset,
+            from_tx, to_tx,
+            datetime.datetime.fromtimestamp(0),
+            TxType.TRANSFER,
+            tx['id'],
+            height
+        )
 
     async def get_transaction_data(self, tx_id: str, address: str = '') -> XcTx:
         try:
@@ -264,46 +249,69 @@ class THORChainClient(CosmosGaiaClient):
             if not logs:
                 raise TxLoadException(f'Failed to get transaction logs (tx-hash: ${tx_id})')
 
-            transfers = logs[0].find_events('transfer')
-            if not transfers:
-                raise TxLoadException(f'Failed to get transaction logs (tx-hash: ${tx_id})')
+            transfers_event = logs[0].find_event('transfer')
+            message_event = logs[0].find_event('message')
+            if not transfers_event and not message_event:
+                raise TxLoadException(f'Invalid transaction data, no transfer/no message (tx-hash: ${tx_id})')
 
-            sender = transfers[0].find_attr_first('sender')
-            sender = sender.value if sender else None
-            sender_address = sender if sender else address
-            sender_amounts = transfers[0].find_attributes('amount')
-            sender_amount = sender_amounts[1].value if sender_amounts and len(sender_amounts) > 1 else None
+            groups = defaultdict(list)
+            for attr in transfers_event.attributes:
+                groups[attr.key].append(attr.value)
 
-            amount, denom = parse_cosmos_amount(sender_amount)
-            sender_asset = get_asset_from_denom(denom)
+            amt_group = groups['amount']
+            amt_index = 1 if len(amt_group) >= 2 else 0
+            asset_amount, denom = parse_cosmos_amount(amt_group[amt_index])
+            from_asset = get_asset_from_denom(denom)
 
-            message = logs[0].find_events('message')
-            coin_spent = logs[0].find_events('coin_spent')
-            if not message and not coin_spent:
-                raise TxLoadException(f'Failed to get transaction logs (tx-hash: {tx_id})')
+            if address:
+                from_address = address
+            else:
+                from_address = transfers_event.find_attr_value_first('sender')
 
-            action = message[0].find_attr_first('action').value
-            bonds = logs[0].find_events('bond')
-
+            memo = ''
+            if (tx_j := j.get('tx')) and (body := tx_j.get('body')):
+                memo = body['memo']
+            memo_components = memo.split(':')
+            n_memo = len(memo_components)
+            to_address = memo_components[2] if n_memo > 2 else ''
+            to_asset = Asset.from_string_exc(memo_components[1]) if n_memo > 1 else ''
+            tx_date = datetime.datetime.fromisoformat(response['timestamp'])
+            tx_type = message_event.find_attr_value_first('action')
+            tx_hash = response['txhash']
             height = int(response['height'])
 
-            if action == 'send' or (bonds and bonds[0].type == 'bond'):
-                # Rune only transactions
-                asset_to = self.native_asset
-            else:
-                # synths and other tx types
-                asset_name = j['tx']['body']['messages']['coins']['asset']
-                asset_to = Asset.from_string_exc(asset_name)
+            if not denom or not from_asset or not tx_hash or not from_address or not tx_type:
+                return XcTx(
+                    from_asset, [], [], tx_date, TxType.UNKNOWN, tx_hash, height
+                )
 
-            tx_data = get_deposit_tx_from_logs(logs, sender_address, sender_asset, asset_to,
-                                               self._decimal, self._denom)
-            date = datetime.datetime.fromisoformat(j['timestamp'])
-            return tx_data._replace(
-                asset=sender_asset,
-                date=date,
-                hash=tx_id,
-                height=height,
-            )
+            tx_data = get_deposit_tx_from_logs(logs, from_address, from_asset, to_asset,
+                                               self._decimal, self._denom, height)
+            if not tx_data:
+                raise TxLoadException('Failed to get transaction data')
+
+            if to_asset == self.native_asset or to_asset.synth:
+                return tx_data._replace(
+                    date=tx_date,
+                    hash=tx_hash,
+                    type=tx_type,
+                    asset=from_asset
+                )
+            else:
+                to_amount = Amount.from_base(int(memo_components[3]))
+                return XcTx(
+                    from_asset,
+                    from_txs=[
+                        TxFrom(from_address, tx_id, Amount.from_base(asset_amount, self._decimal), from_asset)
+                    ],
+                    to_txs=[
+                        TxTo(to_address, to_amount, to_asset)
+                    ],
+                    date=tx_date,
+                    type=TxType.TRANSFER,
+                    hash=tx_hash,
+                    height=height
+                )
 
         except TxLoadException:
             return await self.get_transaction_data_thornode(tx_id)

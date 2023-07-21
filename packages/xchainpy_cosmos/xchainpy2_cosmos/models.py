@@ -78,8 +78,9 @@ class TxEvent(NamedTuple):
     def find_attributes(self, key):
         return (a for a in self.attributes if a.key == key)
 
-    def find_attr_first(self, key) -> Optional[TxEventAttribute]:
-        return next(self.find_attributes(key), None)
+    def find_attr_value_first(self, key, default=None) -> Optional[str]:
+        attr = next(self.find_attributes(key), None)
+        return attr.value if attr else default
 
 
 class TxLog(NamedTuple):
@@ -97,6 +98,9 @@ class TxLog(NamedTuple):
 
     def find_events(self, event_name) -> List[TxEvent]:
         return [e for e in self.events if e.type == event_name]
+
+    def find_event(self, event_name):
+        return next((e for e in self.events if e.type == event_name), None)
 
 
 class RPCResponse(NamedTuple):
