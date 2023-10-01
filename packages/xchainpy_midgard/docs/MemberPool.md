@@ -5,6 +5,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **asset_added** | **str** | Int64(e8), total asset added to the pool by member | 
 **asset_address** | **str** | asset address used by the member | 
+**asset_deposit** | **str** | Int64(e8), total asset that is currently deposited to the pool by member. This field is same as the &#x60;asset_deposit_value&#x60; field in thornode. Mainly can be used  for tracking, mainly Growth Percentage  | 
 **asset_pending** | **str** | Int64(e8), asset sent but not added yet, it will be added when the rune pair arrives  | 
 **asset_withdrawn** | **str** | Int64(e8), total asset withdrawn from the pool by member | 
 **date_first_added** | **str** | Int64, Unix timestamp for the first time member deposited into the pool | 
@@ -13,6 +14,7 @@ Name | Type | Description | Notes
 **pool** | **str** | Pool rest of the data refers to | 
 **rune_added** | **str** | Int64(e8), total Rune added to the pool by member | 
 **rune_address** | **str** | Rune address used by the member | 
+**rune_deposit** | **str** | Int64(e8), total Rune that is currently deposited to the pool by member. This field is same as the &#x60;rune_deposit_value&#x60; field in thornode. Mainly can be used  for tracking, mainly Growth Percentage  | 
 **rune_pending** | **str** | Int64(e8), Rune sent but not added yet, it will be added when the asset pair arrives  | 
 **rune_withdrawn** | **str** | Int64(e8), total Rune withdrawn from the pool by member | 
 

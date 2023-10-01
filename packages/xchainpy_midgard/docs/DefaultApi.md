@@ -6,10 +6,13 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**get_actions**](DefaultApi.md#get_actions) | **GET** /v2/actions | Actions List
 [**get_balance**](DefaultApi.md#get_balance) | **GET** /v2/balance/{address} | Current balance for an address
+[**get_borrower_detail**](DefaultApi.md#get_borrower_detail) | **GET** /v2/borrower/{address} | Borrower Details
+[**get_borrowers_addresses**](DefaultApi.md#get_borrowers_addresses) | **GET** /v2/borrowers | Borrowers List
 [**get_churns**](DefaultApi.md#get_churns) | **GET** /v2/churns | Churns List
 [**get_depth_history**](DefaultApi.md#get_depth_history) | **GET** /v2/history/depths/{pool} | Depth and Price History
 [**get_earnings_history**](DefaultApi.md#get_earnings_history) | **GET** /v2/history/earnings | Earnings History
 [**get_health**](DefaultApi.md#get_health) | **GET** /v2/health | Health Info
+[**get_known_pools**](DefaultApi.md#get_known_pools) | **GET** /v2/knownpools | Known Pools List
 [**get_liquidity_history**](DefaultApi.md#get_liquidity_history) | **GET** /v2/history/liquidity_changes | Liquidity Changes History
 [**get_member_detail**](DefaultApi.md#get_member_detail) | **GET** /v2/member/{address} | Member Details
 [**get_members_adresses**](DefaultApi.md#get_members_adresses) | **GET** /v2/members | Members List
@@ -18,11 +21,8 @@ Method | HTTP request | Description
 [**get_pool**](DefaultApi.md#get_pool) | **GET** /v2/pool/{asset} | Details of a Pool
 [**get_pool_stats**](DefaultApi.md#get_pool_stats) | **GET** /v2/pool/{asset}/stats | Pool Statistics
 [**get_pools**](DefaultApi.md#get_pools) | **GET** /v2/pools | Pools List
-[**get_proxied_constants**](DefaultApi.md#get_proxied_constants) | **GET** /v2/thorchain/constants | Proxied THORChain Constants
-[**get_proxied_inbound_addresses**](DefaultApi.md#get_proxied_inbound_addresses) | **GET** /v2/thorchain/inbound_addresses | Proxied THORChain Inbound Addresses
-[**get_proxied_lastblock**](DefaultApi.md#get_proxied_lastblock) | **GET** /v2/thorchain/lastblock | Proxied THORChain Lastblock
-[**get_proxied_nodes**](DefaultApi.md#get_proxied_nodes) | **GET** /v2/thorchain/nodes | Proxied THORChain Nodes
-[**get_proxied_queue**](DefaultApi.md#get_proxied_queue) | **GET** /v2/thorchain/queue | Proxied THORChain Queue
+[**get_saver_detail**](DefaultApi.md#get_saver_detail) | **GET** /v2/saver/{address} | Saver Details
+[**get_savers_history**](DefaultApi.md#get_savers_history) | **GET** /v2/history/savers/{pool} | Savers Units and Depth History
 [**get_stats**](DefaultApi.md#get_stats) | **GET** /v2/stats | Global Stats
 [**get_swap_history**](DefaultApi.md#get_swap_history) | **GET** /v2/history/swaps | Swaps History
 [**get_thor_name_detail**](DefaultApi.md#get_thor_name_detail) | **GET** /v2/thorname/lookup/{name} | THORName Details
@@ -31,7 +31,7 @@ Method | HTTP request | Description
 [**get_tvl_history**](DefaultApi.md#get_tvl_history) | **GET** /v2/history/tvl | Total Value Locked History
 
 # **get_actions**
-> InlineResponse200 get_actions(address=address, txid=txid, asset=asset, type=type, affiliate=affiliate, limit=limit, offset=offset)
+> InlineResponse200 get_actions(address=address, txid=txid, asset=asset, type=type, affiliate=affiliate, limit=limit, offset=offset, next_page_token=next_page_token, timestamp=timestamp, height=height, prev_page_token=prev_page_token, from_timestamp=from_timestamp, from_height=from_height)
 
 Actions List
 
@@ -49,15 +49,21 @@ from pprint import pprint
 api_instance = xchainpy2_midgard.DefaultApi()
 address = 'address_example' # str | Comma separated list. Address of sender or recipient of any in/out transaction related to the action.  (optional)
 txid = 'txid_example' # str | ID of any in/out tx related to the action (optional)
-asset = 'asset_example' # str | Any asset that is part of the action (CHAIN.SYMBOL) (optional)
+asset = 'asset_example' # str | Comma separated list. Any asset that is part of the action (CHAIN.SYMBOL) Additionally, synth, nosynth, and norune filters can be used for swap, add/withdraw actions.  (optional)
 type = 'type_example' # str | One or more comma separated unique types of action (swap, addLiquidity, withdraw, donate, refund, switch)  (optional)
-affiliate = 'affiliate_example' # str | Affiliate address of the action (swap)  (optional)
+affiliate = 'affiliate_example' # str | Comma separated list. Affiliate address of the action (swap, refund)  (optional)
 limit = 789 # int | number of actions returned, default is 50 (optional)
 offset = 789 # int | pagination offset, default is 0 (optional)
+next_page_token = 789 # int | if this is given, the actions for the next page will be given (optional)
+timestamp = 789 # int | if this is given, the actions older than the timestamp will be given (optional)
+height = 789 # int | if this is given, the actions older than the height will be given (optional)
+prev_page_token = 789 # int | if this is given, the actions for the previous page will be given (optional)
+from_timestamp = 789 # int | if this is given, the actions newer than the timestamp will be given (optional)
+from_height = 789 # int | if this is given, the actions newer than the height will be given (optional)
 
 try:
     # Actions List
-    api_response = api_instance.get_actions(address=address, txid=txid, asset=asset, type=type, affiliate=affiliate, limit=limit, offset=offset)
+    api_response = api_instance.get_actions(address=address, txid=txid, asset=asset, type=type, affiliate=affiliate, limit=limit, offset=offset, next_page_token=next_page_token, timestamp=timestamp, height=height, prev_page_token=prev_page_token, from_timestamp=from_timestamp, from_height=from_height)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_actions: %s\n" % e)
@@ -69,11 +75,17 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **address** | **str**| Comma separated list. Address of sender or recipient of any in/out transaction related to the action.  | [optional] 
  **txid** | **str**| ID of any in/out tx related to the action | [optional] 
- **asset** | **str**| Any asset that is part of the action (CHAIN.SYMBOL) | [optional] 
+ **asset** | **str**| Comma separated list. Any asset that is part of the action (CHAIN.SYMBOL) Additionally, synth, nosynth, and norune filters can be used for swap, add/withdraw actions.  | [optional] 
  **type** | **str**| One or more comma separated unique types of action (swap, addLiquidity, withdraw, donate, refund, switch)  | [optional] 
- **affiliate** | **str**| Affiliate address of the action (swap)  | [optional] 
+ **affiliate** | **str**| Comma separated list. Affiliate address of the action (swap, refund)  | [optional] 
  **limit** | **int**| number of actions returned, default is 50 | [optional] 
  **offset** | **int**| pagination offset, default is 0 | [optional] 
+ **next_page_token** | **int**| if this is given, the actions for the next page will be given | [optional] 
+ **timestamp** | **int**| if this is given, the actions older than the timestamp will be given | [optional] 
+ **height** | **int**| if this is given, the actions older than the height will be given | [optional] 
+ **prev_page_token** | **int**| if this is given, the actions for the previous page will be given | [optional] 
+ **from_timestamp** | **int**| if this is given, the actions newer than the timestamp will be given | [optional] 
+ **from_height** | **int**| if this is given, the actions newer than the height will be given | [optional] 
 
 ### Return type
 
@@ -130,6 +142,102 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**Balance**](Balance.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_borrower_detail**
+> BorrowerDetails get_borrower_detail(address)
+
+Borrower Details
+
+Returns an array of statistics for all the open loans associated with a given borrower address. 
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard.DefaultApi()
+address = 'address_example' # str | Address to match borrower, an asset address is given. Query can also be multiple addresses should be seperated by comma (',') 
+
+try:
+    # Borrower Details
+    api_response = api_instance.get_borrower_detail(address)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_borrower_detail: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **address** | **str**| Address to match borrower, an asset address is given. Query can also be multiple addresses should be seperated by comma (&#x27;,&#x27;)  | 
+
+### Return type
+
+[**BorrowerDetails**](BorrowerDetails.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_borrowers_addresses**
+> list[str] get_borrowers_addresses(asset=asset)
+
+Borrowers List
+
+Returns an array containing the addresses for all borrowers. Addresses are only shown once. 
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard.DefaultApi()
+asset = 'asset_example' # str | Return only borrowers getting loan against this asset as collateral. (optional)
+
+try:
+    # Borrowers List
+    api_response = api_instance.get_borrowers_addresses(asset=asset)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_borrowers_addresses: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **asset** | **str**| Return only borrowers getting loan against this asset as collateral. | [optional] 
+
+### Return type
+
+**list[str]**
 
 ### Authorization
 
@@ -340,6 +448,50 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **get_known_pools**
+> KnownPools get_known_pools()
+
+Known Pools List
+
+Returns an object with known pools and their statuses
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard.DefaultApi()
+
+try:
+    # Known Pools List
+    api_response = api_instance.get_known_pools()
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_known_pools: %s\n" % e)
+```
+
+### Parameters
+This endpoint does not need any parameter.
+
+### Return type
+
+[**KnownPools**](KnownPools.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **get_liquidity_history**
 > LiquidityHistory get_liquidity_history(pool=pool, interval=interval, count=count, to=to, _from=_from)
 
@@ -397,7 +549,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_member_detail**
-> MemberDetails get_member_detail(address)
+> MemberDetails get_member_detail(address, show_savers=show_savers)
 
 Member Details
 
@@ -413,11 +565,12 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = xchainpy2_midgard.DefaultApi()
-address = 'address_example' # str | Address to match liquidity providers. Either a rune or an asset address may be given. 
+address = 'address_example' # str | Address to match liquidity providers. Either a rune or an asset address may be given. Query can also be multiple addresses should be seperated by comma (',') 
+show_savers = false # bool | A flag to show saver vault membership details, the default is false.  (optional) (default to false)
 
 try:
     # Member Details
-    api_response = api_instance.get_member_detail(address)
+    api_response = api_instance.get_member_detail(address, show_savers=show_savers)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_member_detail: %s\n" % e)
@@ -427,7 +580,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **address** | **str**| Address to match liquidity providers. Either a rune or an asset address may be given.  | 
+ **address** | **str**| Address to match liquidity providers. Either a rune or an asset address may be given. Query can also be multiple addresses should be seperated by comma (&#x27;,&#x27;)  | 
+ **show_savers** | **bool**| A flag to show saver vault membership details, the default is false.  | [optional] [default to false]
 
 ### Return type
 
@@ -698,7 +852,7 @@ from pprint import pprint
 # create an instance of the API class
 api_instance = xchainpy2_midgard.DefaultApi()
 status = 'status_example' # str | Filter for only pools with this status (optional)
-period = 'period_example' # str | Specifies the base interval from which annualPercentageRate and poolAPY is extrapolated. Default is 30d.  (optional)
+period = 'period_example' # str | Specifies the base interval from which annualPercentageRate and poolAPY is extrapolated. Default is 14d.  (optional)
 
 try:
     # Pools List
@@ -713,7 +867,7 @@ except ApiException as e:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **status** | **str**| Filter for only pools with this status | [optional] 
- **period** | **str**| Specifies the base interval from which annualPercentageRate and poolAPY is extrapolated. Default is 30d.  | [optional] 
+ **period** | **str**| Specifies the base interval from which annualPercentageRate and poolAPY is extrapolated. Default is 14d.  | [optional] 
 
 ### Return type
 
@@ -730,12 +884,12 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **get_proxied_constants**
-> Constants get_proxied_constants()
+# **get_saver_detail**
+> SaverDetails get_saver_detail(address)
 
-Proxied THORChain Constants
+Saver Details
 
-Constant values used by THORChain , some of the values can be overrided by mimir
+Returns an array of statistics for all the savers associated with a given member address. Query can also be multiple addresses should be seperated by comma (',') 
 
 ### Example
 ```python
@@ -747,21 +901,25 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = xchainpy2_midgard.DefaultApi()
+address = 'address_example' # str | Address to match the saver. an asset address should be given. 
 
 try:
-    # Proxied THORChain Constants
-    api_response = api_instance.get_proxied_constants()
+    # Saver Details
+    api_response = api_instance.get_saver_detail(address)
     pprint(api_response)
 except ApiException as e:
-    print("Exception when calling DefaultApi->get_proxied_constants: %s\n" % e)
+    print("Exception when calling DefaultApi->get_saver_detail: %s\n" % e)
 ```
 
 ### Parameters
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **address** | **str**| Address to match the saver. an asset address should be given.  | 
 
 ### Return type
 
-[**Constants**](Constants.md)
+[**SaverDetails**](SaverDetails.md)
 
 ### Authorization
 
@@ -774,56 +932,12 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **get_proxied_inbound_addresses**
-> list[InboundAddressesItem] get_proxied_inbound_addresses()
+# **get_savers_history**
+> SaversHistory get_savers_history(pool, interval=interval, count=count, to=to, _from=_from)
 
-Proxied THORChain Inbound Addresses
+Savers Units and Depth History
 
-Inbound addresses will return a list of address , one per chain. The address might change frequently if THORChain has multiple asgards. 
-
-### Example
-```python
-from __future__ import print_function
-import time
-import xchainpy2_midgard
-from xchainpy2_midgard.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = xchainpy2_midgard.DefaultApi()
-
-try:
-    # Proxied THORChain Inbound Addresses
-    api_response = api_instance.get_proxied_inbound_addresses()
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_proxied_inbound_addresses: %s\n" % e)
-```
-
-### Parameters
-This endpoint does not need any parameter.
-
-### Return type
-
-[**list[InboundAddressesItem]**](InboundAddressesItem.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_proxied_lastblock**
-> list[LastblockItem] get_proxied_lastblock()
-
-Proxied THORChain Lastblock
-
-Retrieve lastest block infomation across all chains.
+Returns savers depths and units. The values report the state at the end of each interval.  History endpoint has two modes: * With Interval parameter it returns a series of time buckets. From and To dates will   be rounded to the Interval boundaries. * Without Interval parameter a single From..To search is performed with exact timestamps.   * Interval: possible values: 5min, hour, day, week, month, quarter, year. * count: [1..400]. Defines number of intervals. Don't provide if Interval is missing. * from/to: optional int, unix second.  Possible usages with interval. * last 10 days: `?interval=day&count=10` * last 10 days before to: `?interval=day&count=10&to=1608825600` * next 10 days after from: `?interval=day&count=10&from=1606780800` * Days between from and to. From defaults to start of chain, to defaults to now.   Only the first 400 intervals are returned:   `interval=day&from=1606780800&to=1608825600`  Pagination is possible with from&count and then using the returned meta.endTime as the From parameter of the next query.  Possible configurations without interval: * exact search for one time frame: `?from=1606780899&to=1608825600` * one time frame until now: `?from=1606780899` * from chain start until now: no query parameters 
 
 ### Example
 ```python
@@ -835,109 +949,33 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = xchainpy2_midgard.DefaultApi()
+pool = 'pool_example' # str | Return stats for this single pool.
+interval = 'interval_example' # str | Interval of calculations (optional)
+count = 56 # int | Number of intervals to return. Should be between [1..400]. (optional)
+to = 789 # int | End time of the query as unix timestamp. If only count is given, defaults to now.  (optional)
+_from = 789 # int | Start time of the query as unix timestamp (optional)
 
 try:
-    # Proxied THORChain Lastblock
-    api_response = api_instance.get_proxied_lastblock()
+    # Savers Units and Depth History
+    api_response = api_instance.get_savers_history(pool, interval=interval, count=count, to=to, _from=_from)
     pprint(api_response)
 except ApiException as e:
-    print("Exception when calling DefaultApi->get_proxied_lastblock: %s\n" % e)
+    print("Exception when calling DefaultApi->get_savers_history: %s\n" % e)
 ```
 
 ### Parameters
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **pool** | **str**| Return stats for this single pool. | 
+ **interval** | **str**| Interval of calculations | [optional] 
+ **count** | **int**| Number of intervals to return. Should be between [1..400]. | [optional] 
+ **to** | **int**| End time of the query as unix timestamp. If only count is given, defaults to now.  | [optional] 
+ **_from** | **int**| Start time of the query as unix timestamp | [optional] 
 
 ### Return type
 
-[**list[LastblockItem]**](LastblockItem.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_proxied_nodes**
-> list[ProxiedNode] get_proxied_nodes()
-
-Proxied THORChain Nodes
-
-Returns the proxied nodes endpoint from thornode
-
-### Example
-```python
-from __future__ import print_function
-import time
-import xchainpy2_midgard
-from xchainpy2_midgard.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = xchainpy2_midgard.DefaultApi()
-
-try:
-    # Proxied THORChain Nodes
-    api_response = api_instance.get_proxied_nodes()
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_proxied_nodes: %s\n" % e)
-```
-
-### Parameters
-This endpoint does not need any parameter.
-
-### Return type
-
-[**list[ProxiedNode]**](ProxiedNode.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_proxied_queue**
-> Queue get_proxied_queue()
-
-Proxied THORChain Queue
-
-Returns the proxied queue endpoint from thornode
-
-### Example
-```python
-from __future__ import print_function
-import time
-import xchainpy2_midgard
-from xchainpy2_midgard.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = xchainpy2_midgard.DefaultApi()
-
-try:
-    # Proxied THORChain Queue
-    api_response = api_instance.get_proxied_queue()
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_proxied_queue: %s\n" % e)
-```
-
-### Parameters
-This endpoint does not need any parameter.
-
-### Return type
-
-[**Queue**](Queue.md)
+[**SaversHistory**](SaversHistory.md)
 
 ### Authorization
 

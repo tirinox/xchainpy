@@ -16,7 +16,8 @@ Name | Type | Description | Notes
 **asset_deposit_value** | **str** |  | 
 **node_bond_address** | **str** |  | [optional] 
 **withdraw_counter** | **str** |  | 
-**last_withdraw_counter_height** | [**Int64**](Int64.md) |  | [optional] 
+**last_withdraw_counter_height** | **int** |  | [optional] 
+**bonded_nodes** | [**list[LPBondedNode]**](LPBondedNode.md) |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Mayanode API
-  version: 1.104.1
+  version: 1.106.1
   contact:
     email: devs@mayachain.org
   description: Mayanode REST API.
@@ -316,14 +316,45 @@ paths:
                     address:
                       type: string
                       example: bc1qn9esxuw8ca7ts8l6w66kdh800s09msvutydc46
-                    gas_rate:
-                      type: string
-                      example: '214'
                     router:
                       type: string
                     halted:
                       type: boolean
                       example: false
+                    global_trading_paused:
+                      type: boolean
+                      example: false
+                      description: Returns true if trading is paused globally
+                    chain_trading_paused:
+                      type: boolean
+                      example: false
+                      description: Returns true if trading is paused for this chain
+                    chain_lp_actions_paused:
+                      type: boolean
+                      example: false
+                      description: Returns true if LP actions are paused for this
+                        chain
+                    gas_rate:
+                      type: string
+                      example: '214'
+                      description: The minimum fee rate used by vaults to send outbound
+                        TXs. The actual fee rate may be higher. For EVM chains this
+                        is returned in gwei (1e9).
+                    gas_rate_units:
+                      type: string
+                      example: satsperbyte
+                      description: Units of the gas_rate.
+                    outbound_tx_size:
+                      type: string
+                      example: '1000'
+                      description: Avg size of outbound TXs on each chain. For UTXO
+                        chains it may be larger than average, as it takes into account
+                        vault consolidation txs, which can have many vouts
+                    outbound_fee:
+                      type: string
+                      example: '428000'
+                      description: The total outbound fee charged to the user for
+                        outbound txs in the gas asset of the chain.
   /mayachain/lastblock:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -931,6 +962,7 @@ components:
       - cacao_deposit_value
       - asset_deposit_value
       - withdraw_counter
+      - bonded_nodes
       properties:
         asset:
           type: string
@@ -969,13 +1001,31 @@ components:
           example: '0'
         node_bond_address:
           type: string
+          deprecated: true
           example: maya1zupk5lmc84r2dh738a9g3zscavannjy3nzplwt
         withdraw_counter:
           type: string
           example: '1'
         last_withdraw_counter_height:
-          type: int64
+          type: integer
+          format: int64
           example: 60
+        bonded_nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/LPBondedNode'
+    LPBondedNode:
+      type: object
+      required:
+      - node_address
+      - units
+      properties:
+        node_address:
+          type: string
+          example: maya1zupk5lmc84r2dh738a9g3zscavannjy3nzplwt
+        units:
+          type: string
+          example: '1000000000'
     Coin:
       type: object
       required:
@@ -1572,6 +1622,8 @@ components:
       - total_bond_units
       - total_reserve
       - total_asgard
+      - gas_spent_cacao
+      - gas_withheld_cacao
       properties:
         bond_reward_rune:
           type: string
@@ -1589,6 +1641,18 @@ components:
           type: string
           example: '21999180112172346'
           description: total asgard cacao
+        gas_spent_cacao:
+          type: string
+          example: '1000000000'
+          description: Sum of the gas the network has spent to send outbounds
+        gas_withheld_cacao:
+          type: string
+          example: '1500000000'
+          description: Sum of the gas withheld from users to cover outbound gas
+        outbound_fee_multiplier:
+          type: string
+          example: '15000'
+          description: Current outbound fee multiplier, in basis points
     POLResponse:
       type: object
       required:
@@ -1646,7 +1710,7 @@ components:
     ConstantsResponse:
       type: object
       properties:
-        int64_values:
+        int_64_values:
           type: object
           additionalProperties:
             type: string

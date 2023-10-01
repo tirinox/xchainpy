@@ -10,11 +10,22 @@ components:
                   $ref: '#/components/schemas/Action'
                 type: array
               count:
-                description: Int64, number of results matching the given filters.
+                description: 'Int64, number of results matching the given filters.
+                  It may be -1 if
+
+                  Midgard is having trouble counting the results and has to cancel
+                  the count query
+
+                  (temporary fix). Also, if new action parameters is used it won''t
+                  be returned.
+
+                  '
                 type: string
+              meta:
+                $ref: '#/components/schemas/ActionMeta'
             required:
-            - count
             - actions
+            - meta
             type: object
       description: Returns an array of actions for the given filters.
     BalanceResponse:
@@ -23,18 +34,24 @@ components:
           schema:
             $ref: '#/components/schemas/Balance'
       description: object containing balance details for a given address
+    BorrowerDetailsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BorrowerDetails'
+      description: object containing loan data for a specific borrower
+    BorrowersResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Borrowers'
+      description: array of all the borrowers
     ChurnsResponse:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Churns'
       description: Array containing the last occurred churns in block height and timestamp
-    ConstantsResponse:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Constants'
-      description: Thornode Constants response.
     DepthHistoryResponse:
       content:
         application/json:
@@ -53,18 +70,12 @@ components:
           schema:
             $ref: '#/components/schemas/Health'
       description: Returns health status for Midgard
-    InboundAddressesResponse:
+    KnownPoolsResponse:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/InboundAddresses'
-      description: Thornode Indbound Adresses response.
-    LastblockResponse:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Lastblock'
-      description: Thornode Lastblock response.
+            $ref: '#/components/schemas/KnownPools'
+      description: Object containing known pools to status mapping
     LiquidityHistoryResponse:
       content:
         application/json:
@@ -113,30 +124,30 @@ components:
           schema:
             $ref: '#/components/schemas/PoolDetails'
       description: Array of pool details
-    ProxiedNodesResponse:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProxiedNodes'
-      description: Thornode Nodes response.
-    QueueResponse:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Queue'
-      description: Thornode Queue response.
     ReverseTHORNameResponse:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ReverseTHORNames'
       description: object containing a list of THORName names for a specific address
+    SaverDetailsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SaverDetails'
+      description: object containing saver data for a specific member
+    SaversHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SaversHistory'
+      description: Depth and Units history of savers
     StatsResponse:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/StatsData'
-      description: object containing global BEPSwap data
+      description: object containing global THORChain data
     SwapHistoryResponse:
       content:
         application/json:
@@ -214,6 +225,25 @@ components:
       - height
       - metadata
       type: object
+    ActionMeta:
+      description: action query metadata
+      properties:
+        nextPageToken:
+          description: "Int64, The last action event_id that can be used for pagination.\
+            \ \nThis token is needed to be given for next page.\n"
+          type: string
+        prevPageToken:
+          description: 'Int64, The first action event_id that can be used for previous
+            pagination.
+
+            This token is needed to be given for previous page.
+
+            '
+          type: string
+      required:
+      - nextPageToken
+      - prevPageToken
+      type: object
     AddLiquidityMetadata:
       properties:
         liquidityUnits:
@@ -267,6 +297,9 @@ components:
         averageStandbyBond:
           description: Int64(e8), Average bond of standby nodes
           type: string
+        bondHardCap:
+          description: Int64(e8), Highest effective bond for nodes
+          type: string
         maximumActiveBond:
           description: Int64(e8), Maxinum bond of active nodes
           type: string
@@ -297,20 +330,72 @@ components:
       - medianActiveBond
       - minimumActiveBond
       - maximumActiveBond
+      - bondHardCap
       - totalStandbyBond
       - averageStandbyBond
       - medianStandbyBond
       - minimumStandbyBond
       - maximumStandbyBond
       type: object
-    BoolConstants:
+    BorrowerDetails:
       properties:
-        StrictBondLiquidityRatio:
-          example: false
-          type: boolean
+        pools:
+          description: List details of all the loans identified with the given address
+          items:
+            $ref: '#/components/schemas/BorrowerPool'
+          type: array
       required:
-      - StrictBondLiquidityRatio
+      - pools
       type: object
+    BorrowerPool:
+      properties:
+        collateral_asset:
+          description: The asset that the borrower used as collateral
+          type: string
+        collateral_deposited:
+          description: Int64(e8), The total amount of collateral that user deposited
+          type: string
+        collateral_withdrawn:
+          description: Int64(e8), The total amount of collateral the system paid back
+            to the user
+          type: string
+        debt_issued_tor:
+          description: Int64(e8), The total amount of debt issued as debt for user.
+            denominated in TOR.
+          type: string
+        debt_repaid_tor:
+          description: Int64(e8), The total amount of debt that the user paid back.
+            denominated in TOR.
+          type: string
+        last_open_loan_timestamp:
+          description: Int64, Unix timestamp for the last time borrower opened a loan
+          type: string
+        last_repay_loan_timestamp:
+          description: Int64, Unix timestamp for the last time borrower repayment
+            occurred
+          type: string
+        target_assets:
+          items:
+            description: All target assets that the user used as debt target
+            example: ETH.ETH
+            type: string
+          type: array
+      required:
+      - collateral_asset
+      - target_assets
+      - debt_issued_tor
+      - debt_repaid_tor
+      - collateral_deposited
+      - collateral_withdrawn
+      - last_open_loan_timestamp
+      - last_repay_loan_timestamp
+      type: object
+    Borrowers:
+      items: &id001
+        description: Borrower address
+        example: tbnb1fj2lqj8dvr5pumfchc7ntlfqd2v6zdxqwjewf5
+        type: string
+      type: array
     ChurnItem:
       properties:
         date:
@@ -327,7 +412,7 @@ components:
       - date
       type: object
     Churns:
-      items: &id001
+      items: &id002
         $ref: '#/components/schemas/ChurnItem'
       type: array
     Coin:
@@ -347,19 +432,6 @@ components:
       items:
         $ref: '#/components/schemas/Coin'
       type: array
-    Constants:
-      properties:
-        bool_values:
-          $ref: '#/components/schemas/BoolConstants'
-        int_64_values:
-          $ref: '#/components/schemas/Int64Constants'
-        string_values:
-          $ref: '#/components/schemas/StringConstants'
-      required:
-      - int_64_values
-      - bool_values
-      - string_values
-      type: object
     DepthHistory:
       properties:
         intervals:
@@ -399,6 +471,10 @@ components:
 
             '
           type: string
+        membersCount:
+          description: Int64, Number of liquidity members in the pool at the end of
+            the interval
+          type: string
         runeDepth:
           description: Int64(e8), the amount of Rune in the pool at the end of the
             interval
@@ -426,10 +502,29 @@ components:
       - assetPrice
       - assetPriceUSD
       - liquidityUnits
+      - membersCount
       - synthUnits
       - synthSupply
       - units
       - luvi
+      type: object
+    DepthHistoryItemPool:
+      properties:
+        pool:
+          description: asset for the given pool
+          type: string
+        totalDepth:
+          description: 'Int64(e8) in rune, the total value in the pool (both assets
+            and rune) at the end of the interval.
+
+            Note: this is twice of the pool''s Rune depth. (as pools are symmetrically
+            balance)
+
+            '
+          type: string
+      required:
+      - pool
+      - totalDepth
       type: object
     DepthHistoryMeta:
       properties:
@@ -442,6 +537,10 @@ components:
         endLPUnits:
           description: Int64, Liquidity Units in the pool at the end of the interval
             at time endTime
+          type: string
+        endMemberCount:
+          description: Int64, Number of liquidity members in the pool at the end of
+            the interval at time endTime
           type: string
         endRuneDepth:
           description: 'Int64(e8), the amount of Rune in the pool at the end of the
@@ -480,6 +579,12 @@ components:
 
             '
           type: string
+        startMemberCount:
+          description: 'Int64, Number of liquidity member in the pool at the start
+            of the interval at time startTime
+
+            '
+          type: string
         startRuneDepth:
           description: 'Int64(e8), the amount of Rune in the pool at the start of
             the interval at time startTime
@@ -503,10 +608,12 @@ components:
       - startAssetDepth
       - startRuneDepth
       - startLPUnits
+      - startMemberCount
       - startSynthUnits
       - endAssetDepth
       - endRuneDepth
       - endLPUnits
+      - endMemberCount
       - endSynthUnits
       type: object
     EarningsHistory:
@@ -535,12 +642,6 @@ components:
           description: Int64(e8), Share of earnings sent to nodes during the time
             interval
           type: string
-        cacaoPriceUSD:
-          description: 'Float, the price of Cacao based on the deepest USD pool at
-            the end of the interval.
-
-            '
-          type: string
         earnings:
           description: 'Int64(e8), System income generated during the time interval.
             It is the sum of
@@ -567,6 +668,12 @@ components:
           items:
             $ref: '#/components/schemas/EarningsHistoryItemPool'
           type: array
+        runePriceUSD:
+          description: 'Float, the price of Rune based on the deepest USD pool at
+            the end of the interval.
+
+            '
+          type: string
         startTime:
           description: Int64, The beginning time of interval in unix timestamp
           type: string
@@ -579,7 +686,7 @@ components:
       - bondingEarnings
       - liquidityEarnings
       - avgNodeCount
-      - cacaoPriceUSD
+      - runePriceUSD
       - pools
       type: object
     EarningsHistoryItemPool:
@@ -605,6 +712,12 @@ components:
         runeLiquidityFees:
           description: Int64(e8), liquidity fees collected in RUNE
           type: string
+        saverEarning:
+          description: 'Int64(e8), total saver reward collected by the pool, shown
+            in pool''s ASSET
+
+            '
+          type: string
         totalLiquidityFeesRune:
           description: 'Int64(e8), total liquidity fees (assetFees + runeFees) collected,
             shown in RUNE
@@ -616,6 +729,7 @@ components:
       - assetLiquidityFees
       - runeLiquidityFees
       - totalLiquidityFeesRune
+      - saverEarning
       - rewards
       - earnings
       type: object
@@ -660,240 +774,11 @@ components:
       - height
       - timestamp
       type: object
-    InboundAddresses:
-      items: &id002
-        $ref: '#/components/schemas/InboundAddressesItem'
-      type: array
-    InboundAddressesItem:
-      properties:
-        address:
-          example: bcrt1q257g60tcxvu4dvflpszgkwq34d5vw6pg726gf3
-          type: string
-        chain:
-          example: BTC
-          type: string
-        gas_rate:
-          example: '56250'
-          type: string
-        halted:
-          description: indicate whether this chain has halted
-          example: false
-          type: boolean
-        pub_key:
-          example: tthorpub1addwnpepqd9nqqmgay6mju0yq72ptjucmk9atawtev4v4n6wkee5y26q80eccg0xk37
-          type: string
-        router:
-          example: '0x9d496De78837f5a2bA64Cb40E62c19FBcB67f55a'
-          type: string
-      required:
-      - chain
-      - pub_key
-      - address
-      - halted
-      type: object
-    Int64Constants:
-      properties:
-        AsgardSize:
-          example: 30
-          format: int64
-          type: integer
-        BadValidatorRate:
-          example: 60
-          format: int64
-          type: integer
-        BadValidatorRedline:
-          example: 3
-          type: integer
-        BlocksPerYear:
-          example: 6311390
-          format: int64
-          type: integer
-        ChurnInterval:
-          example: 60
-          format: int64
-          type: integer
-        ChurnRetryInterval:
-          example: 30
-          format: int64
-          type: integer
-        DesiredValidatorSet:
-          example: 12
-          format: int64
-          type: integer
-        DoubleSignMaxAge:
-          example: 24
-          format: int64
-          type: integer
-        FailKeygenSlashPoints:
-          example: 720
-          format: int64
-          type: integer
-        FailKeysignSlashPoints:
-          example: 2
-          format: int64
-          type: integer
-        FullImpLossProtectionBlocks:
-          example: 1440000
-          format: int64
-          type: integer
-        FundMigrationInterval:
-          example: 60
-          format: int64
-          type: integer
-        IncentiveCurve:
-          example: 100
-          format: int64
-          type: integer
-        JailTimeKeygen:
-          example: 10
-          format: int64
-          type: integer
-        JailTimeKeysign:
-          example: 10
-          format: int64
-          type: integer
-        LackOfObservationPenalty:
-          example: 2
-          format: int64
-          type: integer
-        LiquidityLockUpBlocks:
-          example: 0
-          format: int64
-          type: integer
-        MaxAvailablePools:
-          example: 10
-          format: int64
-          type: integer
-        MaxSwapsPerBlock:
-          example: 10
-          format: int64
-          type: integer
-        MinRunePoolDepth:
-          example: 10
-          format: int64
-          type: integer
-        MinSlashPointsForBadValidator:
-          example: 10
-          format: int64
-          type: integer
-        MinSwapsPerBlock:
-          example: 10
-          format: int64
-          type: integer
-        MinimumBondInRune:
-          example: 100000000
-          format: int64
-          type: integer
-        MinimumNodesForBFT:
-          example: 4
-          format: int64
-          type: integer
-        MinimumNodesForYggdrasil:
-          example: 6
-          format: int64
-          type: integer
-        NativeTransactionFee:
-          example: 10000000
-          format: int64
-          type: integer
-        NewPoolCycle:
-          example: 51840
-          format: int64
-          type: integer
-        ObservationDelayFlexibility:
-          example: 5
-          format: int64
-          type: integer
-        ObserveSlashPoints:
-          example: 1
-          format: int64
-          type: integer
-        OldValidatorRate:
-          example: 60
-          format: int64
-          type: integer
-        OutboundTransactionFee:
-          example: 100000000
-          format: int64
-          type: integer
-        PoolCycle:
-          example: 43200
-          format: int64
-          type: integer
-        SigningTransactionPeriod:
-          example: 300
-          format: int64
-          type: integer
-        VirtualMultSynths:
-          example: 2
-          format: int64
-          type: integer
-        YggFundLimit:
-          example: 5
-          format: int64
-          type: integer
-      required:
-      - AsgardSize
-      - BadValidatorRate
-      - BadValidatorRedline
-      - BlocksPerYear
-      - ChurnInterval
-      - ChurnRetryInterval
-      - DesiredValidatorSet
-      - DoubleSignMaxAge
-      - FailKeygenSlashPoints
-      - FailKeysignSlashPoints
-      - FullImpLossProtectionBlocks
-      - FundMigrationInterval
-      - IncentiveCurve
-      - JailTimeKeygen
-      - JailTimeKeysign
-      - LackOfObservationPenalty
-      - LiquidityLockUpBlocks
-      - MaxAvailablePools
-      - MaxSwapsPerBlock
-      - MinRunePoolDepth
-      - MinSlashPointsForBadValidator
-      - MinSwapsPerBlock
-      - MinimumBondInRune
-      - MinimumNodesForBFT
-      - MinimumNodesForYggdrasil
-      - NativeTransactionFee
-      - ObservationDelayFlexibility
-      - ObserveSlashPoints
-      - OldValidatorRate
-      - OutboundTransactionFee
-      - PoolCycle
-      - SigningTransactionPeriod
-      - VirtualMultSynths
-      - YggFundLimit
-      type: object
-    Lastblock:
-      items: &id003
-        $ref: '#/components/schemas/LastblockItem'
-      type: array
-    LastblockItem:
-      properties:
-        chain:
-          example: BNB
-          type: string
-        last_observed_in:
-          example: 1590
-          format: int64
-          type: integer
-        last_signed_out:
-          example: 109
-          format: int64
-          type: integer
-        thorchain:
-          example: 1548
-          format: int64
-          type: integer
-      required:
-      - chain
-      - last_observed_in
-      - last_signed_out
-      - thorchain
+    KnownPools:
+      additionalProperties:
+        type: string
+      example:
+        BTC.BTC: available
       type: object
     LiquidityHistory:
       properties:
@@ -935,12 +820,6 @@ components:
 
             '
           type: string
-        cacaoPriceUSD:
-          description: 'Float, the price of Cacao based on the deepest USD pool at
-            the end of the interval.
-
-            '
-          type: string
         endTime:
           description: Int64, The end time of bucket in unix timestamp
           type: string
@@ -955,6 +834,12 @@ components:
         net:
           description: 'Int64(e8), net liquidity changes (withdrawals - deposits)
             during the time interval
+
+            '
+          type: string
+        runePriceUSD:
+          description: 'Float, the price of Rune based on the deepest USD pool at
+            the end of the interval.
 
             '
           type: string
@@ -998,7 +883,7 @@ components:
       - withdrawVolume
       - withdrawCount
       - net
-      - cacaoPriceUSD
+      - runePriceUSD
       type: object
     MemberDetails:
       properties:
@@ -1018,6 +903,11 @@ components:
           type: string
         assetAddress:
           description: asset address used by the member
+          type: string
+        assetDeposit:
+          description: "Int64(e8), total asset that is currently deposited to the\
+            \ pool by member.\nThis field is same as the `asset_deposit_value` field\
+            \ in thornode. Mainly can be used \nfor tracking, mainly Growth Percentage\n"
           type: string
         assetPending:
           description: 'Int64(e8), asset sent but not added yet, it will be added
@@ -1048,6 +938,11 @@ components:
         runeAddress:
           description: Rune address used by the member
           type: string
+        runeDeposit:
+          description: "Int64(e8), total Rune that is currently deposited to the pool\
+            \ by member.\nThis field is same as the `rune_deposit_value` field in\
+            \ thornode. Mainly can be used \nfor tracking, mainly Growth Percentage\n"
+          type: string
         runePending:
           description: 'Int64(e8), Rune sent but not added yet, it will be added when
             the asset pair arrives
@@ -1062,6 +957,8 @@ components:
       - runeAddress
       - assetAddress
       - liquidityUnits
+      - runeDeposit
+      - assetDeposit
       - runeAdded
       - assetAdded
       - runePending
@@ -1072,7 +969,7 @@ components:
       - dateLastAdded
       type: object
     Members:
-      items: &id006
+      items: &id003
         description: Member address
         example: tbnb1fj2lqj8dvr5pumfchc7ntlfqd2v6zdxqwjewf5
         type: string
@@ -1212,21 +1109,9 @@ components:
       - ed25519
       type: object
     Nodes:
-      items: &id007
+      items: &id004
         $ref: '#/components/schemas/Node'
       type: array
-    ObservedChain:
-      properties:
-        chain:
-          example: BTC
-          type: string
-        height:
-          example: 2000000
-          type: integer
-      required:
-      - chain
-      - height
-      type: object
     PoolDetail:
       properties:
         annualPercentageRate:
@@ -1259,6 +1144,10 @@ components:
         liquidityUnits:
           description: Int64, Liquidity Units in the pool.
           type: string
+        nativeDecimal:
+          description: Int64, The native decimal number of the pool asset. (If the
+            value is "-1", it means midgard doesn't know the pool native decimal)
+          type: string
         poolAPY:
           description: 'Float, MAX(AnnualPercentageRate, 0)
 
@@ -1266,6 +1155,25 @@ components:
           type: string
         runeDepth:
           description: Int64(e8), the amount of Rune in the pool.
+          type: string
+        saversAPR:
+          description: 'Float, Annual Return estimated linearly (not compounded) for
+            savers from
+
+            a period of typically the last 30 or 100 days (configurable by the period
+            parameter,
+
+            default is 30). E.g. 0.1 means 10% yearly return.
+
+            If the savers period has not yet been reached, It will show zero instead.
+
+            '
+          type: string
+        saversDepth:
+          description: Int64, Total synth locked in saver vault.
+          type: string
+        saversUnits:
+          description: Int64, Units tracking savers vault ownership.
           type: string
         status:
           description: The state of the pool, e.g. Available, Staged.
@@ -1275,6 +1183,12 @@ components:
           type: string
         synthUnits:
           description: Int64, Synth Units in the pool.
+          type: string
+        totalCollateral:
+          description: Int64, Total collateral of the pool created by the borrowers.
+          type: string
+        totalDebtTor:
+          description: Int64, Total debt of the pool by the borrowers.
           type: string
         units:
           description: Int64, Total Units (synthUnits + liquidityUnits) in the pool.
@@ -1301,9 +1215,15 @@ components:
       - synthUnits
       - synthSupply
       - units
+      - nativeDecimal
+      - saversUnits
+      - saversDepth
+      - saversAPR
+      - totalCollateral
+      - totalDebtTor
       type: object
     PoolDetails:
-      items: &id008
+      items: &id005
         $ref: '#/components/schemas/PoolDetail'
       type: array
     PoolStatsDetail:
@@ -1480,135 +1400,14 @@ components:
       - withdrawCount
       - uniqueMemberCount
       type: object
-    PreflightStatus:
-      properties:
-        code:
-          example: 0
-          type: integer
-        reason:
-          example: OK
-          type: string
-        status:
-          example: Ready
-          type: string
-      required:
-      - status
-      - reason
-      - code
-      type: object
-    ProxiedNode:
-      properties:
-        active_block_height:
-          example: 123456
-          type: integer
-        bond:
-          example: '123456789'
-          type: string
-        bond_address:
-          example: tthorabc3
-          type: string
-        current_award:
-          example: '123456'
-          type: string
-        forced_to_leave:
-          type: boolean
-        ip_address:
-          example: 10.20.30.40
-          type: string
-        jail:
-          properties:
-            node_address:
-              example: tthorabc4
-              type: string
-          type: object
-        leave_height:
-          example: 0
-          type: integer
-        node_address:
-          example: tthorabc1
-          type: string
-        observe_chains:
-          items:
-            $ref: '#/components/schemas/ObservedChain'
-          type: array
-        preflight_status:
-          $ref: '#/components/schemas/PreflightStatus'
-        pub_key_set:
-          properties:
-            ed25519:
-              example: tthorpub1xyz2
-              type: string
-            secp256k1:
-              example: tthorpub1xyz1
-              type: string
-          required:
-          - secp256k1
-          - ed25519
-          type: object
-        requested_to_leave:
-          type: boolean
-        signer_membership:
-          items:
-            type: string
-          type: array
-        slash_points:
-          example: 42
-          type: integer
-        status:
-          example: Active
-          type: string
-        status_since:
-          example: 100000
-          type: integer
-        validator_cons_pub_key:
-          example: tthorabc2
-          type: string
-        version:
-          example: 0.35.0
-          type: string
-      required:
-      - node_address
-      - status
-      - pub_key_set
-      - validator_cons_pub_key
-      - bond
-      - active_block_height
-      - bond_address
-      - status_since
-      - signer_membership
-      - requested_to_leave
-      - forced_to_leave
-      - leave_height
-      - ip_address
-      - version
-      - slash_points
-      - jail
-      - current_award
-      - observe_chains
-      - preflight_status
-      type: object
-    ProxiedNodes:
-      items: &id004
-        $ref: '#/components/schemas/ProxiedNode'
-      type: array
-    Queue:
-      properties:
-        internal:
-          example: 0
-          type: integer
-        outbound:
-          example: 0
-          type: integer
-        swap:
-          example: 0
-          type: integer
-      required:
-      - swap
-      - outbound
-      - internal
-      type: object
     RefundMetadata:
       properties:
+        affiliateAddress:
+          description: Affiliate fee address of the swap, empty if fee swap
+          type: string
+        affiliateFee:
+          description: Int64 (Basis points, 0-1000, where 1000=10%)
+          type: string
         memo:
           description: Transaction memo of the refund action
           type: string
@@ -1621,13 +1420,165 @@ components:
       - networkFees
       - reason
       - memo
+      - affiliateFee
+      - affiliateAddress
       type: object
     ReverseTHORNames:
-      items: &id005
+      items: &id006
         description: THORName name
         example: myname
         type: string
       type: array
+    SaverDetails:
+      properties:
+        pools:
+          description: List details of all the savers identified with the given address
+          items:
+            $ref: '#/components/schemas/SaverPool'
+          type: array
+      required:
+      - pools
+      type: object
+    SaverPool:
+      properties:
+        assetAdded:
+          description: Int64(e8), total asset added in the saver pool by member
+          type: string
+        assetAddress:
+          description: saver address used by the member
+          type: string
+        assetDeposit:
+          description: Int64(e8), total asset that is currently deposited by the member
+          type: string
+        assetRedeem:
+          description: Int64(e8), total asset can be redeemed from the saver pool
+            by member
+          type: string
+        assetWithdrawn:
+          description: Int64(e8), total asset withdrawn from the saver pool by member
+          type: string
+        dateFirstAdded:
+          description: Int64, Unix timestamp for the first time member deposited into
+            the saver pool
+          type: string
+        dateLastAdded:
+          description: Int64, Unix timestamp for the last time member deposited into
+            the saver pool
+          type: string
+        pool:
+          description: The Pool rest of the data are refering to (only those pools
+            can show up which have a corresponding saver pool)
+          type: string
+        saverUnits:
+          description: Int64, saver liquidity units that belong the the member
+          type: string
+      required:
+      - pool
+      - assetAddress
+      - saverUnits
+      - assetAdded
+      - assetRedeem
+      - assetDeposit
+      - assetWithdrawn
+      - dateFirstAdded
+      - dateLastAdded
+      type: object
+    SaversHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/SaversHistoryIntervals'
+        meta:
+          $ref: '#/components/schemas/SaversHistoryMeta'
+      required:
+      - meta
+      - intervals
+      type: object
+    SaversHistoryIntervals:
+      items:
+        $ref: '#/components/schemas/SaversHistoryItem'
+      type: array
+    SaversHistoryItem:
+      properties:
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        saversCount:
+          description: Int64, Number of saver members in the pool at the end of the
+            interval
+          type: string
+        saversDepth:
+          description: Int64(e8), The depth in the savers vault at the end of the
+            interval
+          type: string
+        saversUnits:
+          description: 'Int64, Savers Units in the saver vault at the end of the interval
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+      required:
+      - startTime
+      - endTime
+      - saversDepth
+      - saversCount
+      - saversUnits
+      type: object
+    SaversHistoryMeta:
+      properties:
+        endSaversCount:
+          description: Int64, Number of savers member in the savers vault at the end
+            of the interval at time endTime
+          type: string
+        endSaversDepth:
+          description: 'Int64(e8), The depth in the savers vault at the end of the
+            interval at time
+
+            endTime
+
+            '
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        endUnits:
+          description: Int64, Savers Units in the savers vault at the end of the interval
+            at time endTime
+          type: string
+        startSaversCount:
+          description: 'Int64, Number of savers member in the savers vault at the
+            start of the interval at time startTime
+
+            '
+          type: string
+        startSaversDepth:
+          description: 'Int64(e8), The depth in savers vault at the start of the interval
+            at time
+
+            startTime
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+        startUnits:
+          description: 'Int64, Savers Units in the savers vault at the start of the
+            interval at time startTime
+
+            '
+          type: string
+      required:
+      - startTime
+      - endTime
+      - startSaversDepth
+      - startUnits
+      - startSaversCount
+      - endSaversDepth
+      - endUnits
+      - endSaversCount
+      type: object
     StatsData:
       properties:
         addLiquidityCount:
@@ -1637,9 +1588,6 @@ components:
           description: 'Int64(e8), total of deposits since beginning.
 
             '
-          type: string
-        cacaoPriceUSD:
-          description: Float, the price of cacao based on the deepest USD pool.
           type: string
         dailyActiveUsers:
           description: Deprecated, it's always 0.
@@ -1654,6 +1602,9 @@ components:
           type: string
         runeDepth:
           description: Int64(e8), current total Rune in the pools.
+          type: string
+        runePriceUSD:
+          description: Float, the price of Rune based on the deepest USD pool.
           type: string
         swapCount:
           description: Int64, number of swaps (including synths) since beginning.
@@ -1671,7 +1622,7 @@ components:
             '
           type: string
         switchedRune:
-          description: Int64(e8), amount of native rune switched from erc20 or BEPSwap
+          description: Int64(e8), amount of native rune switched from erc20 or bep2
             rune.
           type: string
         synthBurnCount:
@@ -1700,7 +1651,7 @@ components:
       required:
       - runeDepth
       - switchedRune
-      - cacaoPriceUSD
+      - runePriceUSD
       - swapVolume
       - swapCount24h
       - swapCount30d
@@ -1718,13 +1669,41 @@ components:
       - addLiquidityCount
       - withdrawCount
       type: object
-    StringConstants:
+    StreamingSwapMeta:
       properties:
-        DefaultPoolStatus:
-          example: Enabled
+        count:
+          description: Int64, Number of swaps events which already happened.
+          type: string
+        depositedCoin:
+          $ref: '#/components/schemas/Coin'
+        inCoin:
+          $ref: '#/components/schemas/Coin'
+        interval:
+          description: Int64, Number of blocks between swpas. (Blocks/Swap) E.g. 1
+            means every block.
+          type: string
+        lastHeight:
+          description: 'Int64, The last blockheight the final swap happend (not outbound).
+            This field will be missing until the final swap happens.
+
+            '
+          type: string
+        outCoin:
+          $ref: '#/components/schemas/Coin'
+        quantity:
+          description: 'Int64,  Number of swaps which thorchain is planning to execute.
+            Total count at the end might be less.
+
+            '
           type: string
       required:
-      - DefaultPoolStatus
+      - count
+      - quantity
+      - interval
+      - lastHeight
+      - inCoin
+      - outCoin
+      - depositedCoin
       type: object
     SwapHistory:
       properties:
@@ -1752,14 +1731,14 @@ components:
 
             '
           type: string
-        cacaoPriceUSD:
-          description: 'Float, the price of Cacao based on the deepest USD pool at
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        runePriceUSD:
+          description: 'Float, the price of Rune based on the deepest USD pool at
             the end of the interval.
 
             '
-          type: string
-        endTime:
-          description: Int64, The end time of bucket in unix timestamp
           type: string
         startTime:
           description: Int64, The beginning time of bucket in unix timestamp
@@ -1887,7 +1866,7 @@ components:
       - synthMintAverageSlip
       - synthRedeemAverageSlip
       - averageSlip
-      - cacaoPriceUSD
+      - runePriceUSD
       type: object
     SwapMetadata:
       properties:
@@ -1897,6 +1876,10 @@ components:
         affiliateFee:
           description: Int64 (Basis points, 0-1000, where 1000=10%)
           type: string
+        isStreamingSwap:
+          description: indicate whether this action was streaming
+          example: true
+          type: boolean
         liquidityFee:
           description: Int64(e8), RUNE amount charged as swap liquidity fee
           type: string
@@ -1905,6 +1888,8 @@ components:
           type: string
         networkFees:
           $ref: '#/components/schemas/NetworkFees'
+        streamingSwapMeta:
+          $ref: '#/components/schemas/StreamingSwapMeta'
         swapSlip:
           description: Int64 (Basis points, 0-10000, where 10000=100%), swap slip
             percentage
@@ -1920,6 +1905,7 @@ components:
       - affiliateFee
       - affiliateAddress
       - memo
+      - isStreamingSwap
       type: object
     THORNameDetails:
       properties:
@@ -1969,14 +1955,18 @@ components:
       type: array
     TVLHistoryItem:
       properties:
-        cacaoPriceUSD:
-          description: 'Float, the price of Cacao based on the deepest USD pool at
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        poolsDepth:
+          items:
+            $ref: '#/components/schemas/DepthHistoryItemPool'
+          type: array
+        runePriceUSD:
+          description: 'Float, the price of Rune based on the deepest USD pool at
             the end of the interval.
 
             '
-          type: string
-        endTime:
-          description: Int64, The end time of bucket in unix timestamp
           type: string
         startTime:
           description: Int64, The beginning time of bucket in unix timestamp
@@ -2013,7 +2003,8 @@ components:
       - startTime
       - endTime
       - totalValuePooled
-      - cacaoPriceUSD
+      - runePriceUSD
+      - poolsDepth
       type: object
     Transaction:
       description: Transaction data
@@ -2023,6 +2014,11 @@ components:
           type: string
         coins:
           $ref: '#/components/schemas/Coins'
+        height:
+          description: 'The thorchain height that the outbound transaction occurred.
+
+            '
+          type: string
         txID:
           description: 'Transaction id hash. Some transactions (such as outbound transactions
             made in the
@@ -2084,10 +2080,10 @@ info:
     \ the Bifr\xF6st and prepares information about the network to be readily available\
     \ for public users. The API parses transaction event data from THORChain and stores\
     \ them in a time-series database to make time-dependent queries easy. Midgard\
-    \ does not hold critical information. To interact with BEPSwap and Asgardex, users\
-    \ should query THORChain directly."
+    \ does not hold critical information. To interact with THORChain protocol, users\
+    \ should query THORNode directly."
   title: Midgard Public API
-  version: 2.9.4
+  version: 2.17.0
 openapi: 3.0.0
 paths:
   /v2/actions:
@@ -2123,8 +2119,20 @@ paths:
         name: txid
         schema:
           type: string
-      - description: Any asset that is part of the action (CHAIN.SYMBOL)
-        example: BNB.TOMOB-1E1
+      - description: 'Comma separated list. Any asset that is part of the action (CHAIN.SYMBOL)
+
+          Additionally, synth, nosynth, and norune filters can be used for swap, add/withdraw
+          actions.
+
+          '
+        examples:
+          filterAsset:
+            summary: Query action that are neither synth nor rune asset
+            value: nosynth,norune
+          regularAsset:
+            summary: Regular multiple asset query. (having at least either one of
+              them)
+            value: BTC.BTC,THOR.RUNE
         in: query
         name: asset
         schema:
@@ -2139,10 +2147,16 @@ paths:
         name: type
         schema:
           type: string
-      - description: 'Affiliate address of the action (swap)
+      - description: 'Comma separated list. Affiliate address of the action (swap,
+          refund)
 
           '
-        example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+        examples:
+          multiple:
+            summary: Query affiliates that one is THORName and other is address
+            value: ts,thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+          regular:
+            value: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
         in: query
         name: affiliate
         schema:
@@ -2158,6 +2172,50 @@ paths:
       - description: pagination offset, default is 0
         in: query
         name: offset
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      - description: if this is given, the actions for the next page will be given
+        in: query
+        name: nextPageToken
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      - description: if this is given, the actions older than the timestamp will be
+          given
+        in: query
+        name: timestamp
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      - description: if this is given, the actions older than the height will be given
+        in: query
+        name: height
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      - description: if this is given, the actions for the previous page will be given
+        in: query
+        name: prevPageToken
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      - description: if this is given, the actions newer than the timestamp will be
+          given
+        in: query
+        name: fromTimestamp
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      - description: if this is given, the actions newer than the height will be given
+        in: query
+        name: fromHeight
         schema:
           format: int64
           minimum: 0
@@ -2210,6 +2268,56 @@ paths:
               schema:
                 $ref: '#/components/schemas/Balance'
       summary: Current balance for an address
+  /v2/borrower/{address}:
+    get:
+      description: 'Returns an array of statistics for all the open loans associated
+        with a given
+
+        borrower address.
+
+        '
+      operationId: GetBorrowerDetail
+      parameters:
+      - description: 'Address to match borrower, an asset address is given.
+
+          Query can also be multiple addresses should be seperated by comma ('','')
+
+          '
+        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m,bc1qcxssye4j6730h7ehgega3gyykkuwgdgmmpu62n
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowerDetails'
+      summary: Borrower Details
+  /v2/borrowers:
+    get:
+      description: 'Returns an array containing the addresses for all borrowers.
+
+        Addresses are only shown once.
+
+        '
+      operationId: GetBorrowersAddresses
+      parameters:
+      - description: Return only borrowers getting loan against this asset as collateral.
+        in: query
+        name: asset
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id001
+                type: array
+      summary: Borrowers List
   /v2/churns:
     get:
       description: Returns block height and timestamp for each churn.
@@ -2219,7 +2327,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id001
+                items: *id002
                 type: array
       summary: Churns List
   /v2/doc:
@@ -2464,6 +2572,77 @@ paths:
               schema:
                 $ref: '#/components/schemas/LiquidityHistory'
       summary: Liquidity Changes History
+  /v2/history/savers/{pool}:
+    get:
+      description: "Returns savers depths and units.\nThe values report the state\
+        \ at the end of each interval.\n\nHistory endpoint has two modes:\n* With\
+        \ Interval parameter it returns a series of time buckets. From and To dates\
+        \ will\n  be rounded to the Interval boundaries.\n* Without Interval parameter\
+        \ a single From..To search is performed with exact timestamps.\n\n\n* Interval:\
+        \ possible values: 5min, hour, day, week, month, quarter, year.\n* count:\
+        \ [1..400]. Defines number of intervals. Don't provide if Interval is missing.\n\
+        * from/to: optional int, unix second.\n\nPossible usages with interval.\n\
+        * last 10 days: `?interval=day&count=10`\n* last 10 days before to: `?interval=day&count=10&to=1608825600`\n\
+        * next 10 days after from: `?interval=day&count=10&from=1606780800`\n* Days\
+        \ between from and to. From defaults to start of chain, to defaults to now.\n\
+        \  Only the first 400 intervals are returned:\n  `interval=day&from=1606780800&to=1608825600`\n\
+        \nPagination is possible with from&count and then using the returned meta.endTime\
+        \ as the\nFrom parameter of the next query.\n\nPossible configurations without\
+        \ interval:\n* exact search for one time frame: `?from=1606780899&to=1608825600`\n\
+        * one time frame until now: `?from=1606780899`\n* from chain start until now:\
+        \ no query parameters\n"
+      operationId: GetSaversHistory
+      parameters:
+      - description: Return stats for this single pool.
+        in: path
+        name: pool
+        required: true
+        schema:
+          type: string
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400].
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now.
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaversHistory'
+      summary: Savers Units and Depth History
   /v2/history/swaps:
     get:
       description: "Returns swap count, volume, fees, slip in specified interval.\n\
@@ -2600,135 +2779,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/TVLHistory'
       summary: Total Value Locked History
-  /v2/mayachain/constants:
+  /v2/knownpools:
     get:
-      description: Constant values used by THORChain , some of the values can be overrided
-        by mimir
-      operationId: GetProxiedConstants
+      description: Returns an object with known pools and their statuses
+      operationId: GetKnownPools
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Constants'
-      summary: Proxied THORChain Constants
-  /v2/mayachain/inbound_addresses:
-    get:
-      description: 'Inbound addresses will return a list of address , one per chain.
-        The address might change
-
-        frequently if THORChain has multiple asgards.
-
-        '
-      operationId: GetProxiedInboundAddresses
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items: *id002
-                type: array
-      summary: Proxied THORChain Inbound Addresses
-  /v2/mayachain/lastblock:
-    get:
-      description: Retrieve lastest block infomation across all chains.
-      operationId: GetProxiedLastblock
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items: *id003
-                type: array
-      summary: Proxied THORChain Lastblock
-  /v2/mayachain/nodes:
-    get:
-      description: Returns the proxied nodes endpoint from thornode
-      operationId: GetProxiedNodes
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items: *id004
-                type: array
-      summary: Proxied THORChain Nodes
-  /v2/mayachain/queue:
-    get:
-      description: Returns the proxied queue endpoint from thornode
-      operationId: GetProxiedQueue
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Queue'
-      summary: Proxied THORChain Queue
-  /v2/mayaname/lookup/{name}:
-    get:
-      description: Returns an array of chains and their addresses associated with
-        the given THORName
-      operationId: GetTHORNameDetail
-      parameters:
-      - description: a THORName
-        example: thorchain
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/THORNameDetails'
-      summary: THORName Details
-  /v2/mayaname/owner/{address}:
-    get:
-      description: 'Returns an array of THORNames owned by the address. The address
-        is not necessarily an
-
-        associated address for those mayanames.
-
-        '
-      operationId: GetTHORNamesOwnerByAddress
-      parameters:
-      - description: Address which owns a THORName.
-        example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
-        in: path
-        name: address
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items: *id005
-                type: array
-      summary: THORName owner
-  /v2/mayaname/rlookup/{address}:
-    get:
-      description: Returns an array of THORNames associated with the given address
-      operationId: GetTHORNamesByAddress
-      parameters:
-      - description: Address to match THORNames against.
-        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m
-        in: path
-        name: address
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items: *id005
-                type: array
-      summary: Gives a list of THORNames by reverse lookup
+                $ref: '#/components/schemas/KnownPools'
+      summary: Known Pools List
   /v2/member/{address}:
     get:
       description: 'Returns an array of statistics for all the liquidity providers
@@ -2742,13 +2803,25 @@ paths:
       - description: 'Address to match liquidity providers. Either a rune or an asset
           address may be given.
 
+          Query can also be multiple addresses should be seperated by comma ('','')
+
           '
-        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m
+        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m,bc1qcxssye4j6730h7ehgega3gyykkuwgdgmmpu62n
         in: path
         name: address
         required: true
         schema:
           type: string
+      - description: 'A flag to show saver vault membership details, the default is
+          false.
+
+          '
+        example: true
+        in: query
+        name: showSavers
+        schema:
+          default: false
+          type: boolean
       responses:
         '200':
           content:
@@ -2778,7 +2851,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id006
+                items: *id003
                 type: array
       summary: Members List
   /v2/network:
@@ -2801,7 +2874,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id007
+                items: *id004
                 type: array
       summary: Nodes List
   /v2/pool/{asset}:
@@ -2829,6 +2902,7 @@ paths:
           - 1h
           - 24h
           - 7d
+          - 14d
           - 30d
           - 90d
           - 100d
@@ -2873,6 +2947,7 @@ paths:
           - 1h
           - 24h
           - 7d
+          - 14d
           - 30d
           - 90d
           - 100d
@@ -2904,7 +2979,7 @@ paths:
       - description: 'Specifies the base interval from which annualPercentageRate
           and poolAPY is extrapolated.
 
-          Default is 30d.
+          Default is 14d.
 
           '
         example: 100d
@@ -2915,6 +2990,7 @@ paths:
           - 1h
           - 24h
           - 7d
+          - 14d
           - 30d
           - 90d
           - 100d
@@ -2927,9 +3003,37 @@ paths:
           content:
             application/json:
               schema:
-                items: *id008
+                items: *id005
                 type: array
       summary: Pools List
+  /v2/saver/{address}:
+    get:
+      description: 'Returns an array of statistics for all the savers associated with
+        a given
+
+        member address.
+
+        Query can also be multiple addresses should be seperated by comma ('','')
+
+        '
+      operationId: GetSaverDetail
+      parameters:
+      - description: 'Address to match the saver. an asset address should be given.
+
+          '
+        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m,bc1qcxssye4j6730h7ehgega3gyykkuwgdgmmpu62n
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaverDetails'
+      summary: Saver Details
   /v2/stats:
     get:
       description: Returns an object containing global stats for all pools and all
@@ -2952,3 +3056,68 @@ paths:
       summary: Swagger File
       tags:
       - Specification
+  /v2/thorname/lookup/{name}:
+    get:
+      description: Returns an array of chains and their addresses associated with
+        the given THORName
+      operationId: GetTHORNameDetail
+      parameters:
+      - description: a THORName
+        example: thorchain
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/THORNameDetails'
+      summary: THORName Details
+  /v2/thorname/owner/{address}:
+    get:
+      description: 'Returns an array of THORNames owned by the address. The address
+        is not necessarily an
+
+        associated address for those thornames.
+
+        '
+      operationId: GetTHORNamesOwnerByAddress
+      parameters:
+      - description: Address which owns a THORName.
+        example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id006
+                type: array
+      summary: THORName owner
+  /v2/thorname/rlookup/{address}:
+    get:
+      description: Returns an array of THORNames associated with the given address
+      operationId: GetTHORNamesByAddress
+      parameters:
+      - description: Address to match THORNames against.
+        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id006
+                type: array
+      summary: Gives a list of THORNames by reverse lookup

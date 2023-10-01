@@ -3,7 +3,7 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**int64_values** | **dict(str, str)** |  | [optional] 
+**int_64_values** | **dict(str, str)** |  | [optional] 
 **bool_values** | **dict(str, str)** |  | [optional] 
 **string_values** | **dict(str, str)** |  | [optional] 
 

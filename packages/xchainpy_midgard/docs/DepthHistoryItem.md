@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **end_time** | **str** | Int64, The end time of bucket in unix timestamp | 
 **liquidity_units** | **str** | Int64, Liquidity Units in the pool at the end of the interval | 
 **luvi** | **str** | Float, The liquidity unit value index. Sqrt(assetDepth * runeDepth)/liquidity units  | 
+**members_count** | **str** | Int64, Number of liquidity members in the pool at the end of the interval | 
 **rune_depth** | **str** | Int64(e8), the amount of Rune in the pool at the end of the interval | 
 **start_time** | **str** | Int64, The beginning time of bucket in unix timestamp | 
 **synth_supply** | **str** | Int64, Synth supply in the pool at the end of the interval | 

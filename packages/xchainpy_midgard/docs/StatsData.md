@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 **swap_count24h** | **str** | Int64(e8), number of swaps (including synths) in the last 24h. | 
 **swap_count30d** | **str** | Int64, number of swaps (including synths) in the last 30d. | 
 **swap_volume** | **str** | Int64(e8), total volume of swaps (including synths) denoted in Rune since beginning.  | 
-**switched_rune** | **str** | Int64(e8), amount of native rune switched from erc20 or BEPSwap rune. | 
+**switched_rune** | **str** | Int64(e8), amount of native rune switched from erc20 or bep2 rune. | 
 **synth_burn_count** | **str** | Int64, number of swaps from Synth to Rune since beginning. | 
 **synth_mint_count** | **str** | Int64, number of swaps from Rune to Synth since beginning. | 
 **to_asset_count** | **str** | Int64, number of swaps from Rune to Asset since beginning. | 

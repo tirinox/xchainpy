@@ -5,8 +5,8 @@ dev_tools:
 
 cli_codegen:
 	cd scripts && \
-		./gen_thornode_client.sh \
-		./gen_midgard_client.sh \
+		./gen_thornode_client.sh && \
+		./gen_midgard_client.sh && \
 		./gen_mayanode_client.sh
 
 

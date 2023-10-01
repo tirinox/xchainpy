@@ -4,6 +4,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **end_time** | **str** | Int64, The end time of bucket in unix timestamp | 
+**pools_depth** | [**list[DepthHistoryItemPool]**](DepthHistoryItemPool.md) |  | 
 **rune_price_usd** | **str** | Float, the price of Rune based on the deepest USD pool at the end of the interval.  | 
 **start_time** | **str** | Int64, The beginning time of bucket in unix timestamp | 
 **total_value_bonded** | **str** | Int64(e8), the total amount of bonds (both active and standby) at the end of the interval  | [optional] 

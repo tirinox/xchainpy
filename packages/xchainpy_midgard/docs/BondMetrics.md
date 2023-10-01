@@ -5,6 +5,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **average_active_bond** | **str** | Int64(e8), Average bond of active nodes | 
 **average_standby_bond** | **str** | Int64(e8), Average bond of standby nodes | 
+**bond_hard_cap** | **str** | Int64(e8), Highest effective bond for nodes | 
 **maximum_active_bond** | **str** | Int64(e8), Maxinum bond of active nodes | 
 **maximum_standby_bond** | **str** | Int64(e8), Maximum bond of standby nodes | 
 **median_active_bond** | **str** | Int64(e8), Median bond of active nodes | 
