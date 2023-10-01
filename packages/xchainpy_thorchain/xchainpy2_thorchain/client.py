@@ -202,10 +202,11 @@ class THORChainClient(CosmosGaiaClient):
             raise Exception(f"Could not fetch transaction data from THORNode {tx_id}")
 
         tx = raw_data['observed_tx']['tx']
-        coin = tx['coins']
+        coin = tx['coins'][0]
         sender_asset = Asset.from_string_exc(coin['asset'])
         from_address = tx['from_address']
-        coin_amount = Amount.from_base(coin['amount'], self._decimal)
+        decimals = coin.get('decimals', self._decimal)
+        coin_amount = Amount.from_base(coin['amount'], decimals)
         from_tx = [
             TxFrom(from_address, tx['id'], coin_amount, sender_asset)
         ]
@@ -228,7 +229,7 @@ class THORChainClient(CosmosGaiaClient):
             ]
 
         height = int(raw_data['observed_tx'].get('finalised_height', 0))
-        
+
         return XcTx(
             sender_asset,
             from_tx, to_tx,
