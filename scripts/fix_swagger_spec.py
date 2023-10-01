@@ -8,10 +8,11 @@ Dependencies:
 """
 
 import argparse
+import asyncio
 import json
 import urllib.parse
 from pprint import pprint
-from urllib.request import urlopen
+from aiohttp import ClientSession
 
 import yaml
 
@@ -116,9 +117,17 @@ def fix_spec(spec):
     return spec
 
 
-def main():
+async def fetch(url):
+    async with ClientSession() as session:
+        user_agent = {
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36 OPR/72.0.3815.465 (Edition Yx GX)',
+        }
+        async with session.get(url, headers=user_agent) as response:
+            return await response.text()
+
+async def main():
     args = parse_args()
-    input_data = urlopen(args.input).read().decode('utf-8')
+    input_data = await fetch(args.input)
     try:
         spec = json.loads(input_data)
     except json.decoder.JSONDecodeError as e:
@@ -136,4 +145,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
