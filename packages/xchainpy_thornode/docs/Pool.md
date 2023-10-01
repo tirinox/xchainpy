@@ -4,6 +4,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **asset** | **str** |  | 
+**short_code** | **str** |  | [optional] 
 **status** | **str** |  | 
 **decimals** | **int** |  | [optional] 
 **pending_inbound_asset** | **str** |  | 
@@ -19,6 +20,8 @@ Name | Type | Description | Notes
 **synth_mint_paused** | **bool** | whether additional synths cannot be minted | 
 **synth_supply_remaining** | **str** | the amount of synth supply remaining before the current max supply is reached | 
 **loan_collateral** | **str** | the amount of collateral collects for loans | 
+**loan_cr** | **str** | the current loan collateralization ratio | 
+**derived_depth_bps** | **str** | the depth of the derived virtual pool relative to L1 pool (in basis points) | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

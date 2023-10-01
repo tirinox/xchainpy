@@ -15,6 +15,7 @@ from xchainpy2_thornode.api.pools_api import PoolsApi
 from xchainpy2_thornode.api.queue_api import QueueApi
 from xchainpy2_thornode.api.quote_api import QuoteApi
 from xchainpy2_thornode.api.savers_api import SaversApi
+from xchainpy2_thornode.api.streaming_swap_api import StreamingSwapApi
 from xchainpy2_thornode.api.tss_api import TSSApi
 from xchainpy2_thornode.api.thornames_api import ThornamesApi
 from xchainpy2_thornode.api.transactions_api import TransactionsApi

@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Thornode API
-  version: 1.114.0
+  version: 1.121.0
   contact:
     email: devs@thorchain.org
   description: Thornode REST API.
@@ -56,6 +56,39 @@ paths:
                 type: array
                 items: &id004
                   $ref: '#/components/schemas/Pool'
+  /thorchain/dpool/{asset}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/asset'
+    get:
+      description: Returns the pool information for the provided derived asset.
+      operationId: dpool
+      tags:
+      - Pools
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DerivedPool'
+  /thorchain/dpools:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns the pool information for all derived assets.
+      operationId: dpools
+      tags:
+      - Pools
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: &id005
+                  $ref: '#/components/schemas/DerivedPool'
   /thorchain/pool/{asset}/liquidity_provider/{address}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -89,7 +122,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id005
+                items: &id006
                   $ref: '#/components/schemas/LiquidityProviderSummary'
   /thorchain/pool/{asset}/saver/{address}:
     parameters:
@@ -124,7 +157,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id006
+                items: &id007
                   $ref: '#/components/schemas/Saver'
   /thorchain/pool/{asset}/borrower/{address}:
     parameters:
@@ -159,7 +192,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id007
+                items: &id008
                   $ref: '#/components/schemas/Borrower'
   /thorchain/tx/{hash}:
     parameters:
@@ -210,7 +243,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TxDetailsResponse'
-  /thorchain/alpha/tx/stages/{hash}:
+  /thorchain/tx/stages/{hash}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
     - $ref: '#/components/parameters/hash'
@@ -226,7 +259,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TxStagesResponse'
-  /thorchain/alpha/tx/status/{hash}:
+  /thorchain/tx/status/{hash}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
     - $ref: '#/components/parameters/hash'
@@ -273,7 +306,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id009
+                items: &id010
                   $ref: '#/components/schemas/Node'
   /thorchain/vaults/asgard:
     parameters:
@@ -385,7 +418,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id010
+                items: &id012
                   $ref: '#/components/schemas/InboundAddress'
   /thorchain/lastblock:
     parameters:
@@ -484,6 +517,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BanResponse'
+  /thorchain/swap/streaming/{hash}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/hash'
+    get:
+      description: Returns the state of a streaming swap
+      operationId: stream_swap
+      tags:
+      - StreamingSwap
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StreamingSwap'
+  /thorchain/swaps/streaming:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns the state of all streaming swaps
+      operationId: stream_swaps
+      tags:
+      - StreamingSwap
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: &id011
+                  $ref: '#/components/schemas/StreamingSwap'
   /thorchain/queue:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -514,7 +580,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id011
+                items: &id013
                   $ref: '#/components/schemas/MsgSwap'
   /thorchain/queue/scheduled:
     parameters:
@@ -531,7 +597,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id013
+                items: &id015
                   $ref: '#/components/schemas/TxOutItem'
   /thorchain/queue/outbound:
     parameters:
@@ -548,7 +614,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id012
+                items: &id014
                   $ref: '#/components/schemas/TxOutItem'
   /thorchain/keysign/{height}:
     parameters:
@@ -610,7 +676,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id014
+                items: &id016
                   $ref: '#/components/schemas/KeygenMetric'
   /thorchain/thorname/{name}:
     parameters:
@@ -633,7 +699,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id015
+                items: &id017
                   $ref: '#/components/schemas/Thorname'
   /thorchain/mimir:
     parameters:
@@ -747,6 +813,20 @@ paths:
       schema:
         type: string
         example: '0x1c7b17362c84287bd1184447e6dfeaf920c31bbe'
+    - name: streaming_interval
+      in: query
+      description: the interval in which streaming swaps are swapped
+      schema:
+        type: integer
+        format: int64
+        example: 10
+    - name: streaming_quantity
+      in: query
+      description: the quantity of swaps within a streaming swap
+      schema:
+        type: integer
+        format: int64
+        example: 10
     - name: from_address
       in: query
       description: the from address, required if the from asset is a synth
@@ -851,7 +931,7 @@ paths:
   /thorchain/quote/loan/open:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
-    - name: asset
+    - name: from_asset
       in: query
       description: the collateral asset
       schema:
@@ -864,7 +944,7 @@ paths:
         type: integer
         format: int64
         example: 1000000
-    - name: target_asset
+    - name: to_asset
       in: query
       description: the target asset to receive (loan denominated in TOR regardless)
       schema:
@@ -910,7 +990,7 @@ paths:
   /thorchain/quote/loan/close:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
-    - name: asset
+    - name: from_asset
       in: query
       description: the asset used to repay the loan
       schema:
@@ -923,7 +1003,7 @@ paths:
         type: integer
         format: int64
         example: 1000000
-    - name: loan_asset
+    - name: to_asset
       in: query
       description: the collateral asset of the loan
       schema:
@@ -1064,10 +1144,15 @@ components:
       - synth_mint_paused
       - synth_supply_remaining
       - loan_collateral
+      - loan_cr
+      - derived_depth_bps
       properties:
         asset:
           type: string
           example: BTC.BTC
+        short_code:
+          type: string
+          example: b
         status:
           type: string
           example: Available
@@ -1124,6 +1209,45 @@ components:
           type: string
           example: '123456'
           description: the amount of collateral collects for loans
+        loan_cr:
+          type: string
+          example: '123456'
+          description: the current loan collateralization ratio
+        derived_depth_bps:
+          type: string
+          example: '123456'
+          description: the depth of the derived virtual pool relative to L1 pool (in
+            basis points)
+    DerivedPool:
+      type: object
+      required:
+      - asset
+      - status
+      - balance_asset
+      - balance_rune
+      - derived_depth_bps
+      properties:
+        asset:
+          type: string
+          example: BTC.BTC
+        status:
+          type: string
+          example: Available
+        decimals:
+          type: integer
+          format: int64
+          example: 6
+        balance_asset:
+          type: string
+          example: '3197744873'
+        balance_rune:
+          type: string
+          example: '13460619152985'
+        derived_depth_bps:
+          type: string
+          example: '123456'
+          description: the depth of the derived virtual pool relative to L1 pool (in
+            basis points)
     LiquidityProviderSummary:
       type: object
       required:
@@ -1275,10 +1399,12 @@ components:
       required:
       - owner
       - asset
-      - debt_up
-      - debt_down
-      - collateral_up
-      - collateral_down
+      - debt_issued
+      - debt_repaid
+      - debt_current
+      - collateral_deposited
+      - collateral_withdrawn
+      - collateral_current
       - last_open_height
       - last_repay_height
       properties:
@@ -1288,16 +1414,22 @@ components:
         asset:
           type: string
           example: BNB.BNB
-        debt_up:
+        debt_issued:
           type: string
           example: '123456'
-        debt_down:
+        debt_repaid:
           type: string
           example: '123456'
-        collateral_up:
+        debt_current:
           type: string
           example: '123456'
-        collateral_down:
+        collateral_deposited:
+          type: string
+          example: '123456'
+        collateral_withdrawn:
+          type: string
+          example: '123456'
+        collateral_current:
           type: string
           example: '123456'
         last_open_height:
@@ -1413,6 +1545,57 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/VaultRouter'
+    StreamingSwap:
+      type: object
+      properties:
+        tx_id:
+          type: string
+          example: CF524818D42B63D25BBA0CCC4909F127CAA645C0F9CD07324F2824CC151A64C7
+          description: the hash of a transaction
+        interval:
+          type: integer
+          format: uint64
+          description: how often each swap is made, in blocks
+        quantity:
+          type: integer
+          format: uint64
+          description: the total number of swaps in a streaming swaps
+        count:
+          type: integer
+          format: uint64
+          description: the amount of swap attempts so far
+        last_height:
+          type: integer
+          format: int64
+          description: the block height of the latest swap
+        trade_target:
+          type: string
+          example: '100'
+          description: the total number of tokens the swapper wants to receive of
+            the output asset
+        deposit:
+          type: string
+          example: '100'
+          description: the number of input tokens the swapper has deposited
+        in:
+          type: string
+          example: '100'
+          description: the amount of input tokens that have been swapped so far
+        out:
+          type: string
+          example: '100'
+          description: the amount of output tokens that have been swapped so far
+        failed_swaps:
+          type: array
+          description: the list of swap indexes that failed
+          items:
+            type: integer
+            format: uint64
+        failed_swap_reasons:
+          type: array
+          description: the list of reasons that sub-swaps have failed
+          items:
+            type: string
     Tx:
       type: object
       required:
@@ -1636,6 +1819,14 @@ components:
           format: int64
           description: 0 if a market order (immediately completed or refunded), 1
             if a limit order (held until fulfillable)
+        stream_quantity:
+          type: integer
+          format: uint64
+          description: number of swaps to execute in a streaming swap
+        stream_interval:
+          type: integer
+          format: uint64
+          description: the interval (in blocks) to execute the streaming swap
     TxOutItem:
       type: object
       required:
@@ -1906,6 +2097,11 @@ components:
         preferred_asset:
           type: string
           example: BTC.BTC
+        affiliate_collector_rune:
+          type: string
+          example: '100'
+          description: Amount of RUNE currently accrued by this thorname in affiliate
+            fees waiting to be swapped to preferred asset.
         aliases:
           type: array
           items:
@@ -1914,50 +2110,74 @@ components:
       type: object
       required:
       - asset
-      - outbound
+      - liquidity
+      - total
+      - slippage_bps
+      - total_bps
       properties:
         asset:
           type: string
           example: ETH.ETH
+          description: the target asset used for all fees
         affiliate:
           type: string
           example: '1234'
+          description: affiliate fee in the target asset
         outbound:
           type: string
           example: '1234'
+          description: outbound fee in the target asset
         liquidity:
           type: string
           example: '1234'
-          description: liquidity fees paid to pools
-        total_bps:
+          description: liquidity fees paid to pools in the target asset
+        total:
           type: string
-          example: '500'
+          example: '9876'
+          description: total fees in the target asset
+        slippage_bps:
+          type: integer
+          format: int64
+          description: the swap slippage in basis points
+        total_bps:
+          type: integer
+          format: int64
           description: total basis points in fees relative to amount out
     PoolResponse:
       $ref: '#/components/schemas/Pool'
     PoolsResponse:
       type: array
       items: *id004
-    LiquidityProvidersResponse:
+    DerivedPoolResponse:
+      $ref: '#/components/schemas/DerivedPool'
+    DerivedPoolsResponse:
       type: array
       items: *id005
+    LiquidityProvidersResponse:
+      type: array
+      items: *id006
     LiquidityProviderResponse:
       $ref: '#/components/schemas/LiquidityProvider'
     SaverResponse:
       $ref: '#/components/schemas/Saver'
     SaversResponse:
       type: array
-      items: *id006
+      items: *id007
     BorrowerResponse:
       $ref: '#/components/schemas/Borrower'
     BorrowersResponse:
       type: array
-      items: *id007
+      items: *id008
     TxResponse:
       type: object
       properties:
         observed_tx:
           $ref: '#/components/schemas/ObservedTx'
+        consensus_height:
+          type: integer
+          format: int64
+          example: 7581321
+          description: the thorchain height at which the inbound reached consensus
         finalised_height:
           type: integer
           format: int64
@@ -1970,7 +2190,7 @@ components:
           description: the thorchain height for which the outbound was scheduled
         keysign_metric:
           $ref: '#/components/schemas/TssKeysignMetric'
-    TxDetailsResponse: &id008
+    TxDetailsResponse: &id009
       type: object
       required:
       - tx
@@ -1983,10 +2203,6 @@ components:
           example: CF524818D42B63D25BBA0CCC4909F127CAA645C0F9CD07324F2824CC151A64C7
         tx:
           $ref: '#/components/schemas/ObservedTx'
-        height:
-          type: integer
-          format: int64
-          example: 1234
         txs:
           type: array
           items:
@@ -1999,6 +2215,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Tx'
+        consensus_height:
+          type: integer
+          format: int64
+          example: 7581321
+          description: the thorchain height at which the inbound reached consensus
         finalised_height:
           type: integer
           format: int64
@@ -2015,22 +2236,34 @@ components:
           format: int64
           example: 1234
           description: the thorchain height for which the outbound was scheduled
-    TxSignersResponse: *id008
+    TxSignersResponse: *id009
     TxStagesResponse:
       type: object
       required:
       - inbound_observed
-      - inbound_finalised
       properties:
         inbound_observed:
           type: object
           required:
+          - final_observations
           - completed
           properties:
             started:
               type: boolean
               example: false
               description: returns true if any nodes have observed the transaction
+                (to be deprecated in favour of counts)
+            pre_confirmation_count:
+              type: integer
+              format: uint64
+              example: 80
+              description: number of signers for pre-confirmation-counting observations
+            final_count:
+              type: integer
+              format: uint64
+              example: 80
+              description: number of signers for final observations, after any confirmation
+                counting complete
             completed:
               type: boolean
               example: false
@@ -2084,6 +2317,34 @@ components:
               example: false
               description: returns true if the inbound transaction has been finalised
                 (THORChain agreeing it exists)
+        swap_status:
+          type: object
+          required:
+          - pending
+          properties:
+            pending:
+              type: boolean
+              example: false
+              description: true when awaiting a swap
+            streaming:
+              type: object
+              required:
+              - interval
+              - quantity
+              - count
+              properties:
+                interval:
+                  type: integer
+                  format: uint64
+                  description: how often each swap is made, in blocks
+                quantity:
+                  type: integer
+                  format: uint64
+                  description: the total number of swaps in a streaming swaps
+                count:
+                  type: integer
+                  format: uint64
+                  description: the amount of swap attempts so far
         swap_finalised:
           type: object
           required:
@@ -2092,8 +2353,9 @@ components:
             completed:
               type: boolean
               example: false
-              description: returns true if an inbound transaction's swap (successful
-                or refunded) is no longer pending
+              description: (to be deprecated in favor of swap_status) returns true
+                if an inbound transaction's swap (successful or refunded) is no longer
+                pending
         outbound_delay:
           type: object
           required:
@@ -2175,7 +2437,12 @@ components:
       $ref: '#/components/schemas/Node'
     NodesResponse:
       type: array
-      items: *id009
+      items: *id010
+    StreamingSwapsResponse:
+      type: array
+      items: *id011
+    StreamingSwapResponse:
+      $ref: '#/components/schemas/StreamingSwap'
     VaultsResponse:
       type: array
       items: *id001
@@ -2207,14 +2474,17 @@ components:
       - burned_bep_2_rune
       - burned_erc_20_rune
       - total_bond_units
+      - effective_security_bond
       - total_reserve
       - vaults_migrating
       - gas_spent_rune
       - gas_withheld_rune
-      - outbound_tx_fee_rune
+      - native_outbound_fee_rune
       - native_tx_fee_rune
       - tns_register_fee_rune
       - tns_fee_per_block_rune
+      - rune_price_in_tor
+      - tor_price_in_rune
       properties:
         bond_reward_rune:
           type: string
@@ -2232,6 +2502,10 @@ components:
           type: string
           example: '0'
           description: total bonded RUNE
+        effective_security_bond:
+          type: string
+          example: '0'
+          description: effective security bond used to determine maximum pooled RUNE
         total_reserve:
           type: string
           example: '21999180112172346'
@@ -2253,26 +2527,34 @@ components:
           type: string
           example: '15000'
           description: Current outbound fee multiplier, in basis points
-        outbound_tx_fee_rune:
+        native_outbound_fee_rune:
           type: string
           example: '100000000'
-          description: the outbound transaction fee in rune, converted from the OutboundTransactionFeeUSD
-            mimir
+          description: the outbound transaction fee in rune, converted from the NativeOutboundFeeUSD
+            mimir (after USD fees are enabled)
         native_tx_fee_rune:
           type: string
           example: '100000000'
           description: the native transaction fee in rune, converted from the NativeTransactionFeeUSD
-            mimir
+            mimir (after USD fees are enabled)
         tns_register_fee_rune:
           type: string
           example: '1000000000'
           description: the thorname register fee in rune, converted from the TNSRegisterFeeUSD
-            mimir
+            mimir (after USD fees are enabled)
         tns_fee_per_block_rune:
           type: string
           example: '20'
           description: the thorname fee per block in rune, converted from the TNSFeePerBlockUSD
-            mimir
+            mimir (after USD fees are enabled)
+        rune_price_in_tor:
+          type: string
+          example: '10'
+          description: the rune price in tor
+        tor_price_in_rune:
+          type: string
+          example: '10'
+          description: the tor price in rune
     POLResponse:
       type: object
       required:
@@ -2304,7 +2586,7 @@ components:
           description: current amount of rune deposited
     InboundAddressesResponse:
       type: array
-      items: *id010
+      items: *id012
     LastBlockResponse:
       type: array
       items: *id002
@@ -2393,13 +2675,13 @@ components:
           description: scheduled outbound value in RUNE
     SwapQueueResponse:
       type: array
-      items: *id011
+      items: *id013
     OutboundResponse:
       type: array
-      items: *id012
+      items: *id014
     ScheduledResponse:
       type: array
-      items: *id013
+      items: *id015
     KeysignResponse:
       type: object
       properties:
@@ -2423,7 +2705,7 @@ components:
           type: string
     KeygenMetricsResponse:
       type: array
-      items: *id014
+      items: *id016
     MetricsResponse:
       type: object
       properties:
@@ -2441,7 +2723,7 @@ components:
                 $ref: '#/components/schemas/TssMetric'
     ThornameResponse:
       type: array
-      items: *id015
+      items: *id017
     MimirResponse:
       type: object
       additionalProperties:
@@ -2465,10 +2747,12 @@ components:
           example: false
           description: Returns true if the invariant is broken.
         msg:
-          type: string
-          example: 'insolvent: 200000rune
-
-            oversolvent: 1btc/btc'
+          type: array
+          items:
+            type: string
+          example:
+          - 'insolvent: 200000rune'
+          - 'oversolvent: 1btc/btc'
           description: Informative message about the invariant result.
     InvariantsResponse:
       type: object
@@ -2495,60 +2779,64 @@ components:
                 type: string
     baseQuoteResponse:
       properties:
-        inbound_address: &id016
+        inbound_address: &id018
           type: string
           description: the inbound address for the transaction on the source chain
           example: bc1qjk3xzu5slu7mtmc8jc9yed3zqvkhkttm700g9a
-        inbound_confirmation_blocks: &id017
+        inbound_confirmation_blocks: &id019
           type: integer
           format: int64
           description: the approximate number of source chain blocks required before
             processing
-        inbound_confirmation_seconds: &id018
+        inbound_confirmation_seconds: &id020
           type: integer
           format: int64
           description: the approximate seconds for block confirmations required before
             processing
-        outbound_delay_blocks: &id019
+        outbound_delay_blocks: &id021
           type: integer
           format: int64
           description: the number of thorchain blocks the outbound will be delayed
-        outbound_delay_seconds: &id020
+        outbound_delay_seconds: &id022
           type: integer
           format: int64
           description: the approximate seconds for the outbound delay before it will
             be sent
-        fees: &id021
+        fees: &id023
           $ref: '#/components/schemas/QuoteFees'
-        slippage_bps: &id022
+        slippage_bps: &id024
           type: integer
           format: int64
-          description: the total swap slippage in basis points
-        router: &id023
+          description: Deprecated - migrate to fees object.
+        streaming_slippage_bps: &id025
+          type: integer
+          format: int64
+          description: Deprecated - migrate to fees object.
+        router: &id026
           type: string
           description: the EVM chain router contract address
           example: '0x3624525075b88B24ecc29CE226b0CEc1fFcB6976'
-        expiry: &id024
+        expiry: &id027
           type: integer
           format: int64
           description: expiration timestamp in unix seconds
           example: 1671660285
-        warning: &id025
+        warning: &id028
           type: string
           description: static warning message
           example: Do not cache this response. Do not send funds after the expiry.
-        notes: &id026
+        notes: &id029
           type: string
           description: chain specific quote notes
           example: Transfer the inbound_address the asset with the memo. Do not use
             multi-in, multi-out transactions.
-        dust_threshold: &id027
+        dust_threshold: &id030
           type: string
           example: '10000'
           description: Defines the minimum transaction size for the chain in base
             units (sats, wei, uatom). Transctions with asset amounts lower than the
             dust_threshold are ignored.
-        recommended_min_amount_in: &id028
+        recommended_min_amount_in: &id031
           type: string
           description: The recommended minimum inbound amount for this transaction
             type & inbound asset. Sending less than this amount could result in failed
@@ -2558,27 +2846,30 @@ components:
       type: object
       required:
       - expected_amount_out
+      - expected_amount_out_streaming
       - outbound_delay_blocks
       - outbound_delay_seconds
       - fees
       - slippage_bps
+      - streaming_slippage_bps
       - warning
       - notes
       - expiry
       properties:
-        inbound_address: *id016
-        inbound_confirmation_blocks: *id017
-        inbound_confirmation_seconds: *id018
-        outbound_delay_blocks: *id019
-        outbound_delay_seconds: *id020
-        fees: *id021
-        slippage_bps: *id022
-        router: *id023
-        expiry: *id024
-        warning: *id025
-        notes: *id026
-        dust_threshold: *id027
-        recommended_min_amount_in: *id028
+        inbound_address: *id018
+        inbound_confirmation_blocks: *id019
+        inbound_confirmation_seconds: *id020
+        outbound_delay_blocks: *id021
+        outbound_delay_seconds: *id022
+        fees: *id023
+        slippage_bps: *id024
+        streaming_slippage_bps: *id025
+        router: *id026
+        expiry: *id027
+        warning: *id028
+        notes: *id029
+        dust_threshold: *id030
+        recommended_min_amount_in: *id031
         memo:
           type: string
           description: generated memo for the swap
@@ -2588,6 +2879,34 @@ components:
           description: the amount of the target asset the user can expect to receive
             after fees
           example: '10000'
+        expected_amount_out_streaming:
+          type: string
+          description: Deprecated - expected_amount_out is streaming amount if interval
+            provided.
+          example: '10000'
+        max_streaming_quantity:
+          type: integer
+          format: int64
+          description: the maxiumum amount of trades a streaming swap can do for a
+            trade
+          example: 10
+        streaming_swap_blocks:
+          type: integer
+          format: int64
+          description: the number of blocks the streaming swap will execute over
+          example: 100
+        streaming_swap_seconds:
+          type: integer
+          format: int64
+          description: approx the number of seconds the streaming swap will execute
+            over
+          example: 600
+        total_swap_seconds:
+          type: integer
+          format: int64
+          description: total number of seconds a swap is expected to take (inbound
+            conf + streaming swap + outbound delay)
+          example: 600
     QuoteSaverDepositResponse:
       type: object
       required:
@@ -2600,19 +2919,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id016
-        inbound_confirmation_blocks: *id017
-        inbound_confirmation_seconds: *id018
-        outbound_delay_blocks: *id019
-        outbound_delay_seconds: *id020
-        fees: *id021
-        slippage_bps: *id022
-        router: *id023
-        expiry: *id024
-        warning: *id025
-        notes: *id026
-        dust_threshold: *id027
-        recommended_min_amount_in: *id028
+        inbound_address: *id018
+        inbound_confirmation_blocks: *id019
+        inbound_confirmation_seconds: *id020
+        outbound_delay_blocks: *id021
+        outbound_delay_seconds: *id022
+        fees: *id023
+        slippage_bps: *id024
+        streaming_slippage_bps: *id025
+        router: *id026
+        expiry: *id027
+        warning: *id028
+        notes: *id029
+        dust_threshold: *id030
+        recommended_min_amount_in: *id031
         memo:
           type: string
           description: generated memo for the deposit
@@ -2642,19 +2962,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id016
-        inbound_confirmation_blocks: *id017
-        inbound_confirmation_seconds: *id018
-        outbound_delay_blocks: *id019
-        outbound_delay_seconds: *id020
-        fees: *id021
-        slippage_bps: *id022
-        router: *id023
-        expiry: *id024
-        warning: *id025
-        notes: *id026
-        dust_threshold: *id027
-        recommended_min_amount_in: *id028
+        inbound_address: *id018
+        inbound_confirmation_blocks: *id019
+        inbound_confirmation_seconds: *id020
+        outbound_delay_blocks: *id021
+        outbound_delay_seconds: *id022
+        fees: *id023
+        slippage_bps: *id024
+        streaming_slippage_bps: *id025
+        router: *id026
+        expiry: *id027
+        warning: *id028
+        notes: *id029
+        dust_threshold: *id030
+        recommended_min_amount_in: *id031
         memo:
           type: string
           description: generated memo for the withdraw, the client can use this OR
@@ -2675,8 +2996,8 @@ components:
       required:
       - expected_amount_out
       - expected_collateralization_ratio
-      - expected_collateral_up
-      - expected_debt_up
+      - expected_collateral_deposited
+      - expected_debt_issued
       - outbound_delay_blocks
       - outbound_delay_seconds
       - fees
@@ -2684,19 +3005,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id016
-        inbound_confirmation_blocks: *id017
-        inbound_confirmation_seconds: *id018
-        outbound_delay_blocks: *id019
-        outbound_delay_seconds: *id020
-        fees: *id021
-        slippage_bps: *id022
-        router: *id023
-        expiry: *id024
-        warning: *id025
-        notes: *id026
-        dust_threshold: *id027
-        recommended_min_amount_in: *id028
+        inbound_address: *id018
+        inbound_confirmation_blocks: *id019
+        inbound_confirmation_seconds: *id020
+        outbound_delay_blocks: *id021
+        outbound_delay_seconds: *id022
+        fees: *id023
+        slippage_bps: *id024
+        streaming_slippage_bps: *id025
+        router: *id026
+        expiry: *id027
+        warning: *id028
+        notes: *id029
+        dust_threshold: *id030
+        recommended_min_amount_in: *id031
         memo:
           type: string
           description: generated memo for the loan open
@@ -2710,11 +3032,11 @@ components:
           type: string
           description: the expected collateralization ratio in basis points
           example: '30000'
-        expected_collateral_up:
+        expected_collateral_deposited:
           type: string
           description: the expected amount of collateral increase on the loan
           example: '1000000'
-        expected_debt_up:
+        expected_debt_issued:
           type: string
           description: the expected amount of TOR debt increase on the loan
           example: '1000000'
@@ -2722,8 +3044,8 @@ components:
       type: object
       required:
       - expected_amount_out
-      - expected_collateral_down
-      - expected_debt_down
+      - expected_collateral_withdrawn
+      - expected_debt_repaid
       - memo
       - outbound_delay_blocks
       - outbound_delay_seconds
@@ -2732,19 +3054,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id016
-        inbound_confirmation_blocks: *id017
-        inbound_confirmation_seconds: *id018
-        outbound_delay_blocks: *id019
-        outbound_delay_seconds: *id020
-        fees: *id021
-        slippage_bps: *id022
-        router: *id023
-        expiry: *id024
-        warning: *id025
-        notes: *id026
-        dust_threshold: *id027
-        recommended_min_amount_in: *id028
+        inbound_address: *id018
+        inbound_confirmation_blocks: *id019
+        inbound_confirmation_seconds: *id020
+        outbound_delay_blocks: *id021
+        outbound_delay_seconds: *id022
+        fees: *id023
+        slippage_bps: *id024
+        streaming_slippage_bps: *id025
+        router: *id026
+        expiry: *id027
+        warning: *id028
+        notes: *id029
+        dust_threshold: *id030
+        recommended_min_amount_in: *id031
         memo:
           type: string
           description: generated memo for the loan close
@@ -2754,11 +3077,11 @@ components:
           description: the amount of collateral asset the user can expect to receive
             after fees in 1e8 decimals
           example: '10000'
-        expected_collateral_down:
+        expected_collateral_withdrawn:
           type: string
           description: the expected amount of collateral decrease on the loan
           example: '1000000'
-        expected_debt_down:
+        expected_debt_repaid:
           type: string
           description: the expected amount of TOR debt decrease on the loan
           example: '1000000'

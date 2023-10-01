@@ -7,8 +7,8 @@ Method | HTTP request | Description
 [**tx**](TransactionsApi.md#tx) | **GET** /thorchain/tx/{hash} | 
 [**tx_signers**](TransactionsApi.md#tx_signers) | **GET** /thorchain/tx/details/{hash} | 
 [**tx_signers_old**](TransactionsApi.md#tx_signers_old) | **GET** /thorchain/tx/{hash}/signers | 
-[**tx_stages**](TransactionsApi.md#tx_stages) | **GET** /thorchain/alpha/tx/stages/{hash} | 
-[**tx_status**](TransactionsApi.md#tx_status) | **GET** /thorchain/alpha/tx/status/{hash} | 
+[**tx_stages**](TransactionsApi.md#tx_stages) | **GET** /thorchain/tx/stages/{hash} | 
+[**tx_status**](TransactionsApi.md#tx_status) | **GET** /thorchain/tx/status/{hash} | 
 
 # **tx**
 > TxResponse tx(hash, height=height)

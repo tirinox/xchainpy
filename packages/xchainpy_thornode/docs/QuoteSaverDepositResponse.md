@@ -9,7 +9,8 @@ Name | Type | Description | Notes
 **outbound_delay_blocks** | **int** | the number of thorchain blocks the outbound will be delayed | [optional] 
 **outbound_delay_seconds** | **int** | the approximate seconds for the outbound delay before it will be sent | [optional] 
 **fees** | [**QuoteFees**](QuoteFees.md) |  | 
-**slippage_bps** | **int** | the total swap slippage in basis points | 
+**slippage_bps** | **int** | Deprecated - migrate to fees object. | 
+**streaming_slippage_bps** | **int** | Deprecated - migrate to fees object. | [optional] 
 **router** | **str** | the EVM chain router contract address | [optional] 
 **expiry** | **int** | expiration timestamp in unix seconds | 
 **warning** | **str** | static warning message | 
