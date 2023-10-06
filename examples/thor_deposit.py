@@ -4,10 +4,20 @@ import os
 from xchainpy2_thorchain import THORChainClient
 from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE, RUNE_DECIMAL, Asset, NetworkType
 
+"""
+This example requires a real wallet with some amount of Rune
+(1 Rune will be more than enough)
+Just don't forget to pass "PHRASE" environment variable that contains a mnemonic phrase of your wallet
+"""
+
 SYNTH_BTC = Asset.from_string('BTC/BTC')
 
+NETWORK = NetworkType.MAINNET
 
-async def swap_rune_to_synth_btc(rune_amount):
+
+# NETWORK = NetworkType.STAGENET
+
+async def swap_rune_to_synth_btc(client, rune_amount):
     print('I will swap 0.1 RUNE to BTC/BTC now.')
 
     out_address = client.get_address()
@@ -20,7 +30,7 @@ async def swap_rune_to_synth_btc(rune_amount):
     print(f"Swap TX submitted: {client.get_explorer_tx_url(tx_hash)}")
 
 
-async def swap_synth_btc_back_to_rune(satoshi):
+async def swap_synth_btc_back_to_rune(client, satoshi):
     print(f'I will swap {satoshi} of BTC/BTC back to RUNE now.')
 
     out_address = client.get_address()
@@ -33,7 +43,7 @@ async def swap_synth_btc_back_to_rune(satoshi):
     print(f"Swap TX submitted: {client.get_explorer_tx_url(tx_hash)}")
 
 
-async def check_for_synth_btc_balance() -> int:
+async def check_for_synth_btc_balance(client) -> int:
     balance = await client.get_balance()
 
     for b in balance:
@@ -46,15 +56,15 @@ async def check_for_synth_btc_balance() -> int:
         return 0
 
 
-async def demo_simple_deposit():
+async def demo_simple_deposit(client):
     # Swap 0.1 RUNE to BTC/BTC
-    await swap_rune_to_synth_btc(0.1)
+    await swap_rune_to_synth_btc(client, 0.1)
 
     # Wait until it is done
     while True:
         print("Waiting until things settle down...")
         await asyncio.sleep(10.0)
-        satoshi = await check_for_synth_btc_balance()
+        satoshi = await check_for_synth_btc_balance(client)
         if satoshi:
             break
 
@@ -62,29 +72,21 @@ async def demo_simple_deposit():
     await asyncio.sleep(2.0)
 
     # Swap all BTC/BTC back to RUNE
-    await swap_synth_btc_back_to_rune(satoshi)
+    await swap_synth_btc_back_to_rune(client, satoshi)
 
 
 async def main():
-    balance = await client.get_balance()
-    print(f"{client.get_address()}'s balance is {balance}")
-
-    await demo_simple_deposit()
-
-
-if __name__ == "__main__":
-    """
-    This example requires a real wallet with some amount of Rune
-    (1 Rune will be more than enough)
-    Just don't forget to pass "PHRASE" environment variable that contains a mnemonic phrase of your wallet
-    """
     phrase = os.environ.get('PHRASE')
     if not phrase:
         raise ValueError("PHRASE env var is empty!")
 
-    # network = NetworkType.STAGENET
-    network = NetworkType.MAINNET
+    client = THORChainClient(phrase=phrase, network=NETWORK)
 
-    client = THORChainClient(phrase=phrase, network=network)
+    balance = await client.get_balance()
+    print(f"{client.get_address()}'s balance is {balance}")
 
+    await demo_simple_deposit(client)
+
+
+if __name__ == "__main__":
     asyncio.run(main())
