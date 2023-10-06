@@ -172,6 +172,9 @@ class Amount(NamedTuple):
     def as_decimal_ctx(self, context=DC):
         return Decimal(self.internal_amount, context) / decimal_power_10(self.decimals, context)
 
+    def __float__(self):
+        return float(self.as_decimal)
+
 
 def amount(x) -> Amount:
     return Amount.automatic(x)
