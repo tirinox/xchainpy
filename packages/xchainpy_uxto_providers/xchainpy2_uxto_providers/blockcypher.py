@@ -6,7 +6,7 @@ from typing import Optional, List
 from aiohttp import ClientSession
 from pydantic import BaseModel
 
-from xchainpy2_client import UtxoOnlineDataProvider, XcTx, TxPage, UTXO
+from xchainpy2_client import UtxoOnlineDataProvider, XcTx, TxPage, UTXO, Witness, TxFrom, TxTo, TxType
 from xchainpy2_utils import Asset, CryptoAmount, Chain, AssetBTC, Amount
 
 
@@ -78,10 +78,13 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
         return cls(Chain.Bitcoin, AssetBTC, 8, BlockcypherNetwork.BTC, api_key=api_key, session=session)
 
     async def get_confirmed_unspent_txs(self, address: str) -> List[UTXO]:
-        pass
+        all_unspent = await self.get_raw_transaction(address, limit=2000)
+        all_unspent = [tx for tx in all_unspent if tx.confirmed]
+        return self.convert_utxos(address, all_unspent)
 
     async def get_unspent_txs(self, address: str) -> List[UTXO]:
-        pass
+        all_unspent = await self.get_raw_transaction(address, limit=2000)
+        return self.convert_utxos(address, all_unspent)
 
     def build_url(self, endpoint: str) -> str:
         return f'{self.base_url}/{self.network.value}/{endpoint}'
@@ -103,10 +106,13 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 0,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None) -> TxPage:
-        pass
+        raw_txs = await self.get_raw_transaction(address, offset, limit, start_time, end_time, asset)
+        txs = [self.convert_tx(tx) for tx in raw_txs]
+        return TxPage(len(txs), txs)
 
     async def get_transaction_data(self, tx_id: str) -> XcTx:
-        pass
+        tx = await self._api_get_tx(tx_id)
+        return self.convert_tx(tx)
 
     def _params(self, **kwargs):
         if self.api_key:
@@ -168,3 +174,37 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
             self._api_get_tx(tx_hash) for tx_hash in tx_hashes_to_fetch
         ])
         return r
+
+    def convert_utxos(self, address, utxos: List[Transaction]) -> List[UTXO]:
+        utxos_out = []
+        for utxo in utxos:
+            for output in utxo.outputs:
+                if output.addresses and output.addresses[0] == address:
+                    value = Amount.from_base(output.value, self.asset_decimal).internal_amount
+                    utxos_out.append(UTXO(
+                        utxo.hash, utxo.index,
+                        value,
+                        witness_utxo=Witness(value, bytes.fromhex(output.script)),
+                        tx_hex=utxo.hex
+                    ))
+        return utxos_out
+
+    def convert_tx(self, tx: Transaction) -> XcTx:
+        return XcTx(
+            self.asset,
+            from_txs=[
+                TxFrom(
+                    inp.addresses[0], tx.hash, Amount.from_base(inp.output_value, self.asset_decimal), self.asset
+                ) for inp in tx.inputs
+            ],
+            to_txs=[
+                TxTo(
+                    out.addresses[0], Amount.from_base(out.value, self.asset_decimal), self.asset
+                ) for out in tx.outputs
+                if out.script_type != 'null-data'  # filter out op_return outputs
+            ],
+            date=datetime.fromisoformat(tx.confirmed),
+            type=TxType.TRANSFER,
+            hash=tx.hash,
+            height=tx.block_height,
+        )
