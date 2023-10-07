@@ -3,7 +3,7 @@ from pathlib import Path
 from setuptools import setup, find_packages  # noqa: H301
 
 NAME = "xchainpy2_client"
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 
 # To install the library, run the following
 #
@@ -15,6 +15,7 @@ VERSION = "0.0.3"
 REQUIRES = [
     "bip-utils>=2.7.0,<3.0.0",
     "pycryptodome>=3.17,<4.0",
+    # "pydantic>=2.0.0",
     "xchainpy2_crypto",
     "xchainpy2_util",
 ]

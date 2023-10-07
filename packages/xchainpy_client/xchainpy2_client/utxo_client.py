@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional, Dict
 
-from xchainpy2_utils import Chain, Address, CryptoAmount, NetworkType, Asset
+from xchainpy2_utils import Chain, CryptoAmount, NetworkType, Asset
 from .base_client import XChainClient
 from .explorer import ExplorerProvider
 from .fees import calc_fees_async, standard_fee_rates
@@ -91,7 +91,7 @@ class UTXOClient(XChainClient, abc.ABC):
         :param tx_id: The transaction id.
         :return: The transaction details of the given transaction id.
         """
-        return await self._round_robin('get_transaction_data', tx_id, asset_address)
+        return await self._round_robin('get_transaction_data', tx_id)
 
     async def get_balance(self, address: str, confirmed_only=True) -> List[CryptoAmount]:
         """
@@ -109,7 +109,7 @@ class UTXOClient(XChainClient, abc.ABC):
             self.calc_fee,
             memo,
         )
-        return FeesWithRates(fees, rates)
+        return FeesWithRates(fees=fees, rates=rates)
 
     async def get_fees(self, memo='') -> Fees:
         return (await self.get_fees_with_rates(memo)).fees

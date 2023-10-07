@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, List, NamedTuple, Dict
 
-from xchainpy2_utils import Asset, Amount, NetworkType, CryptoAmount, Address, DEFAULT_ASSET_DECIMAL
+from xchainpy2_utils import Asset, Amount, NetworkType, CryptoAmount, DEFAULT_ASSET_DECIMAL
 
 
 class TxType(Enum):
