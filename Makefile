@@ -1,4 +1,4 @@
-.PHONY: dev_tools cli_codegen test
+.PHONY: dev_tools cli_codegen test tc_env
 
 dev_tools:
 	pip install -U pytest pytest-asyncio requests-mock aioresponses
@@ -19,3 +19,11 @@ test:
 		packages/xchainpy_thorchain_amm \
 		packages/xchainpy_thorchain_query \
 		packages/xchainpy_util
+
+
+tc_env:
+	cd packages/xchainpy_crypto && python3 setup.py develop
+	cd packages/xchainpy_util && python3 setup.py develop
+	cd packages/xchainpy_client && python3 setup.py develop
+	cd packages/xchainpy_cosmos && python3 setup.py develop
+	cd packages/xchainpy_thorchain && python3 setup.py develop

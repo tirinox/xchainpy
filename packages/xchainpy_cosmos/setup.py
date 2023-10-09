@@ -3,7 +3,7 @@ from pathlib import Path
 from setuptools import setup, find_packages  # noqa: H301
 
 NAME = "xchainpy2_cosmos"
-VERSION = "0.0.4"
+VERSION = "0.0.5"
 
 # To install the library, run the following
 #
@@ -15,12 +15,11 @@ VERSION = "0.0.4"
 REQUIRES = [
     "bip-utils>=2.7.0,<3.0.0",
     "pycryptodome>=3.17,<4.0",
+    "cosmpy>=0.9.1",
     "xchainpy2_util",
     "xchainpy2_crypto",
     "xchainpy2_client",
-    "cosmpy>=0.8.0",
 ]
-
 
 CWD = Path(__file__).resolve().parent
 
