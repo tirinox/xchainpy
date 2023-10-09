@@ -50,7 +50,7 @@ def calc_fees(fee_rates: FeeRates, calc_fee: Callable[..., Fee], *args) -> Fees:
     )
 
 
-async def calc_fees_async(fee_rates: FeeRates, calc_fee: Callable[..., Awaitable[...]], *args) -> Fees:
+async def calc_fees_async(fee_rates: FeeRates, calc_fee: Callable, *args) -> Fees:
     """
     Apply async calc_fee function to fee_rates to get Fees
     :param fee_rates: Fee rates
