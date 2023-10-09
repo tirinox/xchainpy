@@ -2,7 +2,8 @@ import asyncio
 
 from xchainpy2_crypto import generate_mnemonic
 from xchainpy2_thorchain import THORChainClient
-from xchainpy2_thorchain_query import TC_RESERVE_ADDR
+
+TC_RESERVE_ADDR = 'thor1dheycdevq39qlkxs2a6wuuzyn4aqxhve4qxtxt'
 
 
 async def main():

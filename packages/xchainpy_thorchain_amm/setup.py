@@ -15,12 +15,12 @@ VERSION = "0.0.4"
 REQUIRES = [
     "bip-utils>=2.7.0,<3.0.0",
     "pycryptodome>=3.17,<4.0",
-    "xchainpy2_util>=0.04",
-    "xchainpy2_crypto>=0.04",
-    "xchainpy2_client>=0.04",
-    "xchainpy2_thorchain>=0.04",
-    "xchainpy2_cosmos>=0.04"
-    "xchainpy2_query>=0.04",
+    "xchainpy2_utils>=0.0.4",
+    "xchainpy2_crypto>=0.0.4",
+    "xchainpy2_client>=0.0.4",
+    "xchainpy2_thorchain>=0.0.4",
+    "xchainpy2_cosmos>=0.0.4"
+    "xchainpy2_query>=0.0.4",
 
 ]
 
