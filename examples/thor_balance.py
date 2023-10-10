@@ -2,20 +2,20 @@ import asyncio
 
 from xchainpy2_crypto import generate_mnemonic
 from xchainpy2_thorchain import THORChainClient, NodeURL, DEFAULT_CLIENT_URLS
-from xchainpy2_utils import NetworkType
+from xchainpy2_utils import NetworkType, XCHAINJS_IDENTIFIER
 
 TC_RESERVE_ADDR = 'thor1dheycdevq39qlkxs2a6wuuzyn4aqxhve4qxtxt'
 
-# Standard public node (maybe protected by Cloudflare, so won't work from Python)
-# MY_CLIENT_URLS = DEFAULT_CLIENT_URLS
+# Standard public node (maybe protected by Cloudflare, so won't work from Python without additional headers)
+MY_CLIENT_URLS = DEFAULT_CLIENT_URLS
 
 # In case, you can use your own full node like
-MY_CLIENT_URLS = {
-    NetworkType.MAINNET: NodeURL(
-        'https://thorchain.fullnode.runepool.com',
-        'https://rpc.fullnode.runepool.com'
-    ),
-}
+# MY_CLIENT_URLS = {
+#     NetworkType.MAINNET: NodeURL(
+#         'https://thornode.ip:1317',
+#         'https://thornode.ip:27147',
+#     ),
+# }
 
 
 async def main():
@@ -23,6 +23,7 @@ async def main():
     print(f'{MY_CLIENT_URLS=}')
 
     client = THORChainClient(phrase=generate_mnemonic(), client_urls=MY_CLIENT_URLS)
+    client.patch_client(identifier9r=XCHAINJS_IDENTIFIER)  # to bypass limitations
 
     balance = await client.get_balance()
     print(f"Balance of {client.get_address()} is {balance}. <- Unsurprisingly empty, because it's a new address")

@@ -114,3 +114,8 @@ class NetworkType(Enum):
     TESTNET = 'testnet'
     STAGENET = 'stagenet'
     MAINNET = 'mainnet'
+
+
+XCHAINJS_IDENTIFIER = 'xchainjs-client'
+XCHAINPY_IDENTIFIER = 'xchainpy-client'
+NINE_REALMS_CLIENT_HEADER = 'x-client-id'

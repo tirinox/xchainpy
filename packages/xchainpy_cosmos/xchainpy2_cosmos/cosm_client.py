@@ -19,7 +19,7 @@ from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx,
 from xchainpy2_client.fees import single_fee
 from xchainpy2_crypto import derive_private_key, derive_address
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DECIMAL, Asset, Amount, AssetATOM, \
-    unique_by_key, batched
+    unique_by_key, batched, NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_DERIVATION_PATHS, COSMOS_ADDR_PREFIX, \
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
     MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE, DEFAULT_GAS_LIMIT, DEFAULT_REST_USER_AGENT
@@ -94,9 +94,10 @@ class CosmosGaiaClient(XChainClient):
         # noinspection PyProtectedMember
         return self._client.auth._rest_api._session
 
-    def patch_client(self, user_agent=DEFAULT_REST_USER_AGENT):
+    def patch_client(self, user_agent=DEFAULT_REST_USER_AGENT, identifier9r=XCHAINPY_IDENTIFIER):
         headers = self.rest_session.headers
-        headers['User-Agent'] = DEFAULT_REST_USER_AGENT
+        headers['User-Agent'] = user_agent
+        headers[NINE_REALMS_CLIENT_HEADER] = identifier9r
 
     def _recreate_client(self):
         # Guard for preventing early client creation before all necessary fields are set.

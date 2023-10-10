@@ -2,7 +2,8 @@ from multiprocessing.pool import ThreadPool
 from typing import Optional
 
 import xchainpy2_midgard as mdg
-from .const import DEFAULT_USER_AGENT, NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER
+from xchainpy2_utils import XCHAINPY_IDENTIFIER, NINE_REALMS_CLIENT_HEADER
+from .const import DEFAULT_USER_AGENT
 from .patch_clients import RESTClientRetry, ConfigurationEx
 
 

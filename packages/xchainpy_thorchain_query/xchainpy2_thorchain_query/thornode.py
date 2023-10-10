@@ -1,8 +1,9 @@
 from multiprocessing.pool import ThreadPool
 
 import xchainpy2_thornode as thornode
+from xchainpy2_utils import NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER
 from .patch_clients import ConfigurationEx, RESTClientRetry
-from .const import DEFAULT_USER_AGENT, XCHAINPY_IDENTIFIER, NINE_REALMS_CLIENT_HEADER
+from .const import DEFAULT_USER_AGENT
 
 
 class ThornodeAPIClient(thornode.ApiClient):
