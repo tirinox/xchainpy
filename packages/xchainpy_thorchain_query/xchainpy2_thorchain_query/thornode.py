@@ -2,11 +2,11 @@ from multiprocessing.pool import ThreadPool
 
 import xchainpy2_thornode as thornode
 from xchainpy2_utils import NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER
-from .patch_clients import ConfigurationEx, RESTClientRetry
 from .const import DEFAULT_USER_AGENT
+from .patch_clients import ConfigurationEx, RESTClientRetry, HeadersPatch
 
 
-class ThornodeAPIClient(thornode.ApiClient):
+class ThornodeAPIClient(HeadersPatch, thornode.ApiClient):
     # noinspection PyMissingConstructor
     def __init__(self, configuration: ConfigurationEx = None,
                  header_name=NINE_REALMS_CLIENT_HEADER, header_value=XCHAINPY_IDENTIFIER,
