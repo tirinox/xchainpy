@@ -3,17 +3,17 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "xchainpy2_utxo_providers"
+name = "xchainpy2_mayanode"
 version = "0.0.5"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
-description = "XChainPy 2 UTXO Data Providers"
+description = "XChainPy 2 MayaNode client (auto-generated)"
 readme = "README.md"
 requires-python = ">=3.7"
-keywords = ["Crypto", "Bitcoin", "Blockchain", "Haskoin", "Sochain", "Blockcypher"]
+keywords = ["Crypto", "Maya Protocol", "MayaNode", "Swagger", "API"]
 license = { text = "MIT" }
-urls = {source = "https://github.com/tirinox/xchainpy"}
+urls = { source = "https://github.com/tirinox/xchainpy" }
 classifiers = [
     'Development Status :: 3 - Alpha',
     # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
@@ -29,10 +29,20 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
 ]
 dependencies = [
+    "certifi >= 14.05.14",
+    "six >= 1.10",
+    "python_dateutil >= 2.5.3",
+    "urllib3 >= 1.15.1",
+    "aiohttp",
+    "aiohttp-retry",
 ]
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = [
+    "pytest",
+    "pytest-cov>=2.5.1",
+    "randomize>=0.13",
+]
 
 [tool.setuptools]
-packages = ["xchainpy2_utxo_providers"]
+packages = ["xchainpy2_mayanode"]
