@@ -1,17 +1,18 @@
 import asyncio
 import logging
 from datetime import datetime
-from math import ceil
 from operator import itemgetter
 from typing import Optional, List
 from urllib.parse import urlencode
 
+from aiohttp import ClientSession
 from cosmpy.aerial.client import LedgerClient, Account
 from cosmpy.aerial.config import NetworkConfig
 from cosmpy.aerial.wallet import LocalWallet
 from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PrivateKey, PublicKey
 from cosmpy.protos.cosmos.tx.v1beta1.service_pb2 import BroadcastTxRequest, BroadcastMode
+from math import ceil
 
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx, \
     Fees, TxPage, AssetInfo, FeeType, FeeOption
@@ -21,9 +22,9 @@ from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DE
     unique_by_key, batched
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_DERIVATION_PATHS, COSMOS_ADDR_PREFIX, \
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
-    MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE, DEFAULT_GAS_LIMIT
+    MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE, DEFAULT_GAS_LIMIT, DEFAULT_REST_USER_AGENT
 from .models import TxHistoryResponse, TxResponse, TxLoadException
-from .utils import parse_tx_response, get_asset, get_denom
+from .utils import parse_tx_response, get_denom
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,15 @@ class CosmosGaiaClient(XChainClient):
     @property
     def server_url(self):
         return self.client_urls[self.network]
+
+    @property
+    def rest_session(self) -> ClientSession:
+        # noinspection PyProtectedMember
+        return self._client.auth._rest_api._session
+
+    def patch_client(self, user_agent=DEFAULT_REST_USER_AGENT):
+        headers = self.rest_session.headers
+        headers['User-Agent'] = DEFAULT_REST_USER_AGENT
 
     def _recreate_client(self):
         # Guard for preventing early client creation before all necessary fields are set.

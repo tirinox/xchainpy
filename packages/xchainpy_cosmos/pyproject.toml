@@ -32,6 +32,7 @@ dependencies = [
     "bip-utils>=2.7.0,<3.0.0",
     "pycryptodome>=3.17,<4.0",
     "cosmpy>=0.9.1",
+    "aiohttp",
     "xchainpy2_utils",
     "xchainpy2_crypto",
     "xchainpy2_client",
