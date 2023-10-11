@@ -32,7 +32,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["pytest", "pytest_asyncio"]
 
 [tool.setuptools]
 packages = ["xchainpy2_utxo_providers"]
