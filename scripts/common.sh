@@ -1,6 +1,8 @@
 #!/bin/bash
 
-VERSION=1.0.1
+SWAGGER_LOCAL="./swagger-codegen-cli.jar"
+SWAGGER_VERSION=3.0.47
+SWAGGER_CODEGEN="https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/${SWAGGER_VERSION}/swagger-codegen-cli-${SWAGGER_VERSION}.jar"
 
 function check_output_dir() {
   read -p "Do you want to clear ${OUTPUT_DIR}? (y/n) " yn
@@ -34,8 +36,7 @@ function install_develop() {
   read -p "Do you want install the package? (y/n) " yn
   case $yn in
   [yY])
-    cd ${OUTPUT_DIR} || exit 3
-    python3 setup.py develop
+    python3 -m pip install --editable "${OUTPUT_DIR}"
     return
     ;;
   [nN])
@@ -46,9 +47,6 @@ function install_develop() {
 
 }
 
-SWAGGER_LOCAL="./swagger-codegen-cli.jar"
-SWAGGER_VERSION=3.0.41
-SWAGGER_CODEGEN="https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/${SWAGGER_VERSION}/swagger-codegen-cli-${SWAGGER_VERSION}.jar"
 
 function download_swagger_codegen() {
   if [ ! -f "${SWAGGER_LOCAL}" ]; then
