@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Mayanode API
-  version: 1.106.1
+  version: 1.107.1
   contact:
     email: devs@mayachain.org
   description: Mayanode REST API.
@@ -729,6 +729,12 @@ paths:
       schema:
         type: string
         example: '0x1c7b17362c84287bd1184447e6dfeaf920c31bbe'
+    - name: from_address
+      in: query
+      description: the from address, required if the from asset is a synth
+      schema:
+        type: string
+        example: thor1zupk5lmc84r2dh738a9g3zscavannjy3nzplwt
     - name: tolerance_bps
       in: query
       description: the maximum basis points from the current feeless swap price to
@@ -1300,6 +1306,7 @@ components:
       - pub_key_set
       - aztec_address
       - validator_cons_pub_key
+      - peer_id
       - bond
       - active_block_height
       - bond_address
@@ -1345,6 +1352,10 @@ components:
           type: string
           description: the consensus pub key for the node
           example: maya104gsqwta048e80j909g6y9kkqdjrw0lff866ew
+        peer_id:
+          type: string
+          description: the P2PID (:6040/p2pid endpoint) of the node
+          example: 16Uiu2HAmRgsiryer3pWCPJz18PQZDFFs1GBqCPGGJczrQXdoTBMk
         bond:
           type: string
           description: current node bond

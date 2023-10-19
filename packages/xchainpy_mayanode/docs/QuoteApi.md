@@ -113,7 +113,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **quoteswap**
-> QuoteSwapResponse quoteswap(height=height, from_asset=from_asset, to_asset=to_asset, amount=amount, destination=destination, tolerance_bps=tolerance_bps, affiliate_bps=affiliate_bps, affiliate=affiliate)
+> QuoteSwapResponse quoteswap(height=height, from_asset=from_asset, to_asset=to_asset, amount=amount, destination=destination, from_address=from_address, tolerance_bps=tolerance_bps, affiliate_bps=affiliate_bps, affiliate=affiliate)
 
 
 
@@ -134,12 +134,13 @@ from_asset = 'from_asset_example' # str | the source asset (optional)
 to_asset = 'to_asset_example' # str | the target asset (optional)
 amount = 789 # int | the source asset amount in 1e8 decimals (optional)
 destination = 'destination_example' # str | the destination address, required to generate memo (optional)
+from_address = 'from_address_example' # str | the from address, required if the from asset is a synth (optional)
 tolerance_bps = 789 # int | the maximum basis points from the current feeless swap price to set the limit in the generated memo (optional)
 affiliate_bps = 789 # int | the affiliate fee in basis points (optional)
 affiliate = 'affiliate_example' # str | the affiliate (address or mayaname) (optional)
 
 try:
-    api_response = api_instance.quoteswap(height=height, from_asset=from_asset, to_asset=to_asset, amount=amount, destination=destination, tolerance_bps=tolerance_bps, affiliate_bps=affiliate_bps, affiliate=affiliate)
+    api_response = api_instance.quoteswap(height=height, from_asset=from_asset, to_asset=to_asset, amount=amount, destination=destination, from_address=from_address, tolerance_bps=tolerance_bps, affiliate_bps=affiliate_bps, affiliate=affiliate)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling QuoteApi->quoteswap: %s\n" % e)
@@ -154,6 +155,7 @@ Name | Type | Description  | Notes
  **to_asset** | **str**| the target asset | [optional] 
  **amount** | **int**| the source asset amount in 1e8 decimals | [optional] 
  **destination** | **str**| the destination address, required to generate memo | [optional] 
+ **from_address** | **str**| the from address, required if the from asset is a synth | [optional] 
  **tolerance_bps** | **int**| the maximum basis points from the current feeless swap price to set the limit in the generated memo | [optional] 
  **affiliate_bps** | **int**| the affiliate fee in basis points | [optional] 
  **affiliate** | **str**| the affiliate (address or mayaname) | [optional] 

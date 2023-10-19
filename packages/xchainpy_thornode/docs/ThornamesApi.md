@@ -7,7 +7,7 @@ Method | HTTP request | Description
 [**thorname**](ThornamesApi.md#thorname) | **GET** /thorchain/thorname/{name} | 
 
 # **thorname**
-> list[Thorname] thorname(name, height=height)
+> Thorname thorname(name, height=height)
 
 
 
@@ -42,7 +42,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**list[Thorname]**](Thorname.md)
+[**Thorname**](Thorname.md)
 
 ### Authorization
 

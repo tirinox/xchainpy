@@ -3,6 +3,7 @@ from __future__ import absolute_import
 # flake8: noqa
 
 # import apis into api package
+from xchainpy2_thornode.api.block_api import BlockApi
 from xchainpy2_thornode.api.borrowers_api import BorrowersApi
 from xchainpy2_thornode.api.health_api import HealthApi
 from xchainpy2_thornode.api.invariants_api import InvariantsApi

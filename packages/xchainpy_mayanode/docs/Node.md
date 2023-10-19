@@ -8,6 +8,7 @@ Name | Type | Description | Notes
 **pub_key_set** | [**NodePubKeySet**](NodePubKeySet.md) |  | 
 **aztec_address** | **str** |  | 
 **validator_cons_pub_key** | **str** | the consensus pub key for the node | 
+**peer_id** | **str** | the P2PID (:6040/p2pid endpoint) of the node | 
 **bond** | **str** | current node bond | 
 **reward** | **str** |  | 
 **active_block_height** | **int** | the block height at which the node became active | 

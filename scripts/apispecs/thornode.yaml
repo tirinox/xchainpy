@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Thornode API
-  version: 1.121.0
+  version: 1.122.0
   contact:
     email: devs@thorchain.org
   description: Thornode REST API.
@@ -698,9 +698,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items: &id017
-                  $ref: '#/components/schemas/Thorname'
+                $ref: '#/components/schemas/Thorname'
   /thorchain/mimir:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -1064,6 +1062,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InvariantsResponse'
+  /thorchain/block:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns verbose details of the block.
+      operationId: block
+      tags:
+      - Block
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockResponse'
 components:
   parameters:
     queryHeight:
@@ -1460,6 +1473,7 @@ components:
       type: object
       required:
       - coins
+      - status
       - routers
       - addresses
       properties:
@@ -1712,47 +1726,15 @@ components:
       properties:
         tx:
           $ref: '#/components/schemas/Tx'
-        status:
+        observed_pub_key:
           type: string
-          enum:
-          - done
-          - incomplete
-          example: done
-        out_hashes:
-          type: array
-          items:
-            type: string
-            example: E17A0906E015F0C343691C18E475C8CB5F3F6C63F5BCDE0F3A341909763CC92B
-        block_height:
-          type: integer
-          format: int64
-          example: 7581334
-          description: same as external_observed_height, to be deprecated in favour
-            of external_observed_height
+          example: thorpub1addwnpepq27ck6u44zl8qqdnmzjjc8rg72amrxrsp42p9vd7kt6marhy6ww76z8shwe
         external_observed_height:
           type: integer
           format: int64
           example: 7581334
           description: the block height on the external source chain when the transaction
             was observed, not provided if chain is THOR
-        signers:
-          type: array
-          items:
-            type: string
-            example: thor1f3s7q037eancht7sg0aj995dht25rwrnu4ats5
-        observed_pub_key:
-          type: string
-          example: thorpub1addwnpepq27ck6u44zl8qqdnmzjjc8rg72amrxrsp42p9vd7kt6marhy6ww76z8shwe
-        keysign_ms:
-          type: integer
-          format: int64
-          example: 10000
-        finalise_height:
-          type: integer
-          format: int64
-          example: 7581334
-          description: same as external_confirmation_delay_height, to be deprecated
-            in favour of external_confirmation_delay_height
         external_confirmation_delay_height:
           type: integer
           format: int64
@@ -1771,6 +1753,26 @@ components:
           type: string
           description: the aggregator target asset limit provided to transferOutAndCall
           example: '0x0a44986b70527154e9F4290eC14e5f0D1C861822'
+        signers:
+          type: array
+          items:
+            type: string
+            example: thor1f3s7q037eancht7sg0aj995dht25rwrnu4ats5
+        keysign_ms:
+          type: integer
+          format: int64
+          example: 10000
+        out_hashes:
+          type: array
+          items:
+            type: string
+            example: E17A0906E015F0C343691C18E475C8CB5F3F6C63F5BCDE0F3A341909763CC92B
+        status:
+          type: string
+          enum:
+          - done
+          - incomplete
+          example: done
     MsgSwap:
       type: object
       required:
@@ -2143,6 +2145,51 @@ components:
           type: integer
           format: int64
           description: total basis points in fees relative to amount out
+    BlockTx:
+      type: object
+      required:
+      - hash
+      - tx
+      - result
+      properties:
+        hash:
+          type: string
+          example: 223BF64D4A01074DC523A80E76B9BBC786C791FB0A1893AC5B14866356FCFD6C
+        tx:
+          type: object
+          additionalProperties: true
+        result:
+          type: object
+          properties:
+            code:
+              type: integer
+              format: int64
+              example: 0
+            data:
+              type: string
+              example: ''
+            log:
+              type: string
+              example: not enough gas
+            info:
+              type: string
+              example: ''
+            gas_wanted:
+              type: string
+              example: '100'
+            gas_used:
+              type: string
+              example: '100'
+            events:
+              type: array
+              nullable: true
+              items:
+                type: object
+                additionalProperties:
+                  type: string
+            codespace:
+              type: string
+              example: ibc
     PoolResponse:
       $ref: '#/components/schemas/Pool'
     PoolsResponse:
@@ -2722,8 +2769,7 @@ components:
               items:
                 $ref: '#/components/schemas/TssMetric'
     ThornameResponse:
-      type: array
-      items: *id017
+      $ref: '#/components/schemas/Thorname'
     MimirResponse:
       type: object
       additionalProperties:
@@ -2777,66 +2823,203 @@ components:
                 format: int64
               signer:
                 type: string
+    BlockResponse:
+      type: object
+      required:
+      - id
+      - header
+      - begin_block_events
+      - end_block_events
+      - txs
+      properties:
+        id:
+          type: object
+          required:
+          - hash
+          - parts
+          properties:
+            hash:
+              type: string
+              example: 112BC173FD838FB68EB43476816CD7B4C6661B6884A9E357B417EE957E1CF8F7
+            parts:
+              type: object
+              required:
+              - total
+              - hash
+              properties:
+                total:
+                  type: integer
+                  format: int64
+                  example: 1
+                hash:
+                  type: string
+                  example: 38D4B26B5B725C4F13571EFE022C030390E4C33C8CF6F88EDD142EA769642DBD
+        header:
+          type: object
+          required:
+          - version
+          - chain_id
+          - height
+          - time
+          - last_block_id
+          - last_commit_hash
+          - data_hash
+          - validators_hash
+          - next_validators_hash
+          - consensus_hash
+          - app_hash
+          - last_results_hash
+          - evidence_hash
+          - proposer_address
+          properties:
+            version:
+              required:
+              - block
+              - app
+              properties:
+                block:
+                  type: string
+                  example: '10'
+                app:
+                  type: string
+                  example: '0'
+              type: object
+            chain_id:
+              type: string
+              example: cosmoshub-2
+            height:
+              type: integer
+              format: int64
+              example: 123
+            time:
+              type: string
+              example: '2019-04-22T17:01:51.701356223Z'
+            last_block_id:
+              type: object
+              required:
+              - hash
+              - parts
+              properties:
+                hash:
+                  type: string
+                  example: 112BC173FD838FB68EB43476816CD7B4C6661B6884A9E357B417EE957E1CF8F7
+                parts:
+                  type: object
+                  required:
+                  - total
+                  - hash
+                  properties:
+                    total:
+                      type: integer
+                      format: int64
+                      example: 1
+                    hash:
+                      type: string
+                      example: 38D4B26B5B725C4F13571EFE022C030390E4C33C8CF6F88EDD142EA769642DBD
+            last_commit_hash:
+              type: string
+              example: 21B9BC845AD2CB2C4193CDD17BFC506F1EBE5A7402E84AD96E64171287A34812
+            data_hash:
+              type: string
+              example: 970886F99E77ED0D60DA8FCE0447C2676E59F2F77302B0C4AA10E1D02F18EF73
+            validators_hash:
+              type: string
+              example: D658BFD100CA8025CFD3BECFE86194322731D387286FBD26E059115FD5F2BCA0
+            next_validators_hash:
+              type: string
+              example: D658BFD100CA8025CFD3BECFE86194322731D387286FBD26E059115FD5F2BCA0
+            consensus_hash:
+              type: string
+              example: 0F2908883A105C793B74495EB7D6DF2EEA479ED7FC9349206A65CB0F9987A0B8
+            app_hash:
+              type: string
+              example: 223BF64D4A01074DC523A80E76B9BBC786C791FB0A1893AC5B14866356FCFD6C
+            last_results_hash:
+              type: string
+              example: ''
+            evidence_hash:
+              type: string
+              example: ''
+            proposer_address:
+              type: string
+              example: D540AB022088612AC74B287D076DBFBC4A377A2E
+        begin_block_events:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+        end_block_events:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+        txs:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/BlockTx'
     baseQuoteResponse:
       properties:
-        inbound_address: &id018
+        inbound_address: &id017
           type: string
           description: the inbound address for the transaction on the source chain
           example: bc1qjk3xzu5slu7mtmc8jc9yed3zqvkhkttm700g9a
-        inbound_confirmation_blocks: &id019
+        inbound_confirmation_blocks: &id018
           type: integer
           format: int64
           description: the approximate number of source chain blocks required before
             processing
-        inbound_confirmation_seconds: &id020
+        inbound_confirmation_seconds: &id019
           type: integer
           format: int64
           description: the approximate seconds for block confirmations required before
             processing
-        outbound_delay_blocks: &id021
+        outbound_delay_blocks: &id020
           type: integer
           format: int64
           description: the number of thorchain blocks the outbound will be delayed
-        outbound_delay_seconds: &id022
+        outbound_delay_seconds: &id021
           type: integer
           format: int64
           description: the approximate seconds for the outbound delay before it will
             be sent
-        fees: &id023
+        fees: &id022
           $ref: '#/components/schemas/QuoteFees'
-        slippage_bps: &id024
+        slippage_bps: &id023
           type: integer
           format: int64
           description: Deprecated - migrate to fees object.
-        streaming_slippage_bps: &id025
+        streaming_slippage_bps: &id024
           type: integer
           format: int64
           description: Deprecated - migrate to fees object.
-        router: &id026
+        router: &id025
           type: string
           description: the EVM chain router contract address
           example: '0x3624525075b88B24ecc29CE226b0CEc1fFcB6976'
-        expiry: &id027
+        expiry: &id026
           type: integer
           format: int64
           description: expiration timestamp in unix seconds
           example: 1671660285
-        warning: &id028
+        warning: &id027
           type: string
           description: static warning message
           example: Do not cache this response. Do not send funds after the expiry.
-        notes: &id029
+        notes: &id028
           type: string
           description: chain specific quote notes
           example: Transfer the inbound_address the asset with the memo. Do not use
             multi-in, multi-out transactions.
-        dust_threshold: &id030
+        dust_threshold: &id029
           type: string
           example: '10000'
           description: Defines the minimum transaction size for the chain in base
             units (sats, wei, uatom). Transctions with asset amounts lower than the
             dust_threshold are ignored.
-        recommended_min_amount_in: &id031
+        recommended_min_amount_in: &id030
           type: string
           description: The recommended minimum inbound amount for this transaction
             type & inbound asset. Sending less than this amount could result in failed
@@ -2856,20 +3039,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id018
-        inbound_confirmation_blocks: *id019
-        inbound_confirmation_seconds: *id020
-        outbound_delay_blocks: *id021
-        outbound_delay_seconds: *id022
-        fees: *id023
-        slippage_bps: *id024
-        streaming_slippage_bps: *id025
-        router: *id026
-        expiry: *id027
-        warning: *id028
-        notes: *id029
-        dust_threshold: *id030
-        recommended_min_amount_in: *id031
+        inbound_address: *id017
+        inbound_confirmation_blocks: *id018
+        inbound_confirmation_seconds: *id019
+        outbound_delay_blocks: *id020
+        outbound_delay_seconds: *id021
+        fees: *id022
+        slippage_bps: *id023
+        streaming_slippage_bps: *id024
+        router: *id025
+        expiry: *id026
+        warning: *id027
+        notes: *id028
+        dust_threshold: *id029
+        recommended_min_amount_in: *id030
         memo:
           type: string
           description: generated memo for the swap
@@ -2919,20 +3102,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id018
-        inbound_confirmation_blocks: *id019
-        inbound_confirmation_seconds: *id020
-        outbound_delay_blocks: *id021
-        outbound_delay_seconds: *id022
-        fees: *id023
-        slippage_bps: *id024
-        streaming_slippage_bps: *id025
-        router: *id026
-        expiry: *id027
-        warning: *id028
-        notes: *id029
-        dust_threshold: *id030
-        recommended_min_amount_in: *id031
+        inbound_address: *id017
+        inbound_confirmation_blocks: *id018
+        inbound_confirmation_seconds: *id019
+        outbound_delay_blocks: *id020
+        outbound_delay_seconds: *id021
+        fees: *id022
+        slippage_bps: *id023
+        streaming_slippage_bps: *id024
+        router: *id025
+        expiry: *id026
+        warning: *id027
+        notes: *id028
+        dust_threshold: *id029
+        recommended_min_amount_in: *id030
         memo:
           type: string
           description: generated memo for the deposit
@@ -2962,20 +3145,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id018
-        inbound_confirmation_blocks: *id019
-        inbound_confirmation_seconds: *id020
-        outbound_delay_blocks: *id021
-        outbound_delay_seconds: *id022
-        fees: *id023
-        slippage_bps: *id024
-        streaming_slippage_bps: *id025
-        router: *id026
-        expiry: *id027
-        warning: *id028
-        notes: *id029
-        dust_threshold: *id030
-        recommended_min_amount_in: *id031
+        inbound_address: *id017
+        inbound_confirmation_blocks: *id018
+        inbound_confirmation_seconds: *id019
+        outbound_delay_blocks: *id020
+        outbound_delay_seconds: *id021
+        fees: *id022
+        slippage_bps: *id023
+        streaming_slippage_bps: *id024
+        router: *id025
+        expiry: *id026
+        warning: *id027
+        notes: *id028
+        dust_threshold: *id029
+        recommended_min_amount_in: *id030
         memo:
           type: string
           description: generated memo for the withdraw, the client can use this OR
@@ -3005,20 +3188,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id018
-        inbound_confirmation_blocks: *id019
-        inbound_confirmation_seconds: *id020
-        outbound_delay_blocks: *id021
-        outbound_delay_seconds: *id022
-        fees: *id023
-        slippage_bps: *id024
-        streaming_slippage_bps: *id025
-        router: *id026
-        expiry: *id027
-        warning: *id028
-        notes: *id029
-        dust_threshold: *id030
-        recommended_min_amount_in: *id031
+        inbound_address: *id017
+        inbound_confirmation_blocks: *id018
+        inbound_confirmation_seconds: *id019
+        outbound_delay_blocks: *id020
+        outbound_delay_seconds: *id021
+        fees: *id022
+        slippage_bps: *id023
+        streaming_slippage_bps: *id024
+        router: *id025
+        expiry: *id026
+        warning: *id027
+        notes: *id028
+        dust_threshold: *id029
+        recommended_min_amount_in: *id030
         memo:
           type: string
           description: generated memo for the loan open
@@ -3054,20 +3237,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id018
-        inbound_confirmation_blocks: *id019
-        inbound_confirmation_seconds: *id020
-        outbound_delay_blocks: *id021
-        outbound_delay_seconds: *id022
-        fees: *id023
-        slippage_bps: *id024
-        streaming_slippage_bps: *id025
-        router: *id026
-        expiry: *id027
-        warning: *id028
-        notes: *id029
-        dust_threshold: *id030
-        recommended_min_amount_in: *id031
+        inbound_address: *id017
+        inbound_confirmation_blocks: *id018
+        inbound_confirmation_seconds: *id019
+        outbound_delay_blocks: *id020
+        outbound_delay_seconds: *id021
+        fees: *id022
+        slippage_bps: *id023
+        streaming_slippage_bps: *id024
+        router: *id025
+        expiry: *id026
+        warning: *id027
+        notes: *id028
+        dust_threshold: *id029
+        recommended_min_amount_in: *id030
         memo:
           type: string
           description: generated memo for the loan close

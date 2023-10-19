@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 **pub_key** | **str** |  | [optional] 
 **coins** | [**list[Coin]**](Coin.md) |  | 
 **type** | **str** |  | [optional] 
-**status** | **str** |  | [optional] 
+**status** | **str** |  | 
 **status_since** | **int** |  | [optional] 
 **membership** | **list[str]** | the list of node public keys which are members of the vault | [optional] 
 **chains** | **list[str]** |  | [optional] 

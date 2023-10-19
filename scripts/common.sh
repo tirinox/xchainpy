@@ -36,7 +36,10 @@ function install_develop() {
   read -p "Do you want install the package? (y/n) " yn
   case $yn in
   [yY])
-    python3 -m pip install --editable "${OUTPUT_DIR}"
+    # python3 -m pip install --editable "${OUTPUT_DIR}"
+    cd ${OUTPUT_DIR} || exit 3
+    python3 setup.py develop
+
     return
     ;;
   [nN])
