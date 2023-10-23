@@ -9,19 +9,32 @@ THOR_DIVIDER = float(10 ** RUNE_DECIMAL)
 THOR_DIVIDER_INV = 1.0 / THOR_DIVIDER
 
 
-class TxType(Enum):
+class ActionType(Enum):
+    # Standard
     ADD_LIQUIDITY = 'addLiquidity'
     SWAP = 'swap'
     WITHDRAW = 'withdraw'
     DONATE = 'donate'
-    REFUND = 'refund'
 
+    # Name service
+    THORNAME = 'thorname'
+
+    # Lending
     LOAN_OPEN = 'loan+'
     LOAN_CLOSE = 'loan-'
 
-    LIMIT_ORDER = 'limit_order'
+    # Node operator/bond provider
     BOND = 'bond'
     UNBOND = 'unbond'
     LEAVE = 'leave'
-    THORNAME = 'thorname'
+
+    # Prospective
+    LIMIT_ORDER = 'limit_order'
+
+    # Outbounds
+    REFUND = 'refund'
     OUTBOUND = 'out'
+
+    # Special/dev-centric
+    RESERVE = 'reserve'
+    NOOP = 'noop'
