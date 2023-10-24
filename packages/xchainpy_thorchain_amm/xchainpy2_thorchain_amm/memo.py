@@ -41,6 +41,10 @@ MEMO_ACTION_TABLE = {
 }
 
 
+def nothing_if_0(x):
+    return str(x) if x else ''
+
+
 @dataclass
 class THORMemo:
     action: ActionType
@@ -69,19 +73,6 @@ class THORMemo:
     affiliate_asset: str = ''
     name_expiry: int = 0
 
-    @staticmethod
-    def ith_or_default(a, index, default=None, dtype: type = str) -> Union[str, int, float]:
-        if 0 <= index < len(a):
-            try:
-                r = a[index].strip()
-                if r == '':
-                    return default
-                return dtype(r)
-            except ValueError:
-                return default
-        else:
-            return default
-
     @property
     def has_affiliate_part(self):
         return self.affiliate_address and self.affiliate_fee_bp > 0
@@ -95,17 +86,7 @@ class THORMemo:
         return bool(self.dex_aggregator_address)
 
     @classmethod
-    def _parse_streaming_params(cls, ss: str):
-        s_swap_components = ss.split('/')
-
-        ith = cls.ith_or_default
-        limit = ith(s_swap_components, 0, 0, int)
-        s_swap_interval = ith(s_swap_components, 1, 0, int)
-        s_swap_quantity = ith(s_swap_components, 2, 0, int)
-        return limit, s_swap_interval, s_swap_quantity
-
-    @classmethod
-    def parse_memo(cls, memo: str):
+    def parse_memo(cls, memo: str, no_raise=False):
         gist, *_comment = memo.split('|', maxsplit=2)  # ignore comments
 
         components = [it for it in gist.split(':')]
@@ -115,17 +96,17 @@ class THORMemo:
         action = ith(components, 0, '').lower()
         tx_type = MEMO_ACTION_TABLE.get(action)
 
-        if tx_type == ActionType.ADD_LIQUIDITY.value:
+        if tx_type == ActionType.ADD_LIQUIDITY:
             # ADD:POOL:PAIRED_ADDR:AFFILIATE:FEE
             # 0   1    2           3         4
-            raise cls.add_liquidity(
+            return cls.add_liquidity(
                 pool=ith(components, 1, ''),
                 paired_address=ith(components, 2, ''),
                 affiliate_address=ith(components, 3, ''),
-                affiliate_fee_bp=ith(components, 4, 0, dtype=int),
+                affiliate_fee_bp=ith(components, 4, 0, is_number=True),
             )
 
-        elif tx_type == ActionType.SWAP.value:
+        elif tx_type == ActionType.SWAP:
             # 0    1     2         3   4         5   6                   7                8
             # SWAP:ASSET:DEST_ADDR:LIM:AFFILIATE:FEE:DEX Aggregator Addr:Final Asset Addr:MinAmountOut
             limit_and_s_swap = ith(components, 3, '')
@@ -135,22 +116,22 @@ class THORMemo:
                 ith(components, 2),
                 limit, s_swap_interval, s_swap_quantity,  # 3
                 affiliate_address=ith(components, 4),
-                affiliate_fee_bp=ith(components, 5, 0, dtype=int),
+                affiliate_fee_bp=ith(components, 5, 0, is_number=True),
                 dex_aggregator_address=ith(components, 6),
                 dex_final_asset_address=ith(components, 7),
-                dex_min_amount_out=ith(components, 8, 0, dtype=int),
+                dex_min_amount_out=ith(components, 8, 0, is_number=True),
             )
 
-        elif tx_type == ActionType.WITHDRAW.value:
+        elif tx_type == ActionType.WITHDRAW:
             # WD:POOL:BASIS_POINTS:ASSET
             # 0  1    2            3
-            raise cls.withdraw(
+            return cls.withdraw(
                 pool=ith(components, 1, ''),
-                withdraw_portion_bp=ith(components, 2, 0, int),
+                withdraw_portion_bp=ith(components, 2, 0, is_number=True),
                 asset=ith(components, 3, ''),
             )
 
-        elif tx_type == ActionType.THORNAME.value:
+        elif tx_type == ActionType.THORNAME:
             # ~:name:chain:address:?owner:?preferredAsset:?expiry
             # 0 1    2     3       4      5               6
             return cls.thorname_set_preferred(
@@ -159,77 +140,80 @@ class THORMemo:
                 address=ith(components, 3),
                 thor_owner=ith(components, 4),
                 preferred_asset=ith(components, 5),
-                expiry=ith(components, 6, 0, int),
+                expiry=ith(components, 6, 0, is_number=True),
             )
 
-        elif tx_type == ActionType.DONATE.value:
+        elif tx_type == ActionType.DONATE:
             return cls.donate(
                 pool=ith(components, 1, '')
             )
 
-        elif tx_type == ActionType.LOAN_OPEN.value:
+        elif tx_type == ActionType.LOAN_OPEN:
             # LOAN+:BTC.BTC:bc1234567:minBTC:affAddr:affPts:dexAgg:dexTarAddr:DexTargetLimit
             # 0     1       2         3      4       5      6      7          8
             return cls.loan_open(
                 asset=ith(components, 1),
                 dest_address=ith(components, 2),
-                limit=ith(components, 3, 0, int),
+                limit=ith(components, 3, 0, is_number=True),
                 affiliate_address=ith(components, 4, ''),
-                affiliate_fee_bp=ith(components, 5, 0, int),
+                affiliate_fee_bp=ith(components, 5, 0, is_number=True),
                 dex_aggregator_address=ith(components, 6),
                 dex_final_asset_address=ith(components, 7),
-                dex_min_amount_out=ith(components, 8, 0, dtype=int)
+                dex_min_amount_out=ith(components, 8, 0, is_number=True)
             )
 
-        elif tx_type == ActionType.LOAN_CLOSE.value:
+        elif tx_type == ActionType.LOAN_CLOSE:
             # "LOAN-:BTC.BTC:bc1234567:minOut"
             #  0     1       2         3
 
             return cls.loan_close(
                 asset=ith(components, 1),
                 dest_address=ith(components, 2),
-                min_out=ith(components, 3, 0, int)
+                min_out=ith(components, 3, 0, is_number=True)
             )
 
-        elif tx_type == ActionType.BOND.value:
+        elif tx_type == ActionType.BOND:
             # BOND:NODEADDR:PROVIDER:FEE
             # 0    1        2        3
             return cls.bond(
                 node_address=ith(components, 1, ''),
                 provider_address=ith(components, 2, ''),
-                fee_bp=ith(components, 3, dtype=int),
+                fee_bp=ith(components, 3, is_number=True),
             )
 
-        elif tx_type == ActionType.UNBOND.value:
+        elif tx_type == ActionType.UNBOND:
             # UNBOND:NODEADDR:AMOUNT:PROVIDER
             # 0      1        2      3
             return cls.unbond(
                 node_address=ith(components, 1, ''),
-                amount=ith(components, 2, 0, int),
+                amount=ith(components, 2, 0, is_number=True),
                 provider_address=ith(components, 3, ''),
             )
 
-        elif tx_type == ActionType.LEAVE.value:
+        elif tx_type == ActionType.LEAVE:
             # LEAVE:NODEADDR
             # 0     1
             return cls.leave(node_address=ith(components, 1, ''))
 
-        elif tx_type == ActionType.OUTBOUND.value:
+        elif tx_type == ActionType.OUTBOUND:
             return cls.outbound(tx_id=ith(components, 1, ''))
 
-        elif tx_type == ActionType.REFUND.value:
+        elif tx_type == ActionType.REFUND:
             return cls.refund(tx_id=ith(components, 1, ''))
 
-        elif tx_type == ActionType.RESERVE.value:
+        elif tx_type == ActionType.RESERVE:
             return cls.reserve()
 
-        elif tx_type == ActionType.NOOP.value:
+        elif tx_type == ActionType.NOOP:
             no_vault = ith(components, 1, default='').upper().strip() == 'NOVAULT'
             return cls.noop(no_vault)
 
         else:
             # todo: limit order, register memo, etc.
-            raise NotImplementedError(f"Not able to parse memo for {tx_type} yet")
+            if no_raise:
+                return None
+            else:
+                raise NotImplementedError(f"Not able to parse memo for {tx_type} yet")
 
     @property
     def _fee_or_empty(self):
@@ -282,7 +266,7 @@ class THORMemo:
 
         elif self.action == ActionType.LOAN_CLOSE:
             # LOAN-:ASSET:DEST_ADDR:MIN_OUT
-            memo = f'$-:{self.asset}:{self.dest_address}:{self.min_amount_out}'
+            memo = f'$-:{self.asset}:{self.dest_address}:{nothing_if_0(self.limit)}'
 
         elif self.action == ActionType.BOND:
             # # BOND:NODEADDR:PROVIDER:FEE
@@ -469,3 +453,38 @@ class THORMemo:
     @classmethod
     def noop(cls, no_vault=False):
         return cls(ActionType.NOOP, no_vault=no_vault)
+
+    # Utils:
+
+    @classmethod
+    def ith_or_default(cls, a, index, default=None, is_number=False) -> Union[str, int, float]:
+        if 0 <= index < len(a):
+            try:
+                r = a[index].strip()
+                if r == '':
+                    return default
+                return cls._int_read(r) if is_number else r
+            except ValueError:
+                return default
+        else:
+            return default
+
+    @classmethod
+    def _parse_streaming_params(cls, ss: str):
+        s_swap_components = ss.split('/')
+
+        ith = cls.ith_or_default
+        limit = ith(s_swap_components, 0, 0, is_number=True)
+        s_swap_interval = ith(s_swap_components, 1, 0, is_number=True)
+        s_swap_quantity = ith(s_swap_components, 2, 0, is_number=True)
+        return limit, s_swap_interval, s_swap_quantity
+
+    @classmethod
+    def _int_read(cls, x):
+        x = str(x).lower()
+        if 'e' in x:
+            # e.g.: 232323e5
+            return int(float(x))
+        else:
+            # just int
+            return int(x)
