@@ -188,3 +188,36 @@ def test_loan_open():
 
     assert THORMemo.parse_memo(f'Loan+:ETH.ETH:{ETH_ADDR}:404204059:t:30') == m
     assert THORMemo.parse_memo(f'$+:ETH.ETH:{ETH_ADDR}:404204059:t:30') == m
+
+
+USDC = 'ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48'
+
+
+def test_thor_name():
+    m = THORMemo.thorname_register_or_renew('foo', 'THOR', THOR_ADDR_1)
+    assert m.action == ActionType.THORNAME
+    assert m.name == 'foo'
+    assert m.chain == 'THOR'
+    assert m.dest_address == THOR_ADDR_1
+    assert m.build() == f'~:foo:THOR:{THOR_ADDR_1}'
+    assert THORMemo.parse_memo(f'~:foo:THOR:{THOR_ADDR_1}') == m
+
+    m = THORMemo.thorname_register_or_renew('acc-test', 'THOR', THOR_ADDR_1, THOR_ADDR_2)
+    assert m.action == ActionType.THORNAME
+    assert m.name == 'acc-test'
+    assert m.chain == 'THOR'
+    assert m.dest_address == THOR_ADDR_1
+    assert m.owner == THOR_ADDR_2
+    assert m.build() == f'~:acc-test:THOR:{THOR_ADDR_1}:{THOR_ADDR_2}'
+    assert THORMemo.parse_memo(f'N:acc-test:THOR:{THOR_ADDR_1}:{THOR_ADDR_2}') == m
+
+    m = THORMemo.thorname_set_preferred('some_name', 'THOR', THOR_ADDR_1, USDC, THOR_ADDR_2)
+    assert m.action == ActionType.THORNAME
+    assert m.name == 'some_name'
+    assert m.chain == 'THOR'
+    assert m.dest_address == THOR_ADDR_1
+    assert m.owner == THOR_ADDR_2
+    assert m.affiliate_asset == USDC
+    assert m.build() == f'~:some_name:THOR:{THOR_ADDR_1}:{THOR_ADDR_2}:{USDC}'
+    assert THORMemo.parse_memo(f'~:some_name:THOR:{THOR_ADDR_1}:{THOR_ADDR_2}:{USDC}') == m
+    assert THORMemo.parse_memo(f'name:some_name:THOR:{THOR_ADDR_1}:{THOR_ADDR_2}:{USDC}') == m

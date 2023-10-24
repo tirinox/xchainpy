@@ -138,8 +138,8 @@ class THORMemo:
                 name=ith(components, 1),
                 chain=ith(components, 2),
                 address=ith(components, 3),
-                thor_owner=ith(components, 4),
-                preferred_asset=ith(components, 5),
+                thor_owner=ith(components, 4, ''),
+                preferred_asset=ith(components, 5, ''),
                 expiry=ith(components, 6, 0, is_number=True),
             )
 
@@ -254,7 +254,7 @@ class THORMemo:
             expiry = self.name_expiry if self.name_expiry is not None else ''
             memo = (
                 f'~:{self.name}:{self.chain}:{self.dest_address}:{self.owner}'
-                f':{self.affiliate_asset}:{expiry}'
+                f':{self.affiliate_asset}:{nothing_if_0(expiry)}'
             )
 
         elif self.action == ActionType.LOAN_OPEN:
@@ -374,7 +374,7 @@ class THORMemo:
             ActionType.THORNAME,
             name=name, chain=chain, dest_address=address,
             owner=thor_owner,
-            affiliate_address=preferred_asset,
+            affiliate_asset=preferred_asset,
             name_expiry=expiry,
         )
 
