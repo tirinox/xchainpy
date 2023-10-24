@@ -221,3 +221,14 @@ def test_thor_name():
     assert m.build() == f'~:some_name:THOR:{THOR_ADDR_1}:{THOR_ADDR_2}:{USDC}'
     assert THORMemo.parse_memo(f'~:some_name:THOR:{THOR_ADDR_1}:{THOR_ADDR_2}:{USDC}') == m
     assert THORMemo.parse_memo(f'name:some_name:THOR:{THOR_ADDR_1}:{THOR_ADDR_2}:{USDC}') == m
+
+
+def test_donate():
+    m = THORMemo.donate(USDC)
+    assert m.action == ActionType.DONATE
+    assert m.asset == USDC
+    assert m.build() == f'DONATE:{USDC}'
+    assert THORMemo.parse_memo(f'DONATE:{USDC}') == m
+    assert THORMemo.parse_memo(f'donate:{USDC}') == m
+    assert THORMemo.parse_memo(f'd:{USDC}') == m
+
