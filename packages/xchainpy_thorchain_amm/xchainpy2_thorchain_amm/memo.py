@@ -157,9 +157,9 @@ class THORMemo:
                 limit=ith(components, 3, 0, is_number=True),
                 affiliate_address=ith(components, 4, ''),
                 affiliate_fee_bp=ith(components, 5, 0, is_number=True),
-                dex_aggregator_address=ith(components, 6),
-                dex_final_asset_address=ith(components, 7),
-                dex_min_amount_out=ith(components, 8, 0, is_number=True)
+                # dex_aggregator_address=ith(components, 6, ''),
+                # dex_final_asset_address=ith(components, 7, ''),
+                # dex_min_amount_out=ith(components, 8, 0, is_number=True)
             )
 
         elif tx_type == ActionType.LOAN_CLOSE:
@@ -260,8 +260,8 @@ class THORMemo:
         elif self.action == ActionType.LOAN_OPEN:
             # LOAN+:ASSET:DESTADDR:MINOUT:AFFILIATE:FEE
             memo = (
-                f'$+:{self.asset}:{self.dest_address}:{self.min_amount_out}:'
-                f'{self.affiliate_address}:{self.affiliate_fee_bp}'
+                f'$+:{self.asset}:{self.dest_address}:{self.limit}'
+                f':{self.affiliate_address}:{nothing_if_0(self.affiliate_fee_bp)}'
             )
 
         elif self.action == ActionType.LOAN_CLOSE:
@@ -380,8 +380,7 @@ class THORMemo:
 
     @classmethod
     def loan_open(cls, asset: str, dest_address: str, limit: int = 0,
-                  affiliate_address: str = '', affiliate_fee_bp: int = 0,
-                  dex_aggregator_address: str = '', dex_final_asset_address: str = '', dex_min_amount_out: int = 0):
+                  affiliate_address: str = '', affiliate_fee_bp: int = 0):
         # LOAN+:BTC.BTC:bc1234567:minBTC:affAddr:affPts:dexAgg:dexTarAddr:DexTargetLimit
         # 0     1       2         3      4       5      6      7          8
         return cls(
@@ -391,9 +390,6 @@ class THORMemo:
             limit=limit,
             affiliate_address=affiliate_address,
             affiliate_fee_bp=affiliate_fee_bp,
-            dex_aggregator_address=dex_aggregator_address,
-            final_asset_address=dex_final_asset_address,
-            min_amount_out=dex_min_amount_out,
             pool=asset,
         )
 

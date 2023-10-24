@@ -130,6 +130,8 @@ def text_bond():
 
 
 ETH_ADDR = '0x1c7b17362c84287bd1184447e6dfeaf920c31bbe'
+ETH_ADDR_2 = '0xe9973cb51ee04446a54ffca73446d33f133d2f49'
+BTC_ADDR = 'bc1qp2t4hl4jr6wjfzv28tsdyjysw7p5armf7px55w'
 
 
 def test_loan_close():
@@ -149,11 +151,40 @@ def test_loan_close():
     assert m.dest_address == ETH_ADDR
     assert m.build() == f'$-:ETH.ETH:{ETH_ADDR}'
 
-    assert THORMemo.parse_memo('$-:BTC.BTC:bc1qp2t4hl4jr6wjfzv28tsdyjysw7p5armf7px55w') == \
-           THORMemo.loan_close('BTC.BTC', 'bc1qp2t4hl4jr6wjfzv28tsdyjysw7p5armf7px55w', 0)
+    assert THORMemo.parse_memo(f'$-:BTC.BTC:{BTC_ADDR}') == \
+           THORMemo.loan_close('BTC.BTC', BTC_ADDR, 0)
 
-    assert THORMemo.parse_memo('LOAN-:ETH.ETH:0xe9973cb51ee04446a54ffca73446d33f133d2f49:404204059') == \
-           THORMemo.loan_close('ETH.ETH', '0xe9973cb51ee04446a54ffca73446d33f133d2f49', 404204059)
+    assert THORMemo.parse_memo(f'LOAN-:ETH.ETH:{ETH_ADDR_2}:404204059') == \
+           THORMemo.loan_close('ETH.ETH', ETH_ADDR_2, 404204059)
 
-    assert THORMemo.parse_memo('LOAN-:ETH.ETH:0xe9973cb51ee04446a54ffca73446d33f133d2f49:404e8') == \
-           THORMemo.loan_close('ETH.ETH', '0xe9973cb51ee04446a54ffca73446d33f133d2f49', 40400000000)
+    assert THORMemo.parse_memo(f'LOAN-:ETH.ETH:{ETH_ADDR_2}:404e8') == \
+           THORMemo.loan_close('ETH.ETH', ETH_ADDR_2, 40400000000)
+
+
+def test_loan_open():
+    m = THORMemo.loan_open('BTC.BTC', BTC_ADDR, 282392832)
+    assert m.action == ActionType.LOAN_OPEN
+    assert m.asset == 'BTC.BTC'
+    assert m.dest_address == BTC_ADDR
+    assert m.limit == 282392832
+    assert m.affiliate_fee_bp == 0
+    assert m.affiliate_address == ''
+
+    assert m.build() == f'$+:BTC.BTC:{BTC_ADDR}:282392832'
+    assert THORMemo.parse_memo(f'$+:BTC.BTC:{BTC_ADDR}:282392832') == m
+
+    m = THORMemo.loan_open('ETH.ETH', ETH_ADDR, 404204059, 't', 30)
+    assert m.action == ActionType.LOAN_OPEN
+    assert m.asset == 'ETH.ETH'
+    assert m.dest_address == ETH_ADDR
+    assert m.limit == 404204059
+    assert m.affiliate_fee_bp == 30
+    assert m.affiliate_address == 't'
+    assert m.dex_aggregator_address == ''
+    assert m.min_amount_out == 0
+    assert m.final_asset_address == ''
+
+    assert m.build() == f'$+:ETH.ETH:{ETH_ADDR}:404204059:t:30'
+
+    assert THORMemo.parse_memo(f'Loan+:ETH.ETH:{ETH_ADDR}:404204059:t:30') == m
+    assert THORMemo.parse_memo(f'$+:ETH.ETH:{ETH_ADDR}:404204059:t:30') == m
