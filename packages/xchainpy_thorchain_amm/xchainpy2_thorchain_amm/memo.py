@@ -45,6 +45,9 @@ def nothing_if_0(x):
     return str(x) if x else ''
 
 
+AUTO_OPTIMIZED = 0
+
+
 @dataclass
 class THORMemo:
     action: ActionType
@@ -52,7 +55,7 @@ class THORMemo:
     dest_address: str = ''
     limit: int = 0
     s_swap_interval: int = 0
-    s_swap_quantity: int = 0
+    s_swap_quantity: int = 0  # 0 = optimized, 1 = single, >1 = streaming, None = don't care
     affiliate_address: str = ''
     affiliate_fee_bp: int = 0  # (0..10000) range, may be "node fee" as well in case of "Bond"
     dex_aggregator_address: str = ''
@@ -115,10 +118,10 @@ class THORMemo:
                 ith(components, 1),
                 ith(components, 2),
                 limit, s_swap_interval, s_swap_quantity,  # 3
-                affiliate_address=ith(components, 4),
+                affiliate_address=ith(components, 4, ''),
                 affiliate_fee_bp=ith(components, 5, 0, is_number=True),
-                dex_aggregator_address=ith(components, 6),
-                dex_final_asset_address=ith(components, 7),
+                dex_aggregator_address=ith(components, 6, ''),
+                dex_final_asset_address=ith(components, 7, ''),
                 dex_min_amount_out=ith(components, 8, 0, is_number=True),
             )
 
@@ -227,17 +230,16 @@ class THORMemo:
         elif self.action == ActionType.SWAP:
             # 0    1     2         3   4         5   6                   7                8
             # SWAP:ASSET:DEST_ADDR:LIM:AFFILIATE:FEE:DEX Aggregator Addr:Final Asset Addr:MinAmountOut
-            # for streaming swaps LIM is like LIM/INTERVAL/QUANTITY
+            limit_or_ss = f'{nothing_if_0(self.limit)}'
 
-            if self.s_swap_quantity:
-                limit_or_ss = f"{self.limit}/{self.s_swap_interval}/{self.s_swap_quantity}"
-            else:
-                limit_or_ss = f"{self.limit}"
+            # for streaming swaps LIM is like LIM/INTERVAL/QUANTITY
+            if self.s_swap_quantity is not None:
+                limit_or_ss = f"{limit_or_ss}/{self.s_swap_interval}/{self.s_swap_quantity}"
 
             memo = (
                 f'=:{self.asset}:{self.dest_address}:{limit_or_ss}'
-                f':{self.affiliate_address}{self.affiliate_fee_bp}'
-                f':{self.dex_aggregator_address}:{self.final_asset_address}:{self.min_amount_out}'
+                f':{self.affiliate_address}:{nothing_if_0(self.affiliate_fee_bp)}'
+                f':{self.dex_aggregator_address}:{self.final_asset_address}:{nothing_if_0(self.min_amount_out)}'
             )
 
         elif self.action == ActionType.WITHDRAW:
@@ -311,12 +313,14 @@ class THORMemo:
         return cls.add_liquidity(pool, affiliate_address=affiliate_address, affiliate_fee_bp=affiliate_fee_bp)
 
     @classmethod
-    def swap(cls, asset: str, dest_address: str, limit: int = 0, s_swap_interval: int = 0, s_swap_quantity: int = 0,
+    def swap(cls, asset: str, dest_address: str, limit: int = 0, s_swap_interval: int = 0,
+             s_swap_quantity: int = None,
              affiliate_address: str = '', affiliate_fee_bp: int = 0,
              dex_aggregator_address: str = '', dex_final_asset_address: str = '', dex_min_amount_out: int = 0):
         return cls(
             ActionType.SWAP,
-            asset, dest_address, limit, s_swap_interval, s_swap_quantity,
+            asset, dest_address, limit,
+            s_swap_interval, s_swap_quantity,
             pool=asset,
             affiliate_address=affiliate_address,
             affiliate_fee_bp=affiliate_fee_bp,
@@ -472,7 +476,8 @@ class THORMemo:
         ith = cls.ith_or_default
         limit = ith(s_swap_components, 0, 0, is_number=True)
         s_swap_interval = ith(s_swap_components, 1, 0, is_number=True)
-        s_swap_quantity = ith(s_swap_components, 2, 0, is_number=True)
+        # 0 = optimized, 1 = single, >1 = streaming, None = don't care
+        s_swap_quantity = ith(s_swap_components, 2, is_number=True)
         return limit, s_swap_interval, s_swap_quantity
 
     @classmethod

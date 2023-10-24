@@ -1,7 +1,7 @@
 import pytest
 
 from xchainpy2_thorchain_amm import ActionType
-from xchainpy2_thorchain_amm.memo import THORMemo
+from xchainpy2_thorchain_amm.memo import THORMemo, AUTO_OPTIMIZED
 
 
 def test_invalid_memo():
@@ -190,6 +190,7 @@ def test_loan_open():
     assert THORMemo.parse_memo(f'$+:ETH.ETH:{ETH_ADDR}:404204059:t:30') == m
 
 
+FINAL_ETH_ASSET = '0xA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48'
 USDC = 'ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48'
 
 
@@ -264,3 +265,74 @@ def test_withdraw():
     assert m.asset == 'BTC.BTC'
     assert m.build() == f'-:BTC.BTC:5000:BTC.BTC'
     assert THORMemo.parse_memo(f'-:BTC.BTC:5000:BTC.BTC') == m
+
+
+def test_swap():
+    m = THORMemo.swap('ETH.ETH', ETH_ADDR)
+    assert m.action == ActionType.SWAP
+    assert m.pool == 'ETH.ETH'
+    assert m.dest_address == ETH_ADDR
+    assert m.build() == f'=:ETH.ETH:{ETH_ADDR}'
+    assert THORMemo.parse_memo(f'=:ETH.ETH:{ETH_ADDR}') == m
+
+    m = THORMemo.swap('THOR.RUNE', THOR_ADDR_1, 9999999)
+    assert m.action == ActionType.SWAP
+    assert m.pool == 'THOR.RUNE'
+    assert m.dest_address == THOR_ADDR_1
+    assert m.limit == 9999999
+    assert m.build() == f'=:THOR.RUNE:{THOR_ADDR_1}:9999999'
+    assert THORMemo.parse_memo(f'=:THOR.RUNE:{THOR_ADDR_1}:9999999') == m
+
+    m = THORMemo.swap('THOR.RUNE', THOR_ADDR_1, 5555, 33, 99)
+    assert m.action == ActionType.SWAP
+    assert m.pool == 'THOR.RUNE'
+    assert m.dest_address == THOR_ADDR_1
+    assert m.limit == 5555
+    assert m.s_swap_interval == 33
+    assert m.s_swap_quantity == 99
+    assert m.build() == f'=:THOR.RUNE:{THOR_ADDR_1}:5555/33/99'
+    assert THORMemo.parse_memo(f'=:THOR.RUNE:{THOR_ADDR_1}:5555/33/99') == m
+
+    m = THORMemo.swap('THOR.RUNE', THOR_ADDR_1, 5555, 33,
+                      s_swap_quantity=AUTO_OPTIMIZED,
+                      affiliate_address='dx', affiliate_fee_bp=35)
+    assert m.action == ActionType.SWAP
+    assert m.pool == 'THOR.RUNE'
+    assert m.dest_address == THOR_ADDR_1
+    assert m.limit == 5555
+    assert m.s_swap_interval == 33
+    assert m.s_swap_quantity == AUTO_OPTIMIZED
+    assert m.affiliate_address == 'dx'
+    assert m.affiliate_fee_bp == 35
+    assert m.build() == f'=:THOR.RUNE:{THOR_ADDR_1}:5555/33/0:dx:35'
+    assert THORMemo.parse_memo(f'=:THOR.RUNE:{THOR_ADDR_1}:5555/33/0:dx:35') == m
+
+    m = THORMemo.swap('ETH.ETH', ETH_ADDR, dex_aggregator_address=ETH_ADDR_2,
+                      dex_final_asset_address=FINAL_ETH_ASSET, dex_min_amount_out=333888)
+    assert m.action == ActionType.SWAP
+    assert m.pool == 'ETH.ETH'
+    assert m.dest_address == ETH_ADDR
+    assert m.dex_aggregator_address == ETH_ADDR_2
+    assert m.final_asset_address == FINAL_ETH_ASSET
+    assert m.min_amount_out == 333888
+    assert m.s_swap_interval == 0
+    assert m.s_swap_quantity is None
+    assert m.build() == f'=:ETH.ETH:{ETH_ADDR}::::{ETH_ADDR_2}:{FINAL_ETH_ASSET}:333888'
+    assert THORMemo.parse_memo(f'=:ETH.ETH:{ETH_ADDR}::::{ETH_ADDR_2}:{FINAL_ETH_ASSET}:333888') == m
+
+    m = THORMemo.swap('ETH.ETH', ETH_ADDR, dex_aggregator_address=ETH_ADDR_2,
+                      dex_final_asset_address=FINAL_ETH_ASSET, dex_min_amount_out=333888,
+                      affiliate_address='t', affiliate_fee_bp=30, limit=9999999, s_swap_interval=4, s_swap_quantity=7)
+    assert m.action == ActionType.SWAP
+    assert m.pool == 'ETH.ETH'
+    assert m.dest_address == ETH_ADDR
+    assert m.dex_aggregator_address == ETH_ADDR_2
+    assert m.final_asset_address == FINAL_ETH_ASSET
+    assert m.min_amount_out == 333888
+    assert m.limit == 9999999
+    assert m.s_swap_interval == 4
+    assert m.s_swap_quantity == 7
+    assert m.affiliate_address == 't'
+    assert m.affiliate_fee_bp == 30
+    assert m.build() == f'=:ETH.ETH:{ETH_ADDR}:9999999/4/7:t:30:{ETH_ADDR_2}:{FINAL_ETH_ASSET}:333888'
+    assert THORMemo.parse_memo(f'=:ETH.ETH:{ETH_ADDR}:9999999/4/7:t:30:{ETH_ADDR_2}:{FINAL_ETH_ASSET}:333888') == m
