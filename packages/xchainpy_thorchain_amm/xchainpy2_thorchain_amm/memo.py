@@ -225,7 +225,7 @@ class THORMemo:
     def build(self):
         if self.action == ActionType.ADD_LIQUIDITY:
             # ADD:POOL:PAIRED_ADDR:AFFILIATE:FEE
-            memo = f'+:{self.pool}:{self.dest_address}:{self.affiliate_address}:{self.affiliate_fee_bp}'
+            memo = f'+:{self.pool}:{self.dest_address}:{self.affiliate_address}:{nothing_if_0(self.affiliate_fee_bp)}'
 
         elif self.action == ActionType.SWAP:
             # 0    1     2         3   4         5   6                   7                8

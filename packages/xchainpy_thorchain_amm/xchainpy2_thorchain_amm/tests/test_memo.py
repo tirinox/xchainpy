@@ -336,3 +336,29 @@ def test_swap():
     assert m.affiliate_fee_bp == 30
     assert m.build() == f'=:ETH.ETH:{ETH_ADDR}:9999999/4/7:t:30:{ETH_ADDR_2}:{FINAL_ETH_ASSET}:333888'
     assert THORMemo.parse_memo(f'=:ETH.ETH:{ETH_ADDR}:9999999/4/7:t:30:{ETH_ADDR_2}:{FINAL_ETH_ASSET}:333888') == m
+
+
+def test_add_liquidity():
+    m = THORMemo.add_liquidity('ETH.ETH', ETH_ADDR)
+    assert m.action == ActionType.ADD_LIQUIDITY
+    assert m.pool == 'ETH.ETH'
+    assert m.dest_address == ETH_ADDR
+    assert m.build() == f'+:ETH.ETH:{ETH_ADDR}'
+    assert THORMemo.parse_memo(f'+:ETH.ETH:{ETH_ADDR}') == m
+
+    m = THORMemo.add_liquidity('ETH.ETH', ETH_ADDR, 't', 100)
+    assert m.action == ActionType.ADD_LIQUIDITY
+    assert m.pool == 'ETH.ETH'
+    assert m.dest_address == ETH_ADDR
+    assert m.affiliate_address == 't'
+    assert m.affiliate_fee_bp == 100
+    assert m.build() == f'+:ETH.ETH:{ETH_ADDR}:t:100'
+    assert THORMemo.parse_memo(f'+:ETH.ETH:{ETH_ADDR}:t:100') == m
+
+    m = THORMemo.add_savers('ETH/ETH', 't', 100)
+    assert m.action == ActionType.ADD_LIQUIDITY
+    assert m.pool == 'ETH/ETH'
+    assert m.affiliate_address == 't'
+    assert m.affiliate_fee_bp == 100
+    assert m.build() == f'+:ETH/ETH::t:100'
+    assert THORMemo.parse_memo(f'+:ETH/ETH::t:100') == m
