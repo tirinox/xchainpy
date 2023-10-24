@@ -127,7 +127,7 @@ class THORMemo:
             # 0  1    2            3
             return cls.withdraw(
                 pool=ith(components, 1, ''),
-                withdraw_portion_bp=ith(components, 2, 0, is_number=True),
+                withdraw_portion_bp=ith(components, 2, THOR_BASIS_POINT_MAX, is_number=True),
                 asset=ith(components, 3, ''),
             )
 
@@ -243,7 +243,7 @@ class THORMemo:
         elif self.action == ActionType.WITHDRAW:
             # -:POOL:BASIS_POINTS:ASSET
             # 0  1    2           3
-            memo = f':{self.pool}:{self.withdraw_portion_bp}:{self.asset}'
+            memo = f'-:{self.pool}:{nothing_if_0(self.withdraw_portion_bp)}:{self.asset}'
 
         elif self.action == ActionType.DONATE:
             memo = f'DONATE:{self.pool}'

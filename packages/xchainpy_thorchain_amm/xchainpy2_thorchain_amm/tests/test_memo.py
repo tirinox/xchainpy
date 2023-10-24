@@ -232,3 +232,35 @@ def test_donate():
     assert THORMemo.parse_memo(f'donate:{USDC}') == m
     assert THORMemo.parse_memo(f'd:{USDC}') == m
 
+
+def test_withdraw():
+    m = THORMemo.withdraw(USDC, 10000)
+    assert m.action == ActionType.WITHDRAW
+    assert m.pool == USDC
+    assert m.withdraw_portion_bp == 10000
+    assert m.build() == f'-:{USDC}:10000'
+    assert THORMemo.parse_memo(f'-:{USDC}:10000') == m
+
+    m = THORMemo.withdraw('BTC.BTC')
+    assert m.action == ActionType.WITHDRAW
+    assert m.pool == 'BTC.BTC'
+    assert m.withdraw_portion_bp == 10000  # default
+    assert m.build() == f'-:BTC.BTC:10000'
+    assert THORMemo.parse_memo(f'-:BTC.BTC') == m
+
+    m = THORMemo.withdraw('BTC.BTC', 5000, 'RUNE')
+    assert m == THORMemo.withdraw_rune('BTC.BTC', 5000)
+    assert m.action == ActionType.WITHDRAW
+    assert m.pool == 'BTC.BTC'
+    assert m.withdraw_portion_bp == 5000
+    assert m.asset == 'RUNE'
+    assert m.build() == f'-:BTC.BTC:5000:RUNE'
+    assert THORMemo.parse_memo(f'-:BTC.BTC:5000:RUNE') == m
+
+    m = THORMemo.withdraw('BTC.BTC', 5000, 'BTC.BTC')
+    assert m.action == ActionType.WITHDRAW
+    assert m.pool == 'BTC.BTC'
+    assert m.withdraw_portion_bp == 5000
+    assert m.asset == 'BTC.BTC'
+    assert m.build() == f'-:BTC.BTC:5000:BTC.BTC'
+    assert THORMemo.parse_memo(f'-:BTC.BTC:5000:BTC.BTC') == m
