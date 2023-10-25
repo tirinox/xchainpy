@@ -152,7 +152,7 @@ def test_loan_close():
     assert m.build() == f'$-:ETH.ETH:{ETH_ADDR}'
 
     assert THORMemo.parse_memo(f'$-:BTC.BTC:{BTC_ADDR}') == \
-           THORMemo.loan_close('BTC.BTC', BTC_ADDR, 0)
+           THORMemo.loan_close('BTC.BTC', BTC_ADDR)
 
     assert THORMemo.parse_memo(f'LOAN-:ETH.ETH:{ETH_ADDR_2}:404204059') == \
            THORMemo.loan_close('ETH.ETH', ETH_ADDR_2, 404204059)
