@@ -66,6 +66,8 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
 
     async def get_balance(self, address: str, confirmed_only=False) -> List[CryptoAmount]:
         balance = await self._api_get_balance(address)
+        if balance is None:
+            return []
         confirmed_amount = Amount.from_base(balance.balance, self.asset_decimal)
         unconfirmed_amount = Amount.from_base(balance.final_balance, self.asset_decimal)
         amount = confirmed_amount if confirmed_only else unconfirmed_amount
@@ -78,7 +80,7 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
         txs = [self.convert_tx(tx) for tx in raw_txs]
         return TxPage(len(txs), txs)
 
-    async def get_transaction_data(self, tx_id: str) -> XcTx:
+    async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
         tx = await self._api_get_tx(tx_id)
         return self.convert_tx(tx)
 
@@ -109,6 +111,8 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
             url = self.build_url(f'txs/{tx_hash}')
             async with self.session.get(url, params=params) as resp:
                 j = await resp.json()
+                if 'error' in j:
+                    return
                 return Transaction(**j)
 
     async def _api_get_balance(self, address: str):
@@ -117,6 +121,8 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
 
         async with self.session.get(url, params=params) as resp:
             j = await resp.json()
+            if 'error' in j:
+                return None
             return GetBalanceDTO(**j)
 
     async def get_raw_transaction(self, address: str, offset: int = 0, limit: int = 0,
@@ -157,7 +163,10 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
                     ))
         return utxos_out
 
-    def convert_tx(self, tx: Transaction) -> XcTx:
+    def convert_tx(self, tx: Transaction) -> Optional[XcTx]:
+        if not tx:
+            return None
+
         date = parse_iso_date(tx.confirmed)
         return XcTx(
             self.asset,
