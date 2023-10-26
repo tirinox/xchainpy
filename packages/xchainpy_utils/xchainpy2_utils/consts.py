@@ -19,6 +19,8 @@ class Chain(Enum):
     Avax = "AVAX"
     Maya = "MAYA"
     BinanceSmartChain = "BSC"
+    Dash = "DASH"
+    Kujira = "KUJI"
 
 
 RUNE_TICKER = 'RUNE'
