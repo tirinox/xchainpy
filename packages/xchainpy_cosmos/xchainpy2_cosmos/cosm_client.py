@@ -430,7 +430,7 @@ class CosmosGaiaClient(XChainClient):
         url = self.url_to_fetch_tx_data(tx_id)
         return await self._get_json(url)
 
-    async def get_transaction_data(self, tx_id: str) -> XcTx:
+    async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
         """
         Get the transaction data for the given transaction id.
         :param tx_id:

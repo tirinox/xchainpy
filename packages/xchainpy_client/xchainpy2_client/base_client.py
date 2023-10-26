@@ -105,7 +105,7 @@ class XChainClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_transaction_data(self, tx_id: str) -> XcTx:
+    async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
         pass
 
     @abc.abstractmethod
