@@ -19,14 +19,14 @@ class AddressTxDTO(BaseModel, extra='allow'):
 
 
 class TxInput(BaseModel, extra='allow'):
-    output_value: str
-    addresses: List[str]
+    output_value: int
+    addresses: Optional[List[str]]
     script_type: Optional[str]
 
 
 class TxOutput(BaseModel, extra='allow'):
-    value: str
-    addresses: List[str]
+    value: int
+    addresses: Optional[List[str]]
     script_type: Optional[str]
     script: str
 
@@ -36,7 +36,7 @@ class Transaction(BaseModel, extra='allow'):
     block_hash: str
     confirmed: str
 
-    hex: str
+    hex: str = ''
     inputs: List[TxInput]
     outputs: List[TxOutput]
 

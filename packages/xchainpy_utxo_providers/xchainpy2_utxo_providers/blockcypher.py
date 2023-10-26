@@ -4,17 +4,21 @@ from datetime import datetime
 from aiohttp import ClientSession
 
 from xchainpy2_client import UtxoOnlineDataProvider, XcTx, TxPage, UTXO, Witness, TxFrom, TxTo, TxType
-from xchainpy2_utils import Asset, CryptoAmount, Chain, AssetBTC, Amount
+from xchainpy2_utils import Asset, CryptoAmount, Chain, AssetBTC, Amount, AssetLTC, AssetDOGE, AssetDASH, parse_iso_date
 from .blockcypher_t import *
 
 
 class BlockCypherProvider(UtxoOnlineDataProvider):
-    DEFAULT_BASE_URL = 'https://api.blockcypher.com/v1/'
+    DEFAULT_BASE_URL = 'https://api.blockcypher.com/v1'
 
     def __init__(self, chain: Chain, asset: Asset, asset_decimal: int, network: BlockcypherNetwork,
                  api_key: str = '', session: ClientSession = None, base_url=DEFAULT_BASE_URL,
                  concurrency=3) -> None:
+
+        assert chain in (Chain.Bitcoin, Chain.Litecoin, Chain.Doge, Chain.Dash), f"BlockCypher does not support {chain}"
+
         super().__init__()
+
         self.api_key = api_key
         self.chain = chain
         self.asset = asset
@@ -23,11 +27,23 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
         self.session = session or ClientSession()
         self.base_url = base_url
         self.delay = 1.0
-        self.semaphore = asyncio.Semaphore(concurrency)
+        self._semaphore = asyncio.Semaphore(concurrency)
 
     @classmethod
     def default_bitcoin(cls, session: ClientSession = None, api_key: str = ''):
         return cls(Chain.Bitcoin, AssetBTC, 8, BlockcypherNetwork.BTC, api_key=api_key, session=session)
+
+    @classmethod
+    def default_litecoin(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.Litecoin, AssetLTC, 8, BlockcypherNetwork.LTC, api_key=api_key, session=session)
+
+    @classmethod
+    def default_doge(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.Doge, AssetDOGE, 8, BlockcypherNetwork.DOGE, api_key=api_key, session=session)
+
+    @classmethod
+    def default_dash(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.Dash, AssetDASH, 8, BlockcypherNetwork.DASH, api_key=api_key, session=session)
 
     async def get_confirmed_unspent_txs(self, address: str) -> List[UTXO]:
         all_unspent = await self.get_raw_transaction(address, limit=2000)
@@ -87,7 +103,7 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
             return [AddressTxDTO(**tx) for tx in j['txrefs']]
 
     async def _api_get_tx(self, tx_hash: str) -> Optional[Transaction]:
-        async with self.semaphore:
+        async with self._semaphore:
             await asyncio.sleep(self.delay)
             params = self._params()
             url = self.build_url(f'txs/{tx_hash}')
@@ -142,6 +158,7 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
         return utxos_out
 
     def convert_tx(self, tx: Transaction) -> XcTx:
+        date = parse_iso_date(tx.confirmed)
         return XcTx(
             self.asset,
             from_txs=[
@@ -155,7 +172,7 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
                 ) for out in tx.outputs
                 if out.script_type != 'null-data'  # filter out op_return outputs
             ],
-            date=datetime.fromisoformat(tx.confirmed),
+            date=date,
             type=TxType.TRANSFER,
             hash=tx.hash,
             height=tx.block_height,
