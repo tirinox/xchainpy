@@ -4,7 +4,7 @@ from datetime import datetime
 from aiohttp import ClientSession
 
 from xchainpy2_client import UtxoOnlineDataProvider, XcTx, TxPage, UTXO, TxType, TxTo, TxFrom, Witness
-from xchainpy2_utils import Asset, CryptoAmount, Chain, Amount
+from xchainpy2_utils import Asset, CryptoAmount, Chain, Amount, AssetBTC, AssetBCH
 from .haskoin_t import *
 
 
@@ -23,6 +23,22 @@ class HaskoinProvider(UtxoOnlineDataProvider):
         self.session = session
         self._confirmed_tx_cache = set()
         self._tx_hex_cache = {}
+
+    @classmethod
+    def default_bitcoin(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.Bitcoin, AssetBTC, 8, HaskoinNetwork.BTC, api_key=api_key, session=session)
+
+    @classmethod
+    def test_bitcoin(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.Bitcoin, AssetBTC, 8, HaskoinNetwork.BTC_TEST, api_key=api_key, session=session)
+
+    @classmethod
+    def default_bitcoin_cash(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.BitcoinCash, AssetBCH, 8, HaskoinNetwork.BCH, api_key=api_key, session=session)
+
+    @classmethod
+    def test_bitcoin_cash(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.BitcoinCash, AssetBCH, 8, HaskoinNetwork.BCH_TEST, api_key=api_key, session=session)
 
     async def get_confirmed_unspent_txs(self, address: str, with_hex=True) -> List[UTXO]:
         all_unspent = await self._api_get_unspent_txs(address)

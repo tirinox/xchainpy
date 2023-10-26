@@ -13,7 +13,7 @@ from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, load_logs
 from xchainpy2_cosmos.utils import parse_cosmos_amount
 from xchainpy2_crypto import decode_address
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, Asset, \
-    SYNTH_DELIMITER
+    SYNTH_DELIMITER, parse_iso_date
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_RUNE_FEE
 from .utils import get_thor_address_prefix, build_deposit_tx_unsigned, get_deposit_tx_from_logs, get_asset_from_denom
@@ -276,7 +276,7 @@ class THORChainClient(CosmosGaiaClient):
             n_memo = len(memo_components)
             to_address = memo_components[2] if n_memo > 2 else ''
             to_asset = Asset.from_string_exc(memo_components[1]) if n_memo > 1 else ''
-            tx_date = datetime.datetime.fromisoformat(response['timestamp'])
+            tx_date = parse_iso_date(response['timestamp'])
             tx_type = message_event.find_attr_value_first('action')
             tx_hash = response['txhash']
             height = int(response['height'])
