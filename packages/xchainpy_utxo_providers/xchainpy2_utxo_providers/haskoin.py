@@ -9,7 +9,7 @@ from .haskoin_t import *
 
 
 class HaskoinProvider(UtxoOnlineDataProvider):
-    DEFAULT_BASE_URL = 'https://api.haskoin.com/'
+    DEFAULT_BASE_URL = 'https://api.haskoin.com'
 
     def __init__(self, chain: Chain, asset: Asset, asset_decimal: int, network: HaskoinNetwork,
                  api_key: str = '', session: ClientSession = None, base_url=DEFAULT_BASE_URL) -> None:
@@ -160,6 +160,8 @@ class HaskoinProvider(UtxoOnlineDataProvider):
                     continue
                 else:
                     j = await resp.json()
+                    if 'error' in j:
+                        raise Exception(f'Error broadcasting tx {j["error"]}: {j["message"]}')
                     return j['txid']
         raise Exception('Error broadcasting tx. Max retries exceeded')
 

@@ -112,7 +112,7 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
             async with self.session.get(url, params=params) as resp:
                 j = await resp.json()
                 if 'error' in j:
-                    return
+                    raise Exception(f'Error getting tx: {j["error"]}')
                 return Transaction(**j)
 
     async def _api_get_balance(self, address: str):
@@ -122,7 +122,7 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
         async with self.session.get(url, params=params) as resp:
             j = await resp.json()
             if 'error' in j:
-                return None
+                raise Exception(f'Error getting balance: {j["error"]}')
             return GetBalanceDTO(**j)
 
     async def get_raw_transaction(self, address: str, offset: int = 0, limit: int = 0,
