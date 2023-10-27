@@ -4,6 +4,8 @@ import aiohttp
 import pytest
 import pytest_asyncio
 
+from xchainpy2_utils import Amount
+
 
 @pytest.fixture(scope="session")
 def event_loop():
@@ -23,3 +25,7 @@ async def provider_getter(client_session):
         return constructor(client_session)
 
     return parametric_func
+
+
+def amt(x):
+    return Amount.from_asset(x, 8).as_base
