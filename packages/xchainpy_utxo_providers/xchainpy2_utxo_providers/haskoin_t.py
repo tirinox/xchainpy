@@ -35,15 +35,9 @@ class RawTransaction(BaseModel, extra='allow'):
 
 
 class AddressDTO(BaseModel, extra='allow'):
-    network: str
     address: str
-    balance: str
-    received_value: str
-    pending_value: str
-    total_txs: int
     received: int
     utxo: int
-    address: str
     txs: int
     unconfirmed: int
     confirmed: int
