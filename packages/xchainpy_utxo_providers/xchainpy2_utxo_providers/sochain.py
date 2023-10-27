@@ -1,16 +1,40 @@
 import asyncio
-import math
 from datetime import datetime
 
+import math
 from aiohttp import ClientSession
 
 from xchainpy2_client import UtxoOnlineDataProvider, XcTx, TxPage, UTXO, TxType, TxTo, TxFrom, Witness
-from xchainpy2_utils import Chain, Asset, CryptoAmount, Amount
+from xchainpy2_utils import Chain, Asset, CryptoAmount, Amount, AssetBTC, AssetLTC, AssetDOGE
 from .sochain_t import *
 
 
 class SochainProvider(UtxoOnlineDataProvider):
     DEFAULT_BASE_URL = 'https://sochain.com/api/v3'
+
+    @classmethod
+    def default_bitcoin(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.Bitcoin, AssetBTC, 8, SochainNetwork.BTC, api_key=api_key, session=session)
+
+    @classmethod
+    def default_bitcoin_test(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.Bitcoin, AssetBTC, 8, SochainNetwork.BTC_TEST, api_key=api_key, session=session)
+
+    @classmethod
+    def default_litecoin(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.Litecoin, AssetLTC, 8, SochainNetwork.LTC, api_key=api_key, session=session)
+
+    @classmethod
+    def default_litecoin_test(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.Litecoin, AssetLTC, 8, SochainNetwork.LTC_TEST, api_key=api_key, session=session)
+
+    @classmethod
+    def default_doge(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.Doge, AssetDOGE, 8, SochainNetwork.DOGE, api_key=api_key, session=session)
+
+    @classmethod
+    def default_doge_test(cls, session: ClientSession = None, api_key: str = ''):
+        return cls(Chain.Doge, AssetDOGE, 8, SochainNetwork.DOGE_TEST, api_key=api_key, session=session)
 
     def __init__(self, chain: Chain, asset: Asset, asset_decimal: int, network: SochainNetwork,
                  session: ClientSession = None, base_url=DEFAULT_BASE_URL, api_key: str = '',
@@ -85,9 +109,9 @@ class SochainProvider(UtxoOnlineDataProvider):
             txs=list(txs),
         )
 
-    async def get_transaction_data(self, tx_id: str) -> XcTx:
+    async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
         async with self._semaphore:
-            tx_data = await self._api_request(f'transaction/{self.network}/{tx_id}')
+            tx_data = await self._api_request(f'transaction/{self.network.value}/{tx_id}')
             return self._convert_tx(tx_data['data'])
 
     def build_url(self, path: str) -> str:
@@ -102,13 +126,13 @@ class SochainProvider(UtxoOnlineDataProvider):
         return {'API-KEY': self.api_key}
 
     async def _api_broadcast(self, tx_hex: str):
-        url = self.build_url(f'broadcast_transaction/{self.network}')
+        url = self.build_url(f'broadcast_transaction/{self.network.value}')
         async with self.session.post(url, json={'tx_hex': tx_hex}, hearders=self._headers) as resp:
             j = await resp.json()
             return j['tx_hex']
 
     async def _api_get_balance(self, address: str, confirmed_only=False):
-        url = self.build_url(f'balance/{self.network}/{address}')
+        url = self.build_url(f'balance/{self.network.value}/{address}')
         j = await self._api_request(url)
         data = GetBalanceDTO(**j['data'])
         confirmed = Amount.from_base(data.confirmed, self.asset_decimal)
@@ -117,14 +141,17 @@ class SochainProvider(UtxoOnlineDataProvider):
         return net_amount
 
     async def _api_get_transactions(self, address: str, page: int = 0):
-        url = self.build_url(f'transactions/{self.network}/{address}/{page}')
+        url = self.build_url(f'transactions/{self.network.value}/{address}/{page}')
         j = await self._api_request(url)
-        return GetTxsDTO(**j['data'])
+        data = j['data']
+        if 'error_message' in data:
+            return
+        return GetTxsDTO(**data)
 
     async def _api_get_unspent_txs(self, address: str, page: int, batch_size=10):
         results = []
         while True:
-            url = self.build_url(f'unspent_outputs/{self.network}/{address}/{page}')
+            url = self.build_url(f'unspent_outputs/{self.network.value}/{address}/{page}')
             j = await self._api_request(url)
             this_page = [AddressUTXO(**output) for output in j['data']['outputs']]
             results.extend(this_page)
