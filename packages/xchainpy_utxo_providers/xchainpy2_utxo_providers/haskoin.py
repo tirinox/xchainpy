@@ -78,7 +78,7 @@ class HaskoinProvider(UtxoOnlineDataProvider):
         txs = [self._convert_tx(tx) for tx in txs]
         return TxPage(total=len(txs), txs=txs)
 
-    async def get_transaction_data(self, tx_id: str) -> XcTx:
+    async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
         tx = await self._api_get_tx(tx_id)
         return self._convert_tx(tx)
 
@@ -92,7 +92,7 @@ class HaskoinProvider(UtxoOnlineDataProvider):
             j = await resp.json()
             if 'error' in j:
                 raise Exception(f'Error {thing} : {j["error"]}')
-            return j['data']
+            return j
 
     async def _api_get_account(self, address: str) -> AddressDTO:
         url = self.build_url(f'address/{address}/balance')
@@ -180,7 +180,7 @@ class HaskoinProvider(UtxoOnlineDataProvider):
                     amount=Amount.from_base(o.value, self.asset_decimal),
                     asset=self.asset,
                 ) for o in tx.outputs
-                if o.script != 'null-data'  # filter out op_return outputs
+                if o.pk_script != 'null-data'  # filter out op_return outputs
             ],
             date=datetime.fromtimestamp(tx.time),
             type=TxType.TRANSFER,

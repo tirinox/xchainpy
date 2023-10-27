@@ -56,26 +56,29 @@ class TxHashParams(BaseModel, extra='allow'):
 
 
 class TxIO(BaseModel, extra='allow'):
-    txid: int
-    output: int
-    script: str
-    address: str
+    txid: str = ''
+    sig_script: str = Field('', alias='sigscript')
+    pk_script: str = Field('', alias='pk_script')
+    address: Optional[str] = ''
     value: int
-    type: Optional[str]
+    type: str = ''
 
 
 class Block(BaseModel, extra='allow'):
-    height: int
-    position: int
+    height: int = 0
+    position: int = 0
+    mempool: int = 0
 
 
 class Transaction(BaseModel, extra='allow'):
     txid: str
     block: Block
-    confirmations: int
+    confirmations: int = 0
     time: int
+    size: int
+    fee: int
 
-    tx_hex: str
+    tx_hex: str = ''
     inputs: List[TxIO]
     outputs: List[TxIO]
 
