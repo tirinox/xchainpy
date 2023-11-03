@@ -40,3 +40,12 @@ def key_attr_getter(msg, key: str):
         return dict.__getitem__(msg, key)
     else:
         raise LookupError()
+
+
+def flatten(items):
+    """
+    Flatten nested lists
+    :param items: a list of lists
+    :return: list
+    """
+    return [item for sublist in items for item in sublist]
