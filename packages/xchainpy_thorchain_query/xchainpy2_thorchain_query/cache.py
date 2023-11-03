@@ -59,7 +59,8 @@ class THORChainCache:
                  expire_inbound: float = TEN_MINUTES,
                  expire_network: float = TEN_MINUTES,
                  native_asset: Asset = AssetRUNE,
-                 network: NetworkType = NetworkType.MAINNET):
+                 network: NetworkType = NetworkType.MAINNET,
+                 stable_coins: List[Asset] = None):
         self.midgard_client = midgard_client
         self.thornode_client = thornode_client
         self._pool_cache = PoolCache(0, {})
@@ -71,6 +72,8 @@ class THORChainCache:
 
         self.native_asset = native_asset
         self.network = network
+
+        self.usd_stable_coins = stable_coins or USD_ASSETS[network]
 
         self.midgard_api = MidgardAPI(midgard_client)
 
@@ -350,10 +353,9 @@ class THORChainCache:
             raise Exception('Could not refresh inbound cache')
 
     async def get_deepest_usd_pool(self) -> LiquidityPool:
-        usd_assets = USD_ASSETS[self.network]
         deepest_rune_depth = 0
         deepest_pool = None
-        for usd_asset in usd_assets:
+        for usd_asset in self.usd_stable_coins:
             usd_pool = await self.get_pool_for_asset(usd_asset)
             if usd_pool.rune_balance.amount > deepest_rune_depth:
                 deepest_rune_depth = usd_pool.rune_balance.amount

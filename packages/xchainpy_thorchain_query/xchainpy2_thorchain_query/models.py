@@ -32,9 +32,16 @@ class SwapEstimate(NamedTuple):
     recommended_min_amount_in: int
 
 
+def get_rune_balance_of_node_pool(pool: Pool) -> Amount:
+    balance = getattr(pool, 'balance_rune', None)
+    if balance is None:
+        balance = getattr(pool, 'balance_cacao', None)
+    return Amount.from_base(balance)
+
+
 class LiquidityPool(NamedTuple):
-    pool: PoolDetail
-    thornode_details: Pool
+    pool: Optional[PoolDetail]
+    thornode_details: Optional[Pool]
     asset_balance: Amount
     rune_balance: Amount
     asset: Asset
@@ -58,6 +65,24 @@ class LiquidityPool(NamedTuple):
             rune_balance=rb,
             asset=Asset.from_string(pool.asset),
             asset_string=pool.asset,
+            rune_to_asset_ratio=rb_dec / ab_dec,
+            asset_to_rune_ratio=ab_dec / rb_dec,
+        )
+
+    @classmethod
+    def from_node_pool(cls, thornode_pool: Pool):
+        rune_balance = get_rune_balance_of_node_pool(thornode_pool)
+        asset_balance = Amount.from_base(thornode_pool.balance_asset)
+
+        ab_dec = asset_balance.as_decimal
+        rb_dec = rune_balance.as_decimal
+
+        return cls(
+            None, thornode_pool,
+            asset_balance=asset_balance,
+            rune_balance=rune_balance,
+            asset=Asset.from_string(thornode_pool.asset),
+            asset_string=thornode_pool.asset,
             rune_to_asset_ratio=rb_dec / ab_dec,
             asset_to_rune_ratio=ab_dec / rb_dec,
         )

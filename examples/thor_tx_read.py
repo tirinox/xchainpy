@@ -12,7 +12,7 @@ from xchainpy2_utils import AssetRUNE
 # In case you have your fullnode, the public nodes are severely rate-limited
 client = THORChainClient(phrase=generate_mnemonic(),
                          client_urls=make_client_urls_from_ip_address(
-                             '95.217.121.104'  # todo: set abstract IP address
+                             '1.2.3.4',  # your fullnode IP
                          ))
 
 EXAMPLE_TX_SEND = '6C346BDC87349A371463C5D0E41A4BCF5765FB62F6808366C7F494717A1E33A2'
