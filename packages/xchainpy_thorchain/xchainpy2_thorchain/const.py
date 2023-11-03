@@ -1,7 +1,7 @@
 from xchainpy2_client import ExplorerProvider
-from xchainpy2_thorchain.models import NodeURL
 from xchainpy2_utils import Asset, Amount
 from xchainpy2_utils.consts import NetworkType, RUNE_DECIMAL
+from .models import NodeURL
 
 DEFAULT_GAS_ADJUSTMENT = 2
 
@@ -19,7 +19,6 @@ RUNE_SYMBOL = 'ᚱ'
 RUNE_TICKER = 'RUNE'
 
 DEFAULT_RUNE_FEE = Amount.from_asset(0.02, RUNE_DECIMAL)
-
 
 DEFAULT_EXPLORER_URL = 'https://viewblock.io/thorchain{path}{network_tag}'
 
@@ -51,6 +50,22 @@ DEFAULT_CHAIN_IDS = {
     NetworkType.STAGENET: 'thorchain-stagenet-v2',
     NetworkType.TESTNET: 'deprecated',
 }
+
+THORNODE_PORT = 1317
+
+RPC_PORTS = {
+    NetworkType.MAINNET: 27147,
+    NetworkType.STAGENET: 26657,
+    NetworkType.TESTNET: 26657,
+}
+
+
+def make_client_urls_from_ip_address(ip_address: str, network=NetworkType.MAINNET, protocol='http'):
+    rpc_port = RPC_PORTS[network]
+    return {
+        network: NodeURL.from_ip_address(ip_address, THORNODE_PORT, rpc_port, protocol)
+    }
+
 
 DEFAULT_CLIENT_URLS = {
     NetworkType.MAINNET: NodeURL(

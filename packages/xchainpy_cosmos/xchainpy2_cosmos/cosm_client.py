@@ -19,7 +19,7 @@ from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx,
 from xchainpy2_client.fees import single_fee
 from xchainpy2_crypto import derive_private_key, derive_address
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DECIMAL, Asset, Amount, AssetATOM, \
-    unique_by_key, batched, NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER
+    unique_by_key, batched, NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER, flatten
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_DERIVATION_PATHS, COSMOS_ADDR_PREFIX, \
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
     MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE, DEFAULT_GAS_LIMIT, DEFAULT_REST_USER_AGENT
@@ -88,6 +88,10 @@ class CosmosGaiaClient(XChainClient):
     @property
     def server_url(self):
         return self.client_urls[self.network]
+
+    @property
+    def rpc_url(self):
+        return self.server_url
 
     @property
     def rest_session(self) -> ClientSession:
@@ -281,7 +285,7 @@ class CosmosGaiaClient(XChainClient):
 
     async def get_transactions(self, address: str,
                                offset: int = 0,
-                               limit: int = 0,
+                               limit: int = 10,
                                start_time: Optional[datetime] = None,
                                end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None,
@@ -314,7 +318,7 @@ class CosmosGaiaClient(XChainClient):
                 limit=MAX_TX_COUNT_PER_PAGE,
                 tx_max_height=tx_max_height,
                 tx_min_height=tx_min_height,
-                rpc_endpoint=self.server_url,
+                rpc_endpoint=self.rpc_url,
             )
             all_tx_incoming_history.append(call)
 
@@ -325,16 +329,18 @@ class CosmosGaiaClient(XChainClient):
                 limit=MAX_TX_COUNT_PER_PAGE,
                 tx_max_height=tx_max_height,
                 tx_min_height=tx_min_height,
-                rpc_endpoint=self.server_url,
+                rpc_endpoint=self.rpc_url,
             )
-            all_tx_incoming_history.append(call)
+            all_tx_outgoing_history.append(call)
 
+        # todo: add semaphore to limit the number of concurrent requests
         incoming_results = await asyncio.gather(*all_tx_incoming_history)
         outgoing_results = await asyncio.gather(*all_tx_outgoing_history)
 
         all_results = incoming_results + outgoing_results
 
-        results = [results['txs'] for results in all_results]
+        results = [results['result']['txs'] for results in all_results]
+        results = flatten(results)
 
         results = unique_by_key(results, itemgetter('hash'))
 
@@ -401,18 +407,19 @@ class CosmosGaiaClient(XChainClient):
         if tx_max_height is not None:
             query_parameter.append(f"tx.height<='{tx_max_height}'")
 
-        search_parameters = []
+        search_parameters = {}
         if query_parameter:
             query = ' AND '.join(query_parameter)
-            search_parameters.append(f'query="{query}"')
+            search_parameters['query'] = f'"{query}"'
 
         if page is not None:
-            search_parameters.append(f'page="{page}"')
+            search_parameters['page'] = page
         if limit is not None:
-            search_parameters.append(f'limit="{limit}"')
-        search_parameters.append('order_by="desc"')
+            search_parameters['limit'] = limit
+        search_parameters['order_by'] = '"desc"'
 
-        params_joined = '&'.join(search_parameters)
+        params_joined = '&'.join(f'{k}={v}' for k, v in search_parameters.items())
+
         url = f"{rpc_endpoint}/tx_search?{params_joined}"
 
         return await self._get_json(url)
@@ -436,14 +443,6 @@ class CosmosGaiaClient(XChainClient):
         :param tx_id:
         :return:
         """
-
-        #
-        # tx = await asyncio.get_event_loop().run_in_executor(
-        #     None,
-        #     self._client.query_tx,
-        #     tx_id
-        # )
-
         j = await self.get_transaction_data_cosmos(tx_id)
 
         return parse_tx_response(

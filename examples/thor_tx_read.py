@@ -3,10 +3,17 @@ import datetime
 
 from xchainpy2_client import TxType
 from xchainpy2_crypto import generate_mnemonic
-from xchainpy2_thorchain import THORChainClient
+from xchainpy2_thorchain import THORChainClient, make_client_urls_from_ip_address
 from xchainpy2_utils import AssetRUNE
 
-client = THORChainClient(phrase=generate_mnemonic())
+# default Client
+# client = THORChainClient(phrase=generate_mnemonic())
+
+# In case you have your fullnode, the public nodes are severely rate-limited
+client = THORChainClient(phrase=generate_mnemonic(),
+                         client_urls=make_client_urls_from_ip_address(
+                             '95.217.121.104'  # todo: set abstract IP address
+                         ))
 
 EXAMPLE_TX_SEND = '6C346BDC87349A371463C5D0E41A4BCF5765FB62F6808366C7F494717A1E33A2'
 EXAMPLE_TX_SYNTH_SEND = 'B81A5E86501CFC4FBA5BCF940A505C94A544247A353E0BEF273359973BAEAE73'
@@ -60,7 +67,13 @@ async def tx_test_swap_external():
     print(tx_data)
 
 
+async def read_txs_of_address():
+    txs = await client.get_transactions('thor1cghgr0dneyymxx6fjq3e72q83z0qz7c3yttadx')
+    print(txs)
+
+
 async def main(phrase=None):
+    await read_txs_of_address()
     # await tx_test_send(client)
     await tx_test_swap1()
     # await tx_test_swap_external()

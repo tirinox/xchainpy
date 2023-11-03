@@ -68,8 +68,12 @@ class THORChainClient(CosmosGaiaClient):
         self._recreate_client()
 
     @property
-    def server_url(self):
+    def server_url(self) -> str:
         return self.client_urls[self.network].node
+
+    @property
+    def rpc_url(self) -> str:
+        return self.client_urls[self.network].rpc
 
     def validate_address(self, address: str) -> bool:
         if not super().validate_address(address):
