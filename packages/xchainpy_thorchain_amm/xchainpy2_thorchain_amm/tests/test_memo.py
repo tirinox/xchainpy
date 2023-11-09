@@ -272,6 +272,7 @@ def test_swap():
     assert m.action == ActionType.SWAP
     assert m.pool == 'ETH.ETH'
     assert m.dest_address == ETH_ADDR
+    assert m.refund_address == m.dest_address
     assert m.build() == f'=:ETH.ETH:{ETH_ADDR}'
     assert THORMemo.parse_memo(f'=:ETH.ETH:{ETH_ADDR}') == m
 
@@ -279,6 +280,7 @@ def test_swap():
     assert m.action == ActionType.SWAP
     assert m.pool == 'THOR.RUNE'
     assert m.dest_address == THOR_ADDR_1
+    assert m.refund_address == m.dest_address
     assert m.limit == 9999999
     assert m.build() == f'=:THOR.RUNE:{THOR_ADDR_1}:9999999'
     assert THORMemo.parse_memo(f'=:THOR.RUNE:{THOR_ADDR_1}:9999999') == m
@@ -287,6 +289,7 @@ def test_swap():
     assert m.action == ActionType.SWAP
     assert m.pool == 'THOR.RUNE'
     assert m.dest_address == THOR_ADDR_1
+    assert m.refund_address == m.dest_address
     assert m.limit == 5555
     assert m.s_swap_interval == 33
     assert m.s_swap_quantity == 99
@@ -299,6 +302,7 @@ def test_swap():
     assert m.action == ActionType.SWAP
     assert m.pool == 'THOR.RUNE'
     assert m.dest_address == THOR_ADDR_1
+    assert m.refund_address == m.dest_address
     assert m.limit == 5555
     assert m.s_swap_interval == 33
     assert m.s_swap_quantity == AUTO_OPTIMIZED
@@ -312,6 +316,7 @@ def test_swap():
     assert m.action == ActionType.SWAP
     assert m.pool == 'ETH.ETH'
     assert m.dest_address == ETH_ADDR
+    assert m.refund_address == m.dest_address
     assert m.dex_aggregator_address == ETH_ADDR_2
     assert m.final_asset_address == FINAL_ETH_ASSET
     assert m.min_amount_out == 333888
@@ -326,6 +331,7 @@ def test_swap():
     assert m.action == ActionType.SWAP
     assert m.pool == 'ETH.ETH'
     assert m.dest_address == ETH_ADDR
+    assert m.refund_address == m.dest_address
     assert m.dex_aggregator_address == ETH_ADDR_2
     assert m.final_asset_address == FINAL_ETH_ASSET
     assert m.min_amount_out == 333888
@@ -336,6 +342,22 @@ def test_swap():
     assert m.affiliate_fee_bp == 30
     assert m.build() == f'=:ETH.ETH:{ETH_ADDR}:9999999/4/7:t:30:{ETH_ADDR_2}:{FINAL_ETH_ASSET}:333888'
     assert THORMemo.parse_memo(f'=:ETH.ETH:{ETH_ADDR}:9999999/4/7:t:30:{ETH_ADDR_2}:{FINAL_ETH_ASSET}:333888') == m
+
+    # custom refund address
+    m = THORMemo.swap('THOR.RUNE', THOR_ADDR_1, 9873, 33,
+                      s_swap_quantity=AUTO_OPTIMIZED,
+                      affiliate_address='dx', affiliate_fee_bp=35, refund_address=THOR_ADDR_2)
+    assert m.action == ActionType.SWAP
+    assert m.pool == 'THOR.RUNE'
+    assert m.dest_address == THOR_ADDR_1
+    assert m.refund_address == THOR_ADDR_2
+    assert m.limit == 9873
+    assert m.s_swap_interval == 33
+    assert m.s_swap_quantity == AUTO_OPTIMIZED
+    assert m.affiliate_address == 'dx'
+    assert m.affiliate_fee_bp == 35
+    assert m.build() == f'=:THOR.RUNE:{THOR_ADDR_1}/{THOR_ADDR_2}:9873/33/0:dx:35'
+    assert THORMemo.parse_memo(f'=:THOR.RUNE:{THOR_ADDR_1}/{THOR_ADDR_2}:9873/33/0:dx:35') == m
 
 
 def test_add_liquidity():

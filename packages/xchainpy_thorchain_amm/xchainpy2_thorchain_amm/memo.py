@@ -68,6 +68,7 @@ class THORMemo:
     provider_address: str = ''
     amount: int = 0
     no_vault: bool = False
+    refund_address: str = ''  # for swaps: dest_addr/refund_addr
 
     # THORName
     name: str = ''
@@ -87,6 +88,14 @@ class THORMemo:
     @property
     def uses_aggregator_out(self):
         return bool(self.dex_aggregator_address)
+
+    @staticmethod
+    def parse_dest_address(dest_address: str):
+        if '/' in dest_address:
+            dest_address, refund_address = dest_address.split('/', maxsplit=1)
+        else:
+            refund_address = dest_address
+        return dest_address.strip(), refund_address.strip()
 
     @classmethod
     def parse_memo(cls, memo: str, no_raise=False):
@@ -114,15 +123,17 @@ class THORMemo:
             # SWAP:ASSET:DEST_ADDR:LIM:AFFILIATE:FEE:DEX Aggregator Addr:Final Asset Addr:MinAmountOut
             limit_and_s_swap = ith(components, 3, '')
             limit, s_swap_interval, s_swap_quantity = cls._parse_streaming_params(limit_and_s_swap)
+            dest_address, refund_address = cls.parse_dest_address(ith(components, 2, ''))
             return cls.swap(
                 ith(components, 1),
-                ith(components, 2),
+                dest_address,  # 2
                 limit, s_swap_interval, s_swap_quantity,  # 3
                 affiliate_address=ith(components, 4, ''),
                 affiliate_fee_bp=ith(components, 5, 0, is_number=True),
                 dex_aggregator_address=ith(components, 6, ''),
                 dex_final_asset_address=ith(components, 7, ''),
                 dex_min_amount_out=ith(components, 8, 0, is_number=True),
+                refund_address=refund_address,  # /2
             )
 
         elif tx_type == ActionType.WITHDRAW:
@@ -316,7 +327,8 @@ class THORMemo:
     def swap(cls, asset: str, dest_address: str, limit: int = 0, s_swap_interval: int = 0,
              s_swap_quantity: int = None,
              affiliate_address: str = '', affiliate_fee_bp: int = 0,
-             dex_aggregator_address: str = '', dex_final_asset_address: str = '', dex_min_amount_out: int = 0):
+             dex_aggregator_address: str = '', dex_final_asset_address: str = '', dex_min_amount_out: int = 0,
+             refund_address: str = ''):
         return cls(
             ActionType.SWAP,
             asset, dest_address, limit,
@@ -327,6 +339,7 @@ class THORMemo:
             dex_aggregator_address=dex_aggregator_address,
             final_asset_address=dex_final_asset_address,
             min_amount_out=dex_min_amount_out,
+            refund_address=refund_address or dest_address,
         )
 
     @classmethod
