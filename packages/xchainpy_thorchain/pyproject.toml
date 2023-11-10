@@ -33,6 +33,7 @@ dependencies = [
     "xchainpy2_crypto",
     "xchainpy2_client",
     "xchainpy2_cosmos",
+    "cosmpy",
 ]
 [project.optional-dependencies]
 test = ["pytest"]
