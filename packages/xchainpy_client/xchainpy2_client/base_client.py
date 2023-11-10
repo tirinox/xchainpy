@@ -5,7 +5,7 @@ from typing import Optional, List
 from xchainpy2_client.models import XcTx, Fees, TxPage, \
     FeeBounds, Fee, RootDerivationPaths, AssetInfo
 from xchainpy2_crypto import validate_mnemonic
-from xchainpy2_utils import Address, CryptoAmount, Chain, NetworkType, Asset
+from xchainpy2_utils import CryptoAmount, Chain, NetworkType, Asset
 
 INF_FEE = Fee(1_000_000_000_000_000_000)
 

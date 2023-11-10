@@ -16,30 +16,33 @@ class AssetInfo(NamedTuple):
     decimals: int = DEFAULT_ASSET_DECIMAL
 
 
-class TxTo(NamedTuple):
-    address: str
-    amount: Amount
-    asset: Optional[Asset] = None
-
-
-class TxFrom(NamedTuple):
+class TokenTransfer(NamedTuple):
     from_address: str
-    from_tx_hash: str
+    to_address: str
     amount: Amount
     asset: Optional[Asset] = None
+    tx_hash: Optional[str] = None
+    outbound: bool = True  # if true, it is a transfer out of the wallet, otherwise it is a transfer into the wallet
+    # outbound = true corresponds TxTo of XChainJS
+    # outbound = false corresponds TxFrom of XChainJS
 
 
 class XcTx(NamedTuple):
     asset: Asset
-    # list of "from" txs. BNC will have one `TxFrom` only, `BTC` might have many transactions going "in" (based on UTXO)
-    from_txs: List[TxFrom]
-    # list of "to" transactions. BNC will have one `TxTo` only,
-    #   `BTC` might have many transactions going "out" (based on UTXO)
-    to_txs: List[TxTo]
+    transfers: List[TokenTransfer]
     date: datetime
     type: TxType
     hash: str
     height: int
+    memo: str = ''
+
+    @property
+    def inbound_txs(self):
+        return [t for t in self.transfers if not t.outbound]
+
+    @property
+    def outbound_txs(self):
+        return [t for t in self.transfers if t.outbound]
 
 
 class TxPage(NamedTuple):

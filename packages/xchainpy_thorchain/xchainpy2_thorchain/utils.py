@@ -6,8 +6,9 @@ from cosmpy.aerial.tx import Transaction, SigningCfg
 from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PublicKey
 
-from xchainpy2_client import XcTx, TxType, TxTo, TxFrom
+from xchainpy2_client import XcTx, TxType, TokenTransfer
 from xchainpy2_cosmos import TxLog
+from xchainpy2_cosmos.utils import parse_cosmos_amount
 from xchainpy2_utils import NetworkType, CryptoAmount, Amount, RUNE_DECIMAL, Asset, AssetRUNE
 from .const import DEPOSIT_GAS_LIMIT_VALUE, DENOM_RUNE_NATIVE
 from .proto.thorchain.v1.common.common_pb2 import Coin, Asset as THORAsset
@@ -85,6 +86,7 @@ class TransferDatum(NamedTuple):
     sender: str
     recipient: str
     amount: Amount
+    asset: str
 
 
 def get_deposit_tx_from_logs(logs: List[TxLog],
@@ -101,7 +103,7 @@ def get_deposit_tx_from_logs(logs: List[TxLog],
         raise ValueError('No events available in logs')
 
     transfer_data_list = []
-    sender, recipient, amount = None, None, None
+    sender, recipient, amount, asset = None, None, None, None
     for event in events:
         if event.type == 'transfer':
             for i, attribute in enumerate(event.attributes):
@@ -110,35 +112,39 @@ def get_deposit_tx_from_logs(logs: List[TxLog],
                 elif attribute.key == 'recipient':
                     recipient = attribute.value
                 elif attribute.key == 'amount':
-                    value = attribute.value.replace(denom, '')
-                    amount = Amount.from_base(value, decimals)
+                    print(attribute.value, denom)
+                    amount_int, asset = parse_cosmos_amount(attribute.value)
+                    amount = Amount.from_base(amount_int, decimals)
 
                 # ready to append
-                if sender and recipient and amount:
-                    transfer_data_list.append(TransferDatum(sender, recipient, amount))
+                if sender and recipient and amount and asset:
+                    transfer_data_list.append(TransferDatum(sender, recipient, amount, asset))
                     # reset
-                    sender, recipient, amount = None, None, None
+                    sender, recipient, amount, asset = None, None, None, None
 
     transfer_data_list = [
         data for data in transfer_data_list
         if data.sender == address or data.recipient == address
     ]
 
-    from_txs, to_txs = [], []
-
+    transfers = []
     for data in transfer_data_list:
-        to_txs.append(TxTo(
-            data.recipient,
-            data.amount,
-            receiver_address
-        ))
-        from_txs.append(TxFrom(
-            data.sender, '',
-            data.amount,
-            sender_asset
-        ))
+        asset = Asset.from_string(data.asset.upper())
+        # todo: check if it is correct
+        transfers.append(TokenTransfer(data.sender, data.recipient, data.amount, asset, outbound=True))
+        transfers.append(TokenTransfer(data.recipient, data.sender, data.amount, asset, outbound=False))
+        # to_txs.append(TxTo(
+        #     data.recipient,
+        #     data.amount,
+        #     asset
+        # ))
+        # from_txs.append(TxFrom(
+        #     data.sender, '',
+        #     data.amount,
+        #     asset
+        # ))
 
-    return XcTx(Asset.dummy(), from_txs, to_txs,
+    return XcTx(Asset.dummy(), transfers,
                 datetime.fromtimestamp(0), TxType.TRANSFER, '',
                 height=height)
 

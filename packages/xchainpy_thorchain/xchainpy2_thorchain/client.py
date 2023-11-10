@@ -6,14 +6,14 @@ from typing import Optional, Union
 from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
-from xchainpy2_client import AssetInfo, XcTx, TxFrom, TxTo, TxType, Fees, FeeType
+from xchainpy2_client import AssetInfo, XcTx, TxType, Fees, FeeType, TokenTransfer
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_client.fees import single_fee
-from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, load_logs
+from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, load_logs, TxInternalException
 from xchainpy2_cosmos.utils import parse_cosmos_amount
 from xchainpy2_crypto import decode_address
-from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, Asset, \
-    SYNTH_DELIMITER, parse_iso_date
+from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, \
+    Asset, SYNTH_DELIMITER, parse_iso_date
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_RUNE_FEE
 from .utils import get_thor_address_prefix, build_deposit_tx_unsigned, get_deposit_tx_from_logs, get_asset_from_denom
@@ -187,7 +187,7 @@ class THORChainClient(CosmosGaiaClient):
     async def get_transaction_data_thornode(self, tx_id: str) -> XcTx:
         """
         Fetch transaction data from THORNode (parsed to XcTx instance)
-        This function is used when in bound or outbound tx is not of THORChain.
+        This function is used when inbound or outbound tx is not of THORChain.
         It is called "getTransactionDataThornode" in xchainjs
         Parsing "observed_tx" object.
         Url: https://node/thorchain/tx/{tx_hash}
@@ -203,7 +203,13 @@ class THORChainClient(CosmosGaiaClient):
         raw_data = await self.fetch_transaction_from_thornode_raw(tx_id)
 
         if not raw_data:
-            raise Exception(f"Could not fetch transaction data from THORNode {tx_id}")
+            raise TxLoadException(f"Could not fetch transaction data from THORNode {tx_id}")
+
+        error = raw_data.get('error', '')
+        if 'desc = internal' in error:
+            raise TxInternalException(f"This transaction is internal: {tx_id}, please use cosmos RPC")
+        elif error:
+            raise TxLoadException(f"Could not fetch transaction data from THORNode {tx_id}. Reason: {error}")
 
         tx = raw_data['observed_tx']['tx']
         coin = tx['coins'][0]
@@ -211,9 +217,14 @@ class THORChainClient(CosmosGaiaClient):
         from_address = tx['from_address']
         decimals = coin.get('decimals', self._decimal)
         coin_amount = Amount.from_base(coin['amount'], decimals)
-        from_tx = [
-            TxFrom(from_address, tx['id'], coin_amount, sender_asset)
+
+        transfers = [
+            TokenTransfer(
+                from_address, tx['to_address'],
+                coin_amount, sender_asset, tx_id
+            )
         ]
+
         split_memo = tx.get('memo', '').split(':')
         if not split_memo:
             raise TxLoadException('Could not parse memo')
@@ -221,22 +232,27 @@ class THORChainClient(CosmosGaiaClient):
         if split_memo[0] == 'OUT':
             asset = sender_asset
             address_to = tx.get('to_address', 'undefined')
-            to_tx = [
-                TxTo(address_to, coin_amount, asset)
-            ]
+
+            transfers.append(TokenTransfer(
+                from_address, address_to,
+                coin_amount, asset, tx_id, outbound=False
+            ))
+
         else:
             asset = Asset.from_string_exc(split_memo[1])
             address = split_memo[2]
             amount = Amount.from_base(split_memo[3], self._decimal)
-            to_tx = [
-                TxTo(address, amount, asset)
-            ]
+
+            transfers.append(TokenTransfer(
+                from_address, address,
+                coin_amount, asset, tx_id, outbound=False
+            ))
 
         height = int(raw_data['observed_tx'].get('finalised_height', 0))
 
         return XcTx(
             sender_asset,
-            from_tx, to_tx,
+            transfers,
             datetime.datetime.fromtimestamp(0),
             TxType.TRANSFER,
             tx['id'],
@@ -287,7 +303,8 @@ class THORChainClient(CosmosGaiaClient):
 
             if not denom or not from_asset or not tx_hash or not from_address or not tx_type:
                 return XcTx(
-                    from_asset, [], [], tx_date, TxType.UNKNOWN, tx_hash, height
+                    from_asset, [], tx_date, TxType.UNKNOWN, tx_hash, height,
+                    memo=memo
                 )
 
             tx_data = get_deposit_tx_from_logs(logs, from_address, from_asset, to_asset,
@@ -304,18 +321,32 @@ class THORChainClient(CosmosGaiaClient):
                 )
             else:
                 to_amount = Amount.from_base(int(memo_components[3]))
+                transfers = [
+                    TokenTransfer(
+                        from_address, to_address,
+                        to_amount, to_asset, tx_hash
+                    ),
+                    TokenTransfer(
+                        from_address, to_address,
+                        Amount.from_base(asset_amount, self._decimal), from_asset, tx_hash, outbound=False
+                    )
+                ]
+                #
+                # from_txs = [
+                #     TxFrom(from_address, tx_id, Amount.from_base(asset_amount, self._decimal), from_asset)
+                # ],
+                # to_txs = [
+                #     TxTo(to_address, to_amount, to_asset)
+                # ],
+
                 return XcTx(
                     from_asset,
-                    from_txs=[
-                        TxFrom(from_address, tx_id, Amount.from_base(asset_amount, self._decimal), from_asset)
-                    ],
-                    to_txs=[
-                        TxTo(to_address, to_amount, to_asset)
-                    ],
+                    transfers=transfers,
                     date=tx_date,
                     type=TxType.TRANSFER,
                     hash=tx_hash,
-                    height=height
+                    height=height,
+                    memo=memo,
                 )
 
         except TxLoadException:

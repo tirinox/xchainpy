@@ -3,7 +3,7 @@ from datetime import datetime
 
 from aiohttp import ClientSession
 
-from xchainpy2_client import UtxoOnlineDataProvider, XcTx, TxPage, UTXO, Witness, TxFrom, TxTo, TxType
+from xchainpy2_client import UtxoOnlineDataProvider, XcTx, TxPage, UTXO, Witness, TokenTransfer, TxType
 from xchainpy2_utils import Asset, CryptoAmount, Chain, AssetBTC, Amount, AssetLTC, AssetDOGE, AssetDASH, parse_iso_date
 from .blockcypher_t import *
 
@@ -163,24 +163,27 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
                     ))
         return utxos_out
 
-    def convert_tx(self, tx: Transaction) -> Optional[XcTx]:
+    def convert_tx(self, tx: Transaction, our_address: str = '') -> Optional[XcTx]:
         if not tx:
             return None
 
         date = parse_iso_date(tx.confirmed)
+        transfers = [
+            TokenTransfer(inp.addresses[0], our_address,
+                          Amount.from_base(inp.output_value, self.asset_decimal), self.asset, tx.hash,
+                          outbound=False)
+            for inp in tx.inputs
+        ]
+        transfers.extend([
+            TokenTransfer(our_address, out.addresses[0],
+                          Amount.from_base(out.value, self.asset_decimal), self.asset, tx.hash)
+            for out in tx.outputs
+            if out.script_type != 'null-data'  # filter out op_return outputs
+        ])
+
         return XcTx(
             self.asset,
-            from_txs=[
-                TxFrom(
-                    inp.addresses[0], tx.hash, Amount.from_base(inp.output_value, self.asset_decimal), self.asset
-                ) for inp in tx.inputs
-            ],
-            to_txs=[
-                TxTo(
-                    out.addresses[0], Amount.from_base(out.value, self.asset_decimal), self.asset
-                ) for out in tx.outputs
-                if out.script_type != 'null-data'  # filter out op_return outputs
-            ],
+            transfers=transfers,
             date=date,
             type=TxType.TRANSFER,
             hash=tx.hash,

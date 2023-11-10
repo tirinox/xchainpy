@@ -437,7 +437,7 @@ class CosmosGaiaClient(XChainClient):
         url = self.url_to_fetch_tx_data(tx_id)
         return await self._get_json(url)
 
-    async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
+    async def get_transaction_data(self, tx_id: str, our_address: str = '') -> Optional[XcTx]:
         """
         Get the transaction data for the given transaction id.
         :param tx_id:
@@ -448,7 +448,8 @@ class CosmosGaiaClient(XChainClient):
         return parse_tx_response(
             TxResponse.from_rpc_json(j['tx_response']),
             self.native_asset,
-            self._denom, self._decimal
+            self._denom, self._decimal,
+            our_address
         )
 
     async def get_transaction_data_raw(self, tx_id: str) -> dict:

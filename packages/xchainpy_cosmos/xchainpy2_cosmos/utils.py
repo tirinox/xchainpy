@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Tuple
 
-from xchainpy2_client import XcTx, TxFrom, TxType, TxTo
+from xchainpy2_client import XcTx, TxType, TokenTransfer
 from xchainpy2_utils import Asset, AssetATOM, Chain, Amount, key_attr_getter
 from .const import COSMOS_DENOM
 from .models import TxResponse
@@ -69,7 +69,7 @@ def get_coins_by_asset(coins, search_asset: Asset, native_denom: str, native_ass
     ]
 
 
-def parse_tx_response(tx: TxResponse, asset: Asset, native_denom: str, decimals) -> XcTx:
+def parse_tx_response(tx: TxResponse, asset: Asset, native_denom: str, decimals, this_address) -> XcTx:
     messages = tx.tx['body']['messages']
     from_txs = {}
     to_txs = {}
@@ -86,9 +86,10 @@ def parse_tx_response(tx: TxResponse, asset: Asset, native_denom: str, decimals)
                     amount=from_already.amount + amount
                 )
             else:
-                from_txs[from_a] = TxFrom(
+                from_txs[from_a] = TokenTransfer(
                     from_address=from_a,
-                    from_tx_hash=tx.txhash,
+                    to_address=this_address,
+                    tx_hash=tx.txhash,
                     amount=amount,
                     asset=asset,
                 )
@@ -100,10 +101,12 @@ def parse_tx_response(tx: TxResponse, asset: Asset, native_denom: str, decimals)
                     amount=to_already.amount + amount
                 )
             else:
-                to_txs[to_a] = TxTo(
-                    address=to_a,
-                    asset=asset,
+                to_txs[to_a] = TokenTransfer(
+                    to_address=to_a,
+                    from_address=this_address,
+                    tx_hash=tx.txhash,
                     amount=amount,
+                    asset=asset,
                 )
 
     try:
@@ -111,10 +114,11 @@ def parse_tx_response(tx: TxResponse, asset: Asset, native_denom: str, decimals)
     except ValueError:
         dt = datetime.strptime(tx.timestamp, "%Y-%m-%dT%H:%M:%SZ")
 
+    transfers = []
+
     return XcTx(
         asset=asset,
-        from_txs=list(from_txs.values()),
-        to_txs=list(to_txs.values()),
+        transfers=transfers,
         date=dt,
         type=TxType.TRANSFER if from_txs or to_txs else TxType.UNKNOWN,
         hash=tx.txhash,
@@ -122,10 +126,10 @@ def parse_tx_response(tx: TxResponse, asset: Asset, native_denom: str, decimals)
     )
 
 
-def get_txs_from_history(txs: TxResponse, asset: Asset, native_denom, decimals) -> List[XcTx]:
+def get_txs_from_history(txs: TxResponse, asset: Asset, native_denom, decimals, this_address) -> List[XcTx]:
     # order list to have latest txs first in list
     txs = sorted(txs, key=lambda tx: tx.timestamp, reverse=True)
-    return [parse_tx_response(tx, asset, native_denom, decimals) for tx in txs]
+    return [parse_tx_response(tx, asset, native_denom, decimals, this_address) for tx in txs]
 
 
 def parse_cosmos_amount(amount: str) -> Tuple[int, str]:

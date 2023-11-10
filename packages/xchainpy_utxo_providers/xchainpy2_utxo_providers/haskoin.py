@@ -3,7 +3,7 @@ from datetime import datetime
 
 from aiohttp import ClientSession
 
-from xchainpy2_client import UtxoOnlineDataProvider, XcTx, TxPage, UTXO, TxType, TxTo, TxFrom, Witness
+from xchainpy2_client import UtxoOnlineDataProvider, XcTx, TxPage, UTXO, TxType, TokenTransfer, Witness
 from xchainpy2_utils import Asset, CryptoAmount, Chain, Amount, AssetBTC, AssetBCH
 from .haskoin_t import *
 
@@ -75,12 +75,12 @@ class HaskoinProvider(UtxoOnlineDataProvider):
             raise Exception('Offset and limit must be positive')
 
         txs = await self._api_get_raw_transactions(address, offset, limit)
-        txs = [self._convert_tx(tx) for tx in txs]
+        txs = [self._convert_tx(tx, address) for tx in txs]
         return TxPage(total=len(txs), txs=txs)
 
-    async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
+    async def get_transaction_data(self, tx_id: str, our_address: str = '') -> Optional[XcTx]:
         tx = await self._api_get_tx(tx_id)
-        return self._convert_tx(tx)
+        return self._convert_tx(tx, our_address)
 
     def build_url(self, endpoint: str) -> str:
         return f'{self.base_url}/{self.network.value}/{endpoint}'
@@ -165,25 +165,29 @@ class HaskoinProvider(UtxoOnlineDataProvider):
                     return j['txid']
         raise Exception('Error broadcasting tx. Max retries exceeded')
 
-    def _convert_tx(self, tx: Transaction) -> XcTx:
+    def _convert_tx(self, tx: Transaction, our_address: str = '') -> XcTx:
+        transfers = [
+            TokenTransfer(
+                from_address=i.address,
+                to_address=our_address,
+                tx_hash=tx.txid,
+                amount=Amount.from_base(i.value, self.asset_decimal),
+                asset=self.asset,
+                outbound=False,
+            ) for i in tx.inputs
+        ]
+        transfers.extend([
+            TokenTransfer(
+                from_address=our_address,
+                to_address=o.address,
+                tx_hash=tx.txid,
+                amount=Amount.from_base(o.value, self.asset_decimal),
+                asset=self.asset,
+            ) for o in tx.outputs
+        ])
         return XcTx(
             asset=self.asset,
-            from_txs=[
-                TxFrom(
-                    from_address=i.address,
-                    from_tx_hash=tx.txid,
-                    amount=Amount.from_base(i.value, self.asset_decimal),
-                    asset=self.asset,
-                ) for i in tx.inputs
-            ],
-            to_txs=[
-                TxTo(
-                    address=o.address,
-                    amount=Amount.from_base(o.value, self.asset_decimal),
-                    asset=self.asset,
-                ) for o in tx.outputs
-                if o.pk_script != 'null-data'  # filter out op_return outputs
-            ],
+            transfers=transfers,
             date=datetime.fromtimestamp(tx.time),
             type=TxType.TRANSFER,
             hash=tx.txid,

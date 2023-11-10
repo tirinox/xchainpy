@@ -4,7 +4,7 @@ from datetime import datetime
 import math
 from aiohttp import ClientSession
 
-from xchainpy2_client import UtxoOnlineDataProvider, XcTx, TxPage, UTXO, TxType, TxTo, TxFrom, Witness
+from xchainpy2_client import UtxoOnlineDataProvider, XcTx, TxPage, UTXO, TxType, TokenTransfer, Witness
 from xchainpy2_utils import Chain, Asset, CryptoAmount, Amount, AssetBTC, AssetLTC, AssetDOGE
 from .sochain_t import *
 
@@ -102,17 +102,17 @@ class SochainProvider(UtxoOnlineDataProvider):
                 else:
                     break
 
-        txs = await asyncio.gather(*[self.get_transaction_data(tx_hash) for tx_hash in tx_hashes_to_fetch])
+        txs = await asyncio.gather(*[self.get_transaction_data(tx_hash, address) for tx_hash in tx_hashes_to_fetch])
 
         return TxPage(
             total=len(tx_hashes_to_fetch),
             txs=list(txs),
         )
 
-    async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
+    async def get_transaction_data(self, tx_id: str, our_address: str = '') -> Optional[XcTx]:
         async with self._semaphore:
             tx_data = await self._api_request(f'transaction/{self.network.value}/{tx_id}')
-            return self._convert_tx(tx_data['data'])
+            return self._convert_tx(tx_data['data'], our_address)
 
     def build_url(self, path: str) -> str:
         return f'{self.base_url}/{path}'
@@ -162,24 +162,30 @@ class SochainProvider(UtxoOnlineDataProvider):
             page += 1
         return results
 
-    def _convert_tx(self, tx: Transaction) -> XcTx:
+    def _convert_tx(self, tx: Transaction, our_address='') -> XcTx:
+        transfers = [
+            TokenTransfer(
+                from_address=i.address,
+                to_address=our_address,
+                tx_hash=tx.txid,
+                amount=Amount.from_base(i.value, self.asset_decimal),
+                asset=self.asset,
+                outbound=False,
+            ) for i in tx.inputs
+        ]
+        transfers.extend([
+            TokenTransfer(
+                from_address=our_address,
+                to_address=o.address,
+                tx_hash=tx.txid,
+                amount=Amount.from_base(o.value, self.asset_decimal),
+                asset=self.asset,
+            ) for o in tx.outputs
+        ])
+
         return XcTx(
             asset=self.asset,
-            from_txs=[
-                TxFrom(
-                    i.address,
-                    tx.hash,
-                    Amount.from_base(i.value, self.asset_decimal), self.asset
-                ) for i in tx.inputs
-            ],
-            to_txs=[
-                TxTo(
-                    o.address,
-                    Amount.from_base(o.value, self.asset_decimal),
-                    self.asset
-                ) for o in tx.outputs
-                if o.type != 'nulldata'
-            ],
+            transfers=transfers,
             date=datetime.fromtimestamp(tx.time),  # todo convert to datetime (checkit)
             type=TxType.TRANSFER,
             hash=tx.txid,

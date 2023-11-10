@@ -119,3 +119,7 @@ class RPCResponse(NamedTuple):
 
 class TxLoadException(Exception):
     pass
+
+
+class TxInternalException(Exception):
+    pass
