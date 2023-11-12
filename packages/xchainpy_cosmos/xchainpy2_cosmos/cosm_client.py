@@ -315,7 +315,7 @@ class CosmosGaiaClient(XChainClient):
                 message_action=message_action,
                 transfer_recipient=address,
                 page=page,
-                limit=MAX_TX_COUNT_PER_PAGE,
+                limit=limit,
                 tx_max_height=tx_max_height,
                 tx_min_height=tx_min_height,
                 rpc_endpoint=self.rpc_url,
@@ -326,7 +326,7 @@ class CosmosGaiaClient(XChainClient):
                 message_action=message_action,
                 transfer_sender=address,
                 page=page,
-                limit=MAX_TX_COUNT_PER_PAGE,
+                limit=limit,
                 tx_max_height=tx_max_height,
                 tx_min_height=tx_min_height,
                 rpc_endpoint=self.rpc_url,
@@ -337,9 +337,14 @@ class CosmosGaiaClient(XChainClient):
         incoming_results = await asyncio.gather(*all_tx_incoming_history)
         outgoing_results = await asyncio.gather(*all_tx_outgoing_history)
 
-        all_results = incoming_results + outgoing_results
+        total_count = 0
+        if incoming_results:
+            total_count += int(incoming_results[0]['result']['total_count'])
 
-        results = [results['result']['txs'] for results in all_results]
+        if outgoing_results:
+            total_count += int(outgoing_results[0]['result']['total_count'])
+
+        results = [results['result']['txs'] for results in incoming_results + outgoing_results]
         results = flatten(results)
 
         results = unique_by_key(results, itemgetter('hash'))
@@ -357,7 +362,7 @@ class CosmosGaiaClient(XChainClient):
 
         return TxPage(
             txs=all_txs,
-            total=len(all_txs)
+            total=total_count,
         )
 
     async def search_tx(self, message_action=None, message_sender=None, offset=0, limit=50):
@@ -415,7 +420,7 @@ class CosmosGaiaClient(XChainClient):
         if page is not None:
             search_parameters['page'] = page
         if limit is not None:
-            search_parameters['limit'] = limit
+            search_parameters['per_page'] = limit
         search_parameters['order_by'] = '"desc"'
 
         params_joined = '&'.join(f'{k}={v}' for k, v in search_parameters.items())
@@ -483,9 +488,10 @@ class CosmosGaiaClient(XChainClient):
                        wallet_index=0) -> str:
         """
         Transfer coins.
-        :param wallet_index: Wallet index
+        :param check_balance: Check balance before transfer. Default is True.
+        :param wallet_index: Wallet index (0 by default)
         :param what: CryptoAmount (amount and asset to transfer)
-        :param recipient: str recepient address
+        :param recipient: str recipient address
         :param memo: str
         :param fee_rate: int
         :return: str tx hash

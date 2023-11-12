@@ -120,7 +120,7 @@ def parse_tx_response(tx: TxResponse, asset: Asset, native_denom: str, decimals,
         asset=asset,
         transfers=transfers,
         date=dt,
-        type=TxType.TRANSFER if from_txs or to_txs else TxType.UNKNOWN,
+        type=TxType.TRANSFER if transfers else TxType.UNKNOWN,
         hash=tx.txhash,
         height=tx.height
     )

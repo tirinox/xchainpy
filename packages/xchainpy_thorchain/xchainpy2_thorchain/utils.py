@@ -1,12 +1,11 @@
-from datetime import datetime
-from typing import Optional, List, NamedTuple
+from typing import Optional, List
 
 from cosmpy.aerial.client import Coin as CosmosCoin
 from cosmpy.aerial.tx import Transaction, SigningCfg
 from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PublicKey
 
-from xchainpy2_client import XcTx, TxType, TokenTransfer
+from xchainpy2_client import TokenTransfer
 from xchainpy2_cosmos import TxLog
 from xchainpy2_cosmos.utils import parse_cosmos_amount
 from xchainpy2_utils import NetworkType, CryptoAmount, Amount, RUNE_DECIMAL, Asset, AssetRUNE
@@ -82,29 +81,12 @@ def build_deposit_tx_unsigned(
     return tx
 
 
-class TransferDatum(NamedTuple):
-    sender: str
-    recipient: str
-    amount: Amount
-    asset: str
-
-
-def get_deposit_tx_from_logs(logs: List[TxLog],
-                             address: str,
-                             sender_asset: Optional[Asset] = None,
-                             receiver_address: Optional[Address] = None,
-                             decimals=8,
-                             denom='rune', height=0) -> XcTx:
-    if not logs:
-        raise ValueError('No logs available')
-
-    events = logs[0].events
-    if not events:
-        raise ValueError('No events available in logs')
-
+def parse_transfer_log(log: TxLog, decimals, filter_address=None,
+                       native_denom=DENOM_RUNE_NATIVE,
+                       native_asset: Asset = AssetRUNE) -> List[TokenTransfer]:
     transfer_data_list = []
     sender, recipient, amount, asset = None, None, None, None
-    for event in events:
+    for event in log.events:
         if event.type == 'transfer':
             for i, attribute in enumerate(event.attributes):
                 if attribute.key == 'sender':
@@ -112,41 +94,30 @@ def get_deposit_tx_from_logs(logs: List[TxLog],
                 elif attribute.key == 'recipient':
                     recipient = attribute.value
                 elif attribute.key == 'amount':
-                    print(attribute.value, denom)
                     amount_int, asset = parse_cosmos_amount(attribute.value)
                     amount = Amount.from_base(amount_int, decimals)
+                    if asset == native_denom:
+                        asset = native_asset
+                    else:
+                        asset = Asset.from_string(asset.upper())
 
                 # ready to append
                 if sender and recipient and amount and asset:
-                    transfer_data_list.append(TransferDatum(sender, recipient, amount, asset))
-                    # reset
-                    sender, recipient, amount, asset = None, None, None, None
+                    transfer_data_list.append(
+                        TokenTransfer(
+                            sender, recipient, amount, asset,
+                            tx_hash='', outbound=(sender == filter_address)
+                        ))
 
-    transfer_data_list = [
-        data for data in transfer_data_list
-        if data.sender == address or data.recipient == address
-    ]
+                    sender, recipient, amount, asset = None, None, None, None  # reset
 
-    transfers = []
-    for data in transfer_data_list:
-        asset = Asset.from_string(data.asset.upper())
-        # todo: check if it is correct
-        transfers.append(TokenTransfer(data.sender, data.recipient, data.amount, asset, outbound=True))
-        transfers.append(TokenTransfer(data.recipient, data.sender, data.amount, asset, outbound=False))
-        # to_txs.append(TxTo(
-        #     data.recipient,
-        #     data.amount,
-        #     asset
-        # ))
-        # from_txs.append(TxFrom(
-        #     data.sender, '',
-        #     data.amount,
-        #     asset
-        # ))
+    if filter_address:
+        transfer_data_list = [
+            data for data in transfer_data_list
+            if data.from_address == filter_address or data.to_address == filter_address
+        ]
 
-    return XcTx(Asset.dummy(), transfers,
-                datetime.fromtimestamp(0), TxType.TRANSFER, '',
-                height=height)
+    return transfer_data_list
 
 
 def get_asset_from_denom(denom: str) -> Asset:
@@ -154,3 +125,19 @@ def get_asset_from_denom(denom: str) -> Asset:
         return AssetRUNE
     else:
         return Asset.from_string_exc(denom.upper())
+
+
+class NativeTxType:
+    DEPOSIT = 'deposit'
+    SEND = 'send'
+    UNKNOWN = 'unknown'
+
+
+def get_native_tx_type(raw_json):
+    tx_type = raw_json['tx']['body']['messages'][0]['@type']
+    if tx_type == "/types.MsgSend":
+        return NativeTxType.SEND
+    elif tx_type == "/types.MsgDeposit":
+        return NativeTxType.DEPOSIT
+    else:
+        return NativeTxType.UNKNOWN

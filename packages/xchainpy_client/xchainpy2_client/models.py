@@ -23,14 +23,23 @@ class TokenTransfer(NamedTuple):
     asset: Optional[Asset] = None
     tx_hash: Optional[str] = None
     outbound: bool = True  # if true, it is a transfer out of the wallet, otherwise it is a transfer into the wallet
+
     # outbound = true corresponds TxTo of XChainJS
     # outbound = false corresponds TxFrom of XChainJS
+
+    @classmethod
+    def to_tx(cls, from_address: str, to_address: str, amount: Amount, asset: Optional[Asset] = None, tx_hash=None):
+        return cls(from_address, to_address, amount, asset, tx_hash)
+
+    @classmethod
+    def from_tx(cls, from_address: str, to_address: str, amount: Amount, asset: Optional[Asset] = None, tx_hash=None):
+        return cls(from_address, to_address, amount, asset, tx_hash, outbound=False)
 
 
 class XcTx(NamedTuple):
     asset: Asset
     transfers: List[TokenTransfer]
-    date: datetime
+    date: Optional[datetime]
     type: TxType
     hash: str
     height: int
