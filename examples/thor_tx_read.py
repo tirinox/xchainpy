@@ -78,10 +78,17 @@ async def read_txs_of_address():
     assert len(txs.txs) == 20
 
 
+async def demo_collect_all_counterparty():
+    address = ''
+    txs = await client.get_transactions(address, limit=10)
+    print(len(txs.txs), txs.total)
+
+
 async def main():
+    await demo_collect_all_counterparty()
     # await demo_read_tx_internal_transfer()
     # await demo_read_external_tx_in_out()
-    await read_txs_of_address()
+    # await read_txs_of_address()
 
 
 if __name__ == "__main__":

@@ -50,8 +50,8 @@ CLIENT_URL_COSMOSTATION = 'https://lcd-cosmos.cosmostation.io/'
 CLIENT_URL_COSMOS_DIRECTORY = 'https://rest.cosmos.directory/cosmoshub'
 
 DEFAULT_CLIENT_URLS = {
-    NetworkType.MAINNET: CLIENT_URL_COSMOSTATION,
-    NetworkType.STAGENET: CLIENT_URL_COSMOSTATION,
+    NetworkType.MAINNET: CLIENT_URL_KEPLR,
+    NetworkType.STAGENET: CLIENT_URL_KEPLR,
     # Note: In case anyone facing into CORS issue, try the following URLs
     #   // https://lcd-cosmos.cosmostation.io/
     #   // https://lcd-cosmoshub.keplr.app/

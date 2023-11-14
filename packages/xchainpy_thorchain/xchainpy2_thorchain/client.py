@@ -7,14 +7,15 @@ from cosmpy.aerial.tx_helpers import SubmittedTx
 from xchainpy2_client import AssetInfo, XcTx, TxType, Fees, FeeType, TokenTransfer
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_client.fees import single_fee
-from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, load_logs, TxInternalException
+from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
+from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, \
-    Asset, SYNTH_DELIMITER, parse_iso_date
+    Asset, SYNTH_DELIMITER
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_RUNE_FEE, \
     make_client_urls_from_ip_address
-from .utils import get_thor_address_prefix, build_deposit_tx_unsigned, parse_transfer_log
+from .utils import get_thor_address_prefix, build_deposit_tx_unsigned
 
 
 class THORChainClient(CosmosGaiaClient):
@@ -242,12 +243,6 @@ class THORChainClient(CosmosGaiaClient):
         height = int(raw_data.get('finalised_height', 0))
         return XcTx(sender_asset, transfers, None, TxType.TRANSFER, tx['id'], height, memo=memo)
 
-    def _parse_deposit(self) -> XcTx:
-        ...
-
-    def _parse_send(self) -> XcTx:
-        ...
-
     async def get_transaction_data(self, tx_id: str, address: str = '') -> XcTx:
         """
         Get transaction details by Tx Hash.
@@ -257,53 +252,7 @@ class THORChainClient(CosmosGaiaClient):
         """
         try:
             j = await self.get_transaction_data_cosmos(tx_id)
-            response = j.get('tx_response')
-            if not response:
-                raise TxLoadException(f'Failed to get transaction logs (tx-hash: ${tx_id}): no tx_response')
-
-            code = response.get('code')
-            is_successful = code == 0
-            if not is_successful:
-                raise TxLoadException(f'Code is not 0 ({code}) for tx-hash: ${tx_id}')
-
-            message0 = j['tx']['body']['messages'][0]
-            address = address or message0.get('signer') or message0.get('from_address')
-
-            logs = load_logs(response.get('logs'))
-            if not logs:
-                raise TxLoadException(f'Failed to get transaction logs (tx-hash: ${tx_id})')
-
-            if len(logs) > 1:
-                raise TxLoadException(f'Multiple logs are not supported yet (tx-hash: ${tx_id})')
-
-            log = logs[0]
-
-            transfers_events = log.find_events('transfer')
-            message_event = log.find_event('message')
-            if not transfers_events and not message_event:
-                raise TxLoadException(f'Invalid transaction data, no transfer/no message (tx-hash: ${tx_id})')
-
-            memo = ''
-            if (tx_j := j.get('tx')) and (body := tx_j.get('body')):
-                memo = body['memo']
-
-            tx_date = parse_iso_date(response['timestamp'])
-            # tx_type = message_event.find_attr_value_first('action')
-            tx_hash = response['txhash']
-            height = int(response['height'])
-
-            transfers = parse_transfer_log(log, self._decimal, address)
-
-            return XcTx(
-                asset=transfers[0].asset if transfers else None,
-                transfers=transfers,
-                date=tx_date,
-                type=TxType.TRANSFER,
-                hash=tx_hash,
-                height=height,
-                memo=memo,
-            )
-
+            return parse_tx_response_json(j, tx_id, address, self._decimal, self._denom, self.native_asset)
         except TxLoadException:
             return await self.get_transaction_data_thornode(tx_id)
 

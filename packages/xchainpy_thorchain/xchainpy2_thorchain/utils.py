@@ -1,13 +1,10 @@
-from typing import Optional, List
+from typing import Optional
 
 from cosmpy.aerial.client import Coin as CosmosCoin
 from cosmpy.aerial.tx import Transaction, SigningCfg
 from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PublicKey
 
-from xchainpy2_client import TokenTransfer
-from xchainpy2_cosmos import TxLog
-from xchainpy2_cosmos.utils import parse_cosmos_amount
 from xchainpy2_utils import NetworkType, CryptoAmount, Amount, RUNE_DECIMAL, Asset, AssetRUNE
 from .const import DEPOSIT_GAS_LIMIT_VALUE, DENOM_RUNE_NATIVE
 from .proto.thorchain.v1.common.common_pb2 import Coin, Asset as THORAsset
@@ -79,46 +76,6 @@ def build_deposit_tx_unsigned(
     )
 
     return tx
-
-
-def parse_transfer_log(log: TxLog, decimals, filter_address=None,
-                       native_denom=DENOM_RUNE_NATIVE,
-                       native_asset: Asset = AssetRUNE) -> List[TokenTransfer]:
-    transfer_data_list = []
-    sender, recipient, amount, asset = None, None, None, None
-    for event in log.events:
-        if event.type == 'transfer':
-            for i, attribute in enumerate(event.attributes):
-                if attribute.key == 'sender':
-                    sender = attribute.value
-                elif attribute.key == 'recipient':
-                    recipient = attribute.value
-                elif attribute.key == 'amount':
-                    amount_int, asset = parse_cosmos_amount(attribute.value)
-                    amount = Amount.from_base(amount_int, decimals)
-                    if asset == native_denom:
-                        asset = native_asset
-                    else:
-                        asset = Asset.from_string(asset.upper())
-
-                # ready to append
-                if sender and recipient and amount and asset:
-                    transfer_data_list.append(
-                        TokenTransfer(
-                            sender, recipient, amount, asset,
-                            tx_hash='', outbound=(sender == filter_address)
-                        ))
-
-                    sender, recipient, amount, asset = None, None, None, None  # reset
-
-    if filter_address:
-        transfer_data_list = [
-            data for data in transfer_data_list
-            if data.from_address == filter_address or data.to_address == filter_address
-        ]
-
-    return transfer_data_list
-
 
 def get_asset_from_denom(denom: str) -> Asset:
     if denom == DENOM_RUNE_NATIVE:
