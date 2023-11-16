@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import NamedTuple, Optional, List
 
 
@@ -82,6 +83,17 @@ class TxEvent(NamedTuple):
         attr = next(self.find_attributes(key), None)
         return attr.value if attr else default
 
+    @property
+    def as_dict_of_list(self):
+        groups = defaultdict(list)
+        for attr in self.attributes:
+            groups[attr.key].append(attr.value)
+        return groups
+
+    @property
+    def as_dict(self):
+        return {attr.key: attr.value for attr in self.attributes}
+
 
 class TxLog(NamedTuple):
     msg_index: int
@@ -118,4 +130,8 @@ class RPCResponse(NamedTuple):
 
 
 class TxLoadException(Exception):
+    pass
+
+
+class TxInternalException(Exception):
     pass

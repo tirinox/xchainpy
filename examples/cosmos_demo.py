@@ -17,13 +17,15 @@ async def demo_read_txs():
     balance = await client.get_balance(demo_addy)
     pprint(balance)
 
-    txs = await client.search_tx(message_sender=demo_addy)
+    tx_id = '72EF6969FACFAD016385BF1E0A0223D6522859E65AC767C27A5D1B6CB61A24A9'
+    tx_data = await client.get_transaction_data(tx_id=tx_id)
+
+    print(tx_data)
+
+    txs = await client.search_tx_from_rpc(message_sender=demo_addy)
     print(txs)
 
     # tx_id = txs.tx_responses[0].txhash
-    tx_id = '95759DFC5641143887A0064FDEF8BA3AC2F0F90DFF39BC4EF17B2DD3CBA3C917'
-    tx_data = await client.get_transaction_data(tx_id=tx_id)
-    print(tx_data)
 
 
 async def main():

@@ -1,82 +1,87 @@
 import asyncio
-import datetime
+import os
 
-from xchainpy2_client import TxType
-from xchainpy2_crypto import generate_mnemonic
-from xchainpy2_thorchain import THORChainClient, make_client_urls_from_ip_address
-from xchainpy2_utils import AssetRUNE
+from examples.common import sep
+from xchainpy2_thorchain import THORChainClient
+from xchainpy2_utils import AssetRUNE, AssetBTC, AssetETH
 
-# default Client
-# client = THORChainClient(phrase=generate_mnemonic())
-
-# In case you have your fullnode, the public nodes are severely rate-limited
-client = THORChainClient(phrase=generate_mnemonic(),
-                         client_urls=make_client_urls_from_ip_address(
-                             '1.2.3.4',  # your fullnode IP
-                         ))
-
-EXAMPLE_TX_SEND = '6C346BDC87349A371463C5D0E41A4BCF5765FB62F6808366C7F494717A1E33A2'
-EXAMPLE_TX_SYNTH_SEND = 'B81A5E86501CFC4FBA5BCF940A505C94A544247A353E0BEF273359973BAEAE73'
-EXAMPLE_TX_BOND = '729A5F240A183C91A94D0D0D6C9AD87E73778DF935DFFEFAE66ADB6F465B9CF0'
-
-# Rune => synth BTC
-EXAMPLE_TX_SWAP = 'A24A2F707A8B030519194170809107391AE4DC45F70A7E259FE4917AAF279EEE'
-
-# TWT => BUSD
-EXAMPLE_TX_SWAP_2 = 'DB5C52697308CA453C36A23113E732E4851495F22A9314CDCFD1846A0BE9DC45'
-
-# This is ETH tx, but it's THORChain inbound, so it also must be loaded
-EXAMPLE_INBOUND_ETH_TX = 'F81B40BBCF35313702D99FB1CB1B5CEB83A2570543161E4161D5B739F2866C8E'
+# >> Default Client (9R provider), the public nodes are severely rate-limited
+# client = THORChainClient()
 
 
-async def tx_test_send():
-    tx_id = EXAMPLE_TX_SEND
-
-    tx_data = await client.get_transaction_data(tx_id)
-    print(tx_data)
-    assert tx_data
-    assert tx_data.height == 11_689_548
-    assert tx_data.date == datetime.datetime(2023, 7, 13, 16, 0, 28)
-
-    assert tx_data.from_txs
-    from0 = tx_data.from_txs[0]
-    assert from0.amount.internal_amount == 33666111337
-    assert from0.amount.decimals == 8
-    assert from0.asset == AssetRUNE
-    assert from0.from_address == 'thor1vl9tf7dsc82f6g76hmdtjzdn73pw5w3wm9fqaq'
-
-    assert tx_data.to_txs
-    to0 = tx_data.to_txs[0]
-    assert to0.address == 'thor1gyap83aenguyhce3a0y3gprap32ypuc99m4wfg'
-    assert to0.asset == AssetRUNE
-    assert to0.amount == from0.amount
-
-    assert tx_data.type == TxType.TRANSFER
+# >> In case you have own full-node:
+ip = os.environ.get('THORNODE_IP_ADDRESS') or '1.2.3.4'
+client = THORChainClient.from_node_ip(ip)
 
 
-async def tx_test_swap1():
-    tx_id = EXAMPLE_TX_SWAP
+async def demo_read_external_tx_in_out():
+    sep('Inbound TX')
+    tx_id = '31605D8C2287482EFCDE76D07B1B641C4A1955C8977D1430A7BC80A7667951EA'  # BTC
+    print(client.get_explorer_tx_url(tx_id))
+    tx = await client.get_transaction_data(tx_id)
+    print(tx)
+    assert tx.asset == AssetBTC
+    assert tx.height == 13382572
+    assert len(tx.transfers) == 1
+    assert tx.transfers[0].amount.internal_amount == 6000000
+    assert tx.transfers[0].amount.decimals == 8
+    assert tx.transfers[0].from_address == 'bc1qy9pluaye4ggdhlcf7q3e5n0p68rxum4m83rxgm'
+    assert tx.memo == '=:ETH.ETH:0x71E5eED74c467b5a33290e11b0e458977F4C1681:0/1/0:te:0'
 
-    tx_data = await client.get_transaction_data(tx_id)
-    print(tx_data)
+    sep('Outbound TX')
+    tx_id = '623C57606865B78F2AA7F51BF6F9E41D229C37BE3899915DA3DA7B54BA141E9E'
+    print(client.get_explorer_tx_url(tx_id))
+    tx = await client.get_transaction_data(tx_id)
+    print(tx)
+    assert tx.asset == AssetETH
+    assert tx.height == 13382652
+    assert len(tx.transfers) == 1
+    assert tx.transfers[0].amount.internal_amount == 103543345
+    assert tx.transfers[0].amount.decimals == 8  # 8 decimals for all in TC
+    assert tx.transfers[0].to_address == '0x71E5eED74c467b5a33290e11b0e458977F4C1681'
+    assert tx.transfers[0].from_address == '0x1f3b3c6ac151bf32409fe139a5d55f3d9444729c'
 
 
-async def tx_test_swap_external():
-    tx_id = EXAMPLE_INBOUND_ETH_TX
-    tx_data = await client.get_transaction_data(tx_id)
-    print(tx_data)
+async def demo_read_tx_internal_transfer():
+    # this is a swap in Maya, but from TC's viewpoint, it is a regular native transfer
+    tx_id = '03F2F2C29F2F1E6FE318065F775BC6E3E47053BD7AE2910A406FF22351792CEA'
+    print(client.get_explorer_tx_url(tx_id))
+    tx = await client.get_transaction_data(tx_id)
+    print(tx)
+    assert len(tx.transfers) == 1
+    assert tx.hash == tx_id
+    assert tx.height == 13379930
+    assert tx.asset == AssetRUNE
+    assert tx.transfers[0].amount.as_asset == 950.0
+    assert tx.transfers[0].asset == AssetRUNE
+    assert tx.transfers[0].to_address == 'thor1l9ftj9w47pmdhcs6rhgtyg2yyy8264ld2fwpcp'
+    assert tx.transfers[0].from_address == 'thor198w2r5cwlamwmw0uyj90hvd6qp5svjvxa65jc2'
+    assert tx.transfers[0].outbound
+
+    # Swap (msg.Deposit)
+    tx_id = '113E0389463871FAD2E115EEFAFDCBAD1A0BF25A516D3F71978FC1B9B22F5EFD'
+    print(client.get_explorer_tx_url(tx_id))
+    tx = await client.get_transaction_data(tx_id)
+    print(tx)
+    assert len(tx.transfers) == 1
+    assert tx.transfers[0].amount.internal_amount == 31139000
+    assert tx.transfers[0].asset == AssetETH.as_synth
+    assert tx.transfers[0].from_address == 'thor166n4w5039meulfa3p6ydg60ve6ueac7tlt0jws'
+    assert tx.transfers[0].to_address == 'thor1g98cy3n9mmjrpn0sxmn63lztelera37n8n67c0'  # pool
+    assert tx.transfers[0].outbound
 
 
 async def read_txs_of_address():
     txs = await client.get_transactions('thor1cghgr0dneyymxx6fjq3e72q83z0qz7c3yttadx')
     print(txs)
+    assert txs.total >= 85
+    assert len(txs.txs) == 20
 
 
-async def main(phrase=None):
+async def main():
+    await demo_read_tx_internal_transfer()
+    await demo_read_external_tx_in_out()
     await read_txs_of_address()
-    # await tx_test_send(client)
-    await tx_test_swap1()
-    # await tx_test_swap_external()
 
 
 if __name__ == "__main__":
