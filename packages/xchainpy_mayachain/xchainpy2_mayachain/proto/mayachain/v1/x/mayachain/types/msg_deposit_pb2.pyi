@@ -1,4 +1,4 @@
-from thorchain.v1.common import common_pb2 as _common_pb2
+from mayachain.v1.common import common_pb2 as _common_pb2
 from gogoproto import gogo_pb2 as _gogo_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor

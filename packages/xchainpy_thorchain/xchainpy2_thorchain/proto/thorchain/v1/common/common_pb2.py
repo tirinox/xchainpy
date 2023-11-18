@@ -20,7 +20,6 @@ _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'thorchain.v1.common.common_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
-
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'Z$gitlab.com/thorchain/thornode/common\310\341\036\000\330\341\036\000\200\342\036\000'
   _ASSET.fields_by_name['chain']._options = None
