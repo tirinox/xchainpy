@@ -11,14 +11,14 @@ from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalExcept
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, \
-    Asset, SYNTH_DELIMITER
-from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
-    THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_RUNE_FEE, \
-    make_client_urls_from_ip_address
-from .utils import get_thor_address_prefix, build_deposit_tx_unsigned
+    Asset, SYNTH_DELIMITER, CACAO_DECIMAL
+from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_CACAO_NATIVE, ROOT_DERIVATION_PATHS, \
+    DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_CACAO_FEE, \
+    make_client_urls_from_ip_address, DEFAULT_MAYA_EXPLORERS
+from .utils import build_deposit_tx_unsigned, get_maya_address_prefix
 
 
-class THORChainClient(CosmosGaiaClient):
+class MayaChainClient(CosmosGaiaClient):
     @classmethod
     def from_node_ip(cls, ip: str):
         """
@@ -36,7 +36,7 @@ class THORChainClient(CosmosGaiaClient):
                  client_urls=DEFAULT_CLIENT_URLS,
                  fallback_client_urls=FALLBACK_CLIENT_URLS,
                  chain_ids=DEFAULT_CHAIN_IDS,
-                 explorer_providers=THOR_EXPLORERS,
+                 explorer_providers=DEFAULT_MAYA_EXPLORERS,
                  ):
         """
         Initialize THORChainClient.
@@ -48,7 +48,7 @@ class THORChainClient(CosmosGaiaClient):
         :param chain_ids: Dictionary of chain ids for each network type. See: DEFAULT_CHAIN_IDS
         :param explorer_providers: Dictionary of explorer providers for each network type. See: THOR_EXPLORERS
         """
-        self.explorer_providers = explorer_providers.copy() if explorer_providers else THOR_EXPLORERS.copy()
+        self.explorer_providers = explorer_providers.copy() if explorer_providers else DEFAULT_MAYA_EXPLORERS.copy()
 
         if isinstance(client_urls, NodeURL):
             client_urls = {network: client_urls}
@@ -66,10 +66,10 @@ class THORChainClient(CosmosGaiaClient):
 
         # Tune for THORChain
         self.chain = Chain.THORChain
-        self._prefix = get_thor_address_prefix(network)
+        self._prefix = get_maya_address_prefix(network)
         self.native_asset = AssetRUNE
-        self._denom = DENOM_RUNE_NATIVE
-        self._decimal = RUNE_DECIMAL
+        self._denom = DENOM_CACAO_NATIVE
+        self._decimal = CACAO_DECIMAL
         self._gas_limit = DEFAULT_GAS_LIMIT_VALUE
         self._deposit_gas_limit = DEPOSIT_GAS_LIMIT_VALUE
 
@@ -117,7 +117,7 @@ class THORChainClient(CosmosGaiaClient):
         :param sequence: sequence number. If it is None, it will be fetched automatically
         :param check_balance: Flag to check the balance before sending Tx
         :param wallet_index: Wallet index, default is 0
-        :param fee: string like "0rune", default is 0
+        :param fee: string like "0cacao", default is 0
         :param account_number: Your account number. If it is none, we will fetch it
         :param return_full_response: when it is not enough to have just tx hash
 
@@ -169,10 +169,10 @@ class THORChainClient(CosmosGaiaClient):
 
         return result if return_full_response else result.tx_hash
 
-    async def fetch_transaction_from_thornode_raw(self, tx_hash: str) -> dict:
+    async def fetch_transaction_from_mayanode_raw(self, tx_hash: str) -> dict:
         """
         Fetch transaction from THORNode, try to use fallback client if main client is not available
-        Url: https://node/thorchain/tx/{tx_hash}
+        Url: https://node/mayachain/tx/{tx_hash}
         :param tx_hash: Tx Hash
         :return: Transaction data (raw, unparsed)
         """
@@ -183,7 +183,7 @@ class THORChainClient(CosmosGaiaClient):
         exc = None
         for client in clients:
             try:
-                url = f"{client.node}/thorchain/tx/{tx_hash}"
+                url = f"{client.node}/mayachain/tx/{tx_hash}"
                 j = await self._get_json(url)
                 return j
             except Exception as e:
@@ -192,13 +192,13 @@ class THORChainClient(CosmosGaiaClient):
         if exc:
             raise exc
 
-    async def get_transaction_data_thornode(self, tx_id: str) -> XcTx:
+    async def get_transaction_data_mayanode(self, tx_id: str) -> XcTx:
         """
-        Fetch transaction data from THORNode (parsed to XcTx instance)
+        Fetch transaction data from MayaNode (parsed to XcTx instance)
         This function is used when inbound or outbound tx is not of THORChain.
         It is called "getTransactionDataThornode" in xchainjs
         Parsing "observed_tx" object.
-        Url: https://node/thorchain/tx/{tx_hash}
+        Url: https://node/mayachain/tx/{tx_hash}
         :param tx_id: Tx Hash
         :return: XcTx result
         """
@@ -208,7 +208,7 @@ class THORChainClient(CosmosGaiaClient):
         # Remove 0x prefix if exists
         tx_id = remove_0x_prefix(tx_id)
 
-        raw_data = await self.fetch_transaction_from_thornode_raw(tx_id)
+        raw_data = await self.fetch_transaction_from_mayanode_raw(tx_id)
 
         if not raw_data:
             raise TxLoadException(f"Could not fetch transaction data from THORNode {tx_id}")
@@ -254,10 +254,10 @@ class THORChainClient(CosmosGaiaClient):
             j = await self.get_transaction_data_cosmos(tx_id)
             return parse_tx_response_json(j, tx_id, address, self._decimal, self._denom, self.native_asset)
         except TxLoadException:
-            return await self.get_transaction_data_thornode(tx_id)
+            return await self.get_transaction_data_mayanode(tx_id)
 
     async def get_fees(self, cache=None, tc_fee_rate=None) -> Fees:
-        return single_fee(FeeType.FLAT_FEE, DEFAULT_RUNE_FEE)
+        return single_fee(FeeType.FLAT_FEE, DEFAULT_CACAO_FEE)
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         if SYNTH_DELIMITER in denom:

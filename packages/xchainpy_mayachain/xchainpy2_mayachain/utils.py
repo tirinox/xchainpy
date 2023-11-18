@@ -5,30 +5,30 @@ from cosmpy.aerial.tx import Transaction, SigningCfg
 from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PublicKey
 
-from xchainpy2_utils import NetworkType, CryptoAmount, Amount, RUNE_DECIMAL, Asset, AssetRUNE
-from .const import DEPOSIT_GAS_LIMIT_VALUE, DENOM_RUNE_NATIVE
-from .proto.thorchain.v1.common.common_pb2 import Coin, Asset as THORAsset
-from .proto.thorchain.v1.x.thorchain.types.msg_deposit_pb2 import MsgDeposit
+from xchainpy2_utils import NetworkType, CryptoAmount, Amount, Asset, CACAO_DECIMAL, AssetCACAO
+from .const import DEPOSIT_GAS_LIMIT_VALUE, DENOM_CACAO_NATIVE
+from .proto.mayachain.v1.common.common_pb2 import Coin, Asset as THORAsset
+from .proto.mayachain.v1.x.mayachain.types.msg_deposit_pb2 import MsgDeposit
 
 
-def get_thor_address_prefix(network: NetworkType) -> str:
+def get_maya_address_prefix(network: NetworkType) -> str:
     """
     Get address prefix based on the network.
     :param network:
     :return: string address prefix
     """
     if network == NetworkType.TESTNET:
-        return 'tthor'
+        return 'tmaya'
     elif network == NetworkType.STAGENET:
-        return 'sthor'
+        return 'smaya'
     elif network == NetworkType.MAINNET:
-        return 'thor'
+        return 'maya'
     else:
         raise ValueError('Invalid network')
 
 
-def convert_coin_to_crypto_amount(coin: CosmosCoin, decimals=RUNE_DECIMAL) -> CryptoAmount:
-    asset = Asset.from_string(f'THOR.{coin.denom.upper()}')
+def convert_coin_to_crypto_amount(coin: CosmosCoin, decimals=CACAO_DECIMAL) -> CryptoAmount:
+    asset = Asset.from_string(f'MAYA.{coin.denom.upper()}')
     return CryptoAmount(
         amount=Amount.from_base(coin.amount, decimals),
         asset=asset
@@ -77,9 +77,10 @@ def build_deposit_tx_unsigned(
 
     return tx
 
+
 def get_asset_from_denom(denom: str) -> Asset:
-    if denom == DENOM_RUNE_NATIVE:
-        return AssetRUNE
+    if denom == DENOM_CACAO_NATIVE:
+        return AssetCACAO
     else:
         return Asset.from_string_exc(denom.upper())
 

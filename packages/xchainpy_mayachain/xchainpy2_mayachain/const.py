@@ -1,12 +1,10 @@
 from xchainpy2_client import ExplorerProvider
 from xchainpy2_utils import Asset, Amount
-from xchainpy2_utils.consts import NetworkType, RUNE_DECIMAL
+from xchainpy2_utils.consts import NetworkType, CACAO_DECIMAL
 from .models import NodeURL
 
 DEFAULT_GAS_ADJUSTMENT = 2
-
-DEFAULT_GAS_LIMIT_VALUE = '6000000'
-
+DEFAULT_GAS_LIMIT_VALUE = '4000000'
 DEPOSIT_GAS_LIMIT_VALUE = '600000000'
 
 MAX_TX_COUNT_PER_PAGE = 100
@@ -15,26 +13,38 @@ MAX_TX_COUNT_PER_FUNCTION_CALL = 500
 
 MAX_PAGES_PER_FUNCTION_CALL = 15
 
-RUNE_SYMBOL = 'ᚱ'
-RUNE_TICKER = 'RUNE'
+RUNE_SYMBOL = 'C'
+CACAO_TICKER = 'CACAO'
+DENOM_CACAO_NATIVE = 'cacao'
 
-DEFAULT_RUNE_FEE = Amount.from_asset(0.02, RUNE_DECIMAL)
+MAYA_DECIMAL = 4
 
-DEFAULT_EXPLORER_URL = 'https://viewblock.io/thorchain{path}{network_tag}'
+AssetMAYA = Asset.from_string('MAYA.CACAO')
+
+DEFAULT_CACAO_FEE = Amount.from_asset(0.02, CACAO_DECIMAL)
+
+DEFAULT_EXPLORER_URL = 'https://explorer.mayachain.info{path}{network_tag}'
+MAYASCAN_EXPLORER_URL = 'https://mayascan.org{path}'
 
 
-def make_explorer_object(network_tag: str):
+def make_explorer_object(network_tag: str, base_url=MAYASCAN_EXPLORER_URL):
     return ExplorerProvider(
-        DEFAULT_EXPLORER_URL.format(network_tag=network_tag, path=''),
-        DEFAULT_EXPLORER_URL.format(network_tag=network_tag, path='/address/{address}'),
-        DEFAULT_EXPLORER_URL.format(network_tag=network_tag, path='/tx/{tx_id}'),
+        base_url.format(network_tag=network_tag, path=''),
+        base_url.format(network_tag=network_tag, path='/address/{address}'),
+        base_url.format(network_tag=network_tag, path='/tx/{tx_id}'),
     )
 
 
-THOR_EXPLORERS = {
+DEFAULT_MAYA_EXPLORERS = {
     NetworkType.MAINNET: make_explorer_object(''),
     NetworkType.TESTNET: make_explorer_object('?network=testnet'),
     NetworkType.STAGENET: make_explorer_object('?network=stagenet')
+}
+
+MAYASCAN_EXPLORERS = {
+    NetworkType.MAINNET: make_explorer_object('', base_url=MAYASCAN_EXPLORER_URL),
+    NetworkType.TESTNET: make_explorer_object('?network=testnet', base_url=MAYASCAN_EXPLORER_URL),
+    NetworkType.STAGENET: make_explorer_object('?network=stagenet', base_url=MAYASCAN_EXPLORER_URL)
 }
 
 ROOT_DERIVATION_PATH = "44'/931'/0'/0/"
@@ -46,8 +56,8 @@ ROOT_DERIVATION_PATHS = {
 }
 
 DEFAULT_CHAIN_IDS = {
-    NetworkType.MAINNET: 'thorchain-mainnet-v1',
-    NetworkType.STAGENET: 'thorchain-stagenet-v2',
+    NetworkType.MAINNET: 'mayachain-mainnet-v1',
+    NetworkType.STAGENET: 'mayachain-stagenet-v1',
     NetworkType.TESTNET: 'deprecated',
 }
 
@@ -69,36 +79,18 @@ def make_client_urls_from_ip_address(ip_address: str, network=NetworkType.MAINNE
 
 DEFAULT_CLIENT_URLS = {
     NetworkType.MAINNET: NodeURL(
-        'https://thornode.ninerealms.com',
-        'https://rpc.ninerealms.com'
+        'https://mayanode.mayachain.info',
+        'https://tendermint.mayachain.info/'
     ),
     NetworkType.STAGENET: NodeURL(
-        'https://stagenet-thornode.ninerealms.com',
-        'https://stagenet-rpc.ninerealms.com'
+        'https://stagenet.mayanode.mayachain.info',
+        'https://stagenet.mayachain.info/'
     ),
     NetworkType.TESTNET: NodeURL('deprecated', 'deprecated'),
 }
 
 FALLBACK_CLIENT_URLS = {
-    NetworkType.MAINNET: [
-        NodeURL('https://thornode-v1.ninerealms.com', 'https://rpc-v1.ninerealms.com'),
-        NodeURL('https://thornode.thorswap.net/', 'https://rpc.thorswap.net'),
-        NodeURL('https://thornode-v0.ninerealms.com', 'https://rpc-v0.ninerealms.com'),
-    ],
-    NetworkType.STAGENET: [DEFAULT_CLIENT_URLS[NetworkType.STAGENET]],
+    NetworkType.MAINNET: [],
+    NetworkType.STAGENET: [],
     NetworkType.TESTNET: []
 }
-
-# Base "chain" asset for RUNE-67C on Binance test net.
-AssetRuneBNBTestnet = Asset.from_string('BNB.RUNE-67C')
-
-# Base "chain" asset for RUNE-B1A on Binance main net.
-AssetRuneBNBMainnet = Asset.from_string('BNB.RUNE-B1A')
-
-# Base "chain" asset for RUNE on ethereum main net.
-AssetRuneERC20Mainnet = Asset.from_string('ETH.RUNE-0x3155ba85d5f96b2d030a4966af206230e46849cb')
-
-# Base "chain" asset for RUNE on ethereum test net.
-AssetRuneERC20Testnet = Asset.from_string('ETH.RUNE-0xd601c6A3a36721320573885A8d8420746dA3d7A0')
-
-DENOM_RUNE_NATIVE = 'rune'
