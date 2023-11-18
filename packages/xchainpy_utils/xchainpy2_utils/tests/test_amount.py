@@ -100,6 +100,19 @@ def test_compare():
     assert int(Amount(11111, 6)) == int(Amount(11111, 10))
     assert Amount(11111, 6) != Amount(11111, 8)
 
+    assert Amount(40, 4, Denomination.ASSET) > 39
+
+    assert Amount.from_asset(40) > 39.0
+    assert Amount.from_asset(40) >= 40.0
+    assert Amount.from_asset(40) >= 38.0
+    assert Amount.from_asset(40) < 40.1
+    assert Amount.from_asset(40) <= 40.0
+    assert Amount.from_asset(40) <= 40.1
+
+    # ints are treated as base amounts
+    assert Amount.from_asset(40) < 50 * 10**8
+    assert Amount.from_asset(40) > 30 * 10**8
+
 
 def test_change_decimals():
     a = Amount(123456789, 8, Denomination.BASE)

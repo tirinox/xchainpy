@@ -1,6 +1,6 @@
 from decimal import Decimal, Context
 from enum import Enum
-from typing import NamedTuple, Union
+from typing import NamedTuple, Union, List
 
 from .asset import Asset
 
@@ -73,22 +73,25 @@ class Amount(NamedTuple):
 
     def __eq__(self, other):
         if not isinstance(other, Amount):
-            return self == Amount.automatic(other, self.decimals)
+            return self == self.like_me(other)
 
         return self.internal_amount == other.internal_amount and \
             self.decimals == other.decimals and self.denom == other.denom
 
+    def like_me(self, x):
+        return self.automatic(x, self.decimals)
+
     def __lt__(self, other):
-        return self.internal_amount < other.internal_amount
+        return self.internal_amount < self.like_me(other).internal_amount
 
     def __le__(self, other):
-        return self.internal_amount <= other.internal_amount
+        return self.internal_amount <= self.like_me(other).internal_amount
 
     def __gt__(self, other):
-        return self.internal_amount > other.internal_amount
+        return self.internal_amount > self.like_me(other).internal_amount
 
     def __ge__(self, other):
-        return self.internal_amount >= other.internal_amount
+        return self.internal_amount >= self.like_me(other).internal_amount
 
     @classmethod
     def zero(cls, decimals=DEFAULT_ASSET_DECIMAL, denom=Denomination.ASSET):
@@ -117,7 +120,8 @@ class Amount(NamedTuple):
     @classmethod
     def automatic(cls, x, decimals=DEFAULT_ASSET_DECIMAL, context=DC):
         if isinstance(x, Amount):
-            return x if x.decimals == decimals else cls(x.internal_amount, decimals, x.denom)
+            # return x if x.decimals == decimals else cls(x.internal_amount, decimals, x.denom)
+            return x
         elif isinstance(x, int):
             return cls.from_base(x, decimals)
         elif isinstance(x, (float, str)):
@@ -244,6 +248,14 @@ class CryptoAmount(NamedTuple):
     @classmethod
     def from_base(cls, amount, asset: Asset = None, decimals=DEFAULT_ASSET_DECIMAL, ) -> 'CryptoAmount':
         return CryptoAmount(Amount.from_base(amount, decimals), asset)
+
+    @classmethod
+    def pick(cls, balances: List['CryptoAmount'], asset: Asset):
+        for b in balances:
+            if b.asset == asset:
+                return b
+        else:
+            return cls.zero(asset)
 
 
 def bn(s: str, context=DECIMAL_CONTEXT) -> Decimal:
