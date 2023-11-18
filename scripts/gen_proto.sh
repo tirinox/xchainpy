@@ -15,6 +15,8 @@ THOR_GIT="https://gitlab.com/thorchain/thornode.git"
 MAYA_GIT="https://gitlab.com/mayachain/mayanode.git"
 COSMOS_GIT="https://github.com/cosmos/cosmos-sdk.git"
 
+TEMP="../temp"
+
 echo "I will help you to generate Python code from THORNode/Maya protobuf files"
 
 # ask if user wants to create new venv
@@ -58,12 +60,19 @@ esac
 
 # -----------------------
 
-NODE_CODE="temp/node_code_$PROTOCOL"
+NODE_CODE="$TEMP/node_code_$PROTOCOL"
+COSMOS_CODE="$TEMP/cosmos"
 
 if [ ! -d "$NODE_CODE" ]; then
   git clone $GIT_URL $NODE_CODE
   cd $NODE_CODE && git checkout $LAST_VERSION && cd ..
   echo "Source code downloaded"
+fi
+
+if [ ! -d "$COSMOS_CODE" ]; then
+  git clone $COSMOS_GIT $COSMOS_CODE
+  cd $COSMOS_CODE && git checkout $COSMOS_SDK_VERSION && cd ..
+  echo "Cosmos source code downloaded"
 fi
 
 # -----------------------
@@ -79,11 +88,14 @@ case $yn in
   # print working directory
   pwd
 
-  temp/venv/bin/python3 -m grpc_tools.protoc --proto_path="${NODE_CODE}/proto" \
+  $TEMP/venv/bin/python3 -m grpc_tools.protoc --proto_path="${NODE_CODE}/proto" \
     --proto_path="${NODE_CODE}/third_party/proto" \
+    --proto_path="${COSMOS_CODE}/proto" \
     --python_out="${PROTO_OUT_PATH}" --grpc_python_out="${PROTO_OUT_PATH}" --pyi_out="${PROTO_OUT_PATH}" \
     "$PROTOCOL/v1/x/$PROTOCOL/types/msg_deposit.proto" \
-    "$PROTOCOL/v1/common/common.proto" "gogoproto/gogo.proto"
+    "$PROTOCOL/v1/x/$PROTOCOL/types/msg_send.proto" \
+    "$PROTOCOL/v1/common/common.proto" "gogoproto/gogo.proto" "cosmos/base/v1beta1/coin.proto"
+
 
   find "$PROTO_OUT_PATH/" -type d -exec touch {}/__init__.py \;
   # restore root __init__.py as it contains code to have the proto files module available
