@@ -14,8 +14,11 @@ async def main():
     """
     public_key = client.get_public_key()
     address = client.get_address()
+    print(f'Your address: {address}')
 
     account = await client.get_account(address)
+    if not account:
+        raise Exception('Account not found')
 
     tx = build_deposit_tx_unsigned(
         CryptoAmount(Amount.zero(), AssetRUNE),
@@ -39,7 +42,8 @@ async def main():
 
 if __name__ == "__main__":
     phrase = os.environ.get('PHRASE')
-    phrase = phrase or generate_mnemonic()
+    if not phrase:
+        raise Exception('Please pass PHRASE environment variable to run this example!')
 
     client = THORChainClient(phrase=phrase)
 
