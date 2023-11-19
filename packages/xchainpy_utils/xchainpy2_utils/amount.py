@@ -249,11 +249,19 @@ class CryptoAmount(NamedTuple):
     def from_base(cls, amount, asset: Asset = None, decimals=DEFAULT_ASSET_DECIMAL, ) -> 'CryptoAmount':
         return CryptoAmount(Amount.from_base(amount, decimals), asset)
 
+    @property
+    def as_asset(self):
+        return CryptoAmount(self.amount.as_asset, self.asset)
+
+    @property
+    def as_base(self):
+        return CryptoAmount(self.amount.as_base, self.asset)
+
     @classmethod
     def pick(cls, balances: List['CryptoAmount'], asset: Asset):
         for b in balances:
             if b.asset == asset:
-                return b
+                return b.as_asset
         else:
             return cls.zero(asset)
 
