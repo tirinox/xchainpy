@@ -2,6 +2,7 @@ import asyncio
 import os
 
 from xchainpy2_mayachain import MayaChainClient
+from xchainpy2_thorchain_query import CACAO_NETWORK_FEE
 from xchainpy2_utils import CryptoAmount, Amount, NetworkType, CACAO_DECIMAL, AssetCACAO
 
 """
@@ -24,13 +25,12 @@ async def main():
     print(f"{client.get_address()}'s balance is {balance}")
 
     dest_address = client.get_address(1)
-    r = await client.transfer(CryptoAmount(Amount.automatic(0.1, CACAO_DECIMAL), AssetCACAO),
-                              dest_address)
+    r = await client.transfer(CryptoAmount(Amount.automatic(0.1, CACAO_DECIMAL), AssetCACAO), dest_address)
     print(f"Transfer submitted: {client.get_explorer_tx_url(r)}")
 
     while True:
         print("Waiting for balance update...")
-        await asyncio.sleep(10)
+        await asyncio.sleep(6)
         balances = await client.get_balance(dest_address)
         print(f"{dest_address}'s balance is {balances}")
 
@@ -40,6 +40,7 @@ async def main():
             print(f"Balance updated: {cacao_balance.amount} Cacao! Let's transfer it back")
             break
 
+    cacao_balance -= CACAO_NETWORK_FEE
     r = await client.transfer(cacao_balance, client.get_address(), wallet_index=1)
     print(f"Transfer submitted: {client.get_explorer_tx_url(r)}")
 
