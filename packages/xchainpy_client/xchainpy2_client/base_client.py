@@ -87,7 +87,7 @@ class XChainClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_balance(self, address: str) -> List[CryptoAmount]:
+    async def get_balance(self, address: str, wallet_index: int = 0) -> List[CryptoAmount]:
         ...
 
     def get_full_derivation_path(self, wallet_index: int) -> str:

@@ -2,13 +2,15 @@ from typing import Optional
 
 from cosmpy.aerial.client import Coin as CosmosCoin
 from cosmpy.aerial.tx import Transaction, SigningCfg
-from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PublicKey
 
+from xchainpy2_cosmos.utils import convert_address_for_msg
 from xchainpy2_utils import NetworkType, CryptoAmount, Amount, Asset, CACAO_DECIMAL, AssetCACAO
 from .const import DEPOSIT_GAS_LIMIT_VALUE, DENOM_CACAO_NATIVE
-from .proto.mayachain.v1.common.common_pb2 import Coin, Asset as THORAsset
+from .proto.cosmos.base.v1beta1.coin_pb2 import Coin
+from .proto.mayachain.v1.common.common_pb2 import Coin as THORCoin, Asset as THORAsset
 from .proto.mayachain.v1.x.mayachain.types.msg_deposit_pb2 import MsgDeposit
+from .proto.mayachain.v1.x.mayachain.types.msg_send_pb2 import MsgSend
 
 
 def get_maya_address_prefix(network: NetworkType) -> str:
@@ -35,17 +37,19 @@ def convert_coin_to_crypto_amount(coin: CosmosCoin, decimals=CACAO_DECIMAL) -> C
     )
 
 
-def crypto_amount_to_msg_coin(a: CryptoAmount) -> Coin:
+def crypto_amount_to_msg_coin(a: CryptoAmount) -> THORCoin:
     asset = THORAsset(
         chain=a.asset.chain,
         symbol=a.asset.full_symbol,
         ticker=a.asset.symbol,
         synth=a.asset.synth
     )
-    return Coin(
+    return THORCoin(
         asset=asset,
         amount=str(a.amount.as_base.amount), decimals=a.amount.decimals
     )
+
+
 
 
 def build_deposit_tx_unsigned(
@@ -65,7 +69,7 @@ def build_deposit_tx_unsigned(
 
     tx = Transaction()
     tx.add_message(
-        MsgDeposit(coins=coins, memo=memo, signer=bytes(Address(signer_public_key, prefix)))
+        MsgDeposit(coins=coins, memo=memo, signer=convert_address_for_msg(signer_public_key, prefix))
     )
 
     tx = tx.seal(
@@ -75,6 +79,22 @@ def build_deposit_tx_unsigned(
         memo=memo
     )
 
+    return tx
+
+
+def build_transfer_tx_draft(what: CryptoAmount, denom: str, sender: str, recipient: str,
+                            prefix: str) -> Transaction:
+    tx = Transaction()
+
+    tx.add_message(
+        msg=MsgSend(
+            from_address=convert_address_for_msg(sender, prefix),
+            to_address=convert_address_for_msg(recipient, prefix),
+            amount=[
+                Coin(amount=str(what.amount.internal_amount), denom=denom)
+            ],
+        )
+    )
     return tx
 
 

@@ -2,6 +2,7 @@ import asyncio
 from typing import Optional, Union
 
 from bip_utils import Bech32ChecksumError
+from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
 from xchainpy2_client import AssetInfo, XcTx, TxType, Fees, FeeType, TokenTransfer
@@ -15,7 +16,7 @@ from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoA
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_RUNE_FEE, \
     make_client_urls_from_ip_address
-from .utils import get_thor_address_prefix, build_deposit_tx_unsigned
+from .utils import get_thor_address_prefix, build_deposit_tx_unsigned, build_transfer_tx_draft
 
 
 class THORChainClient(CosmosGaiaClient):
@@ -265,3 +266,20 @@ class THORChainClient(CosmosGaiaClient):
             return Asset.from_string(denom.upper())
         else:
             return super().parse_denom_to_asset(denom)
+
+    def get_denom(self, asset: Asset) -> str:
+        if asset == AssetRUNE:
+            return DENOM_RUNE_NATIVE
+        else:
+            return str(asset).lower()
+
+    def build_transfer_tx(self, what: CryptoAmount, recipient: str,
+                          wallet_index=0) -> Transaction:
+        self._make_wallet(wallet_index)
+        tx = build_transfer_tx_draft(
+            what, denom=self.get_denom(what.asset),
+            sender=str(self._wallet.address()),
+            recipient=recipient,
+            prefix=self.prefix,
+        )
+        return tx

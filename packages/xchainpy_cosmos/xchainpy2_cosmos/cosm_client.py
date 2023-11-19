@@ -6,8 +6,9 @@ from typing import Optional, List
 from urllib.parse import urlencode
 
 from aiohttp import ClientSession
-from cosmpy.aerial.client import LedgerClient, Account
+from cosmpy.aerial.client import LedgerClient, Account, create_bank_send_msg, prepare_and_broadcast_basic_transaction
 from cosmpy.aerial.config import NetworkConfig
+from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.wallet import LocalWallet
 from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PrivateKey, PublicKey
@@ -24,7 +25,7 @@ from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_D
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
     MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE, DEFAULT_GAS_LIMIT, DEFAULT_REST_USER_AGENT
 from .models import TxHistoryResponse, TxResponse, TxLoadException
-from .utils import parse_tx_response, get_denom
+from .utils import parse_tx_response
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +75,7 @@ class CosmosGaiaClient(XChainClient):
 
         self._wallet: Optional[LocalWallet] = None
         self.cache = None
+        self.tx_responses = {}
 
     def get_client(self) -> LedgerClient:
         """
@@ -222,14 +224,15 @@ class CosmosGaiaClient(XChainClient):
         pk = self.get_private_key(wallet_index)
         return PrivateKey(bytes.fromhex(pk))
 
-    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+    async def get_balance(self, address: str = '', wallet_index: int = 0) -> List[CryptoAmount]:
         """
         Get the balance of a given address.
+        :param wallet_index: Wallet index, default 0
         :param address: By default, it will return the balance of the current wallet. (optional)
         :return:
         """
         if not address:
-            address = self.get_address()
+            address = self.get_address(wallet_index)
 
         address = Address(address)
 
@@ -501,17 +504,30 @@ class CosmosGaiaClient(XChainClient):
         if check_balance:
             await self.check_balance(str(self._wallet.address()), what)
 
+        tx = self.build_transfer_tx(what, recipient, wallet_index)
+
         response = await asyncio.get_event_loop().run_in_executor(
             None,
-            self._client.send_tokens,
-            Address(recipient),
-            what.amount,
-            get_denom(what.asset),
+            prepare_and_broadcast_basic_transaction,
+            self._client,
+            tx,
             self._wallet,
-            memo,
-            self._gas_limit,
+            None,  # account
+            int(self._gas_limit),
+            memo
         )
+
+        self.tx_responses[response.tx_hash] = response
+
         return response.tx_hash
+
+    def build_transfer_tx(self, what: CryptoAmount, recipient: str, wallet_index=0) -> Transaction:
+        tx = Transaction()
+        tx.add_message(
+            create_bank_send_msg(self._wallet.address(), Address(recipient),
+                                 what.amount.internal_amount, self.get_denom(what.asset))
+        )
+        return tx
 
     async def broadcast_tx(self, tx_hex: str) -> str:
         broadcast_req = BroadcastTxRequest(
@@ -528,6 +544,8 @@ class CosmosGaiaClient(XChainClient):
         # check that the response is successful
         initial_tx_response = self._client._parse_tx_response(resp.tx_response)
         initial_tx_response.ensure_successful()
+
+        self.tx_responses[tx_digest] = initial_tx_response
 
         return tx_digest
 
@@ -583,7 +601,7 @@ class CosmosGaiaClient(XChainClient):
         is_native = amount.asset == self.native_asset
         extra_fee = fee if is_native else Amount.from_base(0, self._decimal)
 
-        if asset_balance is None or asset_balance.amount < amount.amount + extra_fee:
+        if asset_balance is None or asset_balance.amount.as_base < amount.amount.as_base + extra_fee.as_base:
             raise ValueError(f"Insufficient funds: {amount.amount} {amount.asset}")
 
         if native_balance is None or native_balance.amount < fee:
@@ -596,3 +614,9 @@ class CosmosGaiaClient(XChainClient):
 
     def get_amount_string(self, amount):
         return f"{int(amount)}{self._denom}"
+
+    def get_denom(self, asset: Asset) -> str:
+        if asset == AssetATOM:
+            return COSMOS_DENOM
+        else:
+            return str(asset).lower()

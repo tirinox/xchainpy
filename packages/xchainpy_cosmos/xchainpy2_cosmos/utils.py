@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Optional, List, Tuple
 
+from cosmpy.crypto.address import Address
+
 from xchainpy2_client import XcTx, TxType, TokenTransfer
 from xchainpy2_utils import Asset, AssetATOM, Chain, Amount, key_attr_getter, parse_iso_date
 from .const import COSMOS_DENOM
@@ -249,3 +251,7 @@ def parse_cosmos_amounts(value: str) -> List[Tuple[int, str]]:
         return []
     items = value.split(',')
     return [parse_cosmos_amount(item.strip()) for item in items]
+
+
+def convert_address_for_msg(address, prefix: str) -> bytes:
+    return bytes(Address(address, prefix))

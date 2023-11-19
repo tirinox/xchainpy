@@ -2,6 +2,7 @@ import asyncio
 from typing import Optional, Union
 
 from bip_utils import Bech32ChecksumError
+from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
 from xchainpy2_client import AssetInfo, XcTx, TxType, Fees, FeeType, TokenTransfer
@@ -11,11 +12,11 @@ from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalExcept
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, \
-    Asset, SYNTH_DELIMITER, CACAO_DECIMAL
+    Asset, SYNTH_DELIMITER, CACAO_DECIMAL, AssetCACAO
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_CACAO_NATIVE, ROOT_DERIVATION_PATHS, \
     DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_CACAO_FEE, \
     make_client_urls_from_ip_address, DEFAULT_MAYA_EXPLORERS
-from .utils import build_deposit_tx_unsigned, get_maya_address_prefix
+from .utils import build_deposit_tx_unsigned, get_maya_address_prefix, build_transfer_tx_draft
 
 
 class MayaChainClient(CosmosGaiaClient):
@@ -67,7 +68,7 @@ class MayaChainClient(CosmosGaiaClient):
         # Tune for THORChain
         self.chain = Chain.THORChain
         self._prefix = get_maya_address_prefix(network)
-        self.native_asset = AssetRUNE
+        self.native_asset = AssetCACAO
         self._denom = DENOM_CACAO_NATIVE
         self._decimal = CACAO_DECIMAL
         self._gas_limit = DEFAULT_GAS_LIMIT_VALUE
@@ -265,3 +266,20 @@ class MayaChainClient(CosmosGaiaClient):
             return Asset.from_string(denom.upper())
         else:
             return super().parse_denom_to_asset(denom)
+
+    def get_denom(self, asset: Asset) -> str:
+        if asset == AssetCACAO:
+            return DENOM_CACAO_NATIVE
+        else:
+            return str(asset).lower()
+
+    def build_transfer_tx(self, what: CryptoAmount, recipient: str,
+                          wallet_index=0) -> Transaction:
+        self._make_wallet(wallet_index)
+        tx = build_transfer_tx_draft(
+            what, denom=self.get_denom(what.asset),
+            sender=str(self._wallet.address()),
+            recipient=recipient,
+            prefix=self.prefix,
+        )
+        return tx
