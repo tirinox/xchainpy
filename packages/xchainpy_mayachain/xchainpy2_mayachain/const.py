@@ -94,3 +94,5 @@ FALLBACK_CLIENT_URLS = {
     NetworkType.STAGENET: [],
     NetworkType.TESTNET: []
 }
+
+MAYA_BLOCK_TIME_SEC = 6.0

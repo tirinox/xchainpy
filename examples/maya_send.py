@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from xchainpy2_mayachain import MayaChainClient
+from xchainpy2_mayachain import MayaChainClient, MAYA_BLOCK_TIME_SEC
 from xchainpy2_thorchain_query import CACAO_NETWORK_FEE
 from xchainpy2_utils import CryptoAmount, Amount, NetworkType, CACAO_DECIMAL, AssetCACAO
 
@@ -19,19 +19,20 @@ async def main():
     if not phrase:
         raise ValueError("PHRASE env var is empty!")
 
-    client = MayaChainClient(phrase=phrase, network=NETWORK)
+    client_a = MayaChainClient(phrase=phrase, network=NETWORK)
+    client_b = MayaChainClient(phrase=phrase, network=NETWORK, wallet_index=1)
 
-    balance = await client.get_balance()
-    print(f"{client.get_address()}'s balance is {balance}")
+    balance = await client_a.get_balance()
+    print(f"{client_a.get_address()}'s balance is {balance}")
 
-    dest_address = client.get_address(1)
-    r = await client.transfer(CryptoAmount(Amount.automatic(0.1, CACAO_DECIMAL), AssetCACAO), dest_address)
-    print(f"Transfer submitted: {client.get_explorer_tx_url(r)}")
+    dest_address = client_b.get_address()
+    r = await client_a.transfer(CryptoAmount(Amount.automatic(1, CACAO_DECIMAL), AssetCACAO), dest_address)
+    print(f"Transfer submitted: {client_a.get_explorer_tx_url(r)}")
 
     while True:
         print("Waiting for balance update...")
-        await asyncio.sleep(6)
-        balances = await client.get_balance(dest_address)
+        await asyncio.sleep(MAYA_BLOCK_TIME_SEC)
+        balances = await client_b.get_balance(dest_address)
         print(f"{dest_address}'s balance is {balances}")
 
         cacao_balance = CryptoAmount.pick(balances, AssetCACAO)
@@ -41,8 +42,8 @@ async def main():
             break
 
     cacao_balance -= CACAO_NETWORK_FEE
-    r = await client.transfer(cacao_balance, client.get_address(), wallet_index=1)
-    print(f"Transfer submitted: {client.get_explorer_tx_url(r)}")
+    r = await client_b.transfer(cacao_balance, client_b.get_address())
+    print(f"Transfer submitted: {client_b.get_explorer_tx_url(r)}")
 
 
 if __name__ == "__main__":
