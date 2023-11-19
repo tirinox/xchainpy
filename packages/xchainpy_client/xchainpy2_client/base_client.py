@@ -17,6 +17,7 @@ class XChainClient(abc.ABC):
                  phrase: Optional[str] = None,
                  fee_bound: FeeBounds = FeeBounds(lower=Fee(0), upper=INF_FEE),
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
+                 wallet_index=0,
                  ):
         """
         Client has to be initialised with network type and phrase.
@@ -27,7 +28,9 @@ class XChainClient(abc.ABC):
         :param phrase: Mnemonic phrase
         :param fee_bound: Fee bounds
         :param root_derivation_paths: Root derivation paths for private key for each Network type
+        :param wallet_index: int (wallet index, default 0) We can derive any number of addresses from a single seed
         """
+        self.wallet_index = wallet_index
         self.chain = chain
 
         self.fee_bound = fee_bound
@@ -58,9 +61,14 @@ class XChainClient(abc.ABC):
     def get_network(self):
         pass
 
-    @abc.abstractmethod
     def set_phrase(self, phrase: str, wallet_index: int = 0):
-        pass
+        if phrase:
+            if not validate_mnemonic(phrase):
+                raise Exception('Invalid phrase')
+            self.phrase = phrase
+        else:
+            self.purge_client()
+        self.wallet_index = wallet_index
 
     @abc.abstractmethod
     def purge_client(self):
@@ -83,11 +91,11 @@ class XChainClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_address(self, wallet_index=0) -> str:
+    def get_address(self) -> str:
         pass
 
     @abc.abstractmethod
-    async def get_balance(self, address: str, wallet_index: int = 0) -> List[CryptoAmount]:
+    async def get_balance(self, address: str) -> List[CryptoAmount]:
         ...
 
     def get_full_derivation_path(self, wallet_index: int) -> str:
@@ -116,8 +124,7 @@ class XChainClient(abc.ABC):
     async def transfer(self, what: CryptoAmount,
                        recipient: str,
                        memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None,
-                       wallet_index: int = 0, **kwargs) -> str:
+                       fee_rate: Optional[int] = None, **kwargs) -> str:
         pass
 
     @abc.abstractmethod

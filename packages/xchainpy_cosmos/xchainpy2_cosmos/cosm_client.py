@@ -39,20 +39,22 @@ class CosmosGaiaClient(XChainClient):
                  client_urls=DEFAULT_CLIENT_URLS,
                  chain_ids=COSMOS_CHAIN_IDS,
                  explorer_providers=DEFAULT_EXPLORER_PROVIDER,
+                 wallet_index=0,
                  ):
         """
         Initialize CosmosClient
         :param network: Network type. Default is `NetworkType.MAINNET`
-        :param phrase: Mnenomic phrase
+        :param phrase: Mnemonic phrase
         :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param client_urls: Dictionary of client urls for each network type.
         :param chain_ids: Dictionary of chain ids for each network type.
         :param explorer_providers: Dictionary of explorer providers for each network type.
+        :param wallet_index: int (default 0)
         """
         root_derivation_paths = root_derivation_paths.copy() \
             if root_derivation_paths else COSMOS_ROOT_DERIVATION_PATHS.copy()
-        super().__init__(Chain.Cosmos, network, phrase, fee_bound, root_derivation_paths)
+        super().__init__(Chain.Cosmos, network, phrase, fee_bound, root_derivation_paths, wallet_index)
 
         self.explorer_providers = explorer_providers.copy() \
             if explorer_providers else DEFAULT_EXPLORER_PROVIDER.copy()
@@ -74,6 +76,8 @@ class CosmosGaiaClient(XChainClient):
         self._recreate_client()
 
         self._wallet: Optional[LocalWallet] = None
+        self._make_wallet()
+
         self.cache = None
         self.tx_responses = {}
 
@@ -145,15 +149,17 @@ class CosmosGaiaClient(XChainClient):
             return
         super().set_network(network)
         self._recreate_client()
+        self._make_wallet()
 
     def get_network(self):
         return self.network
 
-    def set_phrase(self, phrase: str, wallet_index: int = 0):
-        super().set_phrase(phrase, wallet_index)
-
     def purge_client(self):
         super().purge_client()
+
+    def set_phrase(self, phrase: str, wallet_index: int = 0):
+        super().set_phrase(phrase, wallet_index)
+        self._make_wallet()
 
     @property
     def explorer(self):
@@ -199,40 +205,42 @@ class CosmosGaiaClient(XChainClient):
         except Exception:
             return False
 
-    def get_address(self, wallet_index=0) -> str:
+    def get_address(self) -> str:
         """
         Get the address for the given wallet index.
-        :param wallet_index: Wallet index. Default is 0.
         :return: string address
         """
-        return derive_address(self.phrase,
-                              self.get_full_derivation_path(wallet_index),
-                              prefix=self._prefix)
+        return derive_address(
+            self.phrase,
+            self.get_full_derivation_path(self.wallet_index),
+            prefix=self._prefix
+        )
 
-    def get_private_key(self, wallet_index=0) -> str:
+    def get_private_key(self) -> str:
         """
         Get the private key for the given wallet index.
-        :param wallet_index: Wallet index. Default is 0.
         :return:
         """
-        return derive_private_key(self.phrase, self.get_full_derivation_path(wallet_index)).hex()
+        return derive_private_key(
+            self.phrase,
+            self.get_full_derivation_path(self.wallet_index)
+        ).hex()
 
-    def get_public_key(self, wallet_index=0) -> PublicKey:
-        return self.get_private_key_cosmos(wallet_index).public_key
+    def get_public_key(self) -> PublicKey:
+        return self.get_private_key_cosmos().public_key
 
-    def get_private_key_cosmos(self, wallet_index=0) -> PrivateKey:
-        pk = self.get_private_key(wallet_index)
+    def get_private_key_cosmos(self) -> PrivateKey:
+        pk = self.get_private_key()
         return PrivateKey(bytes.fromhex(pk))
 
-    async def get_balance(self, address: str = '', wallet_index: int = 0) -> List[CryptoAmount]:
+    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         """
         Get the balance of a given address.
-        :param wallet_index: Wallet index, default 0
         :param address: By default, it will return the balance of the current wallet. (optional)
         :return:
         """
         if not address:
-            address = self.get_address(wallet_index)
+            address = self.get_address()
 
         address = Address(address)
 
@@ -260,17 +268,16 @@ class CosmosGaiaClient(XChainClient):
         else:
             return Asset(self.chain.value, denom.upper())
 
-    async def get_account(self, address: str = None, wallet_index=0) -> Optional[Account]:
+    async def get_account(self, address: str = None) -> Optional[Account]:
         """
         Get the account information for the given address: number and sequence.
         It there is no account, it will return None.
         It will throw an exception for special addresses (like Reserve)
-        :param wallet_index: Optional wallet_index if no address specified
         :param address: By default, it will return the account of the current wallet. (optional)
         :return:
         """
         if address is None:
-            address = self.get_address(wallet_index)
+            address = self.get_address()
 
         address = Address(address)
 
@@ -286,7 +293,7 @@ class CosmosGaiaClient(XChainClient):
                 return
             raise e
 
-    async def get_transactions(self, address: str,
+    async def get_transactions(self, address: str = None,
                                offset: int = 0,
                                limit: int = 10,
                                start_time: Optional[datetime] = None,
@@ -295,6 +302,9 @@ class CosmosGaiaClient(XChainClient):
                                filter_function: TxFilterFunc = None,
                                batch_size=10,
                                batch_delay_sec=2) -> TxPage:
+        if not address:
+            address = self.get_address()
+
         message_action = None
 
         address = address if address else self.get_address()
@@ -487,24 +497,20 @@ class CosmosGaiaClient(XChainClient):
                        recipient: str,
                        memo: Optional[str] = None,
                        fee_rate: Optional[int] = None,
-                       check_balance: bool = True,
-                       wallet_index=0) -> str:
+                       check_balance: bool = True) -> str:
         """
         Transfer coins.
         :param check_balance: Check balance before transfer. Default is True.
-        :param wallet_index: Wallet index (0 by default)
         :param what: CryptoAmount (amount and asset to transfer)
         :param recipient: str recipient address
         :param memo: str
         :param fee_rate: int
         :return: str tx hash
         """
-        self._make_wallet(wallet_index)
-
         if check_balance:
             await self.check_balance(str(self._wallet.address()), what)
 
-        tx = self.build_transfer_tx(what, recipient, wallet_index)
+        tx = self.build_transfer_tx(what, recipient)
 
         response = await asyncio.get_event_loop().run_in_executor(
             None,
@@ -521,7 +527,7 @@ class CosmosGaiaClient(XChainClient):
 
         return response.tx_hash
 
-    def build_transfer_tx(self, what: CryptoAmount, recipient: str, wallet_index=0) -> Transaction:
+    def build_transfer_tx(self, what: CryptoAmount, recipient: str) -> Transaction:
         tx = Transaction()
         tx.add_message(
             create_bank_send_msg(self._wallet.address(), Address(recipient),
@@ -607,8 +613,8 @@ class CosmosGaiaClient(XChainClient):
         if native_balance is None or native_balance.amount < fee:
             raise ValueError(f"Insufficient funds to pay fee: {fee.amount} {self.native_asset}")
 
-    def _make_wallet(self, wallet_index: int = 0) -> LocalWallet:
-        pk = PrivateKey(bytes.fromhex(self.get_private_key(wallet_index)))
+    def _make_wallet(self) -> LocalWallet:
+        pk = PrivateKey(bytes.fromhex(self.get_private_key()))
         self._wallet = LocalWallet(pk, self._prefix)
         return self._wallet
 
