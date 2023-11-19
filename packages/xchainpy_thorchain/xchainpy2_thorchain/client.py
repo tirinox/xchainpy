@@ -49,6 +49,7 @@ class THORChainClient(CosmosGaiaClient):
         :param client_urls: Dictionary of client urls for each network type. See: DEFAULT_CLIENT_URLS
         :param chain_ids: Dictionary of chain ids for each network type. See: DEFAULT_CHAIN_IDS
         :param explorer_providers: Dictionary of explorer providers for each network type. See: THOR_EXPLORERS
+        :param wallet_index: int (wallet index, default 0) We can derive any number of addresses from a single seed
         """
         self.explorer_providers = explorer_providers.copy() if explorer_providers else THOR_EXPLORERS.copy()
 
@@ -63,7 +64,8 @@ class THORChainClient(CosmosGaiaClient):
         root_derivation_paths = root_derivation_paths.copy() if root_derivation_paths else ROOT_DERIVATION_PATHS.copy()
         super().__init__(
             network, phrase, fee_bound, root_derivation_paths,
-            self.client_urls, self.chain_ids, self.explorer_providers
+            self.client_urls, self.chain_ids, self.explorer_providers,
+            wallet_index
         )
 
         # Tune for THORChain
@@ -108,7 +110,6 @@ class THORChainClient(CosmosGaiaClient):
                       account_number: int = None,
                       check_balance: bool = True,
                       fee=None,
-                      wallet_index: int = 0,
                       return_full_response=False) -> Union[SubmittedTx, str]:
         """
         Send deposit transaction
@@ -118,7 +119,6 @@ class THORChainClient(CosmosGaiaClient):
         :param gas_limit: if not specified, we'll use the default value
         :param sequence: sequence number. If it is None, it will be fetched automatically
         :param check_balance: Flag to check the balance before sending Tx
-        :param wallet_index: Wallet index, default is 0
         :param fee: string like "0rune", default is 0
         :param account_number: Your account number. If it is none, we will fetch it
         :param return_full_response: when it is not enough to have just tx hash
@@ -130,7 +130,7 @@ class THORChainClient(CosmosGaiaClient):
         elif isinstance(what, (int, float)):
             what = CryptoAmount(Amount.automatic(what, self._decimal), self.native_asset)
 
-        address = self.get_address(wallet_index)
+        address = self.get_address()
 
         if check_balance:
             await self.check_balance(address, what)
@@ -143,7 +143,7 @@ class THORChainClient(CosmosGaiaClient):
             sequence = account.sequence
             account_number = account.number
 
-        public_key = self.get_public_key(wallet_index)
+        public_key = self.get_public_key()
 
         tx = build_deposit_tx_unsigned(
             what, memo,
@@ -156,7 +156,7 @@ class THORChainClient(CosmosGaiaClient):
         )
 
         tx.sign(
-            self.get_private_key_cosmos(wallet_index),
+            self.get_private_key_cosmos(),
             self.get_chain_id(),
             account_number=account_number
         )
@@ -274,9 +274,7 @@ class THORChainClient(CosmosGaiaClient):
         else:
             return str(asset).lower()
 
-    def build_transfer_tx(self, what: CryptoAmount, recipient: str,
-                          wallet_index=0) -> Transaction:
-        self._make_wallet(wallet_index)
+    def build_transfer_tx(self, what: CryptoAmount, recipient: str) -> Transaction:
         tx = build_transfer_tx_draft(
             what, denom=self.get_denom(what.asset),
             sender=str(self._wallet.address()),

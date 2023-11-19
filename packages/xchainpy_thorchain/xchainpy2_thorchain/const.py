@@ -102,3 +102,5 @@ AssetRuneERC20Mainnet = Asset.from_string('ETH.RUNE-0x3155ba85d5f96b2d030a4966af
 AssetRuneERC20Testnet = Asset.from_string('ETH.RUNE-0xd601c6A3a36721320573885A8d8420746dA3d7A0')
 
 DENOM_RUNE_NATIVE = 'rune'
+
+THOR_BLOCK_TIME_SEC = 6.0
