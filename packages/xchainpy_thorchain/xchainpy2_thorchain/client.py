@@ -38,11 +38,12 @@ class THORChainClient(CosmosGaiaClient):
                  fallback_client_urls=FALLBACK_CLIENT_URLS,
                  chain_ids=DEFAULT_CHAIN_IDS,
                  explorer_providers=THOR_EXPLORERS,
+                 wallet_index=0,
                  ):
         """
         Initialize THORChainClient.
         :param network: Network type. Default is `NetworkType.MAINNET`
-        :param phrase: Mnenomic phrase
+        :param phrase: Mnemonic phrase
         :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param client_urls: Dictionary of client urls for each network type. See: DEFAULT_CLIENT_URLS

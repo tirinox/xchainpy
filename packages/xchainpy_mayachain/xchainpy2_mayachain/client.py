@@ -42,7 +42,7 @@ class MayaChainClient(CosmosGaiaClient):
         """
         Initialize THORChainClient.
         :param network: Network type. Default is `NetworkType.MAINNET`
-        :param phrase: Mnenomic phrase
+        :param phrase: Mnemonic phrase
         :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param client_urls: Dictionary of client urls for each network type. See: DEFAULT_CLIENT_URLS
