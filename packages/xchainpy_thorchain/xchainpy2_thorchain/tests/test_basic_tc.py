@@ -15,6 +15,17 @@ def stagenet_client():
     return THORChainClient(phrase=generate_mnemonic(), network=NetworkType.STAGENET)
 
 
+def test_wallet_index(client):
+    for i in range(1, 5):
+        client2 = THORChainClient(phrase=generate_mnemonic(), wallet_index=i)
+        assert client.validate_address(client2.get_address())
+        assert client2.get_address() != client.get_address()
+        assert client2.get_private_key() != client.get_private_key()
+        assert client2.get_public_key() != client.get_public_key()
+
+        assert len(client.get_private_key()) == 64
+
+
 # noinspection PyTypeChecker
 def test_validate_address(client, stagenet_client):
     assert client.validate_address('thor1qd4my7934h2sn5ag5eaqsde39va4ex2asz3yv5')
@@ -38,14 +49,13 @@ def test_validate_address(client, stagenet_client):
 
 
 def test_address(client, stagenet_client):
-    for i in range(100):
-        address = client.get_address(i)
-        assert client.validate_address(address)
+    address = client.get_address()
+    assert client.validate_address(address)
 
-        assert len(client.get_private_key(i)) == 64
-        assert len(client.get_public_key(i).public_key_bytes) == 33
+    assert len(client.get_private_key()) == 64
+    assert len(client.get_public_key().public_key_bytes) == 33
 
-        s_addr = stagenet_client.get_address(i)
-        assert s_addr.removeprefix(address)
+    s_addr = stagenet_client.get_address()
+    assert s_addr.removeprefix(address)
 
-        assert len(stagenet_client.get_private_key(i)) == 64
+    assert len(stagenet_client.get_private_key()) == 64

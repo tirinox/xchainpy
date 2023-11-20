@@ -1,18 +1,18 @@
 import pytest
 
 from xchainpy2_crypto import generate_mnemonic
-from xchainpy2_thorchain import THORChainClient
+from xchainpy2_mayachain import MayaChainClient
 from xchainpy2_utils import NetworkType
 
 
 @pytest.fixture
 def client():
-    return THORChainClient(phrase=generate_mnemonic())
+    return MayaChainClient(phrase=generate_mnemonic())
 
 
 @pytest.fixture
 def stagenet_client():
-    return THORChainClient(phrase=generate_mnemonic(), network=NetworkType.STAGENET)
+    return MayaChainClient(phrase=generate_mnemonic(), network=NetworkType.STAGENET)
 
 
 # noinspection PyTypeChecker
@@ -38,14 +38,13 @@ def test_validate_address(client, stagenet_client):
 
 
 def test_address(client, stagenet_client):
-    for i in range(100):
-        address = client.get_address(i)
-        assert client.validate_address(address)
+    address = client.get_address()
+    assert client.validate_address(address)
 
-        assert len(client.get_private_key(i)) == 64
-        assert len(client.get_public_key(i).public_key_bytes) == 33
+    assert len(client.get_private_key()) == 64
+    assert len(client.get_public_key().public_key_bytes) == 33
 
-        s_addr = stagenet_client.get_address(i)
-        assert s_addr.removeprefix(address)
+    s_addr = stagenet_client.get_address()
+    assert s_addr.removeprefix(address)
 
-        assert len(stagenet_client.get_private_key(i)) == 64
+    assert len(stagenet_client.get_private_key()) == 64
