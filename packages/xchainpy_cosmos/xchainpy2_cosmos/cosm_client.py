@@ -2,7 +2,7 @@ import asyncio
 import logging
 from datetime import datetime
 from operator import itemgetter
-from typing import Optional, List
+from typing import Optional, List, Union
 from urllib.parse import urlencode
 
 from aiohttp import ClientSession
@@ -34,6 +34,7 @@ class CosmosGaiaClient(XChainClient):
     def __init__(self,
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
+                 private_key: Union[str, bytes, callable, None] = None,
                  fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  client_urls=DEFAULT_CLIENT_URLS,
@@ -45,6 +46,7 @@ class CosmosGaiaClient(XChainClient):
         Initialize CosmosClient
         :param network: Network type. Default is `NetworkType.MAINNET`
         :param phrase: Mnemonic phrase
+        :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
         :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param client_urls: Dictionary of client urls for each network type.
@@ -54,7 +56,7 @@ class CosmosGaiaClient(XChainClient):
         """
         root_derivation_paths = root_derivation_paths.copy() \
             if root_derivation_paths else COSMOS_ROOT_DERIVATION_PATHS.copy()
-        super().__init__(Chain.Cosmos, network, phrase, fee_bound, root_derivation_paths, wallet_index)
+        super().__init__(Chain.Cosmos, network, phrase, private_key, fee_bound, root_derivation_paths, wallet_index)
 
         self.explorer_providers = explorer_providers.copy() \
             if explorer_providers else DEFAULT_EXPLORER_PROVIDER.copy()
@@ -221,10 +223,13 @@ class CosmosGaiaClient(XChainClient):
         Get the private key for the given wallet index.
         :return:
         """
-        return derive_private_key(
-            self.phrase,
-            self.get_full_derivation_path(self.wallet_index)
-        ).hex()
+        if self.pk_hex:
+            return self.pk_hex
+        else:
+            return derive_private_key(
+                self.phrase,
+                self.get_full_derivation_path(self.wallet_index)
+            ).hex()
 
     def get_public_key(self) -> PublicKey:
         return self.get_private_key_cosmos().public_key

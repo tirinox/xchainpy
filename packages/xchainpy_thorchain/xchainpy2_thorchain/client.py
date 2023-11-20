@@ -32,6 +32,7 @@ class THORChainClient(CosmosGaiaClient):
     def __init__(self,
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
+                 private_key: Union[str, bytes, callable, None] = None,
                  fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  client_urls=DEFAULT_CLIENT_URLS,
@@ -44,6 +45,7 @@ class THORChainClient(CosmosGaiaClient):
         Initialize THORChainClient.
         :param network: Network type. Default is `NetworkType.MAINNET`
         :param phrase: Mnemonic phrase
+        :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
         :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param client_urls: Dictionary of client urls for each network type. See: DEFAULT_CLIENT_URLS
@@ -63,7 +65,7 @@ class THORChainClient(CosmosGaiaClient):
 
         root_derivation_paths = root_derivation_paths.copy() if root_derivation_paths else ROOT_DERIVATION_PATHS.copy()
         super().__init__(
-            network, phrase, fee_bound, root_derivation_paths,
+            network, phrase, private_key, fee_bound, root_derivation_paths,
             self.client_urls, self.chain_ids, self.explorer_providers,
             wallet_index
         )

@@ -1,6 +1,6 @@
 import abc
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from xchainpy2_client.models import XcTx, Fees, TxPage, \
     FeeBounds, Fee, RootDerivationPaths, AssetInfo
@@ -15,6 +15,7 @@ class XChainClient(abc.ABC):
                  chain: Chain,
                  network: Optional[NetworkType] = None,
                  phrase: Optional[str] = None,
+                 private_key: Union[str, bytes, callable, None] = None,
                  fee_bound: FeeBounds = FeeBounds(lower=Fee(0), upper=INF_FEE),
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  wallet_index=0,
@@ -25,7 +26,8 @@ class XChainClient(abc.ABC):
 
         :param chain: Chain name (see utils/chain.py)
         :param network: Network type (see utils/network_type.py)
-        :param phrase: Mnemonic phrase
+        :param phrase: Mnemonic phrase (12-24 words)
+        :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
         :param fee_bound: Fee bounds
         :param root_derivation_paths: Root derivation paths for private key for each Network type
         :param wallet_index: int (wallet index, default 0) We can derive any number of addresses from a single seed
@@ -46,6 +48,26 @@ class XChainClient(abc.ABC):
             self.phrase = phrase
         else:
             self.phrase = None
+
+        self._private_key = private_key
+
+        if private_key and phrase:
+            raise Exception('Phrase and private key cannot be provided at the same time')
+
+    def _throw_if_empty_phrase(self):
+        if not self.phrase and not self._private_key:
+            raise Exception('Phrase or private key must be provided to do this action')
+
+    @property
+    def pk_hex(self):
+        if callable(self._private_key):
+            return self._private_key()
+        elif isinstance(self._private_key, str):
+            return self._private_key
+        elif isinstance(self._private_key, bytes):
+            return self._private_key.hex()
+        else:
+            return None
 
     @abc.abstractmethod
     def set_network(self, network: NetworkType):
@@ -73,6 +95,7 @@ class XChainClient(abc.ABC):
     @abc.abstractmethod
     def purge_client(self):
         self.phrase = ''
+        self.private_key = None
 
     @abc.abstractmethod
     def get_explorer_url(self) -> str:
