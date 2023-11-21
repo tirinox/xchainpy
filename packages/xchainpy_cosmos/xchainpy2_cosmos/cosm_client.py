@@ -504,6 +504,8 @@ class CosmosGaiaClient(XChainClient):
         :param fee_rate: int
         :return: str tx hash
         """
+        self._throw_if_empty_phrase()
+
         if check_balance:
             await self.check_balance(str(self._wallet.address()), what)
 
@@ -611,9 +613,10 @@ class CosmosGaiaClient(XChainClient):
             raise ValueError(f"Insufficient funds to pay fee: {fee.amount} {self.native_asset}")
 
     def _make_wallet(self) -> LocalWallet:
-        pk = PrivateKey(bytes.fromhex(self.get_private_key()))
-        self._wallet = LocalWallet(pk, self._prefix)
-        return self._wallet
+        if self.phrase or self._private_key:
+            pk = PrivateKey(bytes.fromhex(self.get_private_key()))
+            self._wallet = LocalWallet(pk, self._prefix)
+            return self._wallet
 
     def get_amount_string(self, amount):
         return f"{int(amount)}{self._denom}"

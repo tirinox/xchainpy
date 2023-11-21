@@ -2,7 +2,7 @@ import pytest
 
 from xchainpy2_crypto import generate_mnemonic
 from xchainpy2_thorchain import THORChainClient
-from xchainpy2_utils import NetworkType
+from xchainpy2_utils import NetworkType, CryptoAmount, AssetRUNE
 
 
 @pytest.fixture
@@ -15,9 +15,14 @@ def stagenet_client():
     return THORChainClient(phrase=generate_mnemonic(), network=NetworkType.STAGENET)
 
 
+def test_init(client):
+    assert client.network == NetworkType.MAINNET
+    assert client._decimal == 8
+    assert client.native_asset == AssetRUNE
+
 def test_wallet_index(client):
     for i in range(1, 5):
-        client2 = THORChainClient(phrase=generate_mnemonic(), wallet_index=i)
+        client2 = THORChainClient(phrase=client.phrase, wallet_index=i)
         assert client.validate_address(client2.get_address())
         assert client2.get_address() != client.get_address()
         assert client2.get_private_key() != client.get_private_key()
@@ -66,3 +71,16 @@ def test_pk_init(client):
     assert client2.get_address() == client.get_address()
     assert client2.get_private_key() == client.get_private_key()
     assert client2.get_public_key().public_key_bytes == client.get_public_key().public_key_bytes
+
+
+@pytest.mark.asyncio
+async def test_no_keys():
+    client = THORChainClient()
+    amt = CryptoAmount.zero(AssetRUNE)
+
+    with pytest.raises(Exception):
+        # deposit without PK or phrase
+        await client.deposit(amt, 'foo')
+
+    with pytest.raises(Exception):
+        await client.transfer(amt, client.get_address())

@@ -126,6 +126,8 @@ class MayaChainClient(CosmosGaiaClient):
 
         :return: submitted tx hash or full response (SubmittedTt object) if requested
         """
+        self._throw_if_empty_phrase()
+
         if isinstance(what, Amount):
             what = CryptoAmount(what, self.native_asset)
         elif isinstance(what, (int, float)):
