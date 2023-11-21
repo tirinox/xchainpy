@@ -177,8 +177,14 @@ def parse_tx_response_json(j: dict, tx_id: str, address: str, decimals: int,
     if not is_successful:
         raise TxLoadException(f'Code is not 0 ({code}) for tx-hash: ${tx_id}')
 
-    message0 = j['tx']['body']['messages'][0]
-    address = address or message0.get('signer') or message0.get('from_address')
+    messages = j['tx']['body']['messages']
+
+    if len(messages) > 1:
+        raise TxLoadException(f'Multiple messages are not supported yet (tx-hash: ${tx_id})')
+    elif not messages:
+        raise TxLoadException(f'No messages found (tx-hash: ${tx_id})')
+
+    address = address or messages[0].get('signer') or messages[0].get('from_address')
 
     logs = load_logs(response.get('logs'))
     if not logs:

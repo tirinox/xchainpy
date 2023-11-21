@@ -49,13 +49,22 @@ async def test_balance(cosm_client):
 
 @pytest.mark.asyncio
 async def test_get_tx(cosm_client):
-    tx_id = 'D171BD459167FB159FD68CA1BF24110FF1CC635B769067853917366503434CBE'
+    tx_id = '6E5A04808C558AA35624487522B16D48275DC3D368330811ACD3020A7BDB6183'
     tx = await cosm_client.get_transaction_data(tx_id)
     assert tx
-    assert tx.height == 16_143_708
+    assert tx.height == 17_945_199
     assert tx.type == TxType.TRANSFER
-    assert len(tx.to_txs) == 1 and len(tx.from_txs) == 1
-    assert tx.to_txs[0].address == 'cosmos1j8pp7zvcu9z8vd882m284j29fn2dszh05cqvf9'
-    assert tx.from_txs[0].from_address == 'cosmos1mn7yrfn5ycmxsmtqvhvcac8yzyh34aknzpdkf7'
-    assert tx.to_txs[0].amount == Amount.automatic(1470000, COSMOS_DECIMAL) == tx.from_txs[0].amount
-    assert tx.to_txs[0].asset == tx.from_txs[0].asset == AssetATOM
+    assert len(tx.transfers) == 1
+    tr = tx.transfers[0]
+    assert tr.from_address == 'cosmos1qes70g8hc3nv7gdcyg2npjjxy4nwmxc0ege93f'
+    assert tr.to_address == 'cosmos1hfdkewc9cuzdkh4f498a8e4a3hh0qpqm83s82k'
+    assert tr.asset == AssetATOM
+    assert tx.asset == AssetATOM
+    assert tr.amount == Amount.from_base(715197, COSMOS_DECIMAL)
+
+
+def test_pk_init(cosm_client):
+    client2 = CosmosGaiaClient(private_key=cosm_client.get_private_key())
+    assert client2.get_address() == cosm_client.get_address()
+    assert client2.get_private_key() == cosm_client.get_private_key()
+    assert client2.get_public_key().public_key_bytes == cosm_client.get_public_key().public_key_bytes

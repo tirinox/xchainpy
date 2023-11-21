@@ -18,14 +18,14 @@ from math import ceil
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx, \
     Fees, TxPage, AssetInfo, FeeType, FeeOption
 from xchainpy2_client.fees import single_fee
-from xchainpy2_crypto import derive_private_key, derive_address
+from xchainpy2_crypto import derive_private_key, derive_address, get_public_key, create_address
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DECIMAL, Asset, Amount, AssetATOM, \
     unique_by_key, batched, NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER, flatten
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_DERIVATION_PATHS, COSMOS_ADDR_PREFIX, \
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
     MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE, DEFAULT_GAS_LIMIT, DEFAULT_REST_USER_AGENT
 from .models import TxHistoryResponse, TxResponse, TxLoadException
-from .utils import parse_tx_response
+from .utils import parse_tx_response, parse_tx_response_json
 
 logger = logging.getLogger(__name__)
 
@@ -212,11 +212,8 @@ class CosmosGaiaClient(XChainClient):
         Get the address for the given wallet index.
         :return: string address
         """
-        return derive_address(
-            self.phrase,
-            self.get_full_derivation_path(self.wallet_index),
-            prefix=self._prefix
-        )
+        pub_key = self.get_public_key().public_key_bytes
+        return create_address(pub_key, self._prefix)
 
     def get_private_key(self) -> str:
         """
@@ -248,8 +245,6 @@ class CosmosGaiaClient(XChainClient):
             address = self.get_address()
 
         address = Address(address)
-
-        # balances = await self._get_json(f'{self.server_url}/cosmos/bank/v1beta1/balances/{address}')
 
         balances = await asyncio.get_event_loop().run_in_executor(
             None,
@@ -468,11 +463,8 @@ class CosmosGaiaClient(XChainClient):
         """
         j = await self.get_transaction_data_cosmos(tx_id)
 
-        return parse_tx_response(
-            TxResponse.from_rpc_json(j['tx_response']),
-            self.native_asset,
-            self._denom, self._decimal,
-            our_address
+        return parse_tx_response_json(
+            j, tx_id, our_address, self._decimal, self._denom, self.native_asset
         )
 
     async def get_transaction_data_raw(self, tx_id: str) -> dict:
