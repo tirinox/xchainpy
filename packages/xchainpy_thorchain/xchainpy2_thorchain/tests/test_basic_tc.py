@@ -59,3 +59,10 @@ def test_address(client, stagenet_client):
     assert s_addr.removeprefix(address)
 
     assert len(stagenet_client.get_private_key()) == 64
+
+
+def test_pk_init(client):
+    client2 = THORChainClient(private_key=client.get_private_key())
+    assert client2.get_address() == client.get_address()
+    assert client2.get_private_key() == client.get_private_key()
+    assert client2.get_public_key().public_key_bytes == client.get_public_key().public_key_bytes
