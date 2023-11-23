@@ -18,14 +18,15 @@ def test_create(cosm_client):
     assert cosm_client.network == NetworkType.MAINNET
 
 
-def test_address(cosm_client):
+def test_address():
+    mn = generate_mnemonic()
     for i in range(100):
-        address = cosm_client.get_address(i)
+        cosm_client = CosmosGaiaClient(phrase=mn, wallet_index=i)
+        address = cosm_client.get_address()
         assert cosm_client.validate_address(address)
-
-        assert len(cosm_client.get_private_key(i)) == 64
-        assert cosm_client.get_private_key_cosmos(i)
-        assert len(cosm_client.get_public_key(i).public_key_bytes) == 33
+        assert len(cosm_client.get_private_key()) == 64
+        assert cosm_client.get_private_key_cosmos()
+        assert len(cosm_client.get_public_key().public_key_bytes) == 33
 
 
 def test_explorer(cosm_client):

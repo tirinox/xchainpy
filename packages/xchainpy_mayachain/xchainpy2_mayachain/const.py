@@ -18,6 +18,7 @@ CACAO_TICKER = 'CACAO'
 DENOM_CACAO_NATIVE = 'cacao'
 
 MAYA_DECIMAL = 4
+DENOM_MAYA = 'maya'
 
 AssetMAYA = Asset.from_string('MAYA.CACAO')
 
