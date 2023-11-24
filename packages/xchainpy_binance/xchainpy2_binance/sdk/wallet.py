@@ -4,7 +4,7 @@ import binascii
 
 # from .utils.segwit_addr import address_from_public_key, decode_address
 from .environment import BinanceEnvironment
-from .http_cli import HttpApiClient
+# from .http_cli import HttpApiClient
 
 
 class BaseWallet:
@@ -47,8 +47,8 @@ class BaseWallet:
         return f"{binascii.hexlify(self.address_decoded).decode().upper()}-{(self._sequence + 1)}"
 
     def _get_http_client(self):
-        if not self._http_client:
-            self._http_client = HttpApiClient(self._env)
+        # if not self._http_client:
+        #     self._http_client = HttpApiClient(self._env)
         return self._http_client
 
     @property

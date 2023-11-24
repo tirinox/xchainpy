@@ -6,6 +6,7 @@ import aiohttp
 import requests
 import ujson
 
+from xchainpy2_utils import DEFAULT_USER_AGENT
 from .constants import PeerType, KlineInterval, OrderSide, TransactionType, OrderStatus, TransactionSide
 from .environment import BinanceEnvironment
 from .exc import BinanceChainAPIException, BinanceChainRequestException, BinanceChainBroadcastException
@@ -59,7 +60,7 @@ class BaseApiClient:
     def _get_headers(self):
         return {
             'Accept': 'application/json',
-            'User-Agent': 'python-binance-chain',
+            'User-Agent': DEFAULT_USER_AGENT,
         }
 
     def _get_request_kwargs(self, method, **kwargs):

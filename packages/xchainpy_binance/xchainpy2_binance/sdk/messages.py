@@ -7,8 +7,8 @@ import binascii
 import ujson as json
 
 from .constants import TimeInForce, OrderSide, OrderType, VoteOption
-from .protobuf.dex_pb2 import (
-    NewOrder, CancelOrder, TokenFreeze, TokenUnfreeze, StdTx, StdSignature, Send, Input, Output, Token, Vote
+from .proto.dex_pb2 import (
+    NewOrder, CancelOrder, TokenFreeze, TokenUnfreeze, StdTx, StdSignature, Send, Token, Vote
 )
 from .utils import encode_number, varint_encode, decode_address
 from .wallet import BaseWallet
@@ -467,10 +467,10 @@ class TransferMsg(Msg):
         token = Token()
         token.denom = self._symbol
         token.amount = self._amount_amino
-        input_addr = Input()
+        input_addr = Send.Input()
         input_addr.address = decode_address(self._from_address)
         input_addr.coins.extend([token])
-        output_addr = Output()
+        output_addr = Send.Output()
         output_addr.address = decode_address(self._to_address)
         output_addr.coins.extend([token])
 
@@ -534,8 +534,8 @@ class MultiTransferMsg(Msg):
         }
 
     def to_protobuf(self) -> Send:
-        input_addr = Input()
-        output_addr = Output()
+        input_addr = Send.Input()
+        output_addr = Send.Output()
         for transfer in self._transfers:
             token = Token()
             token.denom = transfer.symbol
