@@ -1,8 +1,7 @@
 from multiprocessing.pool import ThreadPool
 
 import xchainpy2_thornode as thornode
-from xchainpy2_utils import NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER
-from .const import DEFAULT_USER_AGENT
+from xchainpy2_utils import NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER, DEFAULT_USER_AGENT
 from .patch_clients import ConfigurationEx, RESTClientRetry, HeadersPatch
 
 

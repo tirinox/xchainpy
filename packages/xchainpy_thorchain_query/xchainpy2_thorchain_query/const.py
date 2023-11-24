@@ -2,7 +2,6 @@ from decimal import Decimal
 
 from xchainpy2_utils import Amount, CryptoAmount, AssetRUNE, AssetCACAO, CACAO_DECIMAL, RUNE_DECIMAL
 
-DEFAULT_USER_AGENT = 'XChainPy2/0.0.1/python'
 DEFAULT_INTERFACE_ID = 'XChainPy2'
 
 TC_RESERVE_ADDR = 'thor1dheycdevq39qlkxs2a6wuuzyn4aqxhve4qxtxt'

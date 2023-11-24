@@ -121,3 +121,5 @@ class NetworkType(Enum):
 XCHAINJS_IDENTIFIER = 'xchainjs-client'
 XCHAINPY_IDENTIFIER = 'xchainpy-client'
 NINE_REALMS_CLIENT_HEADER = 'x-client-id'
+
+DEFAULT_USER_AGENT = 'XChainPy2/0.0.5/python'
