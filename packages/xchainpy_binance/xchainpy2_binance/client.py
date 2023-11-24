@@ -7,9 +7,11 @@ from xchainpy2_client import AssetInfo, Fees, FeeType, XChainClient, XcTx, TxPag
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_client.fees import single_fee
 from xchainpy2_crypto import decode_address
-from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, AssetBNB, Asset, Amount
-from . import get_bnb_address_prefix
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetBNB, Asset, Amount
+from .utils import get_bnb_address_prefix
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_ROOT_DERIVATION_PATHS, FALLBACK_CLIENT_URLS, BNB_EXPLORERS, BNB_DECIMAL
+from .sdk.environment import BinanceEnvironment
+from .sdk.http_cli import AsyncHttpApiClient
 
 
 class BinanceChainClient(XChainClient):
@@ -99,8 +101,12 @@ class BinanceChainClient(XChainClient):
         self._decimal = BNB_DECIMAL
 
         self.cache_fees = True
+        self._cached_fees = None
 
-        # self._recreate_client()
+        # todo: use clientUrls
+        env = BinanceEnvironment.get_production_env() if network != NetworkType.TESTNET \
+            else BinanceEnvironment.get_testnet_env()
+        self._cli = AsyncHttpApiClient(env=env)
 
     @property
     def server_url(self) -> str:
@@ -115,9 +121,27 @@ class BinanceChainClient(XChainClient):
 
     def get_asset_info(self) -> AssetInfo:
         return AssetInfo(
-            AssetRUNE, RUNE_DECIMAL
+            AssetBNB, BNB_DECIMAL
         )
 
-    async def get_fees(self, cache=None, tc_fee_rate=None) -> Fees:
-        # fixme
-        return single_fee(FeeType.FLAT_FEE, Amount.zero())
+    async def load_fees(self):
+        if self._cached_fees:
+            return self._cached_fees
+        else:
+            fees = await self._cli.get_fees()
+            if self.cache_fees:
+                self._cached_fees = fees
+            return fees
+
+    @staticmethod
+    def _find_send_fee(fees) -> Optional[Amount]:
+        for item in fees:
+            fixed_fees = item.get('fixed_fee_params')
+            if fixed_fees and fixed_fees['msg_type'] == 'send':
+                fee = Amount.from_base(int(fixed_fees['fee']), BNB_DECIMAL)
+                return fee
+
+    async def get_fees(self) -> Fees:
+        fees = await self.load_fees()
+        send_fee_rate = self._find_send_fee(fees)
+        return single_fee(FeeType.FLAT_FEE, send_fee_rate)
