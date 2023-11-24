@@ -69,8 +69,8 @@ class MayaChainClient(CosmosGaiaClient):
             self.client_urls, self.chain_ids, self.explorer_providers, wallet_index
         )
 
-        # Tune for THORChain
-        self.chain = Chain.THORChain
+        # Tune for MayaChain
+        self.chain = Chain.Maya
         self._prefix = get_maya_address_prefix(network)
         self.native_asset = AssetCACAO
         self._denom = DENOM_CACAO_NATIVE
