@@ -16,9 +16,6 @@ class NodeURL(NamedTuple):
         )
 
 
-ExplorerProviders = Dict[NetworkType, ExplorerProvider]
-
-
 class RPCTxResultInner(NamedTuple):
     code: int
     data: str
