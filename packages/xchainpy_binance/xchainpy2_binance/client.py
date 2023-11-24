@@ -8,36 +8,34 @@ from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_client.fees import single_fee
 from xchainpy2_crypto import decode_address
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetBNB, Asset, Amount
-from .utils import get_bnb_address_prefix
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_ROOT_DERIVATION_PATHS, FALLBACK_CLIENT_URLS, BNB_EXPLORERS, BNB_DECIMAL
 from .sdk.environment import BinanceEnvironment
 from .sdk.http_cli import AsyncHttpApiClient
+from .utils import get_bnb_address_prefix
 
 
 class BinanceChainClient(XChainClient):
-    def set_network(self, network: NetworkType):
-        super().set_network(network)
-
-    def get_network(self):
-        return super().get_network()
-
-    def purge_client(self):
-        super().purge_client()
-
     def get_explorer_url(self) -> str:
-        pass
+        return self.explorer.explorer_url
 
     def get_explorer_address_url(self, address: str) -> str:
-        pass
+        return self.explorer.get_explorer_address_url(address)
 
     def get_explorer_tx_url(self, tx_id: str) -> str:
-        pass
+        return self.explorer.get_explorer_tx_url(tx_id)
 
     def get_address(self) -> str:
         pass
 
-    async def get_balance(self, address: str) -> List[CryptoAmount]:
-        pass
+    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+        if not address:
+            address = self.get_address()
+
+        balances = await self._cli.get_account(address)
+        return [
+            CryptoAmount(Amount.from_asset(b['free'], self._decimal), self._make_asset(b['symbol']))
+            for b in balances['balances']
+        ]
 
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 0,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
@@ -53,6 +51,11 @@ class BinanceChainClient(XChainClient):
 
     async def broadcast_tx(self, tx_hex: str) -> str:
         pass
+
+    async def get_fees(self) -> Fees:
+        fees = await self.load_fees()
+        send_fee_rate = self._find_send_fee(fees)
+        return single_fee(FeeType.FLAT_FEE, send_fee_rate)
 
     def __init__(self,
                  network=NetworkType.MAINNET,
@@ -109,6 +112,10 @@ class BinanceChainClient(XChainClient):
         self._cli = AsyncHttpApiClient(env=env)
 
     @property
+    def explorer(self):
+        return self.explorer_providers[self.network]
+
+    @property
     def server_url(self) -> str:
         return self.client_urls[self.network]
 
@@ -141,7 +148,5 @@ class BinanceChainClient(XChainClient):
                 fee = Amount.from_base(int(fixed_fees['fee']), BNB_DECIMAL)
                 return fee
 
-    async def get_fees(self) -> Fees:
-        fees = await self.load_fees()
-        send_fee_rate = self._find_send_fee(fees)
-        return single_fee(FeeType.FLAT_FEE, send_fee_rate)
+    def _make_asset(self, symbol: str) -> Asset:
+        return Asset.from_string(f"{self.chain.value}.{symbol}")

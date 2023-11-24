@@ -69,7 +69,6 @@ class XChainClient(abc.ABC):
         else:
             return None
 
-    @abc.abstractmethod
     def set_network(self, network: NetworkType):
         if not network:
             raise Exception('Network must be provided')
@@ -79,9 +78,8 @@ class XChainClient(abc.ABC):
         if self.network == NetworkType.STAGENET:
             print("WARNING: This is using stagenet! Real assets are being used!")
 
-    @abc.abstractmethod
     def get_network(self):
-        pass
+        return self.network
 
     def set_phrase(self, phrase: str, wallet_index: int = 0):
         if phrase:
@@ -92,7 +90,6 @@ class XChainClient(abc.ABC):
             self.purge_client()
         self.wallet_index = wallet_index
 
-    @abc.abstractmethod
     def purge_client(self):
         self.phrase = ''
         self.private_key = None
