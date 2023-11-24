@@ -50,7 +50,6 @@ function install_develop() {
 
 }
 
-
 function download_swagger_codegen() {
   if [ ! -f "${SWAGGER_LOCAL}" ]; then
     wget ${SWAGGER_CODEGEN} -O swagger-codegen-cli.jar
@@ -94,3 +93,19 @@ function run_codegen() {
   install_develop
 }
 
+function ask_dev_virtual_env() {
+  read -p "Do you want to create new virtual environment and install dev tools? (y/n) " yn
+  case $yn in
+  [yY])
+    python3 -m venv temp/venv
+    source temp/venv/bin/activate
+    pip install "betterproto[compiler]" betterproto
+    pip install grpcio grpcio-tools
+    ;;
+  *) ;;
+  esac
+}
+
+function touch_inits() {
+  find "$1/" -type d -exec touch {}/__init__.py \;
+}

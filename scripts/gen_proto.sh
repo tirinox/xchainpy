@@ -7,6 +7,8 @@
 
 set -e
 
+source common.sh
+
 LAST_THOR_VERSION="release-1.124.0"
 LAST_MAYA_VERSION="v1.107.1"
 COSMOS_SDK_VERSION="v0.45.1"
@@ -20,17 +22,7 @@ TEMP="../temp"
 echo "I will help you to generate Python code from THORNode/Maya protobuf files"
 
 # ask if user wants to create new venv
-read -p "Do you want to create new virtual environment and install dev tools? (y/n) " yn
-case $yn in
-[yY])
-  python3 -m venv temp/venv
-  source temp/venv/bin/activate
-  pip install "betterproto[compiler]" betterproto
-  pip install grpcio grpcio-tools
-  ;;
-*) ;;
-
-esac
+ask_dev_virtual_env
 
 # -----------------------
 # ask for protocol
@@ -88,6 +80,7 @@ case $yn in
   # print working directory
   pwd
 
+  mkdir -p $PROTO_OUT_PATH
   $TEMP/venv/bin/python3 -m grpc_tools.protoc --proto_path="${NODE_CODE}/proto" \
     --proto_path="${NODE_CODE}/third_party/proto" \
     --proto_path="${COSMOS_CODE}/proto" \
@@ -97,7 +90,7 @@ case $yn in
     "$PROTOCOL/v1/common/common.proto" "gogoproto/gogo.proto" "cosmos/base/v1beta1/coin.proto"
 
 
-  find "$PROTO_OUT_PATH/" -type d -exec touch {}/__init__.py \;
+  touch_inits $PROTO_OUT_PATH
   # restore root __init__.py as it contains code to have the proto files module available
   git restore "$PROTO_OUT_PATH/__init__.py"
   ;;
