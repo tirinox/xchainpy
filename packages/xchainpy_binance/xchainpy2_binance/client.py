@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from typing import Optional, Union, List
 
@@ -40,7 +41,7 @@ class BinanceChainClient(XChainClient):
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 10,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None,
-                               height=None) -> TxPage:
+                               height=None, detailed=False) -> TxPage:
         raw = await self._cli.get_transactions(
             address,
             offset=offset, limit=limit,
@@ -49,14 +50,29 @@ class BinanceChainClient(XChainClient):
             symbol=asset.symbol if asset else None,
             height=height
         )
+        simple_txs = [self.parse_tx_data_simplified(tx, address) for tx in raw['tx']]
+
+        if detailed:
+            full_txs = await asyncio.gather(*[self.get_transaction_data(tx.hash) for tx in simple_txs])
+
+            # noinspection PyProtectedMember
+            # fill the dates in full_tx from simple_tx, because full_tx is lacking it
+            full_txs = [
+                full_tx._replace(date=simple_tx.date if simple_tx else None)
+                for full_tx, simple_tx in zip(full_txs, simple_txs)
+            ]
+        else:
+            full_txs = simple_txs
+
         return TxPage(
             total=raw['total'],
-            txs=[self.parse_tx_data_simplified(tx, address) for tx in raw['tx']],
+            txs=full_txs,
         )
 
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
-        raw = await self._cli.get_transaction(tx_id)
-        return self.parse_tx_data(raw, self.get_address())
+        async with self._semaphore:
+            raw = await self._cli.get_transaction(tx_id)
+            return self.parse_tx_data(raw, self.get_address())
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, **kwargs) -> str:
@@ -124,6 +140,8 @@ class BinanceChainClient(XChainClient):
         env = BinanceEnvironment.get_production_env() if network != NetworkType.TESTNET \
             else BinanceEnvironment.get_testnet_env()
         self._cli = AsyncHttpApiClient(env=env)
+
+        self._semaphore = asyncio.Semaphore(5)
 
     @property
     def explorer(self):

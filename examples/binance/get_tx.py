@@ -10,7 +10,7 @@ TX_ID_SWAP = '720C118E02EF99CA3AE95909C7AD26905E3388B041ACED7A7B97C7D26A9CB439'
 async def main():
     bnb = BinanceChainClient()
 
-    txs = await bnb.get_transactions('bnb1f578ardgqq3gk9mamsr07g2a3ras6j3x8fg6uh')
+    txs = await bnb.get_transactions('bnb1f578ardgqq3gk9mamsr07g2a3ras6j3x8fg6uh', detailed=True)
     print(txs)
     sep()
 
