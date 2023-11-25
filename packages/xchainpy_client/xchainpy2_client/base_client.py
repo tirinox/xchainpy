@@ -1,11 +1,12 @@
 import abc
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional, List, Union
 
 from xchainpy2_client.models import XcTx, Fees, TxPage, \
-    FeeBounds, Fee, RootDerivationPaths, AssetInfo
+    FeeBounds, Fee, RootDerivationPaths, AssetInfo, FeeOption
 from xchainpy2_crypto import validate_mnemonic
-from xchainpy2_utils import CryptoAmount, Chain, NetworkType, Asset
+from xchainpy2_utils import CryptoAmount, Chain, NetworkType, Asset, Amount
 
 INF_FEE = Fee(1_000_000_000_000_000_000)
 
@@ -53,6 +54,39 @@ class XChainClient(abc.ABC):
 
         if private_key and phrase:
             raise Exception('Phrase and private key cannot be provided at the same time')
+
+        self.native_asset: Optional[Asset] = None
+        self._decimal = 8
+
+    def gas_amount(self, amount: Union[float, str, int, Decimal]) -> CryptoAmount:
+        """
+        Easy way to construct CryptoAmount of gas asset
+        :param amount: Union[float, str, int, Decimal] amount of asset (not base!)
+        :return: CryptoAmount
+        """
+        return CryptoAmount(Amount.from_asset(amount, self._decimal), self.native_asset)
+
+    async def max_gas_amount(self, balances: List[CryptoAmount] = None) -> CryptoAmount:
+        """
+        Calculate maximum amount of Gas asset that you can send
+        :param balances: (Optional) if you already have your balance, otherwise they will be loaded
+        :return: CryptoAmount
+        """
+        if balances is None:
+            balances = await self.get_balance()
+
+        gas_balance = next((b for b in balances if b.asset == self.native_asset), None)
+        if not gas_balance:
+            return self.gas_amount(0)  # no gas at all
+
+        fees = await self.get_fees()
+        fee = fees.fees[FeeOption.FAST]
+        max_value = gas_balance.amount.as_asset - fee.as_asset
+        if max_value.internal_amount < 0:
+            # less than fee
+            return self.gas_amount(0)
+        else:
+            return CryptoAmount(max_value, self.native_asset)
 
     def _throw_if_empty_phrase(self):
         if not self.phrase and not self._private_key:
@@ -115,7 +149,7 @@ class XChainClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_balance(self, address: str) -> List[CryptoAmount]:
+    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         ...
 
     def get_full_derivation_path(self, wallet_index: int) -> str:
