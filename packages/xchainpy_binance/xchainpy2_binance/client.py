@@ -116,6 +116,10 @@ class BinanceChainClient(XChainClient):
         return self.explorer_providers[self.network]
 
     @property
+    def client(self):
+        return self._cli
+
+    @property
     def server_url(self) -> str:
         return self.client_urls[self.network]
 
@@ -150,3 +154,6 @@ class BinanceChainClient(XChainClient):
 
     def _make_asset(self, symbol: str) -> Asset:
         return Asset.from_string(f"{self.chain.value}.{symbol}")
+
+    async def close_session(self):
+        await self.client.session.close()
