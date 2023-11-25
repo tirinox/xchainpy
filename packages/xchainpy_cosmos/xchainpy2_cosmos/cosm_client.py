@@ -18,14 +18,14 @@ from math import ceil
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx, \
     Fees, TxPage, AssetInfo, FeeType, FeeOption
 from xchainpy2_client.fees import single_fee
-from xchainpy2_crypto import derive_private_key, derive_address, get_public_key, create_address
+from xchainpy2_crypto import derive_private_key, create_address
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DECIMAL, Asset, Amount, AssetATOM, \
     unique_by_key, batched, NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER, flatten
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_DERIVATION_PATHS, COSMOS_ADDR_PREFIX, \
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
     MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE, DEFAULT_GAS_LIMIT, DEFAULT_REST_USER_AGENT
-from .models import TxHistoryResponse, TxResponse, TxLoadException
-from .utils import parse_tx_response, parse_tx_response_json
+from .models import TxHistoryResponse, TxLoadException
+from .utils import parse_tx_response_json
 
 logger = logging.getLogger(__name__)
 
