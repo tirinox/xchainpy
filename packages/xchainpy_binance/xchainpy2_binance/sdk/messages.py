@@ -595,7 +595,7 @@ class VoteMsg(Msg):
 
     def to_protobuf(self) -> Vote:
         pb = Vote()
-        pb.voter = self.wallet.address_decoded
+        pb.voter = self._wallet.address_decoded
         pb.proposal_id = self._proposal_id
         pb.option = self.VOTE_OPTION_INT[self._vote_option]
         return pb

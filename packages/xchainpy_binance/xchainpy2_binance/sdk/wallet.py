@@ -1,10 +1,23 @@
-from typing import Optional
+from typing import Optional, NamedTuple
 
 import binascii
 
 # from .utils.segwit_addr import address_from_public_key, decode_address
 from .environment import BinanceEnvironment
+
+
 # from .http_cli import HttpApiClient
+
+
+class Account(NamedTuple):
+    account_number: int
+    sequence: int
+    address: str
+    address_bytes: str
+    chain_id: str
+
+    def generate_order_id(self):
+        return f"{binascii.hexlify(self.address).decode().upper()}-{(self.sequence + 1)}"
 
 
 class BaseWallet:
@@ -89,20 +102,6 @@ class BaseWallet:
 
 
 class Wallet(BaseWallet):
-    """
-    Usage example:
-
-    m = Wallet.create_random_mnemonic() # 12 words
-    p = 'my secret passphrase' # bip39 passphrase
-
-    # Store <m> and <p> somewhere safe
-
-    wallet1 = Wallet.create_wallet_from_mnemonic(m, passphrase=p, child=0, env=testnet_env)
-    wallet2 = Wallet.create_wallet_from_mnemonic(m, passphrase=p, child=1, env=testnet_env)
-    ...
-
-    """
-
     def __init__(self, private_key, env: Optional[BinanceEnvironment] = None, hd_path: str = BaseWallet.HD_PATH):
         super().__init__(env, hd_path=hd_path)
         self._private_key = private_key

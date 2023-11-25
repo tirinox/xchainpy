@@ -3,15 +3,17 @@ from datetime import datetime
 from typing import Optional, Union, List
 
 from bip_utils import Bech32ChecksumError
+from cosmpy.crypto.keypairs import PublicKey, PrivateKey
 
 from xchainpy2_client import AssetInfo, Fees, FeeType, XChainClient, XcTx, TxPage, TokenTransfer, TxType
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_client.fees import single_fee
-from xchainpy2_crypto import decode_address
+from xchainpy2_crypto import decode_address, create_address, derive_private_key
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetBNB, Asset, Amount, parse_iso_date
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_ROOT_DERIVATION_PATHS, FALLBACK_CLIENT_URLS, BNB_EXPLORERS, BNB_DECIMAL
 from .sdk.environment import BinanceEnvironment
 from .sdk.http_cli import AsyncHttpApiClient
+from .sdk.messages import TransferMsg, Signature
 from .utils import get_bnb_address_prefix
 
 
@@ -25,18 +27,18 @@ class BinanceChainClient(XChainClient):
     def get_explorer_tx_url(self, tx_id: str) -> str:
         return self.explorer.get_explorer_tx_url(tx_id)
 
-    def get_address(self) -> str:
-        pass
-
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
-        if not address:
-            address = self.get_address()
-
-        balances = await self._cli.get_account(address)
+        account = await self.get_account(address)
         return [
             CryptoAmount(Amount.from_asset(b['free'], self._decimal), self._make_asset(b['symbol']))
-            for b in balances['balances']
+            for b in account['balances']
         ]
+
+    async def get_account(self, address: str = ''):
+        if not address:
+            address = self.get_address()
+        account = await self._cli.get_account(address)
+        return account
 
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 10,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
@@ -75,8 +77,28 @@ class BinanceChainClient(XChainClient):
             return self.parse_tx_data(raw, self.get_address())
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None, **kwargs) -> str:
-        pass
+                       fee_rate: Optional[int] = None, is_sync: bool = True, **kwargs) -> str:
+        await self._ensure_chain_id()
+
+        message = TransferMsg(
+            what.asset.full_symbol,
+            int(what.amount),
+            recipient,
+            memo=memo,
+        )
+
+        account = self.get_account()
+
+        signature = Signature(message)
+
+        pk = self.get_private_key_cosmos()
+        signed_msg = pk.sign(signature.to_bytes_json()).hex()
+
+        # sig = self._pk.ecdsa_sign(msg_bytes)
+        # return self._pk.ecdsa_serialize_compact(sig)
+
+        tx = await self.broadcast_tx(signed_msg, is_sync=is_sync)
+        return tx
 
     async def broadcast_tx(self, tx_hex: str, is_sync=True) -> str:
         result = await self._cli.broadcast_hex_msg(tx_hex, sync=is_sync)
@@ -86,6 +108,38 @@ class BinanceChainClient(XChainClient):
         fees = await self.load_fees()
         send_fee_rate = self._find_send_fee(fees)
         return single_fee(FeeType.FLAT_FEE, send_fee_rate)
+
+    def get_address(self) -> str:
+        """
+        Get the address for the given wallet index.
+        :return: string address
+        """
+        pub_key = self.get_public_key().public_key_bytes
+        return create_address(pub_key, self._prefix)
+
+    def get_public_key(self) -> PublicKey:
+        return self.get_private_key_cosmos().public_key
+
+    def get_private_key_cosmos(self) -> PrivateKey:
+        pk = self.get_private_key()
+        return PrivateKey(bytes.fromhex(pk))
+
+    def get_private_key(self) -> str:
+        """
+        Get the private key for the given wallet index.
+        :return:
+        """
+        if self.pk_hex:
+            return self.pk_hex
+        else:
+            return derive_private_key(
+                self.phrase,
+                self.get_full_derivation_path(self.wallet_index)
+            ).hex()
+
+    async def get_chain_id(self):
+        node_info = await self._cli.get_node_info()
+        return node_info['node_info']['network']
 
     def __init__(self,
                  network=NetworkType.MAINNET,
@@ -132,6 +186,7 @@ class BinanceChainClient(XChainClient):
         self.native_asset = AssetBNB
         self._denom = 'bnb'
         self._decimal = BNB_DECIMAL
+        self.chain_id = None
 
         self.cache_fees = True
         self._cached_fees = None
@@ -263,3 +318,9 @@ class BinanceChainClient(XChainClient):
                 )
             ],
         )
+
+    async def _ensure_chain_id(self):
+        if self.chain_id is None:
+            self.chain_id = await self.get_chain_id()
+        if not self.chain_id:
+            raise Exception('Failed to get chain Id')
