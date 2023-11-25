@@ -3,11 +3,11 @@ from typing import Optional, Union, List
 
 from bip_utils import Bech32ChecksumError
 
-from xchainpy2_client import AssetInfo, Fees, FeeType, XChainClient, XcTx, TxPage
+from xchainpy2_client import AssetInfo, Fees, FeeType, XChainClient, XcTx, TxPage, TokenTransfer, TxType
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_client.fees import single_fee
 from xchainpy2_crypto import decode_address
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetBNB, Asset, Amount
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetBNB, Asset, Amount, parse_iso_date
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_ROOT_DERIVATION_PATHS, FALLBACK_CLIENT_URLS, BNB_EXPLORERS, BNB_DECIMAL
 from .sdk.environment import BinanceEnvironment
 from .sdk.http_cli import AsyncHttpApiClient
@@ -37,20 +37,34 @@ class BinanceChainClient(XChainClient):
             for b in balances['balances']
         ]
 
-    async def get_transactions(self, address: str, offset: int = 0, limit: int = 0,
+    async def get_transactions(self, address: str, offset: int = 0, limit: int = 10,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
-                               asset: Optional[Asset] = None) -> TxPage:
-        pass
+                               asset: Optional[Asset] = None,
+                               height=None) -> TxPage:
+        raw = await self._cli.get_transactions(
+            address,
+            offset=offset, limit=limit,
+            start_time=(start_time.timestamp() if start_time else None),
+            end_time=(end_time.timestamp() if end_time else None),
+            symbol=asset.symbol if asset else None,
+            height=height
+        )
+        return TxPage(
+            total=raw['total'],
+            txs=[self.parse_tx_data_simplified(tx, address) for tx in raw['tx']],
+        )
 
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
-        pass
+        raw = await self._cli.get_transaction(tx_id)
+        return self.parse_tx_data(raw, self.get_address())
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, **kwargs) -> str:
         pass
 
-    async def broadcast_tx(self, tx_hex: str) -> str:
-        pass
+    async def broadcast_tx(self, tx_hex: str, is_sync=True) -> str:
+        result = await self._cli.broadcast_hex_msg(tx_hex, sync=is_sync)
+        return result['transaction']['hash']
 
     async def get_fees(self) -> Fees:
         fees = await self.load_fees()
@@ -157,3 +171,77 @@ class BinanceChainClient(XChainClient):
 
     async def close_session(self):
         await self.client.session.close()
+
+    def parse_tx_data(self, raw: dict, my_address: str = '') -> XcTx:
+        """
+        Parses only send transactions
+        :param my_address: My address to detect if the transaction is outbound or not
+        :param raw: Raw data dict loaded from JSON received from API
+        :return: XcTx (parsed transaction)
+        """
+        tx_hash = raw['hash']
+        transfers = []
+        messages = raw['tx']['value']['msg']
+        for message in messages:
+            if message['type'] == 'cosmos-sdk/Send':
+                inputs, outputs = message['value']['inputs'], message['value']['outputs']
+                for input_part in inputs:
+                    for output in outputs:
+                        for input_coin in input_part['coins']:
+                            for output_coin in output['coins']:
+                                in_denom = input_coin['denom']
+                                out_denom = output_coin['denom']
+                                in_amount = int(input_coin['amount'])
+                                out_amount = int(output_coin['amount'])
+                                if in_denom != out_denom or in_amount != out_amount:
+                                    continue
+                                from_address = input_part['address']
+                                transfers.append(
+                                    TokenTransfer(
+                                        from_address=from_address,
+                                        to_address=output['address'],
+                                        amount=Amount.automatic(in_amount, self._decimal),
+                                        asset=self._make_asset(in_denom),
+                                        tx_hash=tx_hash,
+                                        outbound=(from_address == my_address)
+                                    )
+                                )
+
+        asset = self.native_asset
+
+        return XcTx(
+            asset=asset,
+            date=None,
+            transfers=transfers,
+            hash=tx_hash,
+            height=int(raw['height']),
+            is_success=raw['ok'],
+            memo=raw['tx']['value'].get('memo', ''),
+            type=TxType.TRANSFER if transfers else TxType.UNKNOWN
+        )
+
+    def parse_tx_data_simplified(self, raw: dict, my_address=None) -> XcTx:
+        tx_date = parse_iso_date(raw['timeStamp'])
+        tx_hash = raw['txHash']
+        symbol = raw['txAsset']
+        asset = self._make_asset(symbol)
+        tx_type = raw['txType']
+        return XcTx(
+            hash=tx_hash,
+            asset=asset,
+            type=TxType.TRANSFER if tx_type == 'TRANSFER' else TxType.UNKNOWN,
+            date=tx_date,
+            height=raw['blockHeight'],
+            is_success=(raw['code'] == 0),
+            memo=raw['memo'],
+            transfers=[
+                TokenTransfer(
+                    raw['fromAddr'],
+                    raw['toAddr'],
+                    amount=Amount.automatic(raw['value'], self._decimal),
+                    asset=self._make_asset(raw['txAsset']),
+                    tx_hash=tx_hash,
+                    outbound=(raw['fromAddr'] == my_address),
+                )
+            ],
+        )

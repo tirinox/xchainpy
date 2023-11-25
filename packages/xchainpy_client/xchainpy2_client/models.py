@@ -44,6 +44,7 @@ class XcTx(NamedTuple):
     hash: str
     height: int
     memo: str = ''
+    is_success: bool = True
 
     @property
     def inbound_txs(self):
