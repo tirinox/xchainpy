@@ -356,14 +356,6 @@ class HttpApiClient(BaseApiClient):
         :return: API Response
 
         """
-
-        # fetch account detail
-        # account = self.get_account(self.msg.wallet.address)
-
-        if self._env != msg.wallet.env:
-            raise BinanceChainBroadcastException("Wallet environment doesn't match HttpApiClient environment")
-
-        msg.wallet.initialise_wallet()
         data = msg.to_hex_data()
 
         req_path = 'broadcast'
@@ -861,13 +853,6 @@ class AsyncHttpApiClient(BaseApiClient):
     get_order_book.__doc__ = HttpApiClient.get_order_book.__doc__
 
     async def broadcast_msg(self, msg: Msg, sync: bool = False):
-        # fetch account detail
-        # account = self.get_account(self.msg.wallet.address)
-
-        if self._env != msg.wallet.env:
-            raise BinanceChainBroadcastException("Wallet environment doesn't match HttpApiClient environment")
-
-        msg.wallet.initialise_wallet()
         data = msg.to_hex_data()
 
         logging.debug(f'data:{data}')
