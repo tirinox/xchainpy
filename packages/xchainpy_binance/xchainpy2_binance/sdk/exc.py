@@ -3,10 +3,11 @@ import ujson as json
 
 class BinanceChainAPIException(Exception):
 
-    def __init__(self, response, status_code):
+    def __init__(self, j, response, status_code):
         self.code = 0
         try:
-            json_res = json.loads(response.content)
+            json_res = j
+            # json_res = json.loads(contents)
         except ValueError:
             if not response.content:
                 self.message = status_code
@@ -14,13 +15,13 @@ class BinanceChainAPIException(Exception):
                 self.message = 'Invalid JSON error message from Binance Chain: {}'.format(response.text)
         else:
             self.code = json_res.get('code', None)
-            self.message = json_res['message']
+            self.message = json_res.get('message')
         self.status_code = status_code
         self.response = response
         self.request = getattr(response, 'request', None)
 
     def __str__(self):  # pragma: no cover
-        return f'APIError(code={self.code}): {self.message}'
+        return f'BinanceAPIError(code={self.code}, status={self.status_code}, message={self.message!r})'
 
 
 class BinanceChainRequestException(Exception):

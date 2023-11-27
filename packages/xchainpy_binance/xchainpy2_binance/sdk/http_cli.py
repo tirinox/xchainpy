@@ -104,15 +104,15 @@ class HttpApiClient(BaseApiClient):
         """
 
         if not str(response.status_code).startswith('2'):
-            raise BinanceChainAPIException(response, response.status_code)
+            raise BinanceChainAPIException({}, response, response.status_code)
         try:
             res = response.json()
 
             if 'code' in res and res['code'] not in [0, "200000"]:
-                raise BinanceChainAPIException(response, response.status_code)
+                raise BinanceChainAPIException(res, response, response.status_code)
 
             if 'success' in res and not res['success']:
-                raise BinanceChainAPIException(response, response.status_code)
+                raise BinanceChainAPIException(res, response, response.status_code)
 
             # by default return full response
             # if it's a normal response we have a data attribute, return that
@@ -750,15 +750,15 @@ class AsyncHttpApiClient(BaseApiClient):
         response.
         """
         if not str(response.status).startswith('2'):
-            raise BinanceChainAPIException(response, response.status)
+            raise BinanceChainAPIException({}, response, response.status)
         try:
             res = await response.json()
 
             if 'code' in res and res['code'] not in [0, "200000"]:
-                raise BinanceChainAPIException(response, response.status)
+                raise BinanceChainAPIException(res, response, response.status)
 
             if 'success' in res and not res['success']:
-                raise BinanceChainAPIException(response, response.status)
+                raise BinanceChainAPIException(res, response, response.status)
 
             # by default return full response
             # if it's a normal response we have a data attribute, return that
