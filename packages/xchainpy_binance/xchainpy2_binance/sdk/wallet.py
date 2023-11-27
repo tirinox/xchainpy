@@ -10,9 +10,14 @@ class Account(NamedTuple):
     address_bytes: bytes
     chain_id: str
     balances: list
+    public_key: bytes
+    private_key: bytes
 
     def generate_order_id(self):
         return f"{binascii.hexlify(self.address).decode().upper()}-{(self.sequence + 1)}"
+
+    def with_private_key(self, pk: bytes):
+        return self._replace(private_key=pk)
 
 
 class BaseWallet:

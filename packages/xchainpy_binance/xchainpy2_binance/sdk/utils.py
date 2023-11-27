@@ -41,6 +41,6 @@ def decode_address(address):
     if hrp is None:
         return None
 
-    return data
+    return bytes(data)
     # bits = convertbits(data, 5, 8, False)
     # return array.array('B', bits).tobytes()

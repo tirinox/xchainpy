@@ -5,13 +5,14 @@ from typing import List, Dict, Union, Optional, NamedTuple
 
 import binascii
 import ujson as json
+from cosmpy.crypto.keypairs import PrivateKey
 
 from .constants import TimeInForce, OrderSide, OrderType, VoteOption
 from .proto.dex_pb2 import (
     NewOrder, CancelOrder, TokenFreeze, TokenUnfreeze, StdTx, StdSignature, Send, Token, Vote
 )
 from .utils import encode_number, varint_encode, decode_address
-from .wallet import BaseWallet
+from .wallet import Account
 
 # An identifier for tools triggering broadcast transactions, set to zero if unwilling to disclose.
 BROADCAST_SOURCE = 0
@@ -26,8 +27,8 @@ class Msg(abc.ABC):
     AMINO_MESSAGE_TYPE = ""
     INCLUDE_AMINO_LENGTH_PREFIX = False
 
-    def __init__(self, wallet: BaseWallet, memo: str = ''):
-        self._wallet = wallet
+    def __init__(self, account: Account, memo: str = ''):
+        self.account = account
         self._memo = memo
 
     def to_dict(self) -> Dict:
@@ -61,10 +62,6 @@ class Msg(abc.ABC):
         return msg
 
     @property
-    def wallet(self):
-        return self._wallet
-
-    @property
     def memo(self):
         return self._memo
 
@@ -74,40 +71,43 @@ class Msg(abc.ABC):
         """
         return binascii.hexlify(StdTxMsg(self).to_amino())
 
-    def increment_sequence(self):
-        self._wallet.increment_account_sequence()
-
 
 class Signature:
-
-    def __init__(self, msg: Msg, data=None):
+    def __init__(self, msg: Msg, data=None, account: Account = None):
         self._msg = msg
-        self._chain_id = msg.wallet.chain_id
         self._data = data
         self._source = BROADCAST_SOURCE
+        self._sequence = account.sequence
+        self._chain_id = account.chain_id
+        self._account_number = account.account_number
 
     def to_json(self):
         return json.dumps(OrderedDict([
-            ('account_number', str(self._msg.wallet.account_number)),
+            ('account_number', str(self._account_number)),
             ('chain_id', self._chain_id),
             ('data', self._data),
             ('memo', self._msg.memo),
             ('msgs', [self._msg.to_dict()]),
-            ('sequence', str(self._msg.wallet.sequence)),
+            ('sequence', str(self._sequence)),
             ('source', str(self._source))
         ]), ensure_ascii=False)
 
     def to_bytes_json(self):
         return self.to_json().encode()
 
-    def sign(self, wallet: Optional[BaseWallet] = None):
-        wallet = wallet or self._msg.wallet
+    def sign(self):
+        if not self._msg.account.private_key:
+            raise Exception("No private key provided")
 
         # generate string to sign
         json_bytes = self.to_bytes_json()
 
-        signed = wallet.sign_message(json_bytes)
-        return signed[-64:]
+        pk = PrivateKey(self._msg.account.private_key)
+        signature = pk.sign(json_bytes)
+        return signature[-64:]
+
+        # signed = wallet.sign_message(json_bytes)
+        # return signed[-64:]
 
 
 class NewOrderMsg(Msg):
@@ -115,7 +115,7 @@ class NewOrderMsg(Msg):
 
     def __init__(self, symbol: str, time_in_force: TimeInForce, order_type: OrderType, side: OrderSide,
                  price: Union[int, float, Decimal], quantity: Union[int, float, Decimal],
-                 wallet: Optional[BaseWallet] = None):
+                 account: Optional[Account] = None):
         """NewOrder transaction creates a new order to buy and sell tokens on Binance DEX.
 
         :param symbol: symbol for trading pair in full name of the tokens e.g. 'ANN-457_BNB'
@@ -126,7 +126,7 @@ class NewOrderMsg(Msg):
         :param quantity: quantity of the order Decimal(12) or 12
 
         """
-        super().__init__(wallet)
+        super().__init__(account)
         self._symbol = symbol
         self._time_in_force = time_in_force.value
         self._order_type = order_type.value
@@ -138,11 +138,11 @@ class NewOrderMsg(Msg):
 
     def to_dict(self) -> Dict:
         return OrderedDict([
-            ('id', self._wallet.generate_order_id()),
+            ('id', self.account.generate_order_id()),
             ('ordertype', self._order_type),
             ('price', self._price_encoded),
             ('quantity', self._quantity_encoded),
-            ('sender', self._wallet.address),
+            ('sender', self.account.address),
             ('side', self._side),
             ('symbol', self._symbol),
             ('timeinforce', self._time_in_force),
@@ -160,8 +160,9 @@ class NewOrderMsg(Msg):
 
     def to_protobuf(self) -> NewOrder:
         pb = NewOrder()
-        pb.sender = self._wallet.address_decoded
-        pb.id = self._wallet.generate_order_id()
+        # pb.sender = self.account.address_decoded
+        pb.sender = self.account.address_bytes
+        pb.id = self.account.generate_order_id()
         pb.symbol = self._symbol.encode()
         pb.timeinforce = self._time_in_force
         pb.ordertype = self._order_type
@@ -176,7 +177,7 @@ class LimitOrderMsg(NewOrderMsg):
     def __init__(self, symbol: str, side: OrderSide,
                  price: Union[int, float, Decimal], quantity: Union[int, float, Decimal],
                  time_in_force: TimeInForce = TimeInForce.GOOD_TILL_EXPIRE,
-                 wallet: Optional[BaseWallet] = None):
+                 account: Optional[Account] = None):
         """NewOrder transaction creates a new order to buy and sell tokens on Binance DEX.
 
         :param symbol: symbol for trading pair in full name of the tokens e.g. 'ANN-457_BNB'
@@ -187,7 +188,7 @@ class LimitOrderMsg(NewOrderMsg):
 
         """
         super().__init__(
-            wallet=wallet,
+            account=account,
             symbol=symbol,
             time_in_force=time_in_force,
             order_type=OrderType.LIMIT,
@@ -201,7 +202,7 @@ class LimitOrderBuyMsg(LimitOrderMsg):
 
     def __init__(self, symbol: str, price: Union[int, float, Decimal], quantity: Union[int, float, Decimal],
                  time_in_force: TimeInForce = TimeInForce.GOOD_TILL_EXPIRE,
-                 wallet: Optional[BaseWallet] = None):
+                 account: Optional[Account] = None):
         """LimitOrderBuyMsg transaction creates a new limit order buy message on Binance DEX.
 
         :param symbol: symbol for trading pair in full name of the tokens e.g. 'ANN-457_BNB'
@@ -211,7 +212,7 @@ class LimitOrderBuyMsg(LimitOrderMsg):
 
         """
         super().__init__(
-            wallet=wallet,
+            account=account,
             symbol=symbol,
             time_in_force=time_in_force,
             side=OrderSide.BUY,
@@ -224,7 +225,7 @@ class LimitOrderSellMsg(LimitOrderMsg):
 
     def __init__(self, symbol: str, price: Union[int, float, Decimal], quantity: Union[int, float, Decimal],
                  time_in_force: TimeInForce = TimeInForce.GOOD_TILL_EXPIRE,
-                 wallet: Optional[BaseWallet] = None):
+                 account: Optional[Account] = None):
         """LimitOrderSellMsg transaction creates a new limit order sell message on Binance DEX.
 
         :param symbol: symbol for trading pair in full name of the tokens e.g. 'ANN-457_BNB'
@@ -235,7 +236,7 @@ class LimitOrderSellMsg(LimitOrderMsg):
 
         """
         super().__init__(
-            wallet=wallet,
+            account=account,
             symbol=symbol,
             time_in_force=time_in_force,
             side=OrderSide.SELL,
@@ -247,7 +248,7 @@ class LimitOrderSellMsg(LimitOrderMsg):
 class CancelOrderMsg(Msg):
     AMINO_MESSAGE_TYPE = b"166E681B"
 
-    def __init__(self, symbol: str, order_id: str, wallet: Optional[BaseWallet] = None):
+    def __init__(self, symbol: str, order_id: str, account: Optional[Account] = None):
         """Cancel transactions cancel the outstanding (unfilled) orders from the Binance DEX. After cancel success,
         the locked quantity on the orders would return back to the address' balance and become free to use,
         i.e. transfer or send new orders.
@@ -255,7 +256,7 @@ class CancelOrderMsg(Msg):
         :param symbol: symbol for trading pair in full name of the tokens
         :param order_id: order id of the one to cancel
         """
-        super().__init__(wallet)
+        super().__init__(account)
 
         self._symbol = symbol
         self._order_id = order_id
@@ -263,7 +264,7 @@ class CancelOrderMsg(Msg):
     def to_dict(self):
         return OrderedDict([
             ('refid', self._order_id),
-            ('sender', self._wallet.address),
+            ('sender', self.account.address),
             ('symbol', self._symbol),
         ])
 
@@ -275,7 +276,7 @@ class CancelOrderMsg(Msg):
 
     def to_protobuf(self) -> CancelOrder:
         pb = CancelOrder()
-        pb.sender = self._wallet.address_decoded
+        pb.sender = self.account.address_bytes
         pb.refid = self._order_id
         pb.symbol = self._symbol.encode()
         return pb
@@ -284,14 +285,14 @@ class CancelOrderMsg(Msg):
 class FreezeMsg(Msg):
     AMINO_MESSAGE_TYPE = b"E774B32D"
 
-    def __init__(self, symbol: str, amount: Union[int, float, Decimal], wallet: Optional[BaseWallet] = None):
+    def __init__(self, symbol: str, amount: Union[int, float, Decimal], account: Optional[Account] = None):
         """Freeze transaction moves the amount of the tokens into a frozen state,
         in which it cannot be used to transfer or send new orders.
 
         :param symbol: token symbol, in full name with "-" suffix
         :param amount: amount of token to freeze
         """
-        super().__init__(wallet)
+        super().__init__(account)
         self._symbol = symbol
         self._amount = amount
         self._amount_amino = encode_number(amount)
@@ -299,7 +300,7 @@ class FreezeMsg(Msg):
     def to_dict(self):
         return OrderedDict([
             ('amount', self._amount_amino),
-            ('from', self._wallet.address),
+            ('from', self.account.address),
             ('symbol', self._symbol),
         ])
 
@@ -311,7 +312,7 @@ class FreezeMsg(Msg):
 
     def to_protobuf(self) -> TokenFreeze:
         pb = TokenFreeze()
-        setattr(pb, 'from', self._wallet.address_decoded)
+        setattr(pb, 'from', self.account.address_bytes)
         pb.symbol = self._symbol.encode()
         pb.amount = self._amount_amino
         return pb
@@ -320,13 +321,13 @@ class FreezeMsg(Msg):
 class UnFreezeMsg(Msg):
     AMINO_MESSAGE_TYPE = b"6515FF0D"
 
-    def __init__(self, symbol: str, amount: Union[int, float, Decimal], wallet: Optional[BaseWallet] = None):
+    def __init__(self, symbol: str, amount: Union[int, float, Decimal], account: Optional[Account] = None):
         """Turn the amount of frozen tokens back to free state.
 
         :param symbol: token symbol, in full name with "-" suffix
         :param amount: amount of token to unfreeze
         """
-        super().__init__(wallet)
+        super().__init__(account)
         self._symbol = symbol
         self._amount = amount
         self._amount_amino = encode_number(amount)
@@ -334,7 +335,7 @@ class UnFreezeMsg(Msg):
     def to_dict(self):
         return OrderedDict([
             ('amount', self._amount_amino),
-            ('from', self._wallet.address),
+            ('from', self.account.address),
             ('symbol', self._symbol),
         ])
 
@@ -346,7 +347,7 @@ class UnFreezeMsg(Msg):
 
     def to_protobuf(self) -> TokenUnfreeze:
         pb = TokenUnfreeze()
-        setattr(pb, 'from', self._wallet.address_decoded)
+        setattr(pb, 'from', self.account.address_bytes)
         pb.symbol = self._symbol.encode()
         pb.amount = self._amount_amino
         return pb
@@ -356,16 +357,16 @@ class SignatureMsg(Msg):
     AMINO_MESSAGE_TYPE = None
 
     def __init__(self, msg: Msg):
-        super().__init__(msg.wallet)
-        self._signature = Signature(msg)
+        super().__init__(msg.account)
+        self._signature = Signature(msg, account=msg.account)
 
     def to_protobuf(self) -> StdSignature:
-        pub_key_msg = PubKeyMsg(self._wallet)
+        pub_key_msg = PubKeyMsg(self.account)
         std_sig = StdSignature()
-        std_sig.sequence = self._wallet.sequence
-        std_sig.account_number = self._wallet.account_number
+        std_sig.sequence = self.account.sequence
+        std_sig.account_number = self.account.account_number
         std_sig.pub_key = pub_key_msg.to_amino()
-        std_sig.signature = self._signature.sign(self._wallet)
+        std_sig.signature = self._signature.sign()
         return std_sig
 
 
@@ -374,7 +375,7 @@ class StdTxMsg(Msg):
     INCLUDE_AMINO_LENGTH_PREFIX = True
 
     def __init__(self, msg: Msg, data=''):
-        super().__init__(msg.wallet)
+        super().__init__(msg.account)
 
         self._msg = msg
         self._signature = SignatureMsg(msg)
@@ -394,11 +395,11 @@ class StdTxMsg(Msg):
 class PubKeyMsg(Msg):
     AMINO_MESSAGE_TYPE = b"EB5AE987"
 
-    def __init__(self, wallet: BaseWallet):
-        super().__init__(wallet)
+    def __init__(self, account: Account):
+        super().__init__(account)
 
     def to_protobuf(self):
-        return self._wallet.public_key
+        return self.account.public_key
 
     def to_amino(self):
         proto = self.to_protobuf()
@@ -416,18 +417,18 @@ class TransferMsg(Msg):
     AMINO_MESSAGE_TYPE = b"2A2C87FA"
 
     def __init__(self, symbol: str, amount: Union[int, float, Decimal],
-                 to_address: str, wallet: Optional[BaseWallet] = None, memo: str = ''):
+                 to_address: str, account: Optional[Account] = None, memo: str = ''):
         """Transferring funds between different addresses.
 
         :param symbol: token symbol, in full name with "-" suffix
         :param amount: amount of token to freeze
         :param to_address: amount of token to freeze
         """
-        super().__init__(wallet, memo)
+        super().__init__(account, memo)
         self._symbol = symbol
         self._amount = amount
         self._amount_amino = encode_number(amount)
-        self._from_address = wallet.address if wallet else None
+        self._from_address = account.address if account else None
         self._to_address = to_address
 
     def to_dict(self):
@@ -464,7 +465,7 @@ class TransferMsg(Msg):
         }
 
     def to_protobuf(self) -> Send:
-        token = Token()
+        token = Send.Token()
         token.denom = self._symbol
         token.amount = self._amount_amino
         input_addr = Send.Input()
@@ -479,21 +480,28 @@ class TransferMsg(Msg):
         msg.outputs.extend([output_addr])
         return msg
 
+    def to_hex_data(self):
+        """Wrap in a Standard Transaction Message and convert to hex string
+
+        """
+        return binascii.hexlify(StdTxMsg(self).to_amino())
+
+
 
 class MultiTransferMsg(Msg):
     AMINO_MESSAGE_TYPE = b"2A2C87FA"
 
     def __init__(self, transfers: List[Transfer],
-                 to_address: str, wallet: Optional[BaseWallet] = None, memo: str = ''):
+                 to_address: str, account: Optional[Account] = None, memo: str = ''):
         """Transferring funds between different addresses.
 
         :param transfers: List of tokens and amounts to send
         :param to_address: amount of token to freeze
         """
-        super().__init__(wallet, memo)
+        super().__init__(account, memo)
         self._transfers = transfers
         self._transfers.sort(key=lambda x: x.symbol)
-        self._from_address = wallet.address if wallet else None
+        self._from_address = account.address if account else None
         self._to_address = to_address
 
     def to_dict(self):
@@ -568,16 +576,16 @@ class VoteMsg(Msg):
         VoteOption.NO_WITH_VETO: 4
     }
 
-    def __init__(self, proposal_id: int, vote_option: VoteOption, wallet: Optional[BaseWallet] = None):
+    def __init__(self, proposal_id: int, vote_option: VoteOption, account: Optional[Account] = None):
         """Place a vote for a proposal from the given wallet address.
 
         :param proposal_id: ID of the proposal
         :param vote_option: option chosen by the voter
         """
-        super().__init__(wallet)
+        super().__init__(account)
         self._proposal_id = proposal_id
         self._proposal_id_amino = encode_number(proposal_id)
-        self._voter = wallet.address if wallet else None
+        self._voter = account.address if account else None
         self._vote_option = vote_option
 
     def to_dict(self):
@@ -595,7 +603,7 @@ class VoteMsg(Msg):
 
     def to_protobuf(self) -> Vote:
         pb = Vote()
-        pb.voter = self._wallet.address_decoded
+        pb.voter = self.account.address_bytes
         pb.proposal_id = self._proposal_id
         pb.option = self.VOTE_OPTION_INT[self._vote_option]
         return pb

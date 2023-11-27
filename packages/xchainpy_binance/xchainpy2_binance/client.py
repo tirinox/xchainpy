@@ -14,6 +14,7 @@ from .const import DEFAULT_CLIENT_URLS, DEFAULT_ROOT_DERIVATION_PATHS, FALLBACK_
 from .sdk.environment import BinanceEnvironment
 from .sdk.http_cli import AsyncHttpApiClient
 from .sdk.messages import TransferMsg, Signature
+from .sdk.wallet import Account
 from .utils import get_bnb_address_prefix
 
 
@@ -31,14 +32,35 @@ class BinanceChainClient(XChainClient):
         account = await self.get_account(address)
         return [
             CryptoAmount(Amount.from_asset(b['free'], self._decimal), self._make_asset(b['symbol']))
-            for b in account['balances']
+            for b in account.balances
         ]
 
-    async def get_account(self, address: str = ''):
+    async def get_account(self, address: str = '') -> Account:
         if not address:
             address = self.get_address()
         account = await self._cli.get_account(address)
-        return account
+
+        await self._ensure_chain_id()
+
+        address_bytes = decode_address(address, self._prefix)
+
+        pub_key = account['public_key']
+        if pub_key:
+            # convert array of int to bytes
+            pub_key = bytes(pub_key)
+        else:
+            pub_key = self.get_public_key().public_key_bytes
+
+        return Account(
+            account['account_number'],
+            account['sequence'],
+            address,
+            address_bytes,
+            self.chain_id,
+            account['balances'],
+            public_key=pub_key,
+            private_key=b''
+        )
 
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 10,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
@@ -80,24 +102,26 @@ class BinanceChainClient(XChainClient):
                        fee_rate: Optional[int] = None, is_sync: bool = True, **kwargs) -> str:
         await self._ensure_chain_id()
 
+        account = await self.get_account()
+        account_pk = account.with_private_key(bytes.fromhex(self.get_private_key()))
+
         message = TransferMsg(
             what.asset.full_symbol,
             int(what.amount),
             recipient,
-            memo=memo,
+            memo=memo or '',
+            account=account_pk,
         )
 
-        account = self.get_account()
-
-        signature = Signature(message)
-
-        pk = self.get_private_key_cosmos()
-        signed_msg = pk.sign(signature.to_bytes_json()).hex()
-
+        # signature = Signature(message, account=account)
+        # signature_bytes = signature.to_bytes_json()
+        # pk = self.get_private_key_cosmos()
+        # signed_msg = pk.sign(signature_bytes).hex()
         # sig = self._pk.ecdsa_sign(msg_bytes)
         # return self._pk.ecdsa_serialize_compact(sig)
 
-        tx = await self.broadcast_tx(signed_msg, is_sync=is_sync)
+        hex_data = message.to_hex_data()
+        tx = await self.broadcast_tx(hex_data, is_sync=is_sync)
         return tx
 
     async def broadcast_tx(self, tx_hex: str, is_sync=True) -> str:
