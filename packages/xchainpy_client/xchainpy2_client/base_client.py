@@ -64,7 +64,7 @@ class XChainClient(abc.ABC):
         :param amount: Union[float, str, int, Decimal] amount of asset (not base!)
         :return: CryptoAmount
         """
-        return CryptoAmount(Amount.from_asset(amount, self._decimal), self.native_asset)
+        return CryptoAmount(Amount.automatic(amount, self._decimal), self.native_asset)
 
     async def max_gas_amount(self, balances: List[CryptoAmount] = None) -> CryptoAmount:
         """
@@ -154,7 +154,9 @@ class XChainClient(abc.ABC):
 
     def get_full_derivation_path(self, wallet_index: int) -> str:
         if self.root_derivation_paths:
-            return f"{self.root_derivation_paths[self.network]}{wallet_index}'"
+            # BREAKING CHANGE!
+            # return f"{self.root_derivation_paths[self.network]}{wallet_index}'"  # original with apostrophe
+            return f"{self.root_derivation_paths[self.network]}{wallet_index}"
         return ''
 
     @abc.abstractmethod
