@@ -16,11 +16,16 @@ async def main():
     balances = await bnb.get_balance()
     print(balances)
 
-    max_sendable = await bnb.max_gas_amount(balances)
-    print(f"{max_sendable = }")
+    tx = await bnb.transfer(bnb.gas_amount(3330), bnb2.get_address())
+    print(f'Tx broadcast: {bnb.get_explorer_tx_url(tx)}')
 
-    tx = await bnb.transfer(bnb.gas_amount(0.001), bnb2.get_address())
-    print(tx)
+    print(f'Sleeping until things settle down...')
+    await asyncio.sleep(6.0)
+
+    max_sendable = await bnb2.max_gas_amount()
+    print(f"I will send back {max_sendable} to {bnb.get_address()}")
+    tx = await bnb2.transfer(max_sendable, bnb.get_address())
+    print(f'Tx broadcast: {bnb.get_explorer_tx_url(tx)}')
 
     await bnb.close_session()
     await bnb2.close_session()
