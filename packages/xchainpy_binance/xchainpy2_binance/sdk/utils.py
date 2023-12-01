@@ -1,6 +1,8 @@
 from decimal import Decimal
 from typing import Union
 
+import array
+from bech32 import convertbits
 from bip_utils import Bech32Decoder
 from bip_utils.bech32.bech32 import Bech32Const
 
@@ -41,6 +43,10 @@ def decode_address(address):
     if hrp is None:
         return None
 
-    return bytes(data)
+    bits = convertbits(data, 5, 8, False)
+    return array.array('B', bits).tobytes()
+
+
+    # return bytes(data)
     # bits = convertbits(data, 5, 8, False)
     # return array.array('B', bits).tobytes()

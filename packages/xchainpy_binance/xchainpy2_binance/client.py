@@ -13,7 +13,7 @@ from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetBNB, Asset, A
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_ROOT_DERIVATION_PATHS, FALLBACK_CLIENT_URLS, BNB_EXPLORERS, BNB_DECIMAL
 from .sdk.environment import BinanceEnvironment
 from .sdk.http_cli import AsyncHttpApiClient
-from .sdk.messages import TransferMsg, Signature
+from .sdk.messages import TransferMsg
 from .sdk.wallet import Account
 from .utils import get_bnb_address_prefix
 
@@ -23,10 +23,10 @@ class BinanceChainClient(XChainClient):
         return self.explorer.explorer_url
 
     def get_explorer_address_url(self, address: str) -> str:
-        return self.explorer.get_explorer_address_url(address)
+        return self.explorer.get_address_url(address)
 
     def get_explorer_tx_url(self, tx_id: str) -> str:
-        return self.explorer.get_explorer_tx_url(tx_id)
+        return self.explorer.get_tx_url(tx_id)
 
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         account = await self.get_account(address)
@@ -113,20 +113,17 @@ class BinanceChainClient(XChainClient):
             account=account_pk,
         )
 
-        # signature = Signature(message, account=account)
-        # signature_bytes = signature.to_bytes_json()
-        # pk = self.get_private_key_cosmos()
-        # signed_msg = pk.sign(signature_bytes).hex()
-        # sig = self._pk.ecdsa_sign(msg_bytes)
-        # return self._pk.ecdsa_serialize_compact(sig)
-
         hex_data = message.to_hex_data()
         tx = await self.broadcast_tx(hex_data, is_sync=is_sync)
         return tx
 
     async def broadcast_tx(self, tx_hex: str, is_sync=True) -> str:
         result = await self._cli.broadcast_hex_msg(tx_hex, sync=is_sync)
-        return result['transaction']['hash']
+        self.last_broadcast_response = result
+        result = result[0]
+        # code = result.get('code')
+        tx_hash = result.get('hash')
+        return tx_hash
 
     async def get_fees(self) -> Fees:
         fees = await self.load_fees()
@@ -221,6 +218,8 @@ class BinanceChainClient(XChainClient):
         self._cli = AsyncHttpApiClient(env=env)
 
         self._semaphore = asyncio.Semaphore(5)
+
+        self.last_broadcast_response = None
 
     @property
     def explorer(self):

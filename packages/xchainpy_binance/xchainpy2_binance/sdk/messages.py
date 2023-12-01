@@ -11,11 +11,20 @@ from .constants import TimeInForce, OrderSide, OrderType, VoteOption
 from .proto.dex_pb2 import (
     NewOrder, CancelOrder, TokenFreeze, TokenUnfreeze, StdTx, StdSignature, Send, Token, Vote
 )
-from .utils import encode_number, varint_encode, decode_address
+from .utils import varint_encode, decode_address
 from .wallet import Account
 
 # An identifier for tools triggering broadcast transactions, set to zero if unwilling to disclose.
 BROADCAST_SOURCE = 0
+
+
+def encode_number(x):
+    """
+    Does nothing, because parent client will always pass encoded int (8 dec)
+    :param x:
+    :return:
+    """
+    return x
 
 
 class Transfer(NamedTuple):
@@ -104,7 +113,8 @@ class Signature:
 
         pk = PrivateKey(self._msg.account.private_key)
         signature = pk.sign(json_bytes)
-        return signature[-64:]
+        return signature
+        # return signature[-64:]
 
         # signed = wallet.sign_message(json_bytes)
         # return signed[-64:]
@@ -485,7 +495,6 @@ class TransferMsg(Msg):
 
         """
         return binascii.hexlify(StdTxMsg(self).to_amino())
-
 
 
 class MultiTransferMsg(Msg):
