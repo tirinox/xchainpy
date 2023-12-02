@@ -2,7 +2,7 @@ import asyncio
 
 from examples.common import get_phrase
 from xchainpy2_binance import BinanceChainClient
-from xchainpy2_utils import NetworkType, CryptoAmount
+from xchainpy2_utils import NetworkType
 
 NETWORK = NetworkType.MAINNET
 
