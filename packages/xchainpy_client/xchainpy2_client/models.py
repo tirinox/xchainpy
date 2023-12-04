@@ -100,6 +100,10 @@ class FeeBounds(NamedTuple):
     lower: Fee
     upper: Fee
 
+    def check_fee_bounds(self, fee_rate: FeeRate):
+        if fee_rate < self.lower or fee_rate > self.upper:
+            raise Exception(f"Fee outside of predetermined bounds: {fee_rate}")
+
 
 RootDerivationPaths = Dict[NetworkType, str]
 
