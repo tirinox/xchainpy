@@ -174,7 +174,7 @@ class BinanceChainClient(XChainClient):
                  wallet_index=0,
                  ):
         """
-        Initialize THORChainClient.
+        Initialize BinanceChainClient.
         :param network: Network type. Default is `NetworkType.MAINNET`
         :param phrase: Mnemonic phrase
         :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
