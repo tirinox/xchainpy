@@ -3,6 +3,8 @@
 XChainPy2 is a library for Python with a common interface for multiple blockchains, built for simple and fast
 integration for wallets and more.
 
+_⚠️WARNING: In Python you do not control memory. Regardless of how secrets are passed to the underlying lib, it still was an object in python before. It will linger in the heap for some time even after going out of scope. It is also impossible to mlock() secrets, your private keys may end up on disk in swap. Use with caution!_
+
 A free interpretation of [XChainJS](https://xchainjs.org/).
 
 ## Packages
