@@ -126,7 +126,7 @@ class XChainClient(abc.ABC):
 
     def purge_client(self):
         self.phrase = ''
-        self.private_key = None
+        self._private_key = None
 
     @abc.abstractmethod
     def get_explorer_url(self) -> str:
