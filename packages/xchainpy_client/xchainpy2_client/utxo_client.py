@@ -7,14 +7,8 @@ from xchainpy2_utils import Chain, CryptoAmount, NetworkType, Asset
 from .base_client import XChainClient
 from .explorer import ExplorerProvider
 from .fees import calc_fees_async, standard_fee_rates
-from .models import XChainClientParams, UTXOOnlineDataProviders, FeeRates, \
+from .models import UTXOOnlineDataProviders, FeeRates, \
     FeeRate, TxPage, XcTx, UTXO, FeesWithRates, FeeOption, Fees, Fee, FeeBounds, RootDerivationPaths
-
-
-class UTXOClientParams(XChainClientParams):
-    explorer_providers: ExplorerProvider
-    data_providers: List[UTXOOnlineDataProviders]
-
 
 logger = logging.getLogger(__name__)
 
