@@ -26,4 +26,6 @@ def test_parse_amount():
                (667, 'ibc/054892D6BB43AF8B93AAC28AA5FD7019D2C59A15DAFD6F45C1FA2BF9BDA22454'),
                (18, 'ibc/5CAE744C89BC70AE7B38019A1EDF83199B7E10F00F160E7F4F12BCA7A32A7EE5'),
            ]
-    assert parse_cosmos_amount('1025304930rune') == [(1025304930, 'rune')]
+
+    # 1 amount
+    assert parse_cosmos_amount('1025304930rune') == (1025304930, 'rune')
