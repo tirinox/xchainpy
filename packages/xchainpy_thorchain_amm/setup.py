@@ -19,7 +19,7 @@ REQUIRES = [
     "xchainpy2_crypto>=0.0.4",
     "xchainpy2_client>=0.0.4",
     "xchainpy2_thorchain>=0.0.4",
-    "xchainpy2_cosmos>=0.0.4"
+    "xchainpy2_cosmos>=0.0.4",
     "xchainpy2_query>=0.0.4",
 
 ]
