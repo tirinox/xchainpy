@@ -9,4 +9,4 @@ Utility helpers for XChain clients
 
 ## Installation
 
-`pip install xchainpy_util`
+`pip install xchainpy-util`
