@@ -29,3 +29,13 @@ tc_env:
 	python3 -m pip install --editable packages/xchainpy_client
 	python3 -m pip install --editable packages/xchainpy_cosmos
 	python3 -m pip install --editable packages/xchainpy_thorchain
+
+
+build:
+	cd scripts && ./publish.sh build
+
+publish_test:
+	cd scripts && ./publish.sh publish_test
+
+publish:
+	cd scripts && ./publish.sh publish

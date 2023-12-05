@@ -3,3 +3,5 @@ pytest~=7.4.0
 pydantic>=2.4.2
 PyYAML~=6.0.0
 pytest-aiohttp
+build
+twine
