@@ -18,7 +18,9 @@ test:
 		packages/xchainpy_thorchain \
 		packages/xchainpy_thorchain_amm \
 		packages/xchainpy_thorchain_query \
-		packages/xchainpy_utils
+		packages/xchainpy_utils \
+		packages/xchainpy_bitcoin \
+		packages/xchainpy_mayachain
 
 
 tc_env:
