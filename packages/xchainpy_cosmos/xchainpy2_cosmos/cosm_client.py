@@ -162,10 +162,6 @@ class CosmosGaiaClient(XChainClient):
         super().set_phrase(phrase, wallet_index)
         self._make_wallet()
 
-    @property
-    def explorer(self):
-        return self.explorer_providers[self.network]
-
     def validate_address(self, address: str) -> bool:
         """
         Validates a Cosmos address.
