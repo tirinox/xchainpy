@@ -1,23 +1,14 @@
 from datetime import datetime
 from typing import Optional, Union, List
 
-from xchainpy2_client import AssetInfo, Fees, XChainClient, XcTx, TxPage, UtxoOnlineDataProvider, ExplorerProvider
+from xchainpy2_client import AssetInfo, Fees, XChainClient, XcTx, TxPage, UtxoOnlineDataProvider
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC
-from .utils import get_btc_address_prefix
 from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS
+from .utils import get_btc_address_prefix
 
 
 class BitcoinClient(XChainClient):
-    def get_explorer_url(self) -> str:
-        return self.explorer.explorer_url
-
-    def get_explorer_address_url(self, address: str) -> str:
-        return self.explorer.get_address_url(address)
-
-    def get_explorer_tx_url(self, tx_id: str) -> str:
-        return self.explorer.get_tx_url(tx_id)
-
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         ...
 
@@ -59,10 +50,9 @@ class BitcoinClient(XChainClient):
                  private_key: Union[str, bytes, callable, None] = None,
                  fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = ROOT_DERIVATION_PATHS,
+                 explorer_providers=BLOCKSTREAM_EXPLORERS,
                  wallet_index=0,
-                 provider: Optional[UtxoOnlineDataProvider] = None,
-                 explorer=BLOCKSTREAM_EXPLORERS,
-                 ):
+                 provider: Optional[UtxoOnlineDataProvider] = None):
         """
         BitcoinClient constructor
         Uses bitcoinlib under the hood
@@ -73,7 +63,7 @@ class BitcoinClient(XChainClient):
         :param root_derivation_paths: HD wallet derivation paths
         :param wallet_index: int index of wallet
         :param provider: UTXO online data provider (see xchainpy/xchainpy-utxo-providers)
-        :param explorer: explorer provider
+        :param explorer_providers: explorer providers dictionary
         """
         super().__init__(
             Chain.Bitcoin,
@@ -83,17 +73,18 @@ class BitcoinClient(XChainClient):
             wallet_index
         )
 
+        self.explorers = explorer_providers
+
         self._prefix = get_btc_address_prefix(network)
         self._decimal = BTC_DECIMAL
         self.native_asset = AssetBTC
 
         self.provider = provider
-        self.explorer: ExplorerProvider = explorer[network]
 
     def validate_address(self, address: str) -> bool:
         ...
 
-    def get_asset_info(self) -> AssetInfo:
+    def get_gas_asset(self) -> AssetInfo:
         return AssetInfo(
             AssetBTC, BTC_DECIMAL
         )

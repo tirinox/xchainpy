@@ -19,7 +19,7 @@ from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx,
     Fees, TxPage, AssetInfo, FeeType, FeeOption
 from xchainpy2_client.fees import single_fee
 from xchainpy2_crypto import derive_private_key, create_address
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetRUNE, RUNE_DECIMAL, Asset, Amount, AssetATOM, \
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, RUNE_DECIMAL, Asset, Amount, AssetATOM, \
     unique_by_key, batched, NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER, flatten
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_DERIVATION_PATHS, COSMOS_ADDR_PREFIX, \
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
@@ -166,25 +166,6 @@ class CosmosGaiaClient(XChainClient):
     @property
     def explorer(self):
         return self.explorer_providers[self.network]
-
-    def get_explorer_url(self) -> str:
-        return self.explorer.explorer_url
-
-    def get_explorer_address_url(self, address: str) -> str:
-        """
-        Get the explorer url for the given address.
-        :param address: Address string
-        :return: The explorer url for the given address.
-        """
-        return self.explorer.get_address_url(address)
-
-    def get_explorer_tx_url(self, tx_id: str) -> str:
-        """
-        Get the explorer url for the given transaction id.
-        :param tx_id: Transaction id or hash string
-        :return: The explorer url for the given transaction id.
-        """
-        return self.explorer.get_tx_url(tx_id)
 
     def validate_address(self, address: str) -> bool:
         """
@@ -554,9 +535,9 @@ class CosmosGaiaClient(XChainClient):
 
         return tx_digest
 
-    def get_asset_info(self) -> AssetInfo:
+    def get_gas_asset(self) -> AssetInfo:
         return AssetInfo(
-            AssetRUNE, RUNE_DECIMAL
+            AssetATOM, self._decimal
         )
 
     async def fetch_chain_id(self, server='') -> str:

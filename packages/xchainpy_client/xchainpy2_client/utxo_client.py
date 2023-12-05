@@ -1,11 +1,10 @@
 import abc
 import logging
 from datetime import datetime
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 from xchainpy2_utils import Chain, CryptoAmount, NetworkType, Asset
 from .base_client import XChainClient
-from .explorer import ExplorerProvider
 from .fees import calc_fees_async, standard_fee_rates
 from .models import UTXOOnlineDataProviders, FeeRates, \
     FeeRate, TxPage, XcTx, UTXO, FeesWithRates, FeeOption, Fees, Fee, FeeBounds, RootDerivationPaths
@@ -21,11 +20,9 @@ class UTXOClient(XChainClient, abc.ABC):
             phrase: Optional[str] = None,
             fee_bound: Optional[FeeBounds] = None,
             root_derivation_paths: Optional[RootDerivationPaths] = None,
-            data_providers: Optional[UTXOOnlineDataProviders] = None,
-            explorer_providers: Dict[NetworkType, ExplorerProvider] = None
+            data_providers: Optional[UTXOOnlineDataProviders] = None
     ):
-        super().__init__(chain, network, phrase, fee_bound, root_derivation_paths)
-        self.explorer_providers = explorer_providers
+        super().__init__(chain, network, phrase, fee_bound=fee_bound, root_derivation_paths=root_derivation_paths)
         self.data_providers = data_providers
 
     @abc.abstractmethod
@@ -35,29 +32,6 @@ class UTXOClient(XChainClient, abc.ABC):
     @abc.abstractmethod
     async def calc_fee(self, fee_type: FeeOption, fee_rate: FeeRate, memo: str = '') -> Fee:
         pass
-
-    def get_explorer_url(self) -> str:
-        """
-        Get the explorer url.
-        :return: The explorer url based on the network.
-        """
-        return self.explorer_providers[self.network].explorer_url
-
-    def get_explorer_tx_url(self, tx_id: str) -> str:
-        """
-        Get the explorer url for the given transaction id.
-        :param tx_id: The transaction id
-        :return: str The explorer url for the given transaction id based on the network.
-        """
-        return self.explorer_providers[self.network].get_tx_url(tx_id)
-
-    def get_explorer_address_url(self, address: str) -> str:
-        """
-        Get the explorer url for the given address.
-        :param address: address
-        :return: The explorer url for the given address based on the network.
-        """
-        return self.explorer_providers[self.network].get_address_url(address)
 
     async def get_transactions(self, address: str,
                                offset: int = 0,

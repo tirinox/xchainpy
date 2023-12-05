@@ -3,9 +3,10 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List, Union
 
+from xchainpy2_client.explorer import ExplorerProvider
 from xchainpy2_client.models import XcTx, Fees, TxPage, \
     FeeBounds, Fee, RootDerivationPaths, AssetInfo, FeeOption
-from xchainpy2_crypto import validate_mnemonic
+from xchainpy2_crypto import validate_mnemonic, derive_private_key
 from xchainpy2_utils import CryptoAmount, Chain, NetworkType, Asset, Amount
 
 INF_FEE = Fee(1_000_000_000_000_000_000)
@@ -39,8 +40,10 @@ class XChainClient(abc.ABC):
         self.fee_bound = fee_bound
         self.root_derivation_paths = root_derivation_paths
 
-        self.network = NetworkType.MAINNET
+        self.network = network
         self.set_network(network)
+
+        self.explorers = {network: ExplorerProvider('', '', '')}
 
         # NOTE: we don't call this.setPhrase() to void generating an address and paying the perf penalty
         if phrase:
@@ -57,6 +60,50 @@ class XChainClient(abc.ABC):
 
         self.native_asset: Optional[Asset] = None
         self._decimal = 8
+
+    @property
+    def decimal(self):
+        return self._decimal
+
+    @abc.abstractmethod
+    def validate_address(self, address: str) -> bool:
+        pass
+
+    @abc.abstractmethod
+    def get_address(self) -> str:
+        pass
+
+    @abc.abstractmethod
+    def get_public_key(self):
+        pass
+
+    def get_private_key(self) -> str:
+        """
+        Get the private key for the given wallet index.
+        :return:
+        """
+        if self.pk_hex:
+            return self.pk_hex
+        else:
+            return derive_private_key(
+                self.phrase,
+                self.get_full_derivation_path(self.wallet_index)
+            ).hex()
+
+    def _throw_if_empty_phrase(self):
+        if not self.phrase and not self._private_key:
+            raise Exception('Phrase or private key must be provided to do this action')
+
+    @property
+    def pk_hex(self):
+        if callable(self._private_key):
+            return self._private_key()
+        elif isinstance(self._private_key, str):
+            return self._private_key
+        elif isinstance(self._private_key, bytes):
+            return self._private_key.hex()
+        else:
+            return None
 
     def gas_amount(self, amount: Union[float, str, int, Decimal]) -> CryptoAmount:
         """
@@ -88,21 +135,6 @@ class XChainClient(abc.ABC):
         else:
             return CryptoAmount(max_value, self.native_asset)
 
-    def _throw_if_empty_phrase(self):
-        if not self.phrase and not self._private_key:
-            raise Exception('Phrase or private key must be provided to do this action')
-
-    @property
-    def pk_hex(self):
-        if callable(self._private_key):
-            return self._private_key()
-        elif isinstance(self._private_key, str):
-            return self._private_key
-        elif isinstance(self._private_key, bytes):
-            return self._private_key.hex()
-        else:
-            return None
-
     def set_network(self, network: NetworkType):
         if not network:
             raise Exception('Network must be provided')
@@ -128,29 +160,32 @@ class XChainClient(abc.ABC):
         self.phrase = ''
         self._private_key = None
 
-    @abc.abstractmethod
     def get_explorer_url(self) -> str:
-        pass
+        """
+        Get the explorer url.
+        :return: The explorer url based on the network.
+        """
+        return self.explorers[self.network].explorer_url
 
-    @abc.abstractmethod
     def get_explorer_address_url(self, address: str) -> str:
-        pass
+        """
+        Get the explorer url for the given address.
+        :param address: address
+        :return: The explorer url for the given address based on the network.
+        """
+        return self.explorers[self.network].get_address_url(address)
 
-    @abc.abstractmethod
     def get_explorer_tx_url(self, tx_id: str) -> str:
-        pass
-
-    @abc.abstractmethod
-    def validate_address(self, address: str) -> bool:
-        pass
-
-    @abc.abstractmethod
-    def get_address(self) -> str:
-        pass
+        """
+        Get the explorer url for the given transaction id.
+        :param tx_id: The transaction id
+        :return: str The explorer url for the given transaction id based on the network.
+        """
+        return self.explorers[self.network].get_tx_url(tx_id)
 
     @abc.abstractmethod
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
-        ...
+        pass
 
     def get_full_derivation_path(self, wallet_index: int) -> str:
         if self.root_derivation_paths:
@@ -188,5 +223,5 @@ class XChainClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_asset_info(self) -> AssetInfo:
-        raise NotImplementedError()
+    def get_gas_asset(self) -> AssetInfo:
+        pass

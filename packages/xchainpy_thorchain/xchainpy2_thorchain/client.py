@@ -53,7 +53,7 @@ class THORChainClient(CosmosGaiaClient):
         :param explorer_providers: Dictionary of explorer providers for each network type. See: THOR_EXPLORERS
         :param wallet_index: int (wallet index, default 0) We can derive any number of addresses from a single seed
         """
-        self.explorer_providers = explorer_providers.copy() if explorer_providers else THOR_EXPLORERS.copy()
+        self.explorers = explorer_providers
 
         if isinstance(client_urls, NodeURL):
             client_urls = {network: client_urls}
@@ -98,7 +98,7 @@ class THORChainClient(CosmosGaiaClient):
         except (ValueError, Bech32ChecksumError):
             return False
 
-    def get_asset_info(self) -> AssetInfo:
+    def get_gas_asset(self) -> AssetInfo:
         return AssetInfo(
             AssetRUNE, RUNE_DECIMAL
         )

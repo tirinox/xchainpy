@@ -19,15 +19,6 @@ from .utils import get_bnb_address_prefix
 
 
 class BinanceChainClient(XChainClient):
-    def get_explorer_url(self) -> str:
-        return self.explorer.explorer_url
-
-    def get_explorer_address_url(self, address: str) -> str:
-        return self.explorer.get_address_url(address)
-
-    def get_explorer_tx_url(self, tx_id: str) -> str:
-        return self.explorer.get_tx_url(tx_id)
-
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         account = await self.get_account(address)
         return [
@@ -181,11 +172,8 @@ class BinanceChainClient(XChainClient):
         :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param client_urls: Dictionary of client urls for each network type. See: DEFAULT_CLIENT_URLS
-        :param explorer_providers: Dictionary of explorer providers for each network type. See: THOR_EXPLORERS
         :param wallet_index: int (wallet index, default 0) We can derive any number of addresses from a single seed
         """
-        self.explorer_providers = explorer_providers.copy() if explorer_providers else BNB_EXPLORERS.copy()
-
         if isinstance(client_urls, str):
             client_urls = {network: client_urls}
 
@@ -202,6 +190,8 @@ class BinanceChainClient(XChainClient):
             root_derivation_paths,
             wallet_index
         )
+
+        self.explorers = explorer_providers
 
         self._prefix = get_bnb_address_prefix(network)
         self.native_asset = AssetBNB
@@ -222,10 +212,6 @@ class BinanceChainClient(XChainClient):
         self.last_broadcast_response = None
 
     @property
-    def explorer(self):
-        return self.explorer_providers[self.network]
-
-    @property
     def client(self):
         return self._cli
 
@@ -240,7 +226,7 @@ class BinanceChainClient(XChainClient):
         except (ValueError, Bech32ChecksumError):
             return False
 
-    def get_asset_info(self) -> AssetInfo:
+    def get_gas_asset(self) -> AssetInfo:
         return AssetInfo(
             AssetBNB, BNB_DECIMAL
         )
