@@ -58,8 +58,7 @@ class CosmosGaiaClient(XChainClient):
             if root_derivation_paths else COSMOS_ROOT_DERIVATION_PATHS.copy()
         super().__init__(Chain.Cosmos, network, phrase, private_key, fee_bound, root_derivation_paths, wallet_index)
 
-        self.explorer_providers = explorer_providers.copy() \
-            if explorer_providers else DEFAULT_EXPLORER_PROVIDER.copy()
+        self.explorers = explorer_providers
 
         if isinstance(client_urls, str):
             client_urls = {NetworkType.MAINNET: client_urls}
@@ -225,7 +224,7 @@ class CosmosGaiaClient(XChainClient):
         if not address:
             address = self.get_address()
 
-        address = Address(address)
+        address = Address(address, prefix=self.prefix)
 
         balances = await asyncio.get_event_loop().run_in_executor(
             None,

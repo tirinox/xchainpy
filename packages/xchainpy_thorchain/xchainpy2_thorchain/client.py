@@ -66,7 +66,7 @@ class THORChainClient(CosmosGaiaClient):
         root_derivation_paths = root_derivation_paths.copy() if root_derivation_paths else ROOT_DERIVATION_PATHS.copy()
         super().__init__(
             network, phrase, private_key, fee_bound, root_derivation_paths,
-            self.client_urls, self.chain_ids, self.explorer_providers,
+            self.client_urls, self.chain_ids, self.explorers,
             wallet_index
         )
 
@@ -80,6 +80,7 @@ class THORChainClient(CosmosGaiaClient):
         self._deposit_gas_limit = DEPOSIT_GAS_LIMIT_VALUE
 
         self._recreate_client()
+        self._make_wallet()
 
     @property
     def server_url(self) -> str:

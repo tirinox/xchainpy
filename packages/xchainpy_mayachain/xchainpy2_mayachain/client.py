@@ -11,7 +11,7 @@ from xchainpy2_client.fees import single_fee
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
-from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, \
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Amount, remove_0x_prefix, \
     Asset, SYNTH_DELIMITER, CACAO_DECIMAL, AssetCACAO
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_CACAO_NATIVE, ROOT_DERIVATION_PATHS, \
     DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_CACAO_FEE, \
@@ -53,7 +53,6 @@ class MayaChainClient(CosmosGaiaClient):
         :param explorer_providers: Dictionary of explorer providers for each network type. See: THOR_EXPLORERS
         :param wallet_index: int (wallet index, default 0) We can derive any number of addresses from a single seed
         """
-        self.explorers = explorer_providers
 
         if isinstance(client_urls, NodeURL):
             client_urls = {network: client_urls}
@@ -63,10 +62,12 @@ class MayaChainClient(CosmosGaiaClient):
 
         self.chain_ids = chain_ids.copy() if chain_ids else DEFAULT_CHAIN_IDS.copy()
 
+        self.explorers = explorer_providers
+
         root_derivation_paths = root_derivation_paths.copy() if root_derivation_paths else ROOT_DERIVATION_PATHS.copy()
         super().__init__(
             network, phrase, private_key, fee_bound, root_derivation_paths,
-            self.client_urls, self.chain_ids, self.explorer_providers, wallet_index
+            self.client_urls, self.chain_ids, self.explorers, wallet_index
         )
 
         # Tune for MayaChain
@@ -79,6 +80,7 @@ class MayaChainClient(CosmosGaiaClient):
         self._deposit_gas_limit = DEPOSIT_GAS_LIMIT_VALUE
 
         self._recreate_client()
+        self._make_wallet()
 
     @property
     def server_url(self) -> str:
