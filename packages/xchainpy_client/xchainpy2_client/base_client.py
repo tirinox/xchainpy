@@ -12,6 +12,10 @@ from xchainpy2_utils import CryptoAmount, Chain, NetworkType, Asset, Amount
 INF_FEE = Fee(1_000_000_000_000_000_000)
 
 
+class KeyException(Exception):
+    ...
+
+
 class XChainClient(abc.ABC):
     def __init__(self,
                  chain: Chain,
@@ -48,7 +52,7 @@ class XChainClient(abc.ABC):
         # NOTE: we don't call this.setPhrase() to void generating an address and paying the perf penalty
         if phrase:
             if not validate_mnemonic(phrase):
-                raise Exception('Invalid phrase')
+                raise KeyException('Invalid phrase')
             self.phrase = phrase
         else:
             self.phrase = None
@@ -56,7 +60,7 @@ class XChainClient(abc.ABC):
         self._private_key = private_key
 
         if private_key and phrase:
-            raise Exception('Phrase and private key cannot be provided at the same time')
+            raise KeyException('Phrase and private key cannot be provided at the same time')
 
         self.native_asset: Optional[Asset] = None
         self._decimal = 8
@@ -84,15 +88,17 @@ class XChainClient(abc.ABC):
         """
         if self.pk_hex:
             return self.pk_hex
-        else:
+        elif self.phrase:
             return derive_private_key(
                 self.phrase,
                 self.get_full_derivation_path(self.wallet_index)
             ).hex()
+        else:
+            raise KeyException('Phrase or private key must be provided to do this action')
 
     def _throw_if_empty_phrase(self):
         if not self.phrase and not self._private_key:
-            raise Exception('Phrase or private key must be provided to do this action')
+            raise KeyException('Phrase or private key must be provided to do this action')
 
     @property
     def pk_hex(self):
@@ -150,7 +156,7 @@ class XChainClient(abc.ABC):
     def set_phrase(self, phrase: str, wallet_index: int = 0):
         if phrase:
             if not validate_mnemonic(phrase):
-                raise Exception('Invalid phrase')
+                raise KeyException('Invalid phrase')
             self.phrase = phrase
         else:
             self.purge_client()
