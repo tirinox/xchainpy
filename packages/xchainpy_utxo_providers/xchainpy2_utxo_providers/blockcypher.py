@@ -188,4 +188,5 @@ class BlockCypherProvider(UtxoOnlineDataProvider):
             type=TxType.TRANSFER,
             hash=tx.hash,
             height=tx.block_height,
+            original=tx,
         )

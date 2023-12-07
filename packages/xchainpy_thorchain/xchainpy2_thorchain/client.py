@@ -243,7 +243,8 @@ class THORChainClient(CosmosGaiaClient):
         ]
 
         height = int(raw_data.get('finalised_height', 0))
-        return XcTx(sender_asset, transfers, None, TxType.TRANSFER, tx['id'], height, memo=memo)
+        return XcTx(sender_asset, transfers, None, TxType.TRANSFER, tx['id'], height, memo=memo,
+                    original=raw_data)
 
     async def get_transaction_data(self, tx_id: str, address: str = '') -> XcTx:
         """

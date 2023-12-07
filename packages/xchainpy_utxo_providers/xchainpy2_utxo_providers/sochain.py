@@ -190,6 +190,7 @@ class SochainProvider(UtxoOnlineDataProvider):
             type=TxType.TRANSFER,
             hash=tx.txid,
             height=tx.block_no,
+            original=tx,
         )
 
     def _convert_utxos(self, utxos: List[AddressUTXO]) -> List[UTXO]:

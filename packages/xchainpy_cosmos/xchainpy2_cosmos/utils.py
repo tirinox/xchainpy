@@ -160,6 +160,7 @@ def parse_tx_response_json(j: dict, tx_id: str, address: str, decimals: int,
         hash=tx_hash,
         height=height,
         memo=memo,
+        original=j,
     )
 
 

@@ -45,6 +45,7 @@ class XcTx(NamedTuple):
     height: int
     memo: str = ''
     is_success: bool = True
+    original: Optional[object] = None  # transaction object / dict from underlying service
 
     @property
     def inbound_txs(self):

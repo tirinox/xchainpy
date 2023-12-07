@@ -192,6 +192,7 @@ class HaskoinProvider(UtxoOnlineDataProvider):
             type=TxType.TRANSFER,
             hash=tx.txid,
             height=tx.block.height,
+            original=tx,
         )
 
     def _convert_utxos(self, utxos: List[TxUnspent]) -> List[UTXO]:

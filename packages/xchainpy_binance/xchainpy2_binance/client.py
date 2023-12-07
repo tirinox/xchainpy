@@ -294,7 +294,8 @@ class BinanceChainClient(XChainClient):
             height=int(raw['height']),
             is_success=raw['ok'],
             memo=raw['tx']['value'].get('memo', ''),
-            type=TxType.TRANSFER if transfers else TxType.UNKNOWN
+            type=TxType.TRANSFER if transfers else TxType.UNKNOWN,
+            original=raw,
         )
 
     def parse_tx_data_simplified(self, raw: dict, my_address=None) -> XcTx:
@@ -321,6 +322,7 @@ class BinanceChainClient(XChainClient):
                     outbound=(raw['fromAddr'] == my_address),
                 )
             ],
+            original=raw,
         )
 
     async def _ensure_chain_id(self):
