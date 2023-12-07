@@ -26,7 +26,7 @@ def demo_keystore():
     print(f"{mnemonic = }")
     ks = KeyStore.encrypt_to_keystore(mnemonic, password)
     print(ks)
-    ks.save('data/example_keystore.json')
+    ks.save('example_keystore.json')
 
     mnemonic_out = ks.decrypt_from_keystore(password)
     print(mnemonic_out)
