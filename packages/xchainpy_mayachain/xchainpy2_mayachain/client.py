@@ -99,11 +99,6 @@ class MayaChainClient(CosmosGaiaClient):
         except (ValueError, Bech32ChecksumError):
             return False
 
-    def get_gas_asset(self) -> AssetInfo:
-        return AssetInfo(
-            AssetCACAO, CACAO_DECIMAL
-        )
-
     async def deposit(self,
                       what: Union[CryptoAmount, Amount, int, float],
                       memo: str,

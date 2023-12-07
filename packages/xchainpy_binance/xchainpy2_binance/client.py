@@ -226,11 +226,6 @@ class BinanceChainClient(XChainClient):
         except (ValueError, Bech32ChecksumError):
             return False
 
-    def get_gas_asset(self) -> AssetInfo:
-        return AssetInfo(
-            AssetBNB, BNB_DECIMAL
-        )
-
     async def load_fees(self):
         if self._cached_fees:
             return self._cached_fees

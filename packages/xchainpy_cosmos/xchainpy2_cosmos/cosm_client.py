@@ -66,7 +66,7 @@ class CosmosGaiaClient(XChainClient):
         self.client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
         self.chain_ids = chain_ids.copy() if chain_ids else COSMOS_CHAIN_IDS.copy()
 
-        self.native_asset = AssetATOM
+        self._gas_asset = AssetATOM
         self._prefix = COSMOS_ADDR_PREFIX
 
         self._denom = COSMOS_DENOM
@@ -240,7 +240,7 @@ class CosmosGaiaClient(XChainClient):
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         if denom == self._denom:
-            return self.native_asset
+            return self._gas_asset
         else:
             return Asset(self.chain.value, denom.upper())
 
@@ -440,7 +440,7 @@ class CosmosGaiaClient(XChainClient):
         j = await self.get_transaction_data_cosmos(tx_id)
 
         return parse_tx_response_json(
-            j, tx_id, our_address, self._decimal, self._denom, self.native_asset
+            j, tx_id, our_address, self._decimal, self._denom, self._gas_asset
         )
 
     async def get_transaction_data_raw(self, tx_id: str) -> dict:
@@ -530,11 +530,6 @@ class CosmosGaiaClient(XChainClient):
 
         return tx_digest
 
-    def get_gas_asset(self) -> AssetInfo:
-        return AssetInfo(
-            AssetATOM, self._decimal
-        )
-
     async def fetch_chain_id(self, server='') -> str:
         """
         Helper to get Cosmos' chain id
@@ -576,17 +571,17 @@ class CosmosGaiaClient(XChainClient):
         for balance in balances:
             if balance.asset == amount.asset:
                 asset_balance = balance
-            if balance.asset == self.native_asset:
+            if balance.asset == self._gas_asset:
                 native_balance = balance
 
-        is_native = amount.asset == self.native_asset
+        is_native = amount.asset == self._gas_asset
         extra_fee = fee if is_native else Amount.from_base(0, self._decimal)
 
         if asset_balance is None or asset_balance.amount.as_base < amount.amount.as_base + extra_fee.as_base:
             raise ValueError(f"Insufficient funds: {amount.amount} {amount.asset}")
 
         if native_balance is None or native_balance.amount < fee:
-            raise ValueError(f"Insufficient funds to pay fee: {fee.amount} {self.native_asset}")
+            raise ValueError(f"Insufficient funds to pay fee: {fee.amount} {self._gas_asset}")
 
     def _make_wallet(self) -> LocalWallet:
         if self.phrase or self._private_key:

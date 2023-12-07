@@ -62,7 +62,7 @@ class XChainClient(abc.ABC):
         if private_key and phrase:
             raise KeyException('Phrase and private key cannot be provided at the same time')
 
-        self.native_asset: Optional[Asset] = None
+        self._gas_asset: Optional[Asset] = None
         self._decimal = 8
 
     @property
@@ -117,7 +117,7 @@ class XChainClient(abc.ABC):
         :param amount: Union[float, str, int, Decimal] amount of asset (not base!)
         :return: CryptoAmount
         """
-        return CryptoAmount(Amount.automatic(amount, self._decimal), self.native_asset)
+        return CryptoAmount(Amount.automatic(amount, self._decimal), self._gas_asset)
 
     async def max_gas_amount(self, balances: List[CryptoAmount] = None) -> CryptoAmount:
         """
@@ -128,7 +128,7 @@ class XChainClient(abc.ABC):
         if balances is None:
             balances = await self.get_balance()
 
-        gas_balance = next((b for b in balances if b.asset == self.native_asset), None)
+        gas_balance = next((b for b in balances if b.asset == self._gas_asset), None)
         if not gas_balance:
             return self.gas_amount(0)  # no gas at all
 
@@ -139,7 +139,7 @@ class XChainClient(abc.ABC):
             # less than fee
             return self.gas_amount(0)
         else:
-            return CryptoAmount(max_value, self.native_asset)
+            return CryptoAmount(max_value, self._gas_asset)
 
     def set_network(self, network: NetworkType):
         if not network:
@@ -228,6 +228,12 @@ class XChainClient(abc.ABC):
     async def broadcast_tx(self, tx_hex: str) -> str:
         pass
 
-    @abc.abstractmethod
-    def get_gas_asset(self) -> AssetInfo:
-        pass
+    def get_gas_asset(self):
+        return AssetInfo(
+            self._gas_asset,
+            self._decimal
+        )
+
+    @property
+    def gas_asset(self):
+        return self._gas_asset

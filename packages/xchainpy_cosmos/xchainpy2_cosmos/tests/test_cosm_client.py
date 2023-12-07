@@ -13,7 +13,7 @@ def cosm_client():
 
 def test_create(cosm_client):
     assert cosm_client._denom == 'uatom'
-    assert cosm_client.native_asset == AssetATOM
+    assert cosm_client._gas_asset == AssetATOM
     assert cosm_client.chain == Chain.Cosmos
     assert cosm_client.network == NetworkType.MAINNET
 
