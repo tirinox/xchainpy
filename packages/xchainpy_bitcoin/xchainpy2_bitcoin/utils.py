@@ -1,4 +1,7 @@
 import binascii
+from typing import Optional
+
+from bitcoinlib.transactions import Output
 
 from xchainpy2_utils import NetworkType
 
@@ -19,6 +22,10 @@ def get_btc_address_prefix(network: NetworkType) -> str:
         raise ValueError('Invalid network')
 
 
+OP_RETURN = 106
+OP_RETURN_HEX = '6a'
+
+
 def compile_memo(memo: str) -> bytes:
     """Compile memo
 
@@ -28,7 +35,6 @@ def compile_memo(memo: str) -> bytes:
     """
     metadata = bytes(memo, 'utf-8')
     metadata_len = len(metadata)
-    op_return = '6a'
 
     if metadata_len <= 75:
         # length byte + data (https://en.bitcoin.it/wiki/Script)
@@ -43,6 +49,11 @@ def compile_memo(memo: str) -> bytes:
         payload = b"\x4d" + bytearray((rest,)) + bytearray((chunks,)) + metadata
 
     compiled_memo = binascii.b2a_hex(payload).decode('utf-8')
-    compiled_memo = op_return + compiled_memo
+    compiled_memo = OP_RETURN_HEX + compiled_memo
     compiled_memo = binascii.unhexlify(compiled_memo)
     return compiled_memo
+
+
+def try_get_memo_from_output(out: Output) -> Optional[str]:
+    if len(out.script.commands) >= 2 and out.script.commands[0] == OP_RETURN:
+        return out.script.commands[1].decode('utf-8')

@@ -32,6 +32,7 @@ dependencies = [
     "xchainpy2_utils",
     "xchainpy2_crypto",
     "xchainpy2_client",
+    "bitcoinlib",
 ]
 [project.optional-dependencies]
 test = ["pytest"]

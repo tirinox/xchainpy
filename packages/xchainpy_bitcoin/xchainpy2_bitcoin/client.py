@@ -1,16 +1,26 @@
+import asyncio
 from datetime import datetime
 from typing import Optional, Union, List
 
-from xchainpy2_client import AssetInfo, Fees, XChainClient, XcTx, TxPage, UtxoOnlineDataProvider
+from bitcoinlib.keys import Key, deserialize_address
+from bitcoinlib.services.services import Service
+from bitcoinlib.transactions import Transaction
+
+from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, UtxoOnlineDataProvider, TxType, TokenTransfer
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC
 from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS
-from .utils import get_btc_address_prefix
+from .utils import get_btc_address_prefix, try_get_memo_from_output
 
 
 class BitcoinClient(XChainClient):
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
-        ...
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            self.service.getbalance,
+            self.get_address()
+        )
+        return [self.gas_amount(result)]
 
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 10,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
@@ -19,7 +29,12 @@ class BitcoinClient(XChainClient):
         ...
 
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
-        ...
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            self.service.gettransaction,
+            tx_id
+        )
+        return self._convert_lib_tx_to_our_tx(result)
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, is_sync: bool = True, **kwargs) -> str:
@@ -32,17 +47,15 @@ class BitcoinClient(XChainClient):
         ...
 
     def get_address(self) -> str:
-        ...
+        return self.get_public_key().address(encoding='bech32')
 
-    def get_public_key(self):
-        ...
+    def get_public_key(self) -> Key:
+        return self.get_private_key().public()
 
-    def get_private_key_cosmos(self):
-        ...
-
-    def get_private_key(self) -> str:
-        # todo: add to base client
-        ...
+    def get_private_key(self) -> Key:
+        pk = super().get_private_key()
+        lib_pk = Key(pk, network=self._service_network, is_private=True)
+        return lib_pk
 
     def __init__(self,
                  network=NetworkType.MAINNET,
@@ -81,10 +94,64 @@ class BitcoinClient(XChainClient):
 
         self.provider = provider
 
-    def validate_address(self, address: str) -> bool:
-        ...
+        if network in (NetworkType.MAINNET, NetworkType.STAGENET):
+            self._service_network = 'bitcoin'
+        else:
+            self._service_network = 'testnet'
 
-    def get_gas_asset(self) -> AssetInfo:
-        return AssetInfo(
-            AssetBTC, BTC_DECIMAL
+        self.service = Service(
+            network=self._service_network,
+            providers=[
+                'mempool'
+            ]
+        )
+
+    def validate_address(self, address: str) -> bool:
+        try:
+            deserialize_address(address)
+        except Exception:
+            return False
+
+    def _convert_lib_tx_to_our_tx(self, tx: Transaction) -> XcTx:
+        transfers = []
+
+        for inp in tx.inputs:
+            if inp.script_type == 'coinbase':
+                continue
+            transfers.append(TokenTransfer(
+                from_address=inp.address,
+                to_address='',
+                amount=self.gas_amount(inp.value).amount,
+                asset=self.native_asset,
+                tx_hash=tx.txid,
+                outbound=False,
+            ))
+
+        memo = ''
+        for output in tx.outputs:
+            if not memo:
+                memo = try_get_memo_from_output(output) or ''
+
+            if output.script_type == 'nulldata':
+                continue
+
+            transfers.append(TokenTransfer(
+                from_address='',
+                to_address=output.address,
+                amount=self.gas_amount(output.value).amount,
+                asset=self.native_asset,
+                tx_hash=tx.txid,
+                outbound=True,
+            ))
+
+        return XcTx(
+            self._gas_asset,
+            transfers=transfers,
+            date=tx.date,
+            type=TxType.TRANSFER,
+            hash=tx.txid,
+            height=tx.block_height,
+            memo=memo,
+            is_success=(tx.status == 'confirmed'),
+            original=tx,
         )
