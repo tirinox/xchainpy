@@ -14,6 +14,8 @@ def get_btc_address_prefix(network: NetworkType) -> str:
     """
     if network == NetworkType.TESTNET:
         return 'tb1'
+    elif network == NetworkType.DEVNET:
+        return 'blt'
     elif network == NetworkType.STAGENET:
         return 'bc1'
     elif network == NetworkType.MAINNET:

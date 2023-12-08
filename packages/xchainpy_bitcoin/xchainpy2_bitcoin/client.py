@@ -2,19 +2,22 @@ import asyncio
 from datetime import datetime
 from typing import Optional, Union, List
 
+from bitcoinlib.config.config import MAX_TRANSACTIONS
 from bitcoinlib.keys import Key, deserialize_address
 from bitcoinlib.services.services import Service
-from bitcoinlib.transactions import Transaction
+from bitcoinlib.transactions import Transaction, Output
 
-from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, UtxoOnlineDataProvider, TxType, TokenTransfer, FeeType, \
+from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, TxType, TokenTransfer, FeeType, \
     FeeOption
 from xchainpy2_client import RootDerivationPaths, FeeBounds
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC, Amount
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC
 from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS
-from .utils import get_btc_address_prefix, try_get_memo_from_output
+from .utils import get_btc_address_prefix, try_get_memo_from_output, compile_memo
 
 
 class BitcoinClient(XChainClient):
+    DEFAULT_PROVIDER_NAME = 'mempool'
+
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         address = address or self.get_address()
         result = await self._call_service(self.service.getbalance, address)
@@ -23,8 +26,19 @@ class BitcoinClient(XChainClient):
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 10,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None,
-                               height=None, detailed=False) -> TxPage:
-        ...
+                               height=None, detailed=False, after_tx_id='') -> TxPage:
+        if asset:
+            raise Exception(f'asset parameter is not supported')
+        if start_time or end_time:
+            raise Exception(f'start_time and end_time parameters are not supported')
+
+        results = await self._call_service(self.service.gettransactions, address, after_tx_id, limit + offset)
+        results = results[offset:]
+
+        return TxPage(
+            -1,
+            [self._convert_lib_tx_to_our_tx(tx) for tx in results]
+        )
 
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
         result = await self._call_service(self.service.gettransaction, tx_id)
@@ -32,10 +46,39 @@ class BitcoinClient(XChainClient):
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, is_sync: bool = True, **kwargs) -> str:
-        ...
 
-    async def broadcast_tx(self, tx_hex: str, is_sync=True) -> str:
-        ...
+        inputs = []
+
+        # todo!
+
+        # r = [
+        #     {'address': 'blt1q74y0083lzwmhsdf336hl5ptwxlqqwthdsdws84',
+        #      'txid': 'fe2acca01e507c4815984418ab6a5ab703b31a49daff6b3db17ea2f91a3de61c', 'confirmations': 10,
+        #      'output_n': 0, 'index': 0, 'value': 100000000, 'script': ''},
+        #     {'address': 'blt1q74y0083lzwmhsdf336hl5ptwxlqqwthdsdws84',
+        #      'txid': '01ff110796c32a4ff9c7c3895a1809172630f5629e6b49e606ad483f0afd1c67', 'confirmations': 10,
+        #      'output_n': 0, 'index': 0, 'value': 100000000, 'script': ''}
+        # ]
+
+
+        outputs = []
+
+        if memo:
+            outputs.append(self.make_output_with_memo(recipient, memo))
+
+        t = Transaction(inputs, outputs)
+        t.sign(self.get_private_key())
+        tx_hex = t.raw_hex()
+        return await self.broadcast_tx(tx_hex)
+
+    @staticmethod
+    def make_output_with_memo(recipient: str, memo: str):
+        return Output(0, recipient, lock_script=compile_memo(memo))
+
+    async def broadcast_tx(self, tx_hex: str) -> str:
+        results = await self._call_service(self.service.sendrawtransaction, tx_hex)
+        self.last_broadcast_response = results
+        return results['txid']
 
     async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> Fees:
         average, fast, fastest = await asyncio.gather(
@@ -72,17 +115,21 @@ class BitcoinClient(XChainClient):
                  root_derivation_paths: Optional[RootDerivationPaths] = ROOT_DERIVATION_PATHS,
                  explorer_providers=BLOCKSTREAM_EXPLORERS,
                  wallet_index=0,
-                 provider: Optional[UtxoOnlineDataProvider] = None):
+                 # provider: Optional[UtxoOnlineDataProvider] = None,
+                 provider_names=None):
         """
         BitcoinClient constructor
         Uses bitcoinlib under the hood
+        :param provider_names: a list of Blockchain info provider names of bitcoinlib.
+        See https://github.com/1200wd/bitcoinlib/blob/master/bitcoinlib/data/providers.json
+        :type provider_names: list[str]
         :param network: Network type
         :param phrase: your secret phrase
         :param private_key: or your private key
         :param fee_bound: fee bounds
         :param root_derivation_paths: HD wallet derivation paths
         :param wallet_index: int index of wallet
-        :param provider: UTXO online data provider (see xchainpy/xchainpy-utxo-providers)
+        # :param provider: UTXO online data provider (see xchainpy/xchainpy-utxo-providers)
         :param explorer_providers: explorer providers dictionary
         """
         super().__init__(
@@ -99,18 +146,23 @@ class BitcoinClient(XChainClient):
         self._decimal = BTC_DECIMAL
         self.native_asset = AssetBTC
 
-        self.provider = provider
+        # self.provider = provider
+
+        if provider_names is None:
+            provider_names = [self.DEFAULT_PROVIDER_NAME]
+        elif isinstance(provider_names, str):
+            provider_names = [provider_names]
 
         if network in (NetworkType.MAINNET, NetworkType.STAGENET):
             self._service_network = 'bitcoin'
+        elif network == NetworkType.DEVNET:
+            self._service_network = 'bitcoinlib_test'
         else:
             self._service_network = 'testnet'
 
         self.service = Service(
             network=self._service_network,
-            providers=[
-                'mempool'
-            ]
+            providers=provider_names
         )
 
     def validate_address(self, address: str) -> bool:
@@ -118,6 +170,12 @@ class BitcoinClient(XChainClient):
             deserialize_address(address)
         except Exception:
             return False
+
+    async def get_utxos(self, address='', limit=MAX_TRANSACTIONS):
+        address = address or self.get_address()
+        results = await self._call_service(self.service.getutxos, address, '', limit)
+
+        return results
 
     def _convert_lib_tx_to_our_tx(self, tx: Transaction) -> XcTx:
         transfers = []
