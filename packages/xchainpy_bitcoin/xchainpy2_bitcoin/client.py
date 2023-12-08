@@ -6,20 +6,18 @@ from bitcoinlib.keys import Key, deserialize_address
 from bitcoinlib.services.services import Service
 from bitcoinlib.transactions import Transaction
 
-from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, UtxoOnlineDataProvider, TxType, TokenTransfer
+from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, UtxoOnlineDataProvider, TxType, TokenTransfer, FeeType, \
+    FeeOption
 from xchainpy2_client import RootDerivationPaths, FeeBounds
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC, Amount
 from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS
 from .utils import get_btc_address_prefix, try_get_memo_from_output
 
 
 class BitcoinClient(XChainClient):
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
-        result = await asyncio.get_event_loop().run_in_executor(
-            None,
-            self.service.getbalance,
-            self.get_address()
-        )
+        address = address or self.get_address()
+        result = await self._call_service(self.service.getbalance, address)
         return [self.gas_amount(result)]
 
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 10,
@@ -29,11 +27,7 @@ class BitcoinClient(XChainClient):
         ...
 
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
-        result = await asyncio.get_event_loop().run_in_executor(
-            None,
-            self.service.gettransaction,
-            tx_id
-        )
+        result = await self._call_service(self.service.gettransaction, tx_id)
         return self._convert_lib_tx_to_our_tx(result)
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
@@ -43,8 +37,21 @@ class BitcoinClient(XChainClient):
     async def broadcast_tx(self, tx_hex: str, is_sync=True) -> str:
         ...
 
-    async def get_fees(self) -> Fees:
-        ...
+    async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> Fees:
+        average, fast, fastest = await asyncio.gather(
+            self._call_service(self.service.estimatefee, average_blocks),
+            self._call_service(self.service.estimatefee, fast_blocks),
+            self._call_service(self.service.estimatefee, fastest_blocks),
+        )
+
+        return Fees(
+            type=FeeType.PER_BYTE,
+            fees={
+                FeeOption.AVERAGE: self.gas_amount(average).amount,
+                FeeOption.FAST: self.gas_amount(fast).amount,
+                FeeOption.FASTEST: self.gas_amount(fastest).amount,
+            }
+        )
 
     def get_address(self) -> str:
         return self.get_public_key().address(encoding='bech32')
@@ -154,4 +161,12 @@ class BitcoinClient(XChainClient):
             memo=memo,
             is_success=(tx.status == 'confirmed'),
             original=tx,
+        )
+
+    @staticmethod
+    async def _call_service(method, *args):
+        return await asyncio.get_event_loop().run_in_executor(
+            None,
+            method,
+            *args
         )
