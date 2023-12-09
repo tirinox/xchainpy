@@ -885,3 +885,6 @@ class THORChainQuery:
             abrev = asset.contract[:max_length]
             asset = asset._replace(contract=abrev)
         return str(asset)
+
+    async def close(self):
+        await self.cache.close()

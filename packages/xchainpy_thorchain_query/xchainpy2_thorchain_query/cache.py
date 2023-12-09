@@ -2,7 +2,7 @@ import asyncio
 import logging
 import time
 from decimal import Decimal
-from itertools import chain
+from itertools import chain as chain_seq
 from typing import Dict, List, Optional
 
 from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMaya, NetworkApi as NetworkApiMaya, \
@@ -95,14 +95,16 @@ class THORChainCache:
             self.tx_api = TransactionsApiMaya(thornode_client)
             self.lp_api = LiquidityProvidersApiMaya(thornode_client)
             self.queue_api = QueueApiMaya(thornode_client)
-            self.saver_api = None  # no savers api for maya?
+            self.saver_api = None  # no savers api for maya yet?
             self.quote_api = QuoteApiMaya(thornode_client)
             self.chain = Chain.Maya
             self.native_decimals = CACAO_DECIMAL
         else:
             raise ValueError('Invalid native asset. Must be RUNE or CACAO')
 
-        self.saver_api: Optional[SaversApi] = None
+    async def close(self):
+        await self.midgard_client.close()
+        await self.thornode_client.close()
 
     def is_native_asset(self, a: Asset):
         return a == self.native_asset
@@ -242,7 +244,7 @@ class THORChainCache:
         )
 
         network_values = {}
-        for k, v in chain(constants.items(), mimir.items()):
+        for k, v in chain_seq(constants.items(), mimir.items()):
             network_values[k.upper()] = int(v)
 
         self._network_cache = NetworkValuesCache(time.monotonic(), network_values)
@@ -397,7 +399,7 @@ class THORChainCache:
         """
         Returns the fee rate for a given chain
         :param chain: Chain
-        :return:
+        :return: estimated fee amount
         """
         inbound = await self.get_inbound_details()
         if not inbound:

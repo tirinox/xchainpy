@@ -4,15 +4,10 @@ from decimal import Decimal
 from enum import Enum
 from typing import NamedTuple, List, Dict, Optional
 
+from xchainpy2_client import FeeOption
 from xchainpy2_midgard import PoolDetail
 from xchainpy2_thornode import Pool, LiquidityProviderSummary, Saver, QuoteFees
 from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
-
-
-class FeeOption(Enum):  # todo: move to it client package
-    Average = 'average'
-    Fast = 'fast'
-    Fastest = 'fastest'
 
 
 class TotalFees(NamedTuple):
