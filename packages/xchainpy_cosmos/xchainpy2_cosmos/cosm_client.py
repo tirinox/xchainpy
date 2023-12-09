@@ -498,7 +498,7 @@ class CosmosGaiaClient(XChainClient):
             memo
         )
 
-        self.tx_responses[response.tx_hash] = response
+        self._save_last_response(response.tx_hash, response)
 
         return response.tx_hash
 
@@ -526,7 +526,7 @@ class CosmosGaiaClient(XChainClient):
         initial_tx_response = self._client._parse_tx_response(resp.tx_response)
         initial_tx_response.ensure_successful()
 
-        self.tx_responses[tx_digest] = initial_tx_response
+        self._save_last_response(tx_digest, initial_tx_response)
 
         return tx_digest
 

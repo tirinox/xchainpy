@@ -65,6 +65,8 @@ class XChainClient(abc.ABC):
         self._gas_asset: Optional[Asset] = None
         self._decimal = 8
 
+        self.last_response_dict = {}
+
     @property
     def decimal(self):
         return self._decimal
@@ -237,3 +239,13 @@ class XChainClient(abc.ABC):
     @property
     def gas_asset(self):
         return self._gas_asset
+
+    def _save_last_response(self, txid, result):
+        if txid and result:
+            self.last_response_dict[txid] = result
+
+    def get_last_response(self, txid: str):
+        return self.last_response_dict.get(txid)
+
+    def clear_last_responses(self):
+        self.last_response_dict = {}

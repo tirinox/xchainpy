@@ -46,6 +46,9 @@ class BitcoinClient(XChainClient):
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, is_sync: bool = True, **kwargs) -> str:
+        sender = self.get_address()
+
+        utxos = await self.get_utxos(sender)
 
         inputs = []
 
@@ -60,7 +63,6 @@ class BitcoinClient(XChainClient):
         #      'output_n': 0, 'index': 0, 'value': 100000000, 'script': ''}
         # ]
 
-
         outputs = []
 
         if memo:
@@ -69,7 +71,13 @@ class BitcoinClient(XChainClient):
         t = Transaction(inputs, outputs)
         t.sign(self.get_private_key())
         tx_hex = t.raw_hex()
-        return await self.broadcast_tx(tx_hex)
+
+        result = await self.broadcast_tx(tx_hex)
+
+        txid = t.txhash
+        self._save_last_response(txid, result)
+
+        return result
 
     @staticmethod
     def make_output_with_memo(recipient: str, memo: str):
@@ -77,7 +85,7 @@ class BitcoinClient(XChainClient):
 
     async def broadcast_tx(self, tx_hex: str) -> str:
         results = await self._call_service(self.service.sendrawtransaction, tx_hex)
-        self.last_broadcast_response = results
+        self._save
         return results['txid']
 
     async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> Fees:

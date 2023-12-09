@@ -110,10 +110,13 @@ class BinanceChainClient(XChainClient):
 
     async def broadcast_tx(self, tx_hex: str, is_sync=True) -> str:
         result = await self._cli.broadcast_hex_msg(tx_hex, sync=is_sync)
-        self.last_broadcast_response = result
+
         result = result[0]
         # code = result.get('code')
         tx_hash = result.get('hash')
+
+        self._save_last_response(tx_hash, result)
+
         return tx_hash
 
     async def get_fees(self) -> Fees:
@@ -208,8 +211,6 @@ class BinanceChainClient(XChainClient):
         self._cli = AsyncHttpApiClient(env=env)
 
         self._semaphore = asyncio.Semaphore(5)
-
-        self.last_broadcast_response = None
 
     @property
     def client(self):
