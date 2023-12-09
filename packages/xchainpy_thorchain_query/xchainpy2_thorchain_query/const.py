@@ -31,7 +31,7 @@ class Mimir:
 ETH_DECIMALS = 18
 AVAX_DECIMALS = 18
 
-RUNE_NETWORK_FEE = CryptoAmount(Amount.from_asset(Decimal("0.02"), RUNE_DECIMAL), AssetRUNE)
-CACAO_NETWORK_FEE = CryptoAmount(Amount.from_asset(Decimal("1"), CACAO_DECIMAL), AssetCACAO)
+DEFAULT_RUNE_NETWORK_FEE = CryptoAmount(Amount.from_asset(Decimal("0.02"), RUNE_DECIMAL), AssetRUNE)
+DEFAULT_CACAO_NETWORK_FEE = CryptoAmount(Amount.from_asset(Decimal("0.5"), CACAO_DECIMAL), AssetCACAO)
 
 DEFAULT_EXTRA_ADD_MINUTES = 15

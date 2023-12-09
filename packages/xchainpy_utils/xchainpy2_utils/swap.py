@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Union
 
-from xchainpy2_thorchain_query.const import RUNE_NETWORK_FEE, CACAO_NETWORK_FEE, ETH_DECIMALS, AVAX_DECIMALS
+from xchainpy2_thorchain_query.const import DEFAULT_RUNE_NETWORK_FEE, DEFAULT_CACAO_NETWORK_FEE, ETH_DECIMALS, AVAX_DECIMALS
 from xchainpy2_thorchain_query.models import LiquidityPool, SwapOutput, InboundDetail
 from .amount import CryptoAmount, Amount
 from .asset import Asset, AssetRUNE, AssetCACAO, AssetETH, AssetBSC, AssetAVAX, AssetATOM, AssetBCH, AssetBNB, \
@@ -153,9 +153,9 @@ def calc_network_fee(asset: Asset, inbound: InboundDetail,
     """
     if asset.synth:
         if base_asset == AssetRUNE:
-            return RUNE_NETWORK_FEE
+            return DEFAULT_RUNE_NETWORK_FEE
         elif base_asset == AssetCACAO:
-            return CACAO_NETWORK_FEE
+            return DEFAULT_CACAO_NETWORK_FEE
         else:
             raise ValueError("Invalid Base Asset, expected RUNE or CACAO")
 
@@ -189,9 +189,9 @@ def calc_network_fee(asset: Asset, inbound: InboundDetail,
         # fixme: is this true?
         return CryptoAmount(Amount.from_base(inbound.gas_rate), AssetBSC)
     elif asset.chain == Chain.THORChain:
-        return RUNE_NETWORK_FEE
+        return DEFAULT_RUNE_NETWORK_FEE
     elif asset.chain == Chain.Maya:
-        return CACAO_NETWORK_FEE
+        return DEFAULT_CACAO_NETWORK_FEE
     else:
         raise ValueError(f"Could not calculate inbound fee for {asset.chain} Chain")
 
@@ -199,9 +199,9 @@ def calc_network_fee(asset: Asset, inbound: InboundDetail,
 def calc_outbound_fee(asset: Asset, inbound: InboundDetail, base_asset=AssetRUNE) -> CryptoAmount:
     if asset.synth:
         if base_asset == AssetRUNE:
-            return RUNE_NETWORK_FEE
+            return DEFAULT_RUNE_NETWORK_FEE
         elif base_asset == AssetCACAO:
-            return CACAO_NETWORK_FEE
+            return DEFAULT_CACAO_NETWORK_FEE
         else:
             raise ValueError("Invalid Base Asset, expected RUNE or CACAO")
 
@@ -226,9 +226,9 @@ def calc_outbound_fee(asset: Asset, inbound: InboundDetail, base_asset=AssetRUNE
     elif asset.chain == Chain.BinanceSmartChain:
         return CryptoAmount(Amount.from_base(inbound.outbound_fee), AssetBSC)
     elif asset.chain == Chain.THORChain:
-        return RUNE_NETWORK_FEE
+        return DEFAULT_RUNE_NETWORK_FEE
     elif asset.chain == Chain.Maya:
-        return CACAO_NETWORK_FEE
+        return DEFAULT_CACAO_NETWORK_FEE
     else:
         raise ValueError(f"Could not calculate outbound fee for {asset.chain} chain")
 

@@ -2,7 +2,7 @@ import asyncio
 import os
 
 from xchainpy2_thorchain import THORChainClient, THOR_BLOCK_TIME_SEC
-from xchainpy2_thorchain_query import RUNE_NETWORK_FEE
+from xchainpy2_thorchain_query import DEFAULT_RUNE_NETWORK_FEE
 from xchainpy2_utils import CryptoAmount, Amount, NetworkType, RUNE_DECIMAL, AssetRUNE
 
 """
@@ -41,7 +41,7 @@ async def main():
             print(f"Balance updated: {rune_balance.amount} Rune! Let's transfer it back")
             break
 
-    rune_balance -= RUNE_NETWORK_FEE
+    rune_balance -= DEFAULT_RUNE_NETWORK_FEE
     r = await client_b.transfer(rune_balance, client_a.get_address())
     print(f"Transfer submitted: {client_b.get_explorer_tx_url(r)}")
 
