@@ -9,7 +9,7 @@ import ujson
 from xchainpy2_utils import DEFAULT_USER_AGENT
 from .constants import PeerType, KlineInterval, OrderSide, TransactionType, OrderStatus, TransactionSide
 from .environment import BinanceEnvironment
-from .exc import BinanceChainAPIException, BinanceChainRequestException, BinanceChainBroadcastException
+from .exc import BinanceChainAPIException, BinanceChainRequestException
 from .messages import Msg
 
 requests.models.json = ujson
@@ -363,7 +363,6 @@ class HttpApiClient(BaseApiClient):
             req_path += f'?sync=1'
 
         res = self._post(req_path, data=data)
-        msg.wallet.increment_account_sequence()
         return res
 
     def broadcast_hex_msg(self, hex_msg: str, sync: bool = False):
