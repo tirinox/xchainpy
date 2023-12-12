@@ -24,6 +24,8 @@ class Chain(Enum):
     Dash = "DASH"
     Kujira = "KUJI"
 
+    UNKNOWN = 'Unknown'
+
 
 RUNE_TICKER = 'RUNE'
 

@@ -249,3 +249,7 @@ class XChainClient(abc.ABC):
 
     def clear_last_responses(self):
         self.last_response_dict = {}
+
+
+class NoClient(XChainClient, abc.ABC):
+    ...
