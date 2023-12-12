@@ -1,7 +1,7 @@
-from typing import NamedTuple, Optional, List, Set
+from datetime import datetime
+from typing import NamedTuple, Optional, List, Set, Dict
 
 from xchainpy2_client import FeeOption
-from xchainpy2_midgard import Balance
 from xchainpy2_thorchain_query import THORChainQuery
 from xchainpy2_utils import Chain, CryptoAmount, Asset
 
@@ -12,6 +12,7 @@ class WalletSettings(NamedTuple):
     phrase: str
     enabled_chains: Set[Chain]
     query_api: Optional[THORChainQuery] = None
+    concurrency: int = 5
 
     @classmethod
     def default(cls, phrase, enabled_chains=ALL):
@@ -30,10 +31,23 @@ class WalletSettings(NamedTuple):
         return chain in self.enabled_chains
 
 
-class AllBalances(NamedTuple):
+class ChainBalances(NamedTuple):
     chain: Chain
     address: str
-    balances: List[Balance]
+    balances: List[CryptoAmount]
+
+
+class AllBalances(NamedTuple):
+    date: datetime
+    balances: Dict[Chain, ChainBalances]
+
+    @property
+    def flat(self) -> List[CryptoAmount]:
+        return [
+            balance
+            for chain_balances in self.balances.values()
+            for balance in chain_balances.balances
+        ]
 
 
 class ExecuteSwap(NamedTuple):

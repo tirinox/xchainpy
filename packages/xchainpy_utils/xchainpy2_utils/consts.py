@@ -27,6 +27,8 @@ class Chain(Enum):
     UNKNOWN = 'Unknown'
 
 
+EVM_CHAINS = {Chain.Ethereum, Chain.Avax, Chain.BinanceSmartChain}
+
 RUNE_TICKER = 'RUNE'
 
 RAIDO_GLYPH = 'ᚱ'

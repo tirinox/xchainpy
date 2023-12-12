@@ -3,7 +3,7 @@ import logging
 import time
 from decimal import Decimal
 from itertools import chain as chain_seq
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMaya, NetworkApi as NetworkApiMaya, \
     TransactionsApi as TransactionsApiMaya, LiquidityProvidersApi as LiquidityProvidersApiMaya, \
