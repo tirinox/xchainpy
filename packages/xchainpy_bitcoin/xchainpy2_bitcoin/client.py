@@ -85,8 +85,9 @@ class BitcoinClient(XChainClient):
 
     async def broadcast_tx(self, tx_hex: str) -> str:
         results = await self._call_service(self.service.sendrawtransaction, tx_hex)
-        self._save
-        return results['txid']
+        tx_id = results.get('txid')
+        self._save_last_response(tx_id, results)
+        return tx_id
 
     async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> Fees:
         average, fast, fastest = await asyncio.gather(
