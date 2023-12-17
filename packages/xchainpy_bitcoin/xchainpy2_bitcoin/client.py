@@ -6,18 +6,17 @@ from bitcoinlib.config.config import MAX_TRANSACTIONS
 from bitcoinlib.keys import Key, deserialize_address
 from bitcoinlib.services.services import Service
 from bitcoinlib.transactions import Transaction, Output
+from bitcoinlib.wallets import Wallet
 
 from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, TxType, TokenTransfer, FeeType, \
     FeeOption
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC
-from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS
+from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS, DEFAULT_PROVIDER_NAME, MAX_MEMO_LENGTH
 from .utils import get_btc_address_prefix, try_get_memo_from_output, compile_memo
 
 
 class BitcoinClient(XChainClient):
-    DEFAULT_PROVIDER_NAME = 'mempool'
-
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         address = address or self.get_address()
         result = await self._call_service(self.service.getbalance, address)
@@ -45,7 +44,16 @@ class BitcoinClient(XChainClient):
         return self._convert_lib_tx_to_our_tx(result)
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None, is_sync: bool = True, **kwargs) -> str:
+                       fee_rate: Optional[int] = None, is_sync: bool = True, min_confirmations=1, **kwargs) -> str:
+        if (memo_len := len(memo)) > MAX_MEMO_LENGTH:
+            raise Exception(f'Memo is too long ({memo_len} of {MAX_MEMO_LENGTH} max)')
+
+        if not self.validate_address(recipient):
+            raise Exception('Invalid recipient address.')
+
+        wallet = Wallet.create('SimpleWallet', network=self._service_network, scheme='single')
+        wallet.import_key(self.get_private_key(), key_type='single')
+
         sender = self.get_address()
 
         utxos = await self.get_utxos(sender)
@@ -158,7 +166,7 @@ class BitcoinClient(XChainClient):
         # self.provider = provider
 
         if provider_names is None:
-            provider_names = [self.DEFAULT_PROVIDER_NAME]
+            provider_names = [DEFAULT_PROVIDER_NAME]
         elif isinstance(provider_names, str):
             provider_names = [provider_names]
 
