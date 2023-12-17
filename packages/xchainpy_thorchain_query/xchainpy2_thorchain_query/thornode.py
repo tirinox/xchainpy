@@ -5,7 +5,7 @@ from xchainpy2_utils import NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER, DEFA
 from .patch_clients import ConfigurationEx, RESTClientRetry, HeadersPatch
 
 
-class ThornodeAPIClient(HeadersPatch, thornode.ApiClient):
+class THORNodeAPIClient(HeadersPatch, thornode.ApiClient):
     # noinspection PyMissingConstructor
     def __init__(self, configuration: ConfigurationEx = None,
                  header_name=NINE_REALMS_CLIENT_HEADER, header_value=XCHAINPY_IDENTIFIER,
@@ -38,4 +38,3 @@ class ThornodeAPIClient(HeadersPatch, thornode.ApiClient):
             self.rest_client = RESTClientRetry(self.configuration)
         return super().request(method, url, query_params, headers, post_params, body, _preload_content,
                                _request_timeout)
-

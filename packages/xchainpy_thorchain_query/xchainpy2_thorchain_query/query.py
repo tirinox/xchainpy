@@ -97,7 +97,7 @@ class THORChainQuery:
         fee_asset = Asset.from_string_exc(swap_quote.fees.asset)
 
         return TxDetails(
-            memo=self.construct_swap_memo(swap_quote.memo, interface_id),
+            memo=swap_quote.memo,
             to_address=swap_quote.inbound_address,
             expiry=datetime.fromtimestamp(swap_quote.expiry),  # timezone?
             tx_estimate=SwapEstimate(
@@ -116,22 +116,6 @@ class THORChainQuery:
             )
         )
 
-    @staticmethod
-    def construct_swap_memo(memo: str, interface_id: str) -> str:
-        memo_parts = memo.split(':')
-        if len(memo_parts) > 3:
-            part3 = memo_parts[3]
-            if len(part3) >= 3:
-                #  memoPart[3].substring(0, memoPart[3].length - 3)
-                part3 = part3[:-3] + interface_id
-            else:
-                part3 = interface_id
-            memo_parts[3] = part3
-
-            return ':'.join(memo_parts)
-
-        return memo
-
     async def outbound_delay(self, outbound_amount: CryptoAmount) -> float:
         """
         Works out how long an outbound Tx will be held by THORChain before sending.
@@ -142,7 +126,7 @@ class THORChainQuery:
         values = await self.cache.get_network_values()
 
         min_tx_volume_threshold = CryptoAmount(
-            values.get(Mimir.MIN_TX_OUT_VOLUME_THRESHOLD, 1),
+            Amount.from_base(values.get(Mimir.MIN_TX_OUT_VOLUME_THRESHOLD, 1), self.native_decimal),
             self.cache.native_asset
         )
         max_tx_out_offset = values.get(Mimir.MAX_TX_OUT_OFFSET, 0)
@@ -166,7 +150,7 @@ class THORChainQuery:
         if rune_value.amount < min_tx_volume_threshold.amount:
             return avg_block_time
 
-        # Add OutboundAmount in rune to the oubound queue
+        # Add OutboundAmount in rune to the outbound queue
         outbound_amount_total = outbound_amount + rune_value
 
         # calculate the if outboundAmountTotal is over the volume threshold
@@ -177,7 +161,7 @@ class THORChainQuery:
             tx_out_delay_rate = 1
 
         # calculate the minimum number of blocks in the future the txn has to be
-        min_blocks = rune_value.amount.amount / tx_out_delay_rate
+        min_blocks = math.ceil(rune_value.amount.amount / tx_out_delay_rate)
 
         min_blocks = min(max_tx_out_offset, min_blocks)
         return avg_block_time * min_blocks
@@ -399,8 +383,8 @@ class THORChainQuery:
 
         # TODO make sure we compare wait times for withdrawing both rune and asset OR just rune OR just asset
         wait_time_sec_for_asset, wait_time_sec_for_rune = await asyncio.gather(
-            self.get_confirmation_counting(pool_share.asset / (param.percentage / 100.0)),
-            self.get_confirmation_counting(pool_share.rune / (param.percentage / 100.0))
+            self.get_confirmation_counting(pool_share.asset / (param.percentage / 100)),
+            self.get_confirmation_counting(pool_share.rune / (param.percentage / 100))
         )
 
         wait_time_in_sec = 0
@@ -656,6 +640,7 @@ class THORChainQuery:
                                  ) -> Optional[SaversPosition]:
         """
         Get the position of a saver
+        :param inbound_details: Inbound details
         :param asset: asset (pool) to check
         :param address: saver's address
         :param height: optional height (default is the last block)

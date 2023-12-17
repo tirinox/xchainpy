@@ -22,7 +22,7 @@ from .midgard import MidgardAPIClient
 from .models import PoolCache, InboundDetailCache, NetworkValuesCache, LiquidityPool, InboundDetail, SwapOutput, \
     InboundDetails
 from .patch_clients import request_api_with_backup_hosts
-from .thornode import ThornodeAPIClient
+from .thornode import THORNodeAPIClient
 
 logger = logging.getLogger('THORChainCache')
 
@@ -48,13 +48,13 @@ USD_ASSETS = {
 DEFAULT_MIDGARD = MidgardAPIClient()
 DEFAULT_MIDGARD.configuration.host = URLs.Midgard.MAINNET
 
-DEFAULT_THORNODE = ThornodeAPIClient()
+DEFAULT_THORNODE = THORNodeAPIClient()
 DEFAULT_THORNODE.configuration.host = URLs.THORNode.MAINNET
 
 
 class THORChainCache:
     def __init__(self, midgard_client: MidgardAPIClient = DEFAULT_MIDGARD,
-                 thornode_client: ThornodeAPIClient = DEFAULT_THORNODE,
+                 thornode_client: THORNodeAPIClient = DEFAULT_THORNODE,
                  expire_pool: float = TEN_MINUTES,
                  expire_inbound: float = TEN_MINUTES,
                  expire_network: float = TEN_MINUTES,
