@@ -50,8 +50,6 @@ def crypto_amount_to_msg_coin(a: CryptoAmount) -> THORCoin:
     )
 
 
-
-
 def build_deposit_tx_unsigned(
         what: CryptoAmount,
         memo: str,
