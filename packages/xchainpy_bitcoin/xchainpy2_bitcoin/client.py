@@ -3,17 +3,18 @@ from datetime import datetime
 from typing import Optional, Union, List
 
 from bitcoinlib.config.config import MAX_TRANSACTIONS
+from bitcoinlib.encoding import EncodingError
 from bitcoinlib.keys import Key, deserialize_address
 from bitcoinlib.services.services import Service
-from bitcoinlib.transactions import Transaction, Output
-from bitcoinlib.wallets import Wallet
+from bitcoinlib.transactions import Transaction
 
 from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, TxType, TokenTransfer, FeeType, \
-    FeeOption
+    FeeOption, UTXO, Witness
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC
 from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS, DEFAULT_PROVIDER_NAME, MAX_MEMO_LENGTH
-from .utils import get_btc_address_prefix, try_get_memo_from_output, compile_memo
+from .tx_prepare import UTXOPrepare, try_get_memo_from_output
+from .utils import get_btc_address_prefix, UTXOException
 
 
 class BitcoinClient(XChainClient):
@@ -27,9 +28,9 @@ class BitcoinClient(XChainClient):
                                asset: Optional[Asset] = None,
                                height=None, detailed=False, after_tx_id='') -> TxPage:
         if asset:
-            raise Exception(f'asset parameter is not supported')
+            raise UTXOException(f'asset parameter is not supported')
         if start_time or end_time:
-            raise Exception(f'start_time and end_time parameters are not supported')
+            raise UTXOException(f'start_time and end_time parameters are not supported')
 
         results = await self._call_service(self.service.gettransactions, address, after_tx_id, limit + offset)
         results = results[offset:]
@@ -45,51 +46,36 @@ class BitcoinClient(XChainClient):
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, is_sync: bool = True, min_confirmations=1, **kwargs) -> str:
+        if what.asset != self.native_asset:
+            raise UTXOException(f'Asset {what.asset} is not supported')
+
         if (memo_len := len(memo)) > MAX_MEMO_LENGTH:
-            raise Exception(f'Memo is too long ({memo_len} of {MAX_MEMO_LENGTH} max)')
+            raise UTXOException(f'Memo is too long ({memo_len} of {MAX_MEMO_LENGTH} max)')
 
         if not self.validate_address(recipient):
-            raise Exception('Invalid recipient address.')
-
-        wallet = Wallet.create('SimpleWallet', network=self._service_network, scheme='single')
-        wallet.import_key(self.get_private_key(), key_type='single')
+            raise UTXOException('Invalid recipient address.')
 
         sender = self.get_address()
 
         utxos = await self.get_utxos(sender)
 
-        inputs = []
+        utxo_prepare = UTXOPrepare(utxos, self._service_network,
+                                   fee_per_byte=fee_rate,
+                                   min_confirmations=min_confirmations)
 
-        # todo!
+        tx = utxo_prepare.build(sender, recipient, what.amount, memo)
+        tx.sign(self.get_private_key())
+        tx_hex = tx.raw_hex()
 
-        # r = [
-        #     {'address': 'blt1q74y0083lzwmhsdf336hl5ptwxlqqwthdsdws84',
-        #      'txid': 'fe2acca01e507c4815984418ab6a5ab703b31a49daff6b3db17ea2f91a3de61c', 'confirmations': 10,
-        #      'output_n': 0, 'index': 0, 'value': 100000000, 'script': ''},
-        #     {'address': 'blt1q74y0083lzwmhsdf336hl5ptwxlqqwthdsdws84',
-        #      'txid': '01ff110796c32a4ff9c7c3895a1809172630f5629e6b49e606ad483f0afd1c67', 'confirmations': 10,
-        #      'output_n': 0, 'index': 0, 'value': 100000000, 'script': ''}
-        # ]
+        print(tx_hex)
+        return tx_hex
 
-        outputs = []
-
-        if memo:
-            outputs.append(self.make_output_with_memo(recipient, memo))
-
-        t = Transaction(inputs, outputs)
-        t.sign(self.get_private_key())
-        tx_hex = t.raw_hex()
-
-        result = await self.broadcast_tx(tx_hex)
-
-        txid = t.txhash
-        self._save_last_response(txid, result)
-
-        return result
-
-    @staticmethod
-    def make_output_with_memo(recipient: str, memo: str):
-        return Output(0, recipient, lock_script=compile_memo(memo))
+        # result = await self.broadcast_tx(tx_hex)
+        #
+        # txid = t.txhash
+        # self._save_last_response(txid, result)
+        #
+        # return result
 
     async def broadcast_tx(self, tx_hex: str) -> str:
         results = await self._call_service(self.service.sendrawtransaction, tx_hex)
@@ -157,6 +143,8 @@ class BitcoinClient(XChainClient):
             wallet_index
         )
 
+        self._gas_asset = AssetBTC
+
         self.explorers = explorer_providers
 
         self._prefix = get_btc_address_prefix(network)
@@ -185,14 +173,23 @@ class BitcoinClient(XChainClient):
     def validate_address(self, address: str) -> bool:
         try:
             deserialize_address(address)
-        except Exception:
+            return True
+        except EncodingError:
             return False
 
-    async def get_utxos(self, address='', limit=MAX_TRANSACTIONS):
+    async def get_utxos(self, address='', limit=MAX_TRANSACTIONS) -> List[UTXO]:
         address = address or self.get_address()
         results = await self._call_service(self.service.getutxos, address, '', limit)
 
-        return results
+        return [
+            UTXO(
+                hash=utxo['txid'],
+                index=utxo['input_n'],
+                value=utxo['value'],
+                witness_utxo=Witness(0, utxo['script']),
+                confirmations=utxo['confirmations'],
+            ) for utxo in results
+        ]
 
     def _convert_lib_tx_to_our_tx(self, tx: Transaction) -> XcTx:
         transfers = []

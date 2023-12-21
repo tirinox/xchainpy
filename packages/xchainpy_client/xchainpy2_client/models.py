@@ -148,6 +148,8 @@ class UTXO(NamedTuple):
     value: int
     witness_utxo: Witness
     tx_hex: str = ""
+    confirmations: int = 0
+    script_pub_key: bytes = b''
 
 
 class UtxoOnlineDataProvider(OnlineDataProvider):
