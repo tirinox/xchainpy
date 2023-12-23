@@ -40,7 +40,7 @@ def compile_memo(memo: str) -> bytes:
         rest = metadata_len % 256
         payload = b"\x4d" + bytearray((rest,)) + bytearray((chunks,)) + metadata
 
-    compiled_memo = binascii.b2a_hex(payload).decode('utf-8')
+    compiled_memo = binascii.b2a_hex(payload).decode()
     compiled_memo = OP_RETURN_HEX + compiled_memo
     compiled_memo = binascii.unhexlify(compiled_memo)
     return compiled_memo
@@ -52,8 +52,10 @@ class UTXOPrepare:
         self.utxos = utxos
         self.fee_per_byte = fee_per_byte
         self.min_confirmations = min_confirmations
+        self.witness_type = 'segwit'
 
-    def make_output_with_memo(self, memo: str):
+    @staticmethod
+    def make_output_with_memo(memo: str):
         return {
             'value': 0,
             'script': compile_memo(memo),
@@ -107,14 +109,17 @@ class UTXOPrepare:
                 # an empty address means this is the change address
                 output['address'] = sender
 
-        witness_type = 'segwit'
-
-        t = Transaction(network=self.service_network, witness_type=witness_type, version=2)
+        t = Transaction(network=self.service_network, witness_type=self.witness_type, version=2)
 
         for the_input in acc_result.inputs:
             txid = the_input.get('hash')
             index = the_input.get('index')
-            t.add_input(prev_txid=txid, output_n=index, witness_type='segwit', value=the_input.get('value'))
+            t.add_input(
+                prev_txid=txid,
+                output_n=index,
+                witness_type=self.witness_type,
+                value=the_input.get('value')
+            )
 
         for output in acc_result.outputs:
             if output.get('address'):

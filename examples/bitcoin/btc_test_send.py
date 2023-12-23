@@ -8,7 +8,8 @@ from xchainpy2_utils import NetworkType
 async def send_btc():
     phrase = get_phrase()
 
-    provider_names = ['blockstream']
+    # provider_names = ['blockstream']
+    provider_names = ['mempool', 'blockstream']
 
     btc = BitcoinClient(phrase=phrase, network=NetworkType.TESTNET, provider_names=provider_names)
     btc2 = BitcoinClient(phrase=phrase, network=NetworkType.TESTNET, wallet_index=1, provider_names=provider_names)

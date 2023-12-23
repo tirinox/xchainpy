@@ -173,7 +173,8 @@ class BitcoinClient(XChainClient):
 
         self.service = Service(
             network=self._service_network,
-            providers=provider_names
+            providers=provider_names,
+            min_providers=2,  # to prevent invalid cache operation
         )
 
     def validate_address(self, address: str) -> bool:
