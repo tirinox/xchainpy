@@ -26,8 +26,8 @@ async def send_btc():
     balance = await btc2.get_balance()
     print(f"Balance 2 ({dest_address}): {balance}")
 
-    tx_hash = await btc.transfer(btc2.gas_amount(0.00011), dest_address, memo='test', fee_rate=4)
-    print(f"Transfer hash: {tx_hash} ({btc2.get_explorer_address_url(tx_hash)})")
+    tx_hash = await btc.transfer(btc2.gas_amount(0.000011), dest_address, memo='test', fee_rate=2, dry_run=True)
+    print(f"Transfer hash: {tx_hash} ({btc2.get_explorer_tx_url(tx_hash)})")
 
 
 async def main():

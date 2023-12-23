@@ -65,20 +65,30 @@ class BitcoinClient(XChainClient):
 
         tx = utxo_prepare.build(sender, recipient, what.amount, memo)
 
-        tx_hex = tx.raw_hex()
+        tx.estimate_size()
+        tx.fee_per_kb = fee_rate * 1000
+        tx.calc_weight_units()
+        tx.calculate_fee()
+
         tx.sign(self.get_private_key())
+        tx_hex = tx.raw_hex()
 
         if not tx.verify():
             raise UTXOException('Transaction verification failed')
 
-        # print('---hex---')
-        # print(tx_hex)
-        # print('---dict---')
-        # print(tx.as_dict())
+        if kwargs.get('dry_run'):
+            print('---hex---')
+            print(tx_hex)
+            print('---dict---')
+            print(tx.as_dict())
+            print('---size---')
+            print(f'{tx.size = } bytes, {tx.vsize = } bytes')
+
+            return tx.txid
 
         result = await self.broadcast_tx(tx_hex)
 
-        txid = tx.txhash
+        txid = tx.txid
         self._save_last_response(txid, result)
 
         return result
