@@ -6,7 +6,7 @@ from bitcoinlib.config.config import MAX_TRANSACTIONS
 from bitcoinlib.encoding import EncodingError
 from bitcoinlib.keys import Key, deserialize_address
 from bitcoinlib.services.services import Service
-from bitcoinlib.transactions import Transaction
+from bitcoinlib.transactions import Transaction, Input
 
 from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, TxType, TokenTransfer, FeeType, \
     FeeOption, UTXO, Witness
@@ -64,18 +64,24 @@ class BitcoinClient(XChainClient):
                                    min_confirmations=min_confirmations)
 
         tx = utxo_prepare.build(sender, recipient, what.amount, memo)
-        tx.sign(self.get_private_key())
+
         tx_hex = tx.raw_hex()
+        tx.sign(self.get_private_key())
 
-        print(tx_hex)
-        return tx_hex
+        if not tx.verify():
+            raise UTXOException('Transaction verification failed')
 
-        # result = await self.broadcast_tx(tx_hex)
-        #
-        # txid = t.txhash
-        # self._save_last_response(txid, result)
-        #
-        # return result
+        # print('---hex---')
+        # print(tx_hex)
+        # print('---dict---')
+        # print(tx.as_dict())
+
+        result = await self.broadcast_tx(tx_hex)
+
+        txid = tx.txhash
+        self._save_last_response(txid, result)
+
+        return result
 
     async def broadcast_tx(self, tx_hex: str) -> str:
         results = await self._call_service(self.service.sendrawtransaction, tx_hex)
@@ -177,14 +183,28 @@ class BitcoinClient(XChainClient):
         except EncodingError:
             return False
 
-    async def get_utxos(self, address='', limit=MAX_TRANSACTIONS) -> List[UTXO]:
+    async def get_utxos(self, address='', limit=MAX_TRANSACTIONS, full=False) -> List[UTXO]:
         address = address or self.get_address()
         results = await self._call_service(self.service.getutxos, address, '', limit)
+
+        if full:
+            transactions = await asyncio.gather(
+                *[self._call_service(self.service.gettransaction, utxo['txid']) for utxo in results]
+            )
+            transactions = {t.txid: t for t in transactions}
+        else:
+            transactions = {}
+
+        for utxo in results:
+            full_tx = transactions.get(utxo['txid'])
+            if full_tx:
+                the_input = full_tx.outputs[utxo['input_n']]
+                utxo['script'] = the_input.script
 
         return [
             UTXO(
                 hash=utxo['txid'],
-                index=utxo['input_n'],
+                index=utxo['output_n'],
                 value=utxo['value'],
                 witness_utxo=Witness(0, utxo['script']),
                 confirmations=utxo['confirmations'],

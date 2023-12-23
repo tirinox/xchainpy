@@ -2,10 +2,10 @@ import binascii
 import math
 from typing import List, Optional
 
-from bitcoinlib.transactions import Output, Transaction, Input
+from bitcoinlib.transactions import Output, Transaction
 
-from xchainpy2_bitcoin.utils import UTXOException
 from xchainpy2_bitcoin.accumulative import accumulative
+from xchainpy2_bitcoin.utils import UTXOException
 from xchainpy2_client import UTXO
 from xchainpy2_utils import Amount
 
@@ -53,8 +53,11 @@ class UTXOPrepare:
         self.fee_per_byte = fee_per_byte
         self.min_confirmations = min_confirmations
 
-    def make_output_with_memo(self, recipient: str, memo: str):
-        return Output(0, recipient, lock_script=compile_memo(memo), network=self.service_network)
+    def make_output_with_memo(self, memo: str):
+        return {
+            'value': 0,
+            'script': compile_memo(memo),
+        }
 
     def available_utxos(self):
         return [utxo for utxo in self.utxos if utxo.confirmations >= self.min_confirmations]
@@ -64,108 +67,59 @@ class UTXOPrepare:
         return int(math.ceil(self.fee_per_byte))
 
     def build(self, sender: str, recipient: str, amount: Amount, memo: Optional[str] = None) -> Transaction:
+        # return Output(0, recipient, lock_script=compile_memo(memo), network=self.service_network)
         outputs = [
-            Output(
-                int(amount.as_base),
-                recipient,
-                network=self.service_network
-            )
+            # this output is the actual transfer
+            {
+                'value': int(amount.as_base),
+                'address': recipient,
+            }
         ]
 
         if memo:
             if len(memo) > 80:
                 raise UTXOException('Memo too long, must not be longer than 80 chars.')
-            outputs.append(self.make_output_with_memo(recipient, memo))
+            # this output is the memo
+            outputs.append(self.make_output_with_memo(memo))
 
         available_utxos = self.available_utxos()
         if len(available_utxos) == 0:
             raise UTXOException('No available utxos. Have you waited for confirmations?')
 
-        raw_outputs = [
-            {
-                'script': output.script.raw,
-                'value': output.value,
-            } for output in outputs
-        ]
         raw_available_utxos = [
             {
                 'value': utxo.value,
-                'script': utxo.witness_utxo.script,
+                'hash': utxo.hash,
+                'index': utxo.index,
+                'witness_utxo': {
+                    'value': utxo.value,
+                    'script': '',
+                }
             } for utxo in available_utxos
         ]
 
-        acc_result = accumulative(raw_available_utxos, raw_outputs, self.fee_rate_whole)
+        acc_result = accumulative(raw_available_utxos, outputs, self.fee_rate_whole)
         if not acc_result.inputs or not acc_result.outputs:
             raise UTXOException('Insufficient balance for transaction')
 
         for output in acc_result.outputs:
-            if not output['address']:
+            if not output.get('address') and output.get('value') > 0:
                 # an empty address means this is the change address
                 output['address'] = sender
 
-        inputs = [
-            Input()
-        ]
+        witness_type = 'segwit'
 
-        t = Transaction(inputs, outputs)
+        t = Transaction(network=self.service_network, witness_type=witness_type, version=2)
+
+        for the_input in acc_result.inputs:
+            txid = the_input.get('hash')
+            index = the_input.get('index')
+            t.add_input(prev_txid=txid, output_n=index, witness_type='segwit', value=the_input.get('value'))
+
+        for output in acc_result.outputs:
+            if output.get('address'):
+                t.add_output(value=output.get('value'), address=output.get('address'))
+            elif output.get('script'):
+                t.add_output(value=output.get('value'), lock_script=output.get('script'))
+
         return t
-
-        # r = [
-        #     {'address': 'blt1q74y0083lzwmhsdf336hl5ptwxlqqwthdsdws84',
-        #      'txid': 'fe2acca01e507c4815984418ab6a5ab703b31a49daff6b3db17ea2f91a3de61c', 'confirmations': 10,
-        #      'output_n': 0, 'index': 0, 'value': 100000000, 'script': ''},
-        #     {'address': 'blt1q74y0083lzwmhsdf336hl5ptwxlqqwthdsdws84',
-        #      'txid': '01ff110796c32a4ff9c7c3895a1809172630f5629e6b49e606ad483f0afd1c67', 'confirmations': 10,
-        #      'output_n': 0, 'index': 0, 'value': 100000000, 'script': ''}
-        # ]
-
-
-"""
-
-    const targetOutputs = []
-
-    //1. add output amount and recipient to targets
-    targetOutputs.push({
-      address: recipient,
-      value: amount.amount().toNumber(),
-    })
-    //2. add output memo to targets (optional)
-    if (compiledMemo) {
-      targetOutputs.push({ script: compiledMemo, value: 0 })
-    }
-    const { inputs, outputs } = accumulative(utxos, targetOutputs, feeRateWhole)
-
-    // .inputs and .outputs will be undefined if no solution was found
-    if (!inputs || !outputs) throw new Error('Insufficient Balance for transaction')
-
-    const psbt = new Bitcoin.Psbt({ network: Utils.btcNetwork(this.network) }) // Network-specific
-
-    // psbt add input from accumulative inputs
-    inputs.forEach((utxo: UTXO) =>
-      psbt.addInput({
-        hash: utxo.hash,
-        index: utxo.index,
-        witnessUtxo: utxo.witnessUtxo,
-      }),
-    )
-
-    // psbt add outputs from accumulative outputs
-    outputs.forEach((output: Bitcoin.PsbtTxOutput) => {
-      if (!output.address) {
-        //an empty address means this is the  change ddress
-        output.address = sender
-      }
-      if (!output.script) {
-        psbt.addOutput(output)
-      } else {
-        //we need to add the compiled memo this way to
-        //avoid dust error tx when accumulating memo output with 0 value
-        if (compiledMemo) {
-          psbt.addOutput({ script: compiledMemo, value: 0 })
-        }
-      }
-    })
-
-    return { psbt, utxos, inputs }
-  }
-"""
