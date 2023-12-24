@@ -190,7 +190,7 @@ class BitcoinClient(XChainClient):
         try:
             deserialize_address(address)
             return True
-        except EncodingError:
+        except (EncodingError, TypeError):
             return False
 
     async def get_utxos(self, address='', limit=MAX_TRANSACTIONS, full=False) -> List[UTXO]:
