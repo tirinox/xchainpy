@@ -28,6 +28,11 @@ if [ "$#" -ge 2 ]; then
 else
   # Use the default value (all packages)
   PACKS=(../packages/xchainpy_*)
+  echo "No package specified, available packages:"
+  for i in "${PACKS[@]}"; do
+    echo " $0 publish `basename $i`"
+  done
+  exit 0
 fi
 
 # Case commands
@@ -54,13 +59,12 @@ publish_test)
   ;;
 
 *)
-  echo "Usage: $0 command [PACKAGE]"
+  echo "Usage: $0 command PACKAGE"
   echo "Commands:"
   echo "  help             Show this help message"
   echo "  build            Build packages"
   echo "  publish          Publish packages"
   echo "  publish_test     Publish packages to the test repository"
-  echo "  if PACKAGE is not provided, all packages will be affected"
   exit 0
   ;;
 esac
