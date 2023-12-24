@@ -9,18 +9,50 @@ TX_OUTPUT_PUBKEYHASH = 25
 
 
 class AccumulativeResult:
-    def __init__(self, fee, inputs=None, outputs=None):
+    def __init__(self, fee=-1, inputs=None, outputs=None):
         self.fee = fee
         self.inputs = inputs
         self.outputs = outputs
 
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def input_value(self, index):
+        return get_value(self.inputs[index])
+
+    def output_value(self, index):
+        return get_value(self.outputs[index])
+
+    def __repr__(self):
+        return f"AccumulativeResult(fee={self.fee}, inputs={self.inputs}, outputs={self.outputs})"
+
+
+def script_length(item):
+    if isinstance(item, (str, bytes)):
+        return len(item)
+    elif isinstance(item, dict) and 'length' in item:
+        return int(item['length'])
+    else:
+        return 0
+
+
+def get_script(item):
+    if isinstance(item, dict):
+        return item.get('script')
+    else:
+        return None
+
 
 def input_bytes(_input):
-    return TX_INPUT_BASE + (len(_input['script']) if _input.get('script') else TX_INPUT_PUBKEYHASH)
+    if isinstance(_input, int):
+        return TX_INPUT_BASE + TX_INPUT_PUBKEYHASH
+    return TX_INPUT_BASE + (script_length(script) if (script := get_script(_input)) else TX_INPUT_PUBKEYHASH)
 
 
 def output_bytes(output):
-    return TX_OUTPUT_BASE + (len(output['script']) if output.get('script') else TX_OUTPUT_PUBKEYHASH)
+    if isinstance(output, int):
+        return TX_OUTPUT_BASE + TX_OUTPUT_PUBKEYHASH
+    return TX_OUTPUT_BASE + (script_length(script) if (script := get_script(output)) else TX_OUTPUT_PUBKEYHASH)
 
 
 def dust_threshold(fee_rate):
@@ -49,12 +81,19 @@ def uint_or_nan(v):
     return v
 
 
+def get_value(v):
+    if isinstance(v, (int, float)):
+        return v
+    else:
+        return v.get('value')
+
+
 def sum_forgiving(_range):
-    return sum(x['value'] if is_finite(x['value']) else 0 for x in _range)
+    return sum(get_value(x) if is_finite(get_value(x)) else 0 for x in _range)
 
 
 def sum_or_nan(_range):
-    return sum(uint_or_nan(x['value']) for x in _range)
+    return sum(uint_or_nan(get_value(x)) for x in _range)
 
 
 BLANK_OUTPUT = output_bytes({})
@@ -93,7 +132,8 @@ def accumulative(utxos, outputs, fee_rate):
         utxo = utxos[i]
         utxo_bytes = input_bytes(utxo)
         utxo_fee = fee_rate * utxo_bytes
-        utxo_value = uint_or_nan(utxo['value'])
+        # utxo_value = uint_or_nan(utxo['value'])
+        utxo_value = uint_or_nan(get_value(utxo))
 
         # skip detrimental input
         if utxo_fee > utxo_value:
