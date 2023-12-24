@@ -12,9 +12,9 @@ import asyncio
 import json
 import urllib.parse
 from pprint import pprint
-from aiohttp import ClientSession
 
 import yaml
+from aiohttp import ClientSession
 
 
 def parse_args():
@@ -125,6 +125,12 @@ async def fetch(url):
         async with session.get(url, headers=user_agent) as response:
             return await response.text()
 
+
+def add_readme(spec):
+    spec['x-readme-file'] = 'README.md'
+    return spec
+
+
 async def main():
     args = parse_args()
     input_data = await fetch(args.input)
@@ -138,6 +144,7 @@ async def main():
 
     print('Fixing spec...')
     spec = fix_spec(spec)
+    spec = add_readme(spec)
 
     with open(args.output, 'w') as f:
         yaml.dump(spec, f, sort_keys=False)
