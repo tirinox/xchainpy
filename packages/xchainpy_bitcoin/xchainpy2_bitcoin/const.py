@@ -62,4 +62,4 @@ BLOCKSTREAM_EXPLORERS = {
 
 MAX_MEMO_LENGTH = 80
 
-DEFAULT_PROVIDER_NAME = 'blockstream'
+DEFAULT_PROVIDER_NAMES = ['mempool', 'blockstream']

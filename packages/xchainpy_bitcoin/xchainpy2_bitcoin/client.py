@@ -6,13 +6,14 @@ from bitcoinlib.config.config import MAX_TRANSACTIONS
 from bitcoinlib.encoding import EncodingError
 from bitcoinlib.keys import Key, deserialize_address
 from bitcoinlib.services.services import Service
-from bitcoinlib.transactions import Transaction, Input
+from bitcoinlib.transactions import Transaction
 
 from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, TxType, TokenTransfer, FeeType, \
     FeeOption, UTXO, Witness
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC
-from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS, DEFAULT_PROVIDER_NAME, MAX_MEMO_LENGTH
+from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS, MAX_MEMO_LENGTH, \
+    DEFAULT_PROVIDER_NAMES
 from .tx_prepare import UTXOPrepare, try_get_memo_from_output
 from .utils import get_btc_address_prefix, UTXOException
 
@@ -167,10 +168,8 @@ class BitcoinClient(XChainClient):
         self._decimal = BTC_DECIMAL
         self.native_asset = AssetBTC
 
-        # self.provider = provider
-
         if provider_names is None:
-            provider_names = [DEFAULT_PROVIDER_NAME]
+            provider_names = DEFAULT_PROVIDER_NAMES
         elif isinstance(provider_names, str):
             provider_names = [provider_names]
 
@@ -184,7 +183,7 @@ class BitcoinClient(XChainClient):
         self.service = Service(
             network=self._service_network,
             providers=provider_names,
-            min_providers=2,  # to prevent invalid cache operation
+            min_providers=2,  # to prevent invalid cache operation when it is <=1
         )
 
     def validate_address(self, address: str) -> bool:

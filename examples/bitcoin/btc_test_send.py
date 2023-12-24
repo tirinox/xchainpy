@@ -4,12 +4,16 @@ from examples.common import get_phrase
 from xchainpy2_bitcoin import BitcoinClient
 from xchainpy2_utils import NetworkType
 
+FEE_RATE = 2
+DRY_RUN = True
+
 
 async def send_btc():
     phrase = get_phrase()
 
     # provider_names = ['blockstream']
-    provider_names = ['mempool', 'blockstream']
+    # provider_names = ['mempool', 'blockstream']
+    provider_names = []
 
     btc = BitcoinClient(phrase=phrase, network=NetworkType.TESTNET, provider_names=provider_names)
     btc2 = BitcoinClient(phrase=phrase, network=NetworkType.TESTNET, wallet_index=1, provider_names=provider_names)
@@ -26,8 +30,23 @@ async def send_btc():
     balance = await btc2.get_balance()
     print(f"Balance 2 ({dest_address}): {balance}")
 
-    tx_hash = await btc.transfer(btc2.gas_amount(0.000011), dest_address, memo='test', fee_rate=2, dry_run=True)
+    tx_hash = await btc.transfer(btc2.gas_amount(0.000011), dest_address, memo='test',
+                                 fee_rate=FEE_RATE,
+                                 dry_run=DRY_RUN)
     print(f"Transfer hash: {tx_hash} ({btc2.get_explorer_tx_url(tx_hash)})")
+
+    if DRY_RUN:
+        print('Dry run complete')
+        return
+
+    print("Waiting for transaction to complete (10 minutes)...")
+    await asyncio.sleep(60 * 10 + 1)
+
+    balance = await btc.get_balance()
+    print(f"Balance 1 ({source_address}): {balance}")
+
+    balance = await btc2.get_balance()
+    print(f"Balance 2 ({dest_address}): {balance}")
 
 
 async def main():

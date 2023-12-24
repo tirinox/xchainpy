@@ -11,5 +11,5 @@ def sep(title='', simple=False):
 def get_phrase():
     phrase = os.environ.get('PHRASE')
     if not phrase:
-        raise ValueError("PHRASE env var is empty!")
+        raise ValueError("PHRASE env var is empty! Usage: PHRASE='your phrase here' python3 YOUR_SCRIPT.py")
     return phrase
