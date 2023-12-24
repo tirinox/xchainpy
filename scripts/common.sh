@@ -29,7 +29,7 @@ function codegen_client() {
     -l python \
     -o ${OUTPUT_DIR} \
     --library asyncio \
-    --additional-properties packageName=${PACKAGE_NAME},aiohttp=true,snake-case-methods=true,python36=true,packageVersion=${VERSION}
+    --additional-properties packageName=${PACKAGE_NAME},aiohttp=true,snake-case-methods=true,python36=true,packageVersion=${VERSION},readmeFile=README.md
 }
 
 function install_develop() {

@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Thornode API
-  version: 1.122.0
+  version: 1.125.0
   contact:
     email: devs@thorchain.org
   description: Thornode REST API.
@@ -550,6 +550,22 @@ paths:
                 type: array
                 items: &id011
                   $ref: '#/components/schemas/StreamingSwap'
+  /thorchain/clout/swap/{address}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/address'
+    get:
+      description: Returns the clout score of an address
+      operationId: swapper_clout
+      tags:
+      - Clout
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapperCloutResponse'
   /thorchain/queue:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -783,6 +799,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MimirResponse'
+  /thorchain/mimirV2:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns current mimir V2 configuration.
+      operationId: mimirV2
+      tags:
+      - Mimir
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MimirResponse'
+  /thorchain/mimirV2/ids:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns mapping of mimir V2 IDs to name.
+      operationId: mimirV2IDs
+      tags:
+      - Mimir
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MimirV2IDsResponse'
   /thorchain/quote/swap:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -825,12 +871,6 @@ paths:
         type: integer
         format: int64
         example: 10
-    - name: from_address
-      in: query
-      description: the from address, required if the from asset is a synth
-      schema:
-        type: string
-        example: thor1zupk5lmc84r2dh738a9g3zscavannjy3nzplwt
     - name: tolerance_bps
       in: query
       description: the maximum basis points from the current feeless swap price to
@@ -994,13 +1034,13 @@ paths:
       schema:
         type: string
         example: ETH.ETH
-    - name: amount
+    - name: repay_bps
       in: query
-      description: the asset amount in 1e8 decimals
+      description: the basis points of the existing position to repay
       schema:
         type: integer
         format: int64
-        example: 1000000
+        example: 100
     - name: to_asset
       in: query
       description: the collateral asset of the loan
@@ -1561,6 +1601,11 @@ components:
             $ref: '#/components/schemas/VaultRouter'
     StreamingSwap:
       type: object
+      required:
+      - trade_target
+      - deposit
+      - in
+      - out
       properties:
         tx_id:
           type: string
@@ -1587,6 +1632,18 @@ components:
           example: '100'
           description: the total number of tokens the swapper wants to receive of
             the output asset
+        source_asset:
+          type: string
+          example: BTC.BTC
+          description: the asset to be swapped from
+        target_asset:
+          type: string
+          example: ETH.ETH
+          description: the asset to be swapped to
+        destination:
+          type: string
+          example: '0x66fb1cd65b97fa40457b90b7d1ca6b92cb64b32b'
+          description: the destination address to receive the swap output
         deposit:
           type: string
           example: '100'
@@ -2001,8 +2058,8 @@ components:
         slash_points:
           type: integer
           format: int64
-          description: the accumlated slash points, reset at churn but excessive slash
-            points may carry over
+          description: the accumulated slash points, reset at churn but excessive
+            slash points may carry over
           example: 42
         jail:
           type: object
@@ -2703,6 +2760,7 @@ components:
       - outbound
       - internal
       - scheduled_outbound_value
+      - scheduled_outbound_clout
       properties:
         swap:
           type: integer
@@ -2720,6 +2778,9 @@ components:
         scheduled_outbound_value:
           type: string
           description: scheduled outbound value in RUNE
+        scheduled_outbound_clout:
+          type: string
+          description: scheduled outbound clout in RUNE
     SwapQueueResponse:
       type: array
       items: *id013
@@ -2770,6 +2831,33 @@ components:
                 $ref: '#/components/schemas/TssMetric'
     ThornameResponse:
       $ref: '#/components/schemas/Thorname'
+    SwapperCloutResponse:
+      type: object
+      required:
+      - address
+      properties:
+        address:
+          type: string
+          example: bc1....
+          description: address associated with this clout account
+        score:
+          type: string
+          description: clout score, which is the amount of rune spent on swap fees
+        reclaimed:
+          type: string
+          description: amount of clout that has been reclaimed in total over time
+            (observed clout spent)
+        spent:
+          type: string
+          description: amount of clout that has been spent in total over time
+        last_spent_height:
+          type: integer
+          format: int64
+          description: last block height that clout was spent
+        last_reclaim_height:
+          type: integer
+          format: int64
+          description: last block height that clout was reclaimed
     MimirResponse:
       type: object
       additionalProperties:
@@ -2777,6 +2865,34 @@ components:
       example:
         NODEOPERATORFEE: 2000
         NUMBEROFNEWNODESPERCHURN: 2
+    MimirV2IDsResponse:
+      type: object
+      properties:
+        id:
+          type: int
+        name:
+          type: string
+        legacy_key:
+          type: string
+        vote_key:
+          type: string
+        votes:
+          type: object
+      example:
+      - id: 1
+        name: AFFILIATEFEEBASISPOINTSMAXGLOBAL
+        legacy_key: MAXAFFILIATEFEEBASISPOINTS
+        vote_key: 1-GLOBAL
+        type: Economic
+        votes:
+          500: 4
+      - id: 2
+        name: BONDPAUSEGLOBAL
+        legacy_key: PAUSEBOND
+        vote_key: 2-GLOBAL
+        type: Operational
+        votes:
+          1: 1
     InvariantResponse:
       type: object
       required:
@@ -3017,7 +3133,7 @@ components:
           type: string
           example: '10000'
           description: Defines the minimum transaction size for the chain in base
-            units (sats, wei, uatom). Transctions with asset amounts lower than the
+            units (sats, wei, uatom). Transactions with asset amounts lower than the
             dust_threshold are ignored.
         recommended_min_amount_in: &id030
           type: string
@@ -3070,7 +3186,7 @@ components:
         max_streaming_quantity:
           type: integer
           format: int64
-          description: the maxiumum amount of trades a streaming swap can do for a
+          description: the maximum amount of trades a streaming swap can do for a
             trade
           example: 10
         streaming_swap_blocks:
@@ -3187,6 +3303,9 @@ components:
       - warning
       - notes
       - expiry
+      - streaming_swap_blocks
+      - streaming_swap_seconds
+      - total_open_loan_seconds
       properties:
         inbound_address: *id017
         inbound_confirmation_blocks: *id018
@@ -3223,12 +3342,32 @@ components:
           type: string
           description: the expected amount of TOR debt increase on the loan
           example: '1000000'
+        streaming_swap_blocks:
+          type: integer
+          format: int64
+          description: The number of blocks involved in the streaming swaps during
+            the open loan process.
+          example: 10
+        streaming_swap_seconds:
+          type: integer
+          format: int64
+          description: The approximate number of seconds taken by the streaming swaps
+            involved in the open loan process.
+          example: 600
+        total_open_loan_seconds:
+          type: integer
+          format: int64
+          description: The total expected duration for a open loan, measured in seconds,
+            which includes the time for inbound confirmation, the duration of streaming
+            swaps, and any outbound delays.
+          example: 600
     QuoteLoanCloseResponse:
       type: object
       required:
       - expected_amount_out
       - expected_collateral_withdrawn
       - expected_debt_repaid
+      - expected_amount_in
       - memo
       - outbound_delay_blocks
       - outbound_delay_seconds
@@ -3236,6 +3375,9 @@ components:
       - warning
       - notes
       - expiry
+      - streaming_swap_blocks
+      - streaming_swap_seconds
+      - total_repay_seconds
       properties:
         inbound_address: *id017
         inbound_confirmation_blocks: *id018
@@ -3260,6 +3402,12 @@ components:
           description: the amount of collateral asset the user can expect to receive
             after fees in 1e8 decimals
           example: '10000'
+        expected_amount_in:
+          type: string
+          description: The quantity of the repayment asset to be sent by the user,
+            calculated as the desired percentage of the loan's value, expressed in
+            units of 1e8
+          example: '10000'
         expected_collateral_withdrawn:
           type: string
           description: the expected amount of collateral decrease on the loan
@@ -3268,3 +3416,23 @@ components:
           type: string
           description: the expected amount of TOR debt decrease on the loan
           example: '1000000'
+        streaming_swap_blocks:
+          type: integer
+          format: int64
+          description: The number of blocks involved in the streaming swaps during
+            the repayment process.
+          example: 10
+        streaming_swap_seconds:
+          type: integer
+          format: int64
+          description: The approximate number of seconds taken by the streaming swaps
+            involved in the repayment process.
+          example: 600
+        total_repay_seconds:
+          type: integer
+          format: int64
+          description: The total expected duration for a repayment, measured in seconds,
+            which includes the time for inbound confirmation, the duration of streaming
+            swaps, and any outbound delays.
+          example: 600
+x-readme-file: README.md

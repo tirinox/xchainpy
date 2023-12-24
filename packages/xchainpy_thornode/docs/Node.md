@@ -19,7 +19,7 @@ Name | Type | Description | Notes
 **leave_height** | **int** |  | 
 **ip_address** | **str** |  | 
 **version** | **str** | the currently set version of the node | 
-**slash_points** | **int** | the accumlated slash points, reset at churn but excessive slash points may carry over | 
+**slash_points** | **int** | the accumulated slash points, reset at churn but excessive slash points may carry over | 
 **jail** | [**NodeJail**](NodeJail.md) |  | 
 **current_award** | **str** |  | 
 **observe_chains** | [**list[ChainHeight]**](ChainHeight.md) | the last observed heights for all chain by the node | 

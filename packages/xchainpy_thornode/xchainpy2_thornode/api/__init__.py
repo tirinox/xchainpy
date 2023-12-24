@@ -5,6 +5,7 @@ from __future__ import absolute_import
 # import apis into api package
 from xchainpy2_thornode.api.block_api import BlockApi
 from xchainpy2_thornode.api.borrowers_api import BorrowersApi
+from xchainpy2_thornode.api.clout_api import CloutApi
 from xchainpy2_thornode.api.health_api import HealthApi
 from xchainpy2_thornode.api.invariants_api import InvariantsApi
 from xchainpy2_thornode.api.liquidity_providers_api import LiquidityProvidersApi

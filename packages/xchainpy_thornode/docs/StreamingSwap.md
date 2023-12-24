@@ -8,10 +8,13 @@ Name | Type | Description | Notes
 **quantity** | **int** | the total number of swaps in a streaming swaps | [optional] 
 **count** | **int** | the amount of swap attempts so far | [optional] 
 **last_height** | **int** | the block height of the latest swap | [optional] 
-**trade_target** | **str** | the total number of tokens the swapper wants to receive of the output asset | [optional] 
-**deposit** | **str** | the number of input tokens the swapper has deposited | [optional] 
-**_in** | **str** | the amount of input tokens that have been swapped so far | [optional] 
-**out** | **str** | the amount of output tokens that have been swapped so far | [optional] 
+**trade_target** | **str** | the total number of tokens the swapper wants to receive of the output asset | 
+**source_asset** | **str** | the asset to be swapped from | [optional] 
+**target_asset** | **str** | the asset to be swapped to | [optional] 
+**destination** | **str** | the destination address to receive the swap output | [optional] 
+**deposit** | **str** | the number of input tokens the swapper has deposited | 
+**_in** | **str** | the amount of input tokens that have been swapped so far | 
+**out** | **str** | the amount of output tokens that have been swapped so far | 
 **failed_swaps** | **list[int]** | the list of swap indexes that failed | [optional] 
 **failed_swap_reasons** | **list[str]** | the list of reasons that sub-swaps have failed | [optional] 
 

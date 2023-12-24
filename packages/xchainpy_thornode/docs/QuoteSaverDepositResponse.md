@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 **expiry** | **int** | expiration timestamp in unix seconds | 
 **warning** | **str** | static warning message | 
 **notes** | **str** | chain specific quote notes | 
-**dust_threshold** | **str** | Defines the minimum transaction size for the chain in base units (sats, wei, uatom). Transctions with asset amounts lower than the dust_threshold are ignored. | [optional] 
+**dust_threshold** | **str** | Defines the minimum transaction size for the chain in base units (sats, wei, uatom). Transactions with asset amounts lower than the dust_threshold are ignored. | [optional] 
 **recommended_min_amount_in** | **str** | The recommended minimum inbound amount for this transaction type &amp; inbound asset. Sending less than this amount could result in failed refunds. | [optional] 
 **memo** | **str** | generated memo for the deposit | 
 **expected_amount_out** | **str** | same as expected_amount_deposit, to be deprecated in favour of expected_amount_deposit | [optional] 
