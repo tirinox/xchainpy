@@ -733,11 +733,25 @@ components:
       - rewards
       - earnings
       type: object
+    GenesisInf:
+      properties:
+        hash:
+          description: Genesis Block hash
+          type: string
+        height:
+          description: Genesis Block height
+          type: integer
+      required:
+      - height
+      - hash
+      type: object
     Health:
       properties:
         database:
           description: True means healthy, connected to database
           type: boolean
+        genesisInfo:
+          $ref: '#/components/schemas/GenesisInf'
         inSync:
           description: True means healthy. False means Midgard is still catching up
             to the chain
@@ -1670,12 +1684,26 @@ components:
       - withdrawCount
       type: object
     StreamingSwapMeta:
+      description: Streaming Metadata associated with the action if it was streaming
+        swap
       properties:
         count:
           description: Int64, Number of swaps events which already happened.
           type: string
         depositedCoin:
           $ref: '#/components/schemas/Coin'
+        failedSwapReasons:
+          description: Array of failed swaps reasons in streaming swap.
+          items:
+            description: The reason why swap got failed
+            type: string
+          type: array
+        failedSwaps:
+          description: Array of failed swaps index in streaming swap.
+          items:
+            description: Int64, Failed Swap number
+            type: string
+          type: array
         inCoin:
           $ref: '#/components/schemas/Coin'
         interval:
@@ -2083,7 +2111,7 @@ info:
     \ does not hold critical information. To interact with THORChain protocol, users\
     \ should query THORNode directly."
   title: Midgard Public API
-  version: 2.17.0
+  version: 2.18.2
 openapi: 3.0.0
 paths:
   /v2/actions:
@@ -2353,10 +2381,13 @@ paths:
         lastFetched - Latest block fetched from ThorNode.
 
 
-        lastCommitted - Latest block commited to the DB but not fully processed yet.
+        lastCommitted - Latest block committed to the DB but not fully processed yet.
 
 
         lastAggregated - Latest block fully processed and aggregated.
+
+
+        genesisInfo - The genesis height Midgard bootstrapped with.
 
         '
       operationId: GetHealth
@@ -3121,3 +3152,4 @@ paths:
                 items: *id006
                 type: array
       summary: Gives a list of THORNames by reverse lookup
+x-readme-file: README.md

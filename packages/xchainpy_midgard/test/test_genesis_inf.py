@@ -15,12 +15,12 @@ from __future__ import absolute_import
 import unittest
 
 import xchainpy2_midgard
-from xchainpy2_midgard.models.thor_name_entry import THORNameEntry  # noqa: E501
+from xchainpy2_midgard.models.genesis_inf import GenesisInf  # noqa: E501
 from xchainpy2_midgard.rest import ApiException
 
 
-class TestTHORNameEntry(unittest.TestCase):
-    """THORNameEntry unit test stubs"""
+class TestGenesisInf(unittest.TestCase):
+    """GenesisInf unit test stubs"""
 
     def setUp(self):
         pass
@@ -28,10 +28,10 @@ class TestTHORNameEntry(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def testTHORNameEntry(self):
-        """Test THORNameEntry"""
+    def testGenesisInf(self):
+        """Test GenesisInf"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = xchainpy2_midgard.models.thor_name_entry.THORNameEntry()  # noqa: E501
+        # model = xchainpy2_midgard.models.genesis_inf.GenesisInf()  # noqa: E501
         pass
 
 

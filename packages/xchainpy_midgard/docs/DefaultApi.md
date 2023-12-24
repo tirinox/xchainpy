@@ -409,7 +409,7 @@ No authorization required
 
 Health Info
 
-Returns an object containing the health response of the API. Meaning of heights:  lastThorNode - Latest block as reported by ThorNode.  lastFetched - Latest block fetched from ThorNode.  lastCommitted - Latest block commited to the DB but not fully processed yet.  lastAggregated - Latest block fully processed and aggregated. 
+Returns an object containing the health response of the API. Meaning of heights:  lastThorNode - Latest block as reported by ThorNode.  lastFetched - Latest block fetched from ThorNode.  lastCommitted - Latest block committed to the DB but not fully processed yet.  lastAggregated - Latest block fully processed and aggregated.  genesisInfo - The genesis height Midgard bootstrapped with. 
 
 ### Example
 ```python
