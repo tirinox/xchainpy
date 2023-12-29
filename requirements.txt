@@ -5,3 +5,5 @@ PyYAML~=6.0.0
 pytest-aiohttp
 build
 twine
+aioresponses==0.7.6
+requests-mock==1.11.0
