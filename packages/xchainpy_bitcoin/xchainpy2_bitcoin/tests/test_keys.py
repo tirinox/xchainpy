@@ -1,6 +1,7 @@
 import pytest
 
 from xchainpy2_bitcoin import BitcoinClient
+from xchainpy2_client import KeyException
 from xchainpy2_utils import NetworkType
 
 # caution! don't ever send any funds to any address derived from test seed phrase!
@@ -38,3 +39,16 @@ async def test_keys_1():
 
     btc = BitcoinClient(phrase=DEMO_MNEMONIC, wallet_index=1, network=NetworkType.TESTNET)
     assert btc.get_address() == 'tb1q0zhvv455z0fkpu87r2xe76cxtlwef7ld4wuufe'
+
+
+@pytest.mark.parametrize("network", [NetworkType.MAINNET, NetworkType.TESTNET, NetworkType.STAGENET])
+def test_empty_keys(network):
+    client = BitcoinClient(network)
+    with pytest.raises(KeyException):
+        client.get_address()
+
+    with pytest.raises(KeyException):
+        client.get_private_key()
+
+    with pytest.raises(KeyException):
+        client.get_public_key()

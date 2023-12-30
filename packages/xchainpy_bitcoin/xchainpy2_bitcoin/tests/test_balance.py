@@ -32,7 +32,7 @@ async def test_balance():
         m.get('https://mempool.space/api/address/bc1qlejn5eh6kf6wm7mxv2drnt0mk66uthvxzcemvc',
               json=load_json('empty_balance'))
         m.get('https://blockstream.info/api/address/bc1qlejn5eh6kf6wm7mxv2drnt0mk66uthvxzcemvc',
-                json=load_json('empty_balance'))
+              json=load_json('empty_balance'))
 
         balances = await btc.get_balance('bc1qlejn5eh6kf6wm7mxv2drnt0mk66uthvxzcemvc')
         assert balances

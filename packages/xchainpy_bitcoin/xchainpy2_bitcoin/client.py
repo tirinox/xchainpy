@@ -13,7 +13,7 @@ from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, TxType, TokenTran
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC
 from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS, MAX_MEMO_LENGTH, \
-    DEFAULT_PROVIDER_NAMES
+    DEFAULT_PROVIDER_NAMES, AssetTestBTC
 from .tx_prepare import UTXOPrepare, try_get_memo_from_output
 from .utils import get_btc_address_prefix, UTXOException
 
@@ -166,7 +166,6 @@ class BitcoinClient(XChainClient):
 
         self._prefix = get_btc_address_prefix(network)
         self._decimal = BTC_DECIMAL
-        self.native_asset = AssetBTC
 
         if provider_names is None:
             provider_names = DEFAULT_PROVIDER_NAMES
@@ -175,10 +174,13 @@ class BitcoinClient(XChainClient):
 
         if network in (NetworkType.MAINNET, NetworkType.STAGENET):
             self._service_network = 'bitcoin'
+            self.native_asset = AssetBTC
         elif network == NetworkType.DEVNET:
             self._service_network = 'bitcoinlib_test'
+            self.native_asset = AssetBTC
         else:
             self._service_network = 'testnet'
+            self.native_asset = AssetTestBTC
 
         self.service = Service(
             network=self._service_network,

@@ -1,4 +1,5 @@
 from xchainpy2_client import ExplorerProvider
+from xchainpy2_utils import Asset
 from xchainpy2_utils.consts import NetworkType
 
 BTC_DECIMAL = 8
@@ -63,3 +64,5 @@ BLOCKSTREAM_EXPLORERS = {
 MAX_MEMO_LENGTH = 80
 
 DEFAULT_PROVIDER_NAMES = ['mempool', 'blockstream']
+
+AssetTestBTC = Asset.from_string('BTC.TBTC')
