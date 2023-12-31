@@ -34,7 +34,12 @@ USD_ASSETS = {
         Asset.from_string('BNB.BUSD-BD1'),
         Asset.from_string('ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48'),
         Asset.from_string('ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7'),
+        Asset.from_string('ETH.DAI-0X6B175474E89094C44DA98B954EEDEAC495271D0F'),
+        Asset.from_string('ETH.GUSD-0X056FD409E1D7A124BD7017459DFEA2F387B6D5CD'),
+        Asset.from_string('ETH.LUSD-0X5F98805A4E8BE255A32880FDEC7F6728C6568BA0'),
+        Asset.from_string('ETH.USDP-0X8E870D67F660D95D5BE530380D0EC0BD388289E1'),
         Asset.from_string('AVAX.USDC-0XB97EF9EF8734C71904D8002F8B6BC66DD9C48A6E'),
+        Asset.from_string('BSC.USDC-0X8AC76A51CC950D9822D68B83FE1AD97B32CD580D'),
     ],
     NetworkType.STAGENET: [
         Asset.from_string('ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7')
@@ -61,8 +66,8 @@ class THORChainCache:
                  native_asset: Asset = AssetRUNE,
                  network: NetworkType = NetworkType.MAINNET,
                  stable_coins: List[Asset] = None):
-        self.midgard_client = midgard_client
-        self.thornode_client = thornode_client
+        self._midgard_client = midgard_client
+        self._thornode_client = thornode_client
         self._pool_cache = PoolCache(0, {})
         self._inbound_cache = InboundDetailCache(0, {})
         self._network_cache = NetworkValuesCache(0, {})
@@ -103,8 +108,8 @@ class THORChainCache:
             raise ValueError('Invalid native asset. Must be RUNE or CACAO')
 
     async def close(self):
-        await self.midgard_client.close()
-        await self.thornode_client.close()
+        await self._midgard_client.close()
+        await self._thornode_client.close()
 
     def is_native_asset(self, a: Asset):
         return a == self.native_asset
@@ -142,7 +147,7 @@ class THORChainCache:
     async def refresh_pool_cache(self):
         thornode_pools, midgard_pools = await asyncio.gather(
             request_api_with_backup_hosts(self.t_pool_api, self.t_pool_api.pools),
-            request_api_with_backup_hosts(self.midgard_client, self.midgard_api.get_pools)
+            request_api_with_backup_hosts(self._midgard_client, self.midgard_api.get_pools)
         )
 
         if not thornode_pools or not midgard_pools:
