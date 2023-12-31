@@ -72,7 +72,7 @@ class THORChainQuery:
                 affiliate_bps=affiliate_bps, affiliate=affiliate_address
             )
         except ValueError:
-            response = self.cache.thornode_client.last_response
+            response = self.cache._thornode_client.last_response
             error = response.data.get('error', 'unknown error')
             error.append(f'Thornode request quote: {error}')
 
@@ -309,7 +309,7 @@ class THORChainQuery:
         network_values = await self.cache.get_network_values()
 
         block = Block(
-            current=self.cache.get_native_block(block),
+            current=self.cache.pluck_native_block_height(block),
             last_added=liquidity_provider.last_add_height,
             full_protection=network_values.get(Mimir.FULL_IL_PROTECTION_BLOCKS, 0),
         )
@@ -652,7 +652,7 @@ class THORChainQuery:
 
         block_data = await self.cache.get_last_block()
         block = next((item for item in block_data if item.chain == asset.chain), None)
-        native_block = self.cache.get_native_block(block)
+        native_block = self.cache.pluck_native_block_height(block)
 
         pool_details = await self.cache.get_pool_for_asset(asset)
 
@@ -867,8 +867,8 @@ class THORChainQuery:
     @staticmethod
     def abbreviate_asset_string(asset: Asset, max_length=5):
         if asset.contract and len(asset.contract) > max_length:
-            abrev = asset.contract[:max_length]
-            asset = asset._replace(contract=abrev)
+            abbrev = asset.contract[:max_length]
+            asset = asset._replace(contract=abbrev)
         return str(asset)
 
     async def close(self):

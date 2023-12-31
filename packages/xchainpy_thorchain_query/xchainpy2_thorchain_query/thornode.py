@@ -29,7 +29,8 @@ class THORNodeAPIClient(HeadersPatch, thornode.ApiClient):
         self.user_agent = DEFAULT_USER_AGENT
 
     async def close(self):
-        await self.rest_client.close()
+        if self.rest_client:
+            await self.rest_client.close()
 
     def request(self, method, url, query_params=None, headers=None, post_params=None, body=None, _preload_content=True,
                 _request_timeout=None):

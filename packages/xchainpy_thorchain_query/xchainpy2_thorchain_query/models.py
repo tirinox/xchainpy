@@ -1,12 +1,13 @@
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import NamedTuple, List, Dict, Optional
+from typing import NamedTuple, List, Dict, Optional, Set
 
 from xchainpy2_client import FeeOption
-from xchainpy2_midgard import PoolDetail
-from xchainpy2_thornode import Pool, LiquidityProviderSummary, Saver, QuoteFees
+from xchainpy2_midgard import PoolDetail, THORNameDetails
+from xchainpy2_thornode import Pool, LiquidityProviderSummary, Saver, QuoteFees, LastBlock
 from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
 
 
@@ -90,6 +91,41 @@ class LiquidityPool(NamedTuple):
 class PoolCache:
     last_refreshed: float
     pools: Dict[str, LiquidityPool]
+
+
+@dataclass
+class NameCache:
+    address_to_name: Dict[str, Set[str]]
+    name_details: Dict[str, THORNameDetails]
+    name_last_refreshed: Dict[str, float]
+
+    def put(self, name: str, n: THORNameDetails):
+        for entry in n.entries:
+            self.address_to_name.setdefault(entry.address, set()).add(name)
+        if name:
+            self.name_details[name] = n
+            self.name_last_refreshed[name] = time.monotonic()
+
+    @staticmethod
+    def is_expired(n: THORNameDetails, last_block_height: int):
+        return int(n.expire) < last_block_height
+
+    def invalidate(self, block_height: int):
+        expired_names = [
+            name for name, n in self.name_details.items() if self.is_expired(n, block_height)
+        ]
+        for name in expired_names:
+            del self.name_details[name]
+            del self.name_last_refreshed[name]
+
+        for address, names in self.address_to_name.items():
+            names.difference_update(expired_names)
+
+
+@dataclass
+class LastBlockCache:
+    last_blocks: List[LastBlock]
+    last_refreshed: float
 
 
 class InboundDetail(NamedTuple):

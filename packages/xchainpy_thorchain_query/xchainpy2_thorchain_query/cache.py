@@ -3,52 +3,30 @@ import logging
 import time
 from decimal import Decimal
 from itertools import chain as chain_seq
-from typing import Dict, List
+from typing import Dict, List, Optional, Set
 
 from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMaya, NetworkApi as NetworkApiMaya, \
     TransactionsApi as TransactionsApiMaya, LiquidityProvidersApi as LiquidityProvidersApiMaya, \
     QueueApi as QueueApiMaya, QuoteApi as QuoteApiMaya
-from xchainpy2_midgard import PoolDetail
+from xchainpy2_midgard import PoolDetail, THORNameDetails
 from xchainpy2_midgard.api import DefaultApi as MidgardAPI
+from xchainpy2_midgard.rest import ApiException
+from xchainpy2_thorchain import THOR_BLOCK_TIME_SEC
 from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress, TransactionsApi, LiquidityProvidersApi, \
     SaversApi, QueueApi, QuoteApi, LastBlock, LiquidityProviderSummary
 from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, CryptoAmount, RUNE_DECIMAL, CACAO_DECIMAL, Amount, \
     Address, NetworkType
 from xchainpy2_utils.swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
     get_double_swap_slip
-from .const import Mimir
+from .const import Mimir, TEN_MINUTES, SAME_ASSET_EXCHANGE_RATE, USD_ASSETS
 from .env import URLs
 from .midgard import MidgardAPIClient
 from .models import PoolCache, InboundDetailCache, NetworkValuesCache, LiquidityPool, InboundDetail, SwapOutput, \
-    InboundDetails
+    InboundDetails, NameCache, LastBlockCache
 from .patch_clients import request_api_with_backup_hosts
 from .thornode import THORNodeAPIClient
 
 logger = logging.getLogger('THORChainCache')
-
-SAME_ASSET_EXCHANGE_RATE = 1.0
-TEN_MINUTES = 60 * 10
-
-USD_ASSETS = {
-    NetworkType.MAINNET: [
-        Asset.from_string('BNB.BUSD-BD1'),
-        Asset.from_string('ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48'),
-        Asset.from_string('ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7'),
-        Asset.from_string('ETH.DAI-0X6B175474E89094C44DA98B954EEDEAC495271D0F'),
-        Asset.from_string('ETH.GUSD-0X056FD409E1D7A124BD7017459DFEA2F387B6D5CD'),
-        Asset.from_string('ETH.LUSD-0X5F98805A4E8BE255A32880FDEC7F6728C6568BA0'),
-        Asset.from_string('ETH.USDP-0X8E870D67F660D95D5BE530380D0EC0BD388289E1'),
-        Asset.from_string('AVAX.USDC-0XB97EF9EF8734C71904D8002F8B6BC66DD9C48A6E'),
-        Asset.from_string('BSC.USDC-0X8AC76A51CC950D9822D68B83FE1AD97B32CD580D'),
-    ],
-    NetworkType.STAGENET: [
-        Asset.from_string('ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7')
-    ],
-    NetworkType.TESTNET: [
-        Asset.from_string('BNB.BUSD-74E'),
-        Asset.from_string('ETH.USDT-0XA3910454BF2CB59B8B3A401589A3BACC5CA42306')
-    ]
-}
 
 DEFAULT_MIDGARD = MidgardAPIClient()
 DEFAULT_MIDGARD.configuration.host = URLs.Midgard.MAINNET
@@ -71,6 +49,7 @@ class THORChainCache:
         self._pool_cache = PoolCache(0, {})
         self._inbound_cache = InboundDetailCache(0, {})
         self._network_cache = NetworkValuesCache(0, {})
+        self._name_cache = NameCache({}, {}, {})
         self.expire_pool = expire_pool
         self.expire_inbound = expire_inbound
         self.expire_network = expire_network
@@ -106,6 +85,8 @@ class THORChainCache:
             self.native_decimals = CACAO_DECIMAL
         else:
             raise ValueError('Invalid native asset. Must be RUNE or CACAO')
+
+        self._last_block_cache = LastBlockCache([], 0)
 
     async def close(self):
         await self._midgard_client.close()
@@ -379,15 +360,25 @@ class THORChainCache:
     def is_maya(self):
         return self.native_asset == AssetCACAO
 
-    def get_native_block(self, data: LastBlock) -> int:
+    def pluck_native_block_height(self, data: LastBlock) -> int:
         key = 'thorchain' if self.is_thorchain else 'mayachain'
         return getattr(data, key)
 
+    async def get_native_block_height(self) -> int:
+        data = await self.get_last_block()
+        return self.pluck_native_block_height(data[0])
+
     async def get_last_block(self) -> List[LastBlock]:
-        last_block_obj = await self.network_api.lastblock()
-        if not last_block_obj:
-            raise ValueError("No last block")
-        return last_block_obj
+        t = time.monotonic()
+        if t - self._last_block_cache.last_refreshed > THOR_BLOCK_TIME_SEC:
+            last_block_obj = await self.network_api.lastblock()
+            if not last_block_obj:
+                raise ValueError("No last block")
+            self._last_block_cache.last_refreshed = t
+            self._last_block_cache.last_blocks = last_block_obj
+            return last_block_obj
+        else:
+            return self._last_block_cache.last_blocks
 
     def get_rune_address(self, lp: LiquidityProviderSummary):
         key = 'rune_address' if self.is_thorchain else 'cacao_address'
@@ -413,3 +404,53 @@ class THORChainCache:
         for chain_details in inbound.values():
             if chain_details.chain == chain.value:
                 return int(chain_details.outbound_fee)
+
+    async def get_names_by_address(self, address: str) -> Set[str]:
+        if not address:
+            raise ValueError('address is required')
+
+        last_block = await self.get_native_block_height()
+        self._name_cache.invalidate(last_block)
+
+        if names := self._name_cache.address_to_name.get(address):
+            return names
+
+        try:
+            thor_names = await self.midgard_api.get_thor_names_by_address(address)
+            self._name_cache.address_to_name[address] = thor_names
+            return thor_names
+        except ApiException as e:
+            if e.status == 404:
+                self._name_cache.address_to_name[address] = set()
+                return []
+            else:
+                raise
+
+    async def load_names_by_address(self, address: str) -> List[THORNameDetails]:
+        names = await self.get_names_by_address(address)
+        if not names:
+            return []
+        details = await asyncio.gather(*[self.get_name_details(name) for name in names])
+        return list(details)
+
+    async def get_name_details(self, name: str) -> Optional[THORNameDetails]:
+        if not name:
+            raise ValueError('name is required')
+        name = name.lower()
+
+        last_block = await self.get_native_block_height()
+        self._name_cache.invalidate(last_block)
+
+        if details := self._name_cache.name_details.get(name):
+            return details
+
+        try:
+            thor_name = await self.midgard_api.get_thor_name_detail(name)
+            self._name_cache.put(name, thor_name)
+            return thor_name
+        except ApiException as e:
+            if e.status == 404:
+                self._name_cache.put(name, None)
+                return None
+            else:
+                raise
