@@ -13,6 +13,11 @@ Just don't forget to pass "PHRASE" environment variable that contains a mnemonic
 
 NETWORK = NetworkType.MAINNET
 
+WHAT_SEND = CryptoAmount(
+    Amount.automatic(1.0, CACAO_DECIMAL),
+    AssetCACAO
+)
+
 
 async def main():
     phrase = os.environ.get('PHRASE')
@@ -26,7 +31,7 @@ async def main():
     print(f"{client_a.get_address()}'s balance is {balance}")
 
     dest_address = client_b.get_address()
-    r = await client_a.transfer(CryptoAmount(Amount.automatic(1.0, CACAO_DECIMAL), AssetCACAO), dest_address)
+    r = await client_a.transfer(WHAT_SEND, dest_address)
     print(f"Transfer submitted: {client_a.get_explorer_tx_url(r)}")
 
     while True:
