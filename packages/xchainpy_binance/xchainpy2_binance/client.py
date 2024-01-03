@@ -197,7 +197,7 @@ class BinanceChainClient(XChainClient):
         self.explorers = explorer_providers
 
         self._prefix = get_bnb_address_prefix(network)
-        self.native_asset = AssetBNB
+        self._gas_asset = AssetBNB
         self._denom = 'bnb'
         self._decimal = BNB_DECIMAL
         self.chain_id = None
@@ -285,7 +285,7 @@ class BinanceChainClient(XChainClient):
                                     )
                                 )
 
-        asset = self.native_asset
+        asset = self._gas_asset
 
         return XcTx(
             asset=asset,
