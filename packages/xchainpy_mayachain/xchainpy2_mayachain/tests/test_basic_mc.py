@@ -17,7 +17,7 @@ def stagenet_client():
 
 def test_init(client):
     assert client.network == NetworkType.MAINNET
-    assert client._decimal == 8
+    assert client._decimal == 10
     assert client._gas_asset == AssetCACAO
 
 
@@ -33,10 +33,10 @@ def test_wallet_index(client):
 
 
 # noinspection PyTypeChecker
-def test_validate_address(client, stagenet_client):
-    assert client.validate_address('thor1qd4my7934h2sn5ag5eaqsde39va4ex2asz3yv5')
-    assert client.validate_address('thor1505gp5h48zd24uexrfgka70fg8ccedafsnj0e3')
-    assert client.validate_address('thor1505gp5h48zd24uexrfgka70fg8ccedafsnj0e3'.upper())
+def test_validate_address(client):
+    assert client.validate_address('maya1qefmyzkgkvu2kz57yv5x5r6k9tvr65v3u2dgvh')
+    assert client.validate_address('maya1xdmj4ly3t9afy0fqvxqyar7c2agw9gqjjmxpku')
+    assert client.validate_address('maya1xdmj4ly3t9afy0fqvxqyar7c2agw9gqjjmxpku'.upper())
 
     assert not client.validate_address('')
     assert not client.validate_address('5230')
@@ -47,11 +47,6 @@ def test_validate_address(client, stagenet_client):
     assert not client.validate_address('sthor1qd4my7934h2sn5ag5eaqsde39va4ex2asz3yv5')
     assert not client.validate_address('tthor1qd4my7934h2sn5ag5eaqsde39va4ex2asz3yv5')
     assert not client.validate_address('cosmos1qd4my7934h2sn5ag5eaqsde39va4ex2asz3yv5')
-
-    assert not stagenet_client.validate_address('thor1qd4my7934h2sn5ag5eaqsde39va4ex2asz3yv5')
-    assert stagenet_client.validate_address('sthor16zj3wfurvc6j6sny8s6gt2s3st9yjypqfjegy2')
-    assert stagenet_client.validate_address('sthor1g6pnmnyeg48yc3lg796plt0uw50qpp7humfggz')
-    assert stagenet_client.validate_address('sthor1g6pnmnyeg48yc3lg796plt0uw50qpp7humfggz'.upper())
 
 
 def test_address(client, stagenet_client):
