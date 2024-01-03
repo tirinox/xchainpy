@@ -20,9 +20,9 @@ DENOM_CACAO_NATIVE = 'cacao'
 MAYA_DECIMAL = 4
 DENOM_MAYA = 'maya'
 
-AssetMAYA = Asset.from_string('MAYA.CACAO')
+AssetMAYA = Asset.from_string('MAYA.MAYA')
 
-DEFAULT_CACAO_FEE = Amount.from_asset(0.02, CACAO_DECIMAL)
+DEFAULT_CACAO_FEE = Amount.from_asset(0.5, CACAO_DECIMAL)
 
 DEFAULT_EXPLORER_URL = 'https://explorer.mayachain.info{path}{network_tag}'
 MAYASCAN_EXPLORER_URL = 'https://mayascan.org{path}'
