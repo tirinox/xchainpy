@@ -1,8 +1,9 @@
 import pytest
+from cosmpy.aerial.client import Coin
 
 from xchainpy2_crypto import generate_mnemonic
-from xchainpy2_mayachain import MayaChainClient
-from xchainpy2_utils import NetworkType, CryptoAmount, AssetCACAO
+from xchainpy2_mayachain import MayaChainClient, AssetMAYA, MAYA_DECIMAL
+from xchainpy2_utils import NetworkType, CryptoAmount, AssetCACAO, AssetRUNE, Asset, Amount, CACAO_DECIMAL, RUNE_DECIMAL
 
 
 @pytest.fixture
@@ -73,3 +74,32 @@ async def test_no_keys():
 
     with pytest.raises(Exception):
         await client.transfer(amt, client.get_address())
+
+
+@pytest.mark.parametrize(('asset', 'denom'), [
+    (AssetCACAO, 'cacao'),
+    (AssetMAYA, 'maya'),
+    (AssetRUNE.as_synth, 'thor/rune'),
+    (Asset.from_string('DASH/DASH'), 'dash/dash'),
+])
+def test_maya_get_denom(client, asset, denom):
+    assert client.get_denom(asset) == denom
+
+
+@pytest.mark.parametrize(('denom', 'asset'), [
+    ('atom', None),
+    ('cacao', AssetCACAO),
+    ('maya', AssetMAYA),
+    ('thor/rune', AssetRUNE.as_synth),
+])
+def test_maya_parse_denom_to_asset(client, denom, asset):
+    assert client.parse_denom_to_asset(denom) == asset
+
+
+@pytest.mark.parametrize('coin, amount', [
+    (Coin(124, 'cacao'), CryptoAmount(Amount.from_base(124, CACAO_DECIMAL), AssetCACAO)),
+    (Coin(778899, 'maya'), CryptoAmount(Amount.from_base(778899, MAYA_DECIMAL), AssetMAYA)),
+    (Coin(123455, 'thor/rune'), CryptoAmount(Amount.from_base(123455, RUNE_DECIMAL), AssetRUNE.as_synth))
+])
+def test_convert_coin_to_amount(client, coin: Coin, amount: CryptoAmount):
+    assert client.convert_coin_to_amount(coin) == amount

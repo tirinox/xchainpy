@@ -2,11 +2,12 @@ import asyncio
 from typing import Optional, Union
 
 from bip_utils import Bech32ChecksumError
+from cosmpy.aerial.client import Coin
 from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
-from xchainpy2_client import AssetInfo, XcTx, TxType, Fees, FeeType, TokenTransfer
 from xchainpy2_client import RootDerivationPaths, FeeBounds
+from xchainpy2_client import XcTx, TxType, Fees, FeeType, TokenTransfer
 from xchainpy2_client.fees import single_fee
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
@@ -15,7 +16,7 @@ from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Amount, remove_0x_
     Asset, SYNTH_DELIMITER, CACAO_DECIMAL, AssetCACAO
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_CACAO_NATIVE, ROOT_DERIVATION_PATHS, \
     DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_CACAO_FEE, \
-    make_client_urls_from_ip_address, DEFAULT_MAYA_EXPLORERS
+    make_client_urls_from_ip_address, DEFAULT_MAYA_EXPLORERS, AssetMAYA, DENOM_MAYA, MAYA_DECIMAL
 from .utils import build_deposit_tx_unsigned, get_maya_address_prefix, build_transfer_tx_draft
 
 
@@ -260,18 +261,36 @@ class MayaChainClient(CosmosGaiaClient):
             return await self.get_transaction_data_mayanode(tx_id)
 
     async def get_fees(self, cache=None, tc_fee_rate=None) -> Fees:
+        # todo! fee may be variable
         return single_fee(FeeType.FLAT_FEE, DEFAULT_CACAO_FEE)
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         if SYNTH_DELIMITER in denom:
             # special case for synths
             return Asset.from_string(denom.upper())
+        elif denom == DENOM_MAYA:
+            return AssetMAYA
+        elif denom == DENOM_CACAO_NATIVE:
+            return AssetCACAO
+
+    def convert_coin_to_amount(self, c: Coin) -> CryptoAmount:
+        if c.denom == DENOM_MAYA:
+            decimal = MAYA_DECIMAL
+        elif c.denom == DENOM_CACAO_NATIVE:
+            decimal = CACAO_DECIMAL
         else:
-            return super().parse_denom_to_asset(denom)
+            decimal = 8
+
+        return CryptoAmount(
+            Amount.from_base(c.amount, decimal),
+            asset=self.parse_denom_to_asset(c.denom)
+        )
 
     def get_denom(self, asset: Asset) -> str:
         if asset == AssetCACAO:
             return DENOM_CACAO_NATIVE
+        elif asset == AssetMAYA:
+            return DENOM_MAYA
         else:
             return str(asset).lower()
 
