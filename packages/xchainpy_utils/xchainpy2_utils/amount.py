@@ -179,6 +179,13 @@ class Amount(NamedTuple):
     def __float__(self):
         return float(self.as_decimal)
 
+    def __bool__(self):
+        return bool(self.internal_amount)
+
+    @property
+    def is_zero(self):
+        return self.internal_amount == 0
+
 
 def amount(x) -> Amount:
     return Amount.automatic(x)

@@ -110,8 +110,8 @@ def test_compare():
     assert Amount.from_asset(40) <= 40.1
 
     # ints are treated as base amounts
-    assert Amount.from_asset(40) < 50 * 10**8
-    assert Amount.from_asset(40) > 30 * 10**8
+    assert Amount.from_asset(40) < 50 * 10 ** 8
+    assert Amount.from_asset(40) > 30 * 10 ** 8
 
 
 def test_change_decimals():
@@ -160,3 +160,14 @@ def test_divide():
 
     with pytest.raises(ZeroDivisionError):
         assert a / 0 == 0
+
+
+def test_bool():
+    assert Amount(400)
+    assert Amount(-5)
+    assert not Amount(0)
+    assert not Amount.from_base(0, 4)
+    assert not Amount.automatic(0)
+
+    assert Amount(0).is_zero
+    assert not Amount.automatic(25.3).is_zero
