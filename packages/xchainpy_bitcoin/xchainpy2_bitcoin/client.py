@@ -47,7 +47,7 @@ class BitcoinClient(XChainClient):
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, is_sync: bool = True, min_confirmations=1, **kwargs) -> str:
-        if what.asset != self.native_asset:
+        if what.asset != self._gas_asset:
             raise UTXOException(f'Asset {what.asset} is not supported')
 
         if (memo_len := len(memo)) > MAX_MEMO_LENGTH:
@@ -174,13 +174,13 @@ class BitcoinClient(XChainClient):
 
         if network in (NetworkType.MAINNET, NetworkType.STAGENET):
             self._service_network = 'bitcoin'
-            self.native_asset = AssetBTC
+            self._gas_asset = AssetBTC
         elif network == NetworkType.DEVNET:
             self._service_network = 'bitcoinlib_test'
-            self.native_asset = AssetBTC
+            self._gas_asset = AssetBTC
         else:
             self._service_network = 'testnet'
-            self.native_asset = AssetTestBTC
+            self._gas_asset = AssetTestBTC
 
         self.service = Service(
             network=self._service_network,
@@ -233,7 +233,7 @@ class BitcoinClient(XChainClient):
                 from_address=inp.address,
                 to_address='',
                 amount=self.gas_amount(inp.value).amount,
-                asset=self.native_asset,
+                asset=self._gas_asset,
                 tx_hash=tx.txid,
                 outbound=False,
             ))
@@ -250,7 +250,7 @@ class BitcoinClient(XChainClient):
                 from_address='',
                 to_address=output.address,
                 amount=self.gas_amount(output.value).amount,
-                asset=self.native_asset,
+                asset=self._gas_asset,
                 tx_hash=tx.txid,
                 outbound=True,
             ))

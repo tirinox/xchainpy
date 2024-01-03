@@ -12,9 +12,9 @@ def test_client(network):
     assert client.decimal == 8
 
     if network in (NetworkType.MAINNET, NetworkType.STAGENET):
-        assert client.native_asset == AssetBTC
+        assert client._gas_asset == AssetBTC
     else:
-        assert client.native_asset == AssetTestBTC
+        assert client._gas_asset == AssetTestBTC
 
 
 def test_explorers():
