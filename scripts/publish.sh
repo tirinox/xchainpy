@@ -51,23 +51,14 @@ fi
 case "$1" in
 
 build)
-  echo "Building all packages"
-  for i in "${PACKS[@]}"; do
-    build "$i"
-  done
+  build "$PACKS"
   ;;
 publish)
-  echo "Publishing all packages"
-  for i in "${PACKS[@]}"; do
-    publish "$i"
-  done
+  publish "$PACKS"
   ;;
 
 publish_test)
-  echo "Publishing all packages [TEST]"
-  for i in "${PACKS[@]}"; do
-    publish_test "$i"
-  done
+  publish_test "$PACKS"
   ;;
 
 *)
