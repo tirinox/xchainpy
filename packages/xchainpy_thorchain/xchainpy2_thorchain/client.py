@@ -73,7 +73,7 @@ class THORChainClient(CosmosGaiaClient):
         # Tune for THORChain
         self.chain = Chain.THORChain
         self._prefix = get_thor_address_prefix(network)
-        self.native_asset = AssetRUNE
+        self._gas_asset = AssetRUNE
         self._denom = DENOM_RUNE_NATIVE
         self._decimal = RUNE_DECIMAL
         self._gas_limit = DEFAULT_GAS_LIMIT_VALUE
@@ -126,9 +126,9 @@ class THORChainClient(CosmosGaiaClient):
         self._throw_if_empty_phrase()
 
         if isinstance(what, Amount):
-            what = CryptoAmount(what, self.native_asset)
+            what = CryptoAmount(what, self._gas_asset)
         elif isinstance(what, (int, float)):
-            what = CryptoAmount(Amount.automatic(what, self._decimal), self.native_asset)
+            what = CryptoAmount(Amount.automatic(what, self._decimal), self._gas_asset)
 
         address = self.get_address()
 
@@ -255,7 +255,7 @@ class THORChainClient(CosmosGaiaClient):
         """
         try:
             j = await self.get_transaction_data_cosmos(tx_id)
-            return parse_tx_response_json(j, tx_id, address, self._decimal, self._denom, self.native_asset)
+            return parse_tx_response_json(j, tx_id, address, self._decimal, self._denom, self._gas_asset)
         except TxLoadException:
             return await self.get_transaction_data_thornode(tx_id)
 
