@@ -6,7 +6,8 @@ from typing import Optional, List, Union
 from urllib.parse import urlencode
 
 from aiohttp import ClientSession
-from cosmpy.aerial.client import LedgerClient, Account, create_bank_send_msg, prepare_and_broadcast_basic_transaction
+from cosmpy.aerial.client import LedgerClient, Account, create_bank_send_msg, prepare_and_broadcast_basic_transaction, \
+    Coin
 from cosmpy.aerial.config import NetworkConfig
 from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.wallet import LocalWallet
@@ -228,15 +229,16 @@ class CosmosGaiaClient(XChainClient):
             address
         )
 
-        our_balances = [
-            CryptoAmount(
-                Amount.from_base(balance.amount, self._decimal),
-                self.parse_denom_to_asset(balance.denom)
-            )
-            for balance in balances
-        ]
+        our_balances = [self.convert_coin_to_amount(balance) for balance in balances]
 
         return our_balances
+
+    def convert_coin_to_amount(self, c: Coin):
+        asset = self.parse_denom_to_asset(c.denom)
+        return CryptoAmount(
+            Amount.from_base(c.amount, self._decimal),
+            asset
+        )
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         if denom == self._denom:
