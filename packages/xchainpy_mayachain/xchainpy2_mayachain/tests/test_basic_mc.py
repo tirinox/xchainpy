@@ -18,7 +18,7 @@ def stagenet_client():
 def test_init(client):
     assert client.network == NetworkType.MAINNET
     assert client._decimal == 8
-    assert client.native_asset == AssetCACAO
+    assert client._gas_asset == AssetCACAO
 
 
 def test_wallet_index(client):

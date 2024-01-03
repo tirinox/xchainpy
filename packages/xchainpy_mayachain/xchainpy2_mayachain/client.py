@@ -73,7 +73,7 @@ class MayaChainClient(CosmosGaiaClient):
         # Tune for MayaChain
         self.chain = Chain.Maya
         self._prefix = get_maya_address_prefix(network)
-        self.native_asset = AssetCACAO
+        self._gas_asset = AssetCACAO
         self._denom = DENOM_CACAO_NATIVE
         self._decimal = CACAO_DECIMAL
         self._gas_limit = DEFAULT_GAS_LIMIT_VALUE
@@ -126,9 +126,9 @@ class MayaChainClient(CosmosGaiaClient):
         self._throw_if_empty_phrase()
 
         if isinstance(what, Amount):
-            what = CryptoAmount(what, self.native_asset)
+            what = CryptoAmount(what, self._gas_asset)
         elif isinstance(what, (int, float)):
-            what = CryptoAmount(Amount.automatic(what, self._decimal), self.native_asset)
+            what = CryptoAmount(Amount.automatic(what, self._decimal), self._gas_asset)
 
         address = self.get_address()
 
@@ -255,7 +255,7 @@ class MayaChainClient(CosmosGaiaClient):
         """
         try:
             j = await self.get_transaction_data_cosmos(tx_id)
-            return parse_tx_response_json(j, tx_id, address, self._decimal, self._denom, self.native_asset)
+            return parse_tx_response_json(j, tx_id, address, self._decimal, self._denom, self._gas_asset)
         except TxLoadException:
             return await self.get_transaction_data_mayanode(tx_id)
 
