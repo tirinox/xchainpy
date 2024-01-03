@@ -99,7 +99,7 @@ class NameCache:
     name_details: Dict[str, THORNameDetails]
     name_last_refreshed: Dict[str, float]
 
-    def put(self, name: str, n: THORNameDetails):
+    def put(self, name: str, n: Optional[THORNameDetails]):
         for entry in n.entries:
             self.address_to_name.setdefault(entry.address, set()).add(name)
         if name:

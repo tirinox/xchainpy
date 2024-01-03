@@ -422,7 +422,7 @@ class THORChainCache:
         except ApiException as e:
             if e.status == 404:
                 self._name_cache.address_to_name[address] = set()
-                return []
+                return set()
             else:
                 raise
 
