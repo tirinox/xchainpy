@@ -29,10 +29,22 @@ else
   # Use the default value (all packages)
   PACKS=(../packages/xchainpy_*)
   echo "No package specified, available packages:"
+  counter=1
   for i in "${PACKS[@]}"; do
-    echo " $0 publish `basename $i`"
+    echo " $counter) $0 publish `basename $i`"
+    ((counter++))
   done
-  exit 0
+  echo "Which package do you want to publish?"
+  # ask for the number
+  read -r number
+  # check if the number is valid
+  if [ "$number" -gt "${#PACKS[@]}" ]; then
+    echo "Invalid number"
+    exit 1
+  fi
+  # get the package name
+  PACKS=${PACKS[$number - 1]}
+  echo "Selected package: $PACKS"
 fi
 
 # Case commands
