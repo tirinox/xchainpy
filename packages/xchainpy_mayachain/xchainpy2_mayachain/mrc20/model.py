@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import NamedTuple, List
 
 
 class MRC20Token(NamedTuple):
@@ -123,3 +123,109 @@ class MNFTToken(NamedTuple):
     @classmethod
     def from_api(cls, resp):
         return [cls.from_dict(d) for d in resp['collections']]
+
+
+class MRC20Price(NamedTuple):
+    ticker: str
+    price_in_cacao: float
+    price_in_usd: float
+    decimals: int
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            ticker=d['ticker'],
+            price_in_cacao=float(d['priceInCacao']),
+            price_in_usd=float(d['priceInUsd']),
+            decimals=d['decimals'],
+        )
+
+
+class MRC20Order(NamedTuple):
+    hash: str
+    ticker: str
+    address: str
+    balance: int
+    price: int
+    height: int
+    date: str
+    sellers_balance_remaining: int
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            hash=d['hash'],
+            ticker=d['ticker'],
+            address=d['address'],
+            balance=d['balance'],
+            price=d['price'],
+            height=d['height'],
+            date=d['date'],
+            sellers_balance_remaining=d['sellers_balance_remaining'],
+        )
+
+    @classmethod
+    def from_api(cls, resp):
+        return [cls.from_dict(d) for d in resp]
+
+
+class MNFTOrder(NamedTuple):
+    hash: str
+    symbol: str
+    address: str
+    id: int
+    price: int
+    height: int
+    date: str
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            hash=d['hash'],
+            symbol=d['symbol'],
+            address=d['address'],
+            id=d['id'],
+            price=d['price'],
+            height=d['height'],
+            date=d['date'],
+        )
+
+    @classmethod
+    def from_api(cls, resp):
+        return [cls.from_dict(d) for d in resp]
+
+
+class SendAction(NamedTuple):
+    hash: str
+    height: int
+    from_: str
+    to: str
+    asset: str
+    amount: str
+    memo: str
+    date: str
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            hash=d['hash'],
+            height=d['height'],
+            from_=d['from'],
+            to=d['to'],
+            asset=d['asset'],
+            amount=d['amount'],
+            memo=d['memo'],
+            date=d['date'],
+        )
+
+
+class SendActionResponse(NamedTuple):
+    total: int
+    actions: List[SendAction]
+
+    @classmethod
+    def from_response(cls, d):
+        return cls(
+            total=d['total'],
+            actions=[SendAction.from_dict(action) for action in d['list']],
+        )
