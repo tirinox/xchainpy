@@ -16,10 +16,10 @@ from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Amount, remove_0x_
     Asset, SYNTH_DELIMITER, CACAO_DECIMAL, AssetCACAO
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_CACAO_NATIVE, ROOT_DERIVATION_PATHS, \
     DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_CACAO_FEE, \
-    make_client_urls_from_ip_address, DEFAULT_MAYA_EXPLORERS, AssetMAYA, DENOM_MAYA, MAYA_DECIMAL
+    make_client_urls_from_ip_address, DEFAULT_MAYA_EXPLORERS, AssetMAYA, DENOM_MAYA, MAYA_DECIMAL, CACAO_DUST
 from .mrc20.api import MayaScanClient
-from .mrc20.memo import MRC20Memo
 from .mrc20.const import is_mrc20, make_mrc20_asset
+from .mrc20.memo import MRC20Memo, MNFTMemo
 from .utils import build_deposit_tx_unsigned, get_maya_address_prefix, build_transfer_tx_draft
 
 
@@ -309,6 +309,9 @@ class MayaChainClient(CosmosGaiaClient):
         )
         return tx
 
+    def _maya_scan_tx_value_cacao(self):
+        return self.gas_amount(CACAO_DUST)
+
     async def transfer_mrc20(self, what: CryptoAmount, recipient: str):
         """
         Transfer MRC20 token
@@ -326,7 +329,27 @@ class MayaChainClient(CosmosGaiaClient):
         memo = MRC20Memo.transfer(what.asset.symbol, what.amount)
 
         return await self.transfer(
-            self.gas_amount(0),
+            self._maya_scan_tx_value_cacao(),
+            recipient, memo=memo,
+            check_balance=False,
+        )
+
+    async def transfer_mnft(self, symbol: str, ident: int, recipient: str):
+        """
+        Transfer MNFT token
+        Example: await maya.transfer_mnft('PEPE', 25, 'maya1f4f2a4b24')
+        :param symbol: MNFT ticker
+        :param ident: MNFT token ID
+        :param recipient: maya1Address
+        :return: TX hash string
+        """
+        if not self.validate_address(recipient):
+            raise ValueError(f"Invalid recipient address: {recipient}")
+
+        memo = MNFTMemo.transfer(symbol, ident)
+
+        return await self.transfer(
+            self._maya_scan_tx_value_cacao(),
             recipient, memo=memo,
             check_balance=False,
         )
