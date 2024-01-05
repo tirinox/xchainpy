@@ -108,6 +108,22 @@ class MRC20Memo:
 
         return ':'.join(['MRC-20', 'burn', ticker, amount])
 
+    @classmethod
+    def stake(cls, ticker, amount) -> str:
+        # "STAKING:stake:GLD:12340000000000"
+        check_ticker(ticker)
+        amount = get_amount(amount)
+        if amount.internal_amount <= 0:
+            raise ValueError('Amount must be positive')
+
+        return ':'.join(['STAKING', 'stake', ticker, amount])
+
+    @classmethod
+    def unstake_all(cls, ticker) -> str:
+        # "STAKING:withdraw:GLD
+        check_ticker(ticker)
+        return ':'.join(['STAKING', 'withdraw', ticker])
+
 
 class MNFTMemo:
 
