@@ -24,6 +24,9 @@ async def main():
     gld_price = await client.maya_scan.get_price(AssetGLD)
     print(f'GLD price: {gld_price}')
 
+    order_book = await client.maya_scan.get_orderbook(AssetGLD)
+    print(f'Order book: {order_book}')
+
     await client.close()
 
 if __name__ == "__main__":

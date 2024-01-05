@@ -116,7 +116,7 @@ class MayaScanClient:
             except Exception as e:
                 raise MayaScanException(f'Error parsing response: {e}')
 
-            if r.get('error'):
+            if isinstance(r, dict) and r.get('error'):
                 raise MayaScanException(r['error'])
             return r
 
