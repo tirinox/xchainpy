@@ -200,6 +200,13 @@ class CryptoAmount(NamedTuple):
     amount: Amount
     asset: Asset
 
+    @classmethod
+    def automatic(cls, _amount: Union[Amount, str, int, float], asset: Union[Asset, str]):
+        return cls(
+            Amount.automatic(_amount),
+            Asset.automatic(asset),
+        )
+
     def __add__(self, other) -> 'CryptoAmount':
         self.check(other)
         return CryptoAmount(self.amount + other.amount, self.asset)

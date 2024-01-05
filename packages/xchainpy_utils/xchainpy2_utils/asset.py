@@ -57,6 +57,13 @@ class Asset(NamedTuple):
             raise ValueError(f'Invalid asset string: {s}')
         return a
 
+    @classmethod
+    def automatic(cls, x) -> Optional['Asset']:
+        if isinstance(x, str):
+            return cls.from_string(x)
+        elif isinstance(x, Asset):
+            return x
+
     @property
     def as_native(self):
         # noinspection PyArgumentEqualDefault
