@@ -21,9 +21,10 @@ def usage():
 
 
 async def main():
-    phrase = os.environ.get('PHRASE').strip().strip('"')
+    phrase = os.environ.get('PHRASE')
     if not phrase:
         raise ValueError("PHRASE env var is empty!")
+    phrase = phrase.strip().strip('"')
 
     client = MayaChainClient(phrase=phrase, network=NETWORK)
 

@@ -17,6 +17,9 @@ from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Amount, remove_0x_
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_CACAO_NATIVE, ROOT_DERIVATION_PATHS, \
     DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_CACAO_FEE, \
     make_client_urls_from_ip_address, DEFAULT_MAYA_EXPLORERS, AssetMAYA, DENOM_MAYA, MAYA_DECIMAL
+from .mrc20.api import MayaScanClient
+from .mrc20.memo import MRC20Memo
+from .mrc20.const import is_mrc20, make_mrc20_asset
 from .utils import build_deposit_tx_unsigned, get_maya_address_prefix, build_transfer_tx_draft
 
 
@@ -24,9 +27,9 @@ class MayaChainClient(CosmosGaiaClient):
     @classmethod
     def from_node_ip(cls, ip: str):
         """
-        Initialize THORChainClient from node IP address.
+        Initialize MayaChainClient from node IP address.
         :param ip: IP address of the node
-        :return: THORChainClient
+        :return: MayaChainClient
         """
         return cls(client_urls=make_client_urls_from_ip_address(ip))
 
@@ -82,6 +85,8 @@ class MayaChainClient(CosmosGaiaClient):
 
         self._recreate_client()
         self._make_wallet()
+
+        self.maya_scan = MayaScanClient()
 
     @property
     def server_url(self) -> str:
@@ -174,7 +179,7 @@ class MayaChainClient(CosmosGaiaClient):
 
     async def fetch_transaction_from_mayanode_raw(self, tx_hash: str) -> dict:
         """
-        Fetch transaction from THORNode, try to use fallback client if main client is not available
+        Fetch transaction from MayaNode, try to use fallback client if main client is not available
         Url: https://node/mayachain/tx/{tx_hash}
         :param tx_hash: Tx Hash
         :return: Transaction data (raw, unparsed)
@@ -198,7 +203,7 @@ class MayaChainClient(CosmosGaiaClient):
     async def get_transaction_data_mayanode(self, tx_id: str) -> XcTx:
         """
         Fetch transaction data from MayaNode (parsed to XcTx instance)
-        This function is used when inbound or outbound tx is not of THORChain.
+        This function is used when inbound or outbound tx is not of MayaChain.
         It is called "getTransactionDataThornode" in xchainjs
         Parsing "observed_tx" object.
         Url: https://node/mayachain/tx/{tx_hash}
@@ -303,3 +308,32 @@ class MayaChainClient(CosmosGaiaClient):
             prefix=self.prefix,
         )
         return tx
+
+    async def transfer_mrc20(self, what: CryptoAmount, recipient: str):
+        """
+        Transfer MRC20 token
+        Example: await maya.transfer_mrc20(CryptoAmount.automatic(100, 'MRC20.GLD'), 'maya1f4f2a4b24')
+        :param what: CryptoAmount
+        :param recipient: maya1Address
+        :return: TX hash string
+        """
+        if not self.validate_address(recipient):
+            raise ValueError(f"Invalid recipient address: {recipient}")
+
+        if not is_mrc20(what.asset):
+            raise ValueError(f"Asset {what.asset} is not MRC20")
+
+        memo = MRC20Memo.transfer(what.asset.symbol, what.amount)
+
+        return await self.transfer(
+            self.gas_amount(0),
+            recipient, memo=memo,
+            check_balance=False,
+        )
+
+    @staticmethod
+    def amount_of_mrc20(amount, asset_name: str):
+        return CryptoAmount.automatic(amount, make_mrc20_asset(asset_name))
+
+    async def close(self):
+        await self.maya_scan.close()
