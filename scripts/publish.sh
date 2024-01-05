@@ -31,10 +31,10 @@ else
   echo "No package specified, available packages:"
   counter=1
   for i in "${PACKS[@]}"; do
-    echo " $counter) $0 publish `basename $i`"
+    echo " $counter) `basename $i` [$counter]"
     ((counter++))
   done
-  echo "Which package do you want to publish?"
+  echo "Which package do you want to publish (enter the number)?"
   # ask for the number
   read -r number
   # check if the number is valid
