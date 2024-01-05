@@ -266,8 +266,8 @@ class THORChainClient(CosmosGaiaClient):
         if SYNTH_DELIMITER in denom:
             # special case for synths
             return Asset.from_string(denom.upper())
-        else:
-            return super().parse_denom_to_asset(denom)
+        elif denom == DENOM_RUNE_NATIVE:
+            return AssetRUNE
 
     def get_denom(self, asset: Asset) -> str:
         if asset == AssetRUNE:
