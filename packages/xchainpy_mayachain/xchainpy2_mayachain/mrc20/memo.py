@@ -119,10 +119,16 @@ class MRC20Memo:
         return ':'.join(['STAKING', 'stake', ticker, amount])
 
     @classmethod
-    def unstake_all(cls, ticker) -> str:
+    def withdraw_stake(cls, ticker) -> str:
         # "STAKING:withdraw:GLD
         check_ticker(ticker)
         return ':'.join(['STAKING', 'withdraw', ticker])
+
+    @classmethod
+    def claim(cls, ticker) -> str:
+        # "STAKING:claim:GLD"
+        check_ticker(ticker)
+        return ':'.join(['STAKING', 'claim', ticker])
 
 
 class MNFTMemo:

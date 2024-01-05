@@ -195,6 +195,22 @@ class MNFTOrder(NamedTuple):
         return [cls.from_dict(d) for d in resp]
 
 
+class MNFTBalance(NamedTuple):
+    symbol: str
+    ids: List[int]
+    name: str
+    base_url: str
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            symbol=d['symbol'],
+            ids=d['ids'],
+            name=d['name'],
+            base_url=d['base_url'],
+        )
+
+
 class SendAction(NamedTuple):
     hash: str
     height: int
@@ -228,4 +244,38 @@ class SendActionResponse(NamedTuple):
         return cls(
             total=d['total'],
             actions=[SendAction.from_dict(action) for action in d['list']],
+        )
+
+
+class MRC20StakingInfo(NamedTuple):
+    ticker: str
+    pool: int
+    apr: int
+    stakers: int
+    staked: int
+    claimed: int
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            ticker=d['ticker'],
+            pool=int(d['pool']),
+            apr=d['apr'],
+            stakers=int(d['stakers']),
+            staked=int(d['staked']),
+            claimed=d['claimed'],
+        )
+
+
+class MRC20StakingBalance(NamedTuple):
+    added: int
+    claimed: int
+    claimable: float
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            added=int(d['added']),
+            claimed=int(d['claimed']),
+            claimable=float(d['claimable']),
         )

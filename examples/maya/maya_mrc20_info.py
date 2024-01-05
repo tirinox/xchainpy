@@ -22,10 +22,17 @@ async def main():
     print(f'First token: {mrc20_tokens[0]}')
 
     gld_price = await client.maya_scan.get_price(AssetGLD)
-    print(f'GLD price: {gld_price}')
+    print(f'GLD price: {gld_price}\n')
 
     order_book = await client.maya_scan.get_orderbook(AssetGLD)
-    print(f'Order book: {order_book}')
+    print(f'Order book: {order_book[:3]}, ...\n')
+
+    addr = 'maya1eengpj4yac7vwnnxr2jytyvpw2kusqrzqggsc4'
+    nft_balance = await client.maya_scan.get_nft_balance(addr)
+    print(f'NFT balance of {client.get_explorer_address_url(addr)} is {nft_balance}\n')
+
+    staking_balance = await client.maya_scan.get_staking_balance(addr, AssetGLD)
+    print(f'Staking balance is {staking_balance}\n')
 
     await client.close()
 
