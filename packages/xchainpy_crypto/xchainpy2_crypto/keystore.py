@@ -69,16 +69,17 @@ class KeyStore(NamedTuple):
 
     @classmethod
     def from_dict(cls, j):
+        crypto = j.get('crypto')
         return cls(
-            cipher=j['cipher'],
-            ciphertext=j['ciphertext'],
-            cipherparams_iv=j['cipherparams']['iv'],
-            kdf=j['kdf'],
-            kdfparams_prf=j['kdfparams']['prf'],
-            kdfparams_dklen=int(j['kdfparams']['dklen']),
-            kdfparams_salt=j['kdfparams']['salt'],
-            kdfparams_c=j['kdfparams']['c'],
-            mac=j['mac'],
+            cipher=crypto['cipher'],
+            ciphertext=crypto['ciphertext'],
+            cipherparams_iv=crypto['cipherparams']['iv'],
+            kdf=crypto['kdf'],
+            kdfparams_prf=crypto['kdfparams']['prf'],
+            kdfparams_dklen=int(crypto['kdfparams']['dklen']),
+            kdfparams_salt=crypto['kdfparams']['salt'],
+            kdfparams_c=crypto['kdfparams']['c'],
+            mac=crypto['mac'],
             id=j['id'],
             version=j['version'],
             meta=j['meta']
@@ -86,8 +87,9 @@ class KeyStore(NamedTuple):
 
     @classmethod
     def from_file(cls, path):
-        with open(path, 'r') as f:
-            return cls.from_dict(json.load(f))
+        with open(path) as f:
+            data = json.load(f)
+            return cls.from_dict(data)
 
     def save(self, path: str, indent=4):
         with open(path, 'w') as f:
