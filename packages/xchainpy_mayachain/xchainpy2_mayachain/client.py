@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.client import Coin
@@ -360,3 +360,26 @@ class MayaChainClient(CosmosGaiaClient):
 
     async def close(self):
         await self.maya_scan.close()
+
+    async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
+                       fee_rate: Optional[int] = None, check_balance: bool = True) -> str:
+        if is_mrc20(what.asset):
+            return await self.transfer_mrc20(what, recipient)
+        else:
+            return await super().transfer(what, recipient, memo, fee_rate, check_balance)
+
+    transfer.__doc__ = CosmosGaiaClient.transfer.__doc__
+
+    async def get_balance(self, address: str = '', include_mrc20=True) -> List[CryptoAmount]:
+        on_chain_balances = await super().get_balance(address)
+        if include_mrc20:
+            mrc20_balances = await self.maya_scan.get_balance(address)
+            mrc20_balances = [
+                CryptoAmount(Amount.from_base(b.balance, b.decimals), make_mrc20_asset(b.ticker))
+                for b in mrc20_balances
+            ]
+            on_chain_balances.extend(mrc20_balances)
+
+        return on_chain_balances
+
+    get_balance.__doc__ = CosmosGaiaClient.get_balance.__doc__
