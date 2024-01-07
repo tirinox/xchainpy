@@ -5,7 +5,7 @@ from aiohttp import ClientSession
 
 from xchainpy2_utils import NetworkType, Asset
 from .model import MRC20Token, MRC20Price, MNFTToken, MRC20Order, MNFTOrder, MNFTBalance, MRC20StakingInfo, \
-    MRC20StakingBalance
+    MRC20StakingBalance, MRC20Balance
 from .utils import build_url
 
 MAYA_SCAN_BASE_API = "https://www.MayaScan.org/api/"
@@ -62,7 +62,9 @@ class MayaScanClient:
         return MRC20Token.from_dict(token) if token else None
 
     async def get_balance(self, address: str):
-        return await self._request(self.url_balance(address))
+        results = await self._request(self.url_balance(address))
+        return [MRC20Balance.from_dict(r) for r in results]
+        return results
 
     async def get_orderbook(self, ticker: Union[Asset, str]):
         ticker = self._get_ticker(ticker)

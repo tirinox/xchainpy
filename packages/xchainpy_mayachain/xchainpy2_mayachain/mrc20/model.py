@@ -279,3 +279,33 @@ class MRC20StakingBalance(NamedTuple):
             claimed=int(d['claimed']),
             claimable=float(d['claimable']),
         )
+
+
+class MRC20Balance(NamedTuple):
+    ticker: str
+    balance: int
+    balance_for_sale: int
+    balance_staked: int
+    name: str
+    logo: str
+    logo_full_path: str
+    price_in_cacao: float
+    price_in_usd: float
+    decimals: int
+
+    @classmethod
+    def from_dict(cls, d):
+        for_sale = int(d.get('balance_for_sale', 0) or 0)
+        staked = int(d.get('balance_staked', 0) or 0)
+        return cls(
+            ticker=d['ticker'],
+            balance=int(d['balance']),
+            balance_for_sale=for_sale,
+            balance_staked=staked,
+            name=d['name'],
+            logo=d['logo'],
+            logo_full_path=d['logoFullPath'],
+            price_in_cacao=float(d['priceInCacao']),
+            price_in_usd=float(d['priceInUsd']),
+            decimals=int(d['decimals']),
+        )

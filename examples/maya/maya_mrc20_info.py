@@ -4,13 +4,6 @@ from xchainpy2_mayachain import MayaChainClient
 from xchainpy2_mayachain.mrc20.const import AssetGLD
 from xchainpy2_utils import NetworkType
 
-"""
-This example requires a real wallet with some amount of Cacao for gas (1 Cacao will be enough)
-Obviously, there must be also GLD to transfer
-
-Just don't forget to pass "PHRASE" environment variable that contains a mnemonic phrase of your wallet
-"""
-
 NETWORK = NetworkType.MAINNET
 
 
@@ -31,10 +24,14 @@ async def main():
     nft_balance = await client.maya_scan.get_nft_balance(addr)
     print(f'NFT balance of {client.get_explorer_address_url(addr)} is {nft_balance}\n')
 
+    mrc20_balance = await client.get_balance(addr)
+    print(f'MRC20 balance of {client.get_explorer_address_url(addr)} is {mrc20_balance}\n')
+
     staking_balance = await client.maya_scan.get_staking_balance(addr, AssetGLD)
     print(f'Staking balance is {staking_balance}\n')
 
     await client.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
