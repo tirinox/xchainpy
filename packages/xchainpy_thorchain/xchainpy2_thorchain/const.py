@@ -1,5 +1,7 @@
+from decimal import Decimal
+
 from xchainpy2_client import ExplorerProvider
-from xchainpy2_utils import Asset, Amount
+from xchainpy2_utils import Asset, Amount, CryptoAmount, AssetRUNE
 from xchainpy2_utils.consts import NetworkType, RUNE_DECIMAL
 from .models import NodeURL
 
@@ -104,3 +106,5 @@ AssetRuneERC20Testnet = Asset.from_string('ETH.RUNE-0xd601c6A3a36721320573885A8d
 DENOM_RUNE_NATIVE = 'rune'
 
 THOR_BLOCK_TIME_SEC = 6.0
+
+DEFAULT_RUNE_NETWORK_FEE = CryptoAmount(Amount.from_asset(Decimal("0.02"), RUNE_DECIMAL), AssetRUNE)
