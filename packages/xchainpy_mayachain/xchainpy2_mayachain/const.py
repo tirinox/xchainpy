@@ -1,5 +1,7 @@
+from decimal import Decimal
+
 from xchainpy2_client import ExplorerProvider
-from xchainpy2_utils import Asset, Amount
+from xchainpy2_utils import Asset, Amount, CryptoAmount, AssetCACAO
 from xchainpy2_utils.consts import NetworkType, CACAO_DECIMAL
 from .models import NodeURL
 
@@ -21,6 +23,8 @@ MAYA_DECIMAL = 4
 DENOM_MAYA = 'maya'
 
 AssetMAYA = Asset.from_string('MAYA.MAYA')
+
+DEFAULT_CACAO_NETWORK_FEE = CryptoAmount(Amount.from_asset(Decimal("0.5"), CACAO_DECIMAL), AssetCACAO)
 
 DEFAULT_CACAO_FEE = Amount.from_asset(0.5, CACAO_DECIMAL)
 

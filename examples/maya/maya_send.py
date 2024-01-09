@@ -1,8 +1,7 @@
 import asyncio
 import os
 
-from xchainpy2_mayachain import MayaChainClient, MAYA_BLOCK_TIME_SEC
-from xchainpy2_thorchain_query import DEFAULT_CACAO_NETWORK_FEE
+from xchainpy2_mayachain import MayaChainClient, MAYA_BLOCK_TIME_SEC, DEFAULT_CACAO_NETWORK_FEE
 from xchainpy2_utils import CryptoAmount, Amount, NetworkType, CACAO_DECIMAL, AssetCACAO
 
 """

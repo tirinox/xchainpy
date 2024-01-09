@@ -15,7 +15,13 @@ logger = logging.getLogger('MayaScanClient')
 
 
 class MayaScanException(Exception):
-    ...
+    def __init__(self, *args, code=200):
+        super().__init__(*args)
+        self.code = code
+
+    @property
+    def is_not_found(self):
+        return self.code == 404
 
 
 class MayaScanClient:
@@ -64,7 +70,6 @@ class MayaScanClient:
     async def get_balance(self, address: str):
         results = await self._request(self.url_balance(address))
         return [MRC20Balance.from_dict(r) for r in results]
-        return results
 
     async def get_orderbook(self, ticker: Union[Asset, str]):
         ticker = self._get_ticker(ticker)
@@ -137,7 +142,7 @@ class MayaScanClient:
                 raise MayaScanException(f'Error parsing response from {url}: {e}')
 
             if isinstance(r, dict) and r.get('error'):
-                raise MayaScanException(f'Error response from {url}: {r["error"]}')
+                raise MayaScanException(f'Error response from {url}: {r["error"]}', code=resp.status)
             return r
 
     @staticmethod

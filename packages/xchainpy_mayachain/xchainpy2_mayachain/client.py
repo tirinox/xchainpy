@@ -17,7 +17,7 @@ from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Amount, remove_0x_
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_CACAO_NATIVE, ROOT_DERIVATION_PATHS, \
     DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_CACAO_FEE, \
     make_client_urls_from_ip_address, DEFAULT_MAYA_EXPLORERS, AssetMAYA, DENOM_MAYA, MAYA_DECIMAL, CACAO_DUST
-from .mrc20.api import MayaScanClient
+from .mrc20.api import MayaScanClient, MayaScanException
 from .mrc20.const import is_mrc20, make_mrc20_asset
 from .mrc20.memo import MRC20Memo, MNFTMemo
 from .utils import build_deposit_tx_unsigned, get_maya_address_prefix, build_transfer_tx_draft
@@ -371,14 +371,22 @@ class MayaChainClient(CosmosGaiaClient):
     transfer.__doc__ = CosmosGaiaClient.transfer.__doc__
 
     async def get_balance(self, address: str = '', include_mrc20=True) -> List[CryptoAmount]:
+        if not address:
+            address = self.get_address()
+
         on_chain_balances = await super().get_balance(address)
         if include_mrc20:
-            mrc20_balances = await self.maya_scan.get_balance(address)
-            mrc20_balances = [
-                CryptoAmount(Amount.from_base(b.balance, b.decimals), make_mrc20_asset(b.ticker))
-                for b in mrc20_balances
-            ]
-            on_chain_balances.extend(mrc20_balances)
+            try:
+                mrc20_balances = await self.maya_scan.get_balance(address)
+                mrc20_balances = [
+                    CryptoAmount(Amount.from_base(b.balance, b.decimals), make_mrc20_asset(b.ticker))
+                    for b in mrc20_balances
+                ]
+                on_chain_balances.extend(mrc20_balances)
+            except MayaScanException as e:
+                # "not found" means zero balances, that is OK
+                if not e.is_not_found:
+                    raise
 
         return on_chain_balances
 
