@@ -244,7 +244,7 @@ class CryptoAmount(NamedTuple):
         return self.amount >= other.amount
 
     def __str__(self):
-        return f'{self.amount.format()} {self.asset}'
+        return f'{float(self.amount.format())} {self.asset}'
 
     def check(self, a: 'CryptoAmount'):
         if isinstance(a, CryptoAmount):

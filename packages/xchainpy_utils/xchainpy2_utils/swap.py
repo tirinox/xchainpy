@@ -1,7 +1,9 @@
 from decimal import Decimal
 from typing import Union
 
-from xchainpy2_thorchain_query.const import DEFAULT_RUNE_NETWORK_FEE, DEFAULT_CACAO_NETWORK_FEE, ETH_DECIMALS, AVAX_DECIMALS
+from xchainpy2_mayachain import DEFAULT_CACAO_NETWORK_FEE
+from xchainpy2_thorchain import DEFAULT_RUNE_NETWORK_FEE
+from xchainpy2_thorchain_query.const import ETH_DECIMALS, AVAX_DECIMALS
 from xchainpy2_thorchain_query.models import LiquidityPool, SwapOutput, InboundDetail
 from .amount import CryptoAmount, Amount
 from .asset import Asset, AssetRUNE, AssetCACAO, AssetETH, AssetBSC, AssetAVAX, AssetATOM, AssetBCH, AssetBNB, \
