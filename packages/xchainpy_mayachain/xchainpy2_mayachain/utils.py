@@ -8,9 +8,7 @@ from xchainpy2_cosmos.utils import convert_address_for_msg
 from xchainpy2_utils import NetworkType, CryptoAmount, Amount, Asset, CACAO_DECIMAL, AssetCACAO
 from .const import DEPOSIT_GAS_LIMIT_VALUE, DENOM_CACAO_NATIVE
 from .proto.cosmos.base.v1beta1.coin_pb2 import Coin
-from .proto.mayachain.v1.common.common_pb2 import Coin as THORCoin, Asset as THORAsset
-from .proto.mayachain.v1.x.mayachain.types.msg_deposit_pb2 import MsgDeposit
-from .proto.mayachain.v1.x.mayachain.types.msg_send_pb2 import MsgSend
+from .proto import THORCoin, THORAsset, MsgSend, MsgDeposit
 
 
 def get_maya_address_prefix(network: NetworkType) -> str:

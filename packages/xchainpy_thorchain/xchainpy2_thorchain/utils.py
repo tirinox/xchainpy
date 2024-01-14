@@ -8,10 +8,7 @@ from xchainpy2_cosmos.utils import convert_address_for_msg
 from xchainpy2_utils import NetworkType, CryptoAmount, Amount, RUNE_DECIMAL, Asset, AssetRUNE
 from .const import DEPOSIT_GAS_LIMIT_VALUE, DENOM_RUNE_NATIVE
 from .proto.cosmos.base.v1beta1.coin_pb2 import Coin
-from .proto.thorchain.v1.common.common_pb2 import Coin as THORCoin, Asset as THORAsset
-from .proto.thorchain.v1.x.thorchain.types.msg_deposit_pb2 import MsgDeposit
-from .proto.thorchain.v1.x.thorchain.types.msg_send_pb2 import MsgSend
-
+from .proto import THORCoin, THORAsset, MsgSend, MsgDeposit
 
 def get_thor_address_prefix(network: NetworkType) -> str:
     """
@@ -94,7 +91,6 @@ def build_transfer_tx_draft(what: CryptoAmount, denom: str, sender: str, recipie
         )
     )
     return tx
-
 
 
 def get_asset_from_denom(denom: str) -> Asset:

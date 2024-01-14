@@ -2,7 +2,7 @@ import argparse
 import asyncio
 
 from examples.common import get_phrase
-from xchainpy2_thorchain_amm import THORChainAMM, Wallet, WalletSettings
+from xchainpy2_thorchain_amm import THORChainAMM, Wallet
 from xchainpy2_thorchain_query import THORChainQuery, THORChainCache, MidgardAPIClient
 from xchainpy2_thorchain_query.thornode import THORNodeAPIClient
 
@@ -41,7 +41,7 @@ async def main():
     query = THORChainQuery(cache)
 
     phrase = get_phrase()
-    wallet = Wallet(WalletSettings.default(phrase))
+    wallet = Wallet(phrase)
 
     amm = THORChainAMM(query)
 
