@@ -7,8 +7,9 @@ from cosmpy.crypto.keypairs import PublicKey
 from xchainpy2_cosmos.utils import convert_address_for_msg
 from xchainpy2_utils import NetworkType, CryptoAmount, Amount, RUNE_DECIMAL, Asset, AssetRUNE
 from .const import DEPOSIT_GAS_LIMIT_VALUE, DENOM_RUNE_NATIVE
-from .proto.cosmos.base.v1beta1.coin_pb2 import Coin
 from .proto import THORCoin, THORAsset, MsgSend, MsgDeposit
+from .proto.cosmos.base.v1beta1.coin_pb2 import Coin
+
 
 def get_thor_address_prefix(network: NetworkType) -> str:
     """
