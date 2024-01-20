@@ -12,8 +12,11 @@ def check_ticker(ticker):
 MRC20_DECIMALS = 10
 
 
-def get_amount(amount):
-    return Amount.automatic(amount, MRC20_DECIMALS)
+def get_amount(amount, zero_allowed=False):
+    amount = Amount.automatic(amount, MRC20_DECIMALS)
+    if not zero_allowed and amount.internal_amount <= 0:
+        raise ValueError('Must be positive')
+    return str(amount.internal_amount)
 
 
 class MRC20Memo:
@@ -23,13 +26,13 @@ class MRC20Memo:
         check_ticker(ticker)
 
         supply = get_amount(supply)
-        if supply.internal_amount <= 0:
-            raise ValueError('Supply must be positive')
 
         components = ['MRC-20', 'deploy', ticker, supply]
         if mint_limit is not None:
+            mint_limit = get_amount(mint_price)
             components.append(mint_limit)
         if mint_price is not None:
+            mint_price = get_amount(mint_price)
             components.append(mint_price)
         return ':'.join(components)
 
@@ -45,8 +48,6 @@ class MRC20Memo:
         # "MRC-20:mint:[ticker]:[amount]:[recipient]"
         check_ticker(ticker)
         amount = get_amount(amount)
-        if amount.internal_amount <= 0:
-            raise ValueError('Amount must be positive')
 
         components = ['MRC-20', 'mint', ticker, amount]
         if recipient is not None:
@@ -58,8 +59,6 @@ class MRC20Memo:
         # "MRC-20:transfer:[ticker]:[amount]
         check_ticker(ticker)
         amount = get_amount(amount)
-        if amount.internal_amount <= 0:
-            raise ValueError('Amount must be positive')
 
         return ':'.join(['MRC-20', 'transfer', ticker, amount])
 
@@ -68,12 +67,7 @@ class MRC20Memo:
         # "MRC-20:sell:[ticker]:[amount]:[price]"
         check_ticker(ticker)
         amount = get_amount(amount)
-        if amount.internal_amount <= 0:
-            raise ValueError('Amount must be positive')
-
         price = get_amount(price)
-        if price.internal_amount <= 0:
-            raise ValueError('Price must be positive')
 
         return ':'.join(['MRC-20', 'sell', ticker, amount, price])
 
@@ -90,8 +84,6 @@ class MRC20Memo:
         # "MRC-20:buy:[ticker]:[amount]:[hash]"
         check_ticker(ticker)
         amount = get_amount(amount)
-        if amount.internal_amount <= 0:
-            raise ValueError('Amount must be positive')
 
         if not tx_hash:
             raise ValueError('tx_hash must not be empty')
@@ -103,8 +95,6 @@ class MRC20Memo:
         # "MRC-20:burn:[ticker]:[amount]"
         check_ticker(ticker)
         amount = get_amount(amount)
-        if amount.internal_amount <= 0:
-            raise ValueError('Amount must be positive')
 
         return ':'.join(['MRC-20', 'burn', ticker, amount])
 
@@ -113,9 +103,6 @@ class MRC20Memo:
         # "STAKING:stake:GLD:12340000000000"
         check_ticker(ticker)
         amount = get_amount(amount)
-        if amount.internal_amount <= 0:
-            raise ValueError('Amount must be positive')
-
         return ':'.join(['STAKING', 'stake', ticker, amount])
 
     @classmethod
