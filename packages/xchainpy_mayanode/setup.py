@@ -13,7 +13,7 @@
 from setuptools import setup, find_packages  # noqa: H301
 
 NAME = "xchainpy2-mayanode"
-VERSION = "1.107.3"
+VERSION = "1.108.1"
 # To install the library, run the following
 #
 # python setup.py install
