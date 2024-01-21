@@ -89,8 +89,10 @@ class THORChainCache:
         self._last_block_cache = LastBlockCache([], 0)
 
     async def close(self):
-        await self._midgard_client.close()
-        await self._thornode_client.close()
+        if self._midgard_client:
+            await self._midgard_client.close()
+        if self._thornode_client:
+            await self._thornode_client.close()
 
     def is_native_asset(self, a: Asset):
         return a == self.native_asset

@@ -28,7 +28,6 @@ class MidgardAPIClient(HeadersPatch, mdg.ApiClient):
 
         # Patch REST client with additional retry logic and backup hosts
         self.rest_client = None
-        self.configuration = configuration
 
     async def close(self):
         if self.rest_client:
@@ -39,5 +38,9 @@ class MidgardAPIClient(HeadersPatch, mdg.ApiClient):
         if not self.rest_client:
             # it must be initialized here, because we need to be inside asyncio loop
             self.rest_client = RESTClientRetry(self.configuration)
+
+        if _request_timeout is None:
+            _request_timeout = self.configuration.timeout
+
         return super().request(method, url, query_params, headers, post_params, body, _preload_content,
                                _request_timeout)

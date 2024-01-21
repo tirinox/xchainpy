@@ -50,9 +50,19 @@ async def run_thorchain_cache():
                         expire_network=10)
     await tc.refresh_pool_cache()
 
+    pools = await tc.get_pools()
+    print(pools)
+
+    print('-' * 80)
+
+    inbound = await tc.get_inbound_details()
+    print(inbound)
+
+    await tc.close()
+
 
 async def main():
-    await run_midgard_pools()
+    # await run_midgard_pools()
     await run_thorchain_cache()
 
 

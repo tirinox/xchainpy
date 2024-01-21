@@ -25,6 +25,29 @@ class ConfigurationEx(Configuration):
         self.raise_for_status = False
         self.backup_hosts = []
 
+    @classmethod
+    def new(cls, host=None, api_key=None, api_key_prefix=None, username=None, password=None,
+            ssl_ca_cert=None, cert_file=None, key_file=None, timeout=DEFAULT_TIMEOUT,
+            retry_config=ExponentialRetry(attempts=DEFAULT_RETRY_ATTEMPTS), raise_for_status=False,
+            backup_hosts=None, verify_ssl=True):
+        if backup_hosts is None:
+            backup_hosts = []
+        self = cls()
+        self.host = host
+        self.api_key = api_key
+        self.api_key_prefix = api_key_prefix
+        self.username = username
+        self.password = password
+        self.ssl_ca_cert = ssl_ca_cert
+        self.cert_file = cert_file
+        self.key_file = key_file
+        self.timeout = timeout
+        self.retry_config = retry_config
+        self.raise_for_status = raise_for_status
+        self.backup_hosts = backup_hosts
+        self.verify_ssl = verify_ssl
+        return self
+
 
 class RESTClientRetry(RESTClientObject):
     # noinspection PyMissingConstructor
@@ -118,4 +141,5 @@ class HeadersPatch:
     def patch_client(self, user_agent=DEFAULT_REST_USER_AGENT, identifier9r=XCHAINPY_IDENTIFIER):
         headers = self.default_headers
         headers['User-Agent'] = user_agent
-        headers[NINE_REALMS_CLIENT_HEADER] = identifier9r
+        if identifier9r:
+            headers[NINE_REALMS_CLIENT_HEADER] = identifier9r
