@@ -3,6 +3,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List, Union
 
+from typing_extensions import deprecated
+
 from xchainpy2_client.explorer import ExplorerProvider
 from xchainpy2_client.models import XcTx, Fees, TxPage, \
     FeeBounds, Fee, RootDerivationPaths, AssetInfo, FeeOption
@@ -113,17 +115,41 @@ class XChainClient(abc.ABC):
         else:
             return None
 
-    def gas_amount(self, amount: Union[float, str, int, Decimal]) -> CryptoAmount:
+    def gas_amount(self, amount: Union[float, str, int, Decimal, Amount]) -> CryptoAmount:
         """
         Easy way to construct CryptoAmount of gas asset
+        Type int means base amount (like satoshi, wei, 1e-8 rune, etc)
+        Types float and Decimal means asset amount (like btc, eth, rune, etc)
         :param amount: Union[float, str, int, Decimal] amount of asset (not base!)
         :return: CryptoAmount
         """
         return CryptoAmount(Amount.automatic(amount, self._decimal), self._gas_asset)
 
+    def gas_base_amount(self, amount: int) -> CryptoAmount:
+        """
+        Easy way to construct CryptoAmount of gas asset from base units
+        :param amount: base amount of asset (like satoshi, wei, 1e-8 rune, etc); must be int type
+        :return:
+        """
+        assert isinstance(amount, int)
+        return CryptoAmount(Amount.from_base(amount, self._decimal), self._gas_asset)
+
+    def gas_asset_amount(self, amount: Union[float, str, Decimal]) -> CryptoAmount:
+        """
+        Easy way to construct CryptoAmount of gas asset from asset units
+        :param amount: asset amount (like btc, eth, rune, etc); must be float or Decimal type or str
+        :return:
+        """
+        assert isinstance(amount, (float, str, Decimal))
+        return CryptoAmount(Amount.from_asset(amount, self._decimal), self._gas_asset)
+
+    @property
+    def zero_gas_amount(self) -> CryptoAmount:
+        return self.gas_base_amount(0)
+
     async def max_gas_amount(self, balances: List[CryptoAmount] = None) -> CryptoAmount:
         """
-        Calculate maximum amount of Gas asset that you can send
+        Calculate maximum amount of Gas asset that you can send to empty your wallet
         :param balances: (Optional) if you already have your balance, otherwise they will be loaded
         :return: CryptoAmount
         """
@@ -132,14 +158,14 @@ class XChainClient(abc.ABC):
 
         gas_balance = next((b for b in balances if b.asset == self._gas_asset), None)
         if not gas_balance:
-            return self.gas_amount(0)  # no gas at all
+            return self.zero_gas_amount  # no gas at all
 
         fees = await self.get_fees()
         fee = fees.fees[FeeOption.FAST]
         max_value = gas_balance.amount.as_asset - fee.as_asset
         if max_value.internal_amount < 0:
             # less than fee
-            return self.gas_amount(0)
+            return self.zero_gas_amount
         else:
             return CryptoAmount(max_value, self._gas_asset)
 
