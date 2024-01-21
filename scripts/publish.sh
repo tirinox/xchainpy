@@ -14,8 +14,15 @@ function publish_test() {
   python -m twine upload --repository testpypi "$1"/dist/*
 }
 
+function clean_dist() {
+  rm $1/dist/*.tar.gz
+  rm $1/dist/*.whl
+}
+
 function publish() {
+  clean_dist $1
   build $1
+
   echo "---------------"
   echo "Publishing $1"
   python -m twine upload --repository pypi "$1"/dist/*
@@ -31,7 +38,7 @@ else
   echo "No package specified, available packages:"
   counter=1
   for i in "${PACKS[@]}"; do
-    echo " $counter) `basename $i` [$counter]"
+    echo " $counter) $(basename $i) [$counter]"
     ((counter++))
   done
   echo "Which package do you want to publish (enter the number)?"
