@@ -117,9 +117,9 @@ class THORChainCache:
             raise LookupError(f'Pool for {asset} not found')
         return pool
 
-    async def get_pools(self) -> Dict[str, LiquidityPool]:
+    async def get_pools(self, forced=False) -> Dict[str, LiquidityPool]:
         time_elapsed = time.monotonic() - self._pool_cache.last_refreshed
-        if time_elapsed > self.expire_pool:
+        if forced or time_elapsed > self.expire_pool:
             await self.refresh_pool_cache()
         if self._pool_cache.pools:
             return self._pool_cache.pools
@@ -134,14 +134,19 @@ class THORChainCache:
         if not thornode_pools or not midgard_pools:
             raise LookupError('Could not refresh pools')
 
+        thornode_pools_map = {str(p.asset): p for p in thornode_pools}
+        midgard_pools_map = {str(p.asset): p for p in midgard_pools}
+        all_assets = set(thornode_pools_map.keys()).union(set(midgard_pools_map.keys()))
+
         pool_map = {}
         midgard_pools: List[PoolDetail]
-        for mdg_pool in midgard_pools:
-            thornode_pool = next((p for p in thornode_pools if p.asset == mdg_pool.asset), None)
-            if thornode_pool:
-                raise LookupError(f'Pool {mdg_pool.asset} not found in both Midgard and THORNode')
-            lp = LiquidityPool.from_pool_details(mdg_pool, thornode_pool)
-            pool_map[str(lp.asset)] = lp
+
+        for asset in all_assets:
+            thornode_pool = thornode_pools_map.get(asset)
+            midgard_pool = midgard_pools_map.get(asset)
+            pool = LiquidityPool.from_pool_details(midgard_pool, thornode_pool)
+            pool_map[str(pool.asset)] = pool
+
         self._pool_cache = PoolCache(time.monotonic(), pool_map)
 
     async def refresh_inbound_cache(self):
@@ -169,14 +174,14 @@ class THORChainCache:
             ):
                 raise LookupError('Missing required inbound info')
 
-            halted = (
+            halted = bool(
                     inbound.halted or
                     # is it necessary?
                     mimir.get(Mimir.HALT_CHAIN_GLOBAL, False) or
                     mimir.get(Mimir.halt_trading(inbound.chain), False)
             )
 
-            halted_trading = (
+            halted_trading = bool(
                     inbound.global_trading_paused or
                     inbound.chain_trading_paused or
                     # is it necessary?
@@ -184,7 +189,7 @@ class THORChainCache:
                     mimir.get(Mimir.halt_trading(inbound.chain), False)
             )
 
-            halted_lp = (
+            halted_lp = bool(
                     inbound.chain_lp_actions_paused or
                     # is it necessary?
                     mimir.get(Mimir.PAUSE_LP, False) or
@@ -202,6 +207,7 @@ class THORChainCache:
                 halted_trading=halted_trading,
                 halted_lp=halted_lp,
                 router=inbound.router,
+                dust_threshold=int(inbound.dust_threshold),
             )
 
         inbound_map[Chain.THORChain.value] = InboundDetail(
@@ -215,6 +221,7 @@ class THORChainCache:
             halted_chain=False,
             halted_trading=not (mimir.get(Mimir.HALT_TRADING, False)),
             halted_lp=False,
+            dust_threshold=0,
         )
 
         self._inbound_cache = InboundDetailCache(time.monotonic(), inbound_map)
@@ -235,13 +242,14 @@ class THORChainCache:
 
         self._network_cache = NetworkValuesCache(time.monotonic(), network_values)
 
-    async def get_network_values(self) -> Dict[str, int]:
+    async def get_network_values(self, forced=False) -> Dict[str, int]:
         """
         Returns the NetworkValues Cache (Mimir and Constants combined)
+        :param forced: force refresh
         :return:
         """
         sec_since_last_refresh = time.monotonic() - self._network_cache.last_refreshed
-        if sec_since_last_refresh > self.expire_network:
+        if forced or sec_since_last_refresh > self.expire_network:
             await self.refresh_network_values()
 
         if not self._network_cache.network_values:
@@ -326,13 +334,14 @@ class THORChainCache:
             raise Exception('router address is not defined')
         return inbound[chain.value].router
 
-    async def get_inbound_details(self) -> InboundDetails:
+    async def get_inbound_details(self, forced=False) -> InboundDetails:
         """
         Returns the inbound details for all chains
+        :param forced: force refresh
         :return: inbound details
         """
         time_elapsed = time.monotonic() - self._inbound_cache.last_refreshed
-        if time_elapsed > self.expire_inbound:
+        if forced or time_elapsed > self.expire_inbound:
             await self.refresh_inbound_cache()
 
         if self._inbound_cache:
