@@ -34,7 +34,10 @@ def parse_args():
 
 
 def drill(obj, path):
-    components = path.split('.')
+    if isinstance(path, str):
+        components = path.split('.')
+    else:
+        components = path
     for c in components:
         obj = obj.get(c, {})
     return obj
@@ -117,6 +120,15 @@ def fix_spec(spec):
     return spec
 
 
+def fix_maya_liquidity_providers(spec):
+    place = drill(spec, ['paths', '/mayachain/pool/{asset}/liquidity_provider/{address}',
+                         'get', 'responses', 200, 'content', 'application/json'])
+
+    place['schema'] = {'$ref': '#/components/schemas/LiquidityProviderSummary'}
+
+    return spec
+
+
 async def fetch(url):
     async with ClientSession() as session:
         user_agent = {
@@ -144,6 +156,7 @@ async def main():
 
     print('Fixing spec...')
     spec = fix_spec(spec)
+    spec = fix_maya_liquidity_providers(spec)
     spec = add_readme(spec)
 
     with open(args.output, 'w') as f:
