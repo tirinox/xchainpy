@@ -1,13 +1,20 @@
-.PHONY: dev_tools cli_codegen test tc_env
+.PHONY: dev_tools test tc_env build publish_test publish gen_thornode gen_mayanode gen_midgard gen_binance_proto
 
 dev_tools:
 	pip install -U pytest pytest-asyncio requests-mock aioresponses
 
-cli_codegen:
-	cd scripts && \
-		./gen_thornode_client.sh && \
-		./gen_midgard_client.sh && \
-		./gen_mayanode_client.sh
+gen_thornode:
+	cd scripts && ./gen_thornode_client.sh
+
+gen_mayanode:
+	cd scripts && ./gen_mayanode_client.sh
+
+gen_midgard:
+	cd scripts && ./gen_midgard_client.sh
+
+
+gen_binance_proto:
+	cd scripts && ./gen_proto_binance_chain.sh
 
 
 test:
