@@ -1,4 +1,4 @@
-# BucketsResponse
+# SaversResponse
 
 ## Properties
 Name | Type | Description | Notes

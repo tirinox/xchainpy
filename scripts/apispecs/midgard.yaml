@@ -147,7 +147,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/StatsData'
-      description: object containing global THORChain data
+      description: object containing global MAYAChain data
     SwapHistoryResponse:
       content:
         application/json:
@@ -642,6 +642,12 @@ components:
           description: Int64(e8), Share of earnings sent to nodes during the time
             interval
           type: string
+        cacaoPriceUSD:
+          description: 'Float, the price of Cacao based on the deepest USD pool at
+            the end of the interval.
+
+            '
+          type: string
         earnings:
           description: 'Int64(e8), System income generated during the time interval.
             It is the sum of
@@ -669,7 +675,7 @@ components:
             $ref: '#/components/schemas/EarningsHistoryItemPool'
           type: array
         runePriceUSD:
-          description: 'Float, the price of Rune based on the deepest USD pool at
+          description: 'Float, the price of Cacao based on the deepest USD pool at
             the end of the interval.
 
             '
@@ -686,6 +692,7 @@ components:
       - bondingEarnings
       - liquidityEarnings
       - avgNodeCount
+      - cacaoPriceUSD
       - runePriceUSD
       - pools
       type: object
@@ -834,6 +841,12 @@ components:
 
             '
           type: string
+        cacaoPriceUSD:
+          description: 'Float, the price of Cacao based on the deepest USD pool at
+            the end of the interval.
+
+            '
+          type: string
         endTime:
           description: Int64, The end time of bucket in unix timestamp
           type: string
@@ -897,6 +910,7 @@ components:
       - withdrawVolume
       - withdrawCount
       - net
+      - cacaoPriceUSD
       - runePriceUSD
       type: object
     MemberDetails:
@@ -932,6 +946,11 @@ components:
         assetWithdrawn:
           description: Int64(e8), total asset withdrawn from the pool by member
           type: string
+        cacaoDeposit:
+          description: "Int64(e8), total Cacao that is currently deposited to the\
+            \ pool by member.\nThis field is same as the `rune_deposit_value` field\
+            \ in thornode. Mainly can be used \nfor tracking, mainly Growth Percentage\n"
+          type: string
         dateFirstAdded:
           description: Int64, Unix timestamp for the first time member deposited into
             the pool
@@ -952,11 +971,6 @@ components:
         runeAddress:
           description: Rune address used by the member
           type: string
-        runeDeposit:
-          description: "Int64(e8), total Rune that is currently deposited to the pool\
-            \ by member.\nThis field is same as the `rune_deposit_value` field in\
-            \ thornode. Mainly can be used \nfor tracking, mainly Growth Percentage\n"
-          type: string
         runePending:
           description: 'Int64(e8), Rune sent but not added yet, it will be added when
             the asset pair arrives
@@ -971,7 +985,7 @@ components:
       - runeAddress
       - assetAddress
       - liquidityUnits
-      - runeDeposit
+      - cacaoDeposit
       - assetDeposit
       - runeAdded
       - assetAdded
@@ -983,7 +997,7 @@ components:
       - dateLastAdded
       type: object
     Members:
-      items: &id003
+      items: &id004
         description: Member address
         example: tbnb1fj2lqj8dvr5pumfchc7ntlfqd2v6zdxqwjewf5
         type: string
@@ -1123,7 +1137,7 @@ components:
       - ed25519
       type: object
     Nodes:
-      items: &id004
+      items: &id005
         $ref: '#/components/schemas/Node'
       type: array
     PoolDetail:
@@ -1237,7 +1251,7 @@ components:
       - totalDebtTor
       type: object
     PoolDetails:
-      items: &id005
+      items: &id006
         $ref: '#/components/schemas/PoolDetail'
       type: array
     PoolStatsDetail:
@@ -1438,7 +1452,7 @@ components:
       - affiliateAddress
       type: object
     ReverseTHORNames:
-      items: &id006
+      items: &id003
         description: THORName name
         example: myname
         type: string
@@ -1603,6 +1617,9 @@ components:
 
             '
           type: string
+        cacaoPriceUSD:
+          description: Float, the price of Cacao based on the deepest USD pool.
+          type: string
         dailyActiveUsers:
           description: Deprecated, it's always 0.
           type: string
@@ -1665,6 +1682,7 @@ components:
       required:
       - runeDepth
       - switchedRune
+      - cacaoPriceUSD
       - runePriceUSD
       - swapVolume
       - swapCount24h
@@ -1756,6 +1774,12 @@ components:
             of toAssetAverageSlip, toRuneAverageSlip, synthMintAverageSlip, synthRedeemAverageSlip.
 
             Big swaps have the same weight as small swaps.
+
+            '
+          type: string
+        cacaoPriceUSD:
+          description: 'Float, the price of Cacao based on the deepest USD pool at
+            the end of the interval.
 
             '
           type: string
@@ -1894,6 +1918,7 @@ components:
       - synthMintAverageSlip
       - synthRedeemAverageSlip
       - averageSlip
+      - cacaoPriceUSD
       - runePriceUSD
       type: object
     SwapMetadata:
@@ -1983,6 +2008,12 @@ components:
       type: array
     TVLHistoryItem:
       properties:
+        cacaoPriceUSD:
+          description: 'Float, the price of Cacao based on the deepest USD pool at
+            the end of the interval.
+
+            '
+          type: string
         endTime:
           description: Int64, The end time of bucket in unix timestamp
           type: string
@@ -2031,6 +2062,7 @@ components:
       - startTime
       - endTime
       - totalValuePooled
+      - cacaoPriceUSD
       - runePriceUSD
       - poolsDepth
       type: object
@@ -2108,10 +2140,10 @@ info:
     \ the Bifr\xF6st and prepares information about the network to be readily available\
     \ for public users. The API parses transaction event data from THORChain and stores\
     \ them in a time-series database to make time-dependent queries easy. Midgard\
-    \ does not hold critical information. To interact with THORChain protocol, users\
-    \ should query THORNode directly."
+    \ does not hold critical information. To interact with MAYAChain protocol, users\
+    \ should query MAYANode directly."
   title: Midgard Public API
-  version: 2.18.2
+  version: 2.10.0
 openapi: 3.0.0
 paths:
   /v2/actions:
@@ -2821,6 +2853,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/KnownPools'
       summary: Known Pools List
+  /v2/mayaname/lookup/{name}:
+    get:
+      description: Returns an array of chains and their addresses associated with
+        the given THORName
+      operationId: GetTHORNameDetail
+      parameters:
+      - description: a THORName
+        example: thorchain
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/THORNameDetails'
+      summary: THORName Details
+  /v2/mayaname/owner/{address}:
+    get:
+      description: 'Returns an array of THORNames owned by the address. The address
+        is not necessarily an
+
+        associated address for those mayanames.
+
+        '
+      operationId: GetTHORNamesOwnerByAddress
+      parameters:
+      - description: Address which owns a THORName.
+        example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id003
+                type: array
+      summary: THORName owner
+  /v2/mayaname/rlookup/{address}:
+    get:
+      description: Returns an array of THORNames associated with the given address
+      operationId: GetTHORNamesByAddress
+      parameters:
+      - description: Address to match THORNames against.
+        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id003
+                type: array
+      summary: Gives a list of THORNames by reverse lookup
   /v2/member/{address}:
     get:
       description: 'Returns an array of statistics for all the liquidity providers
@@ -2882,7 +2979,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id003
+                items: *id004
                 type: array
       summary: Members List
   /v2/network:
@@ -2905,7 +3002,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id004
+                items: *id005
                 type: array
       summary: Nodes List
   /v2/pool/{asset}:
@@ -3034,7 +3131,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id005
+                items: *id006
                 type: array
       summary: Pools List
   /v2/saver/{address}:
@@ -3087,69 +3184,4 @@ paths:
       summary: Swagger File
       tags:
       - Specification
-  /v2/thorname/lookup/{name}:
-    get:
-      description: Returns an array of chains and their addresses associated with
-        the given THORName
-      operationId: GetTHORNameDetail
-      parameters:
-      - description: a THORName
-        example: thorchain
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/THORNameDetails'
-      summary: THORName Details
-  /v2/thorname/owner/{address}:
-    get:
-      description: 'Returns an array of THORNames owned by the address. The address
-        is not necessarily an
-
-        associated address for those thornames.
-
-        '
-      operationId: GetTHORNamesOwnerByAddress
-      parameters:
-      - description: Address which owns a THORName.
-        example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
-        in: path
-        name: address
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items: *id006
-                type: array
-      summary: THORName owner
-  /v2/thorname/rlookup/{address}:
-    get:
-      description: Returns an array of THORNames associated with the given address
-      operationId: GetTHORNamesByAddress
-      parameters:
-      - description: Address to match THORNames against.
-        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m
-        in: path
-        name: address
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items: *id006
-                type: array
-      summary: Gives a list of THORNames by reverse lookup
 x-readme-file: README.md

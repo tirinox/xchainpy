@@ -1,18 +1,18 @@
-# xchainpy2_mayanode.BucketsApi
+# xchainpy2_mayanode.SaversApi
 
 All URIs are relative to */*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**bucket**](BucketsApi.md#bucket) | **GET** /mayachain/bucket/{asset} | 
-[**buckets**](BucketsApi.md#buckets) | **GET** /mayachain/buckets | 
+[**saver**](SaversApi.md#saver) | **GET** /mayachain/pool/{asset}/saver/{address} | 
+[**savers**](SaversApi.md#savers) | **GET** /mayachain/pool/{asset}/savers | 
 
-# **bucket**
-> Bucket bucket(asset, height=height)
+# **saver**
+> Saver saver(asset, address, height=height)
 
 
 
-Returns the bucket information for the provided asset.
+Returns the saver position given then savers pool and address.
 
 ### Example
 ```python
@@ -23,15 +23,16 @@ from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = xchainpy2_mayanode.BucketsApi()
+api_instance = xchainpy2_mayanode.SaversApi()
 asset = 'asset_example' # str | 
+address = 'address_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
-    api_response = api_instance.bucket(asset, height=height)
+    api_response = api_instance.saver(asset, address, height=height)
     pprint(api_response)
 except ApiException as e:
-    print("Exception when calling BucketsApi->bucket: %s\n" % e)
+    print("Exception when calling SaversApi->saver: %s\n" % e)
 ```
 
 ### Parameters
@@ -39,11 +40,12 @@ except ApiException as e:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **asset** | **str**|  | 
+ **address** | **str**|  | 
  **height** | **int**| optional block height, defaults to current tip | [optional] 
 
 ### Return type
 
-[**Bucket**](Bucket.md)
+[**Saver**](Saver.md)
 
 ### Authorization
 
@@ -56,12 +58,12 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **buckets**
-> list[Bucket] buckets(height=height)
+# **savers**
+> list[Saver] savers(asset, height=height)
 
 
 
-Returns the bucket information for all assets.
+Returns all savers for the savers pool.
 
 ### Example
 ```python
@@ -72,25 +74,27 @@ from xchainpy2_mayanode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = xchainpy2_mayanode.BucketsApi()
+api_instance = xchainpy2_mayanode.SaversApi()
+asset = 'asset_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
-    api_response = api_instance.buckets(height=height)
+    api_response = api_instance.savers(asset, height=height)
     pprint(api_response)
 except ApiException as e:
-    print("Exception when calling BucketsApi->buckets: %s\n" % e)
+    print("Exception when calling SaversApi->savers: %s\n" % e)
 ```
 
 ### Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **asset** | **str**|  | 
  **height** | **int**| optional block height, defaults to current tip | [optional] 
 
 ### Return type
 
-[**list[Bucket]**](Bucket.md)
+[**list[Saver]**](Saver.md)
 
 ### Authorization
 

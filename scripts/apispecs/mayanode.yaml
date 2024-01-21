@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Mayanode API
-  version: 1.107.3
+  version: 1.108.1
   contact:
     email: devs@mayachain.org
   description: Mayanode REST API.
@@ -54,41 +54,8 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id005
+                items: &id004
                   $ref: '#/components/schemas/Pool'
-  /mayachain/bucket/{asset}:
-    parameters:
-    - $ref: '#/components/parameters/queryHeight'
-    - $ref: '#/components/parameters/asset'
-    get:
-      description: Returns the bucket information for the provided asset.
-      operationId: bucket
-      tags:
-      - Buckets
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Bucket'
-  /mayachain/buckets:
-    parameters:
-    - $ref: '#/components/parameters/queryHeight'
-    get:
-      description: Returns the bucket information for all assets.
-      operationId: buckets
-      tags:
-      - Buckets
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items: &id006
-                  $ref: '#/components/schemas/Bucket'
   /mayachain/pool/{asset}/liquidity_provider/{address}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -105,9 +72,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items: &id001
-                  $ref: '#/components/schemas/LiquidityProvider'
+                $ref: '#/components/schemas/LiquidityProviderSummary'
   /mayachain/pool/{asset}/liquidity_providers:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -123,8 +88,42 @@ paths:
           content:
             application/json:
               schema:
+                $ref: '#/components/schemas/LiquidityProvider'
+  /mayachain/pool/{asset}/saver/{address}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/asset'
+    - $ref: '#/components/parameters/address'
+    get:
+      description: Returns the saver position given then savers pool and address.
+      operationId: saver
+      tags:
+      - Savers
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Saver'
+  /mayachain/pool/{asset}/savers:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/asset'
+    get:
+      description: Returns all savers for the savers pool.
+      operationId: savers
+      tags:
+      - Savers
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
                 type: array
-                items: *id001
+                items: &id005
+                  $ref: '#/components/schemas/Saver'
   /mayachain/tx/{hash}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -189,7 +188,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id007
+                items: &id006
                   $ref: '#/components/schemas/Node'
   /mayachain/vaults/asgard:
     parameters:
@@ -206,7 +205,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id002
+                items: &id001
                   $ref: '#/components/schemas/Vault'
   /mayachain/vaults/yggdrasil:
     parameters:
@@ -223,7 +222,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: *id002
+                items: *id001
   /mayachain/vaults/{pubkey}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -301,7 +300,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id008
+                items: &id007
                   type: object
                   title: InboundAddress
                   required:
@@ -355,6 +354,12 @@ paths:
                       example: '428000'
                       description: The total outbound fee charged to the user for
                         outbound txs in the gas asset of the chain.
+                    dust_threshold:
+                      type: string
+                      example: '10000'
+                      description: Defines the minimum transaction size for the chain
+                        in base units (sats, wei, uatom). Transctions with asset amounts
+                        lower than the dust_thresold are ignored.
   /mayachain/lastblock:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -370,7 +375,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id003
+                items: &id002
                   $ref: '#/components/schemas/LastBlock'
   /mayachain/lastblock/{chain}:
     parameters:
@@ -388,7 +393,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: *id003
+                items: *id002
   /mayachain/version:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -482,7 +487,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id010
+                items: &id009
                   $ref: '#/components/schemas/TxOutItem'
   /mayachain/queue/outbound:
     parameters:
@@ -499,7 +504,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id009
+                items: &id008
                   $ref: '#/components/schemas/TxOutItem'
   /mayachain/keysign/{height}:
     parameters:
@@ -511,7 +516,7 @@ paths:
       operationId: keysign
       tags:
       - TSS
-      responses: &id004
+      responses: &id003
         200:
           description: OK
           content:
@@ -529,7 +534,7 @@ paths:
       operationId: keysignPubkey
       tags:
       - TSS
-      responses: *id004
+      responses: *id003
   /mayachain/metrics:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -561,7 +566,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id011
+                items: &id010
                   type: object
                   title: KeygenMetric
                   required:
@@ -600,7 +605,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id012
+                items: &id011
                   type: object
                   title: Mayaname
                   properties:
@@ -729,12 +734,6 @@ paths:
       schema:
         type: string
         example: '0x1c7b17362c84287bd1184447e6dfeaf920c31bbe'
-    - name: from_address
-      in: query
-      description: the from address, required if the from asset is a synth
-      schema:
-        type: string
-        example: thor1zupk5lmc84r2dh738a9g3zscavannjy3nzplwt
     - name: tolerance_bps
       in: query
       description: the maximum basis points from the current feeless swap price to
@@ -898,6 +897,9 @@ components:
       - synth_supply
       - pending_inbound_cacao
       - pending_inbound_asset
+      - savers_depth
+      - savers_units
+      - synth_mint_paused
       properties:
         balance_cacao:
           type: string
@@ -937,27 +939,62 @@ components:
         pending_inbound_asset:
           type: string
           example: '101713319'
-    Bucket:
+        savers_depth:
+          example: '199998'
+          description: the balance of L1 asset deposited into the Savers Vault
+        savers_units:
+          type: string
+          example: '199998'
+          description: the number of units owned by Savers
+        synth_mint_paused:
+          type: boolean
+          example: true
+          description: whether additional synths cannot be minted
+    LiquidityProviderSummary:
       type: object
       required:
-      - balance_asset
       - asset
-      - LP_units
-      - status
+      - units
+      - pending_rune
+      - pending_asset
+      - rune_deposit_value
+      - asset_deposit_value
       properties:
-        balance_asset:
-          type: string
-          example: '3197744873'
         asset:
           type: string
-          example: BTC/BTC
-        LP_units:
+          example: BNB.BNB
+        rune_address:
           type: string
-          description: the total pool liquidity provider units
-          example: '14694928607473'
-        status:
+          example: thor1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        asset_address:
           type: string
-          example: Available
+          example: bnb1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        last_add_height:
+          type: integer
+          format: int64
+          example: 82745
+        last_withdraw_height:
+          type: integer
+          format: int64
+          example: 82745
+        units:
+          type: string
+          example: '0'
+        pending_rune:
+          type: string
+          example: '0'
+        pending_asset:
+          type: string
+          example: '242000000'
+        pending_tx_id:
+          type: string
+          example: C4C876802xxxxxxxxxxBC408829878446A37011EBBA0C5CAA3DD64A548879CB228
+        rune_deposit_value:
+          type: string
+          example: '0'
+        asset_deposit_value:
+          type: string
+          example: '0'
     LiquidityProvider:
       type: object
       required:
@@ -969,6 +1006,11 @@ components:
       - asset_deposit_value
       - withdraw_counter
       - bonded_nodes
+      - cacao_redeem_value
+      - asset_redeem_value
+      - luvi_deposit_value
+      - luvi_redeem_value
+      - luvi_growth_pct
       properties:
         asset:
           type: string
@@ -996,7 +1038,7 @@ components:
         pending_asset:
           type: string
           example: '242000000'
-        pending_tx_Id:
+        pending_tx_id:
           type: string
           example: C4C876802xxxxxxxxxxBC408829878446A37011EBBA0C5CAA3DD64A548879CB228
         cacao_deposit_value:
@@ -1020,6 +1062,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LPBondedNode'
+        cacao_redeem_value:
+          type: string
+          example: '0'
+        asset_redeem_value:
+          type: string
+          example: '0'
+        luvi_deposit_value:
+          type: string
+          example: '0'
+        luvi_redeem_value:
+          type: string
+          example: '0'
+        luvi_growth_pct:
+          type: string
+          example: '0'
     LPBondedNode:
       type: object
       required:
@@ -1032,6 +1089,42 @@ components:
         units:
           type: string
           example: '1000000000'
+    Saver:
+      type: object
+      required:
+      - asset
+      - asset_address
+      - units
+      - asset_deposit_value
+      - asset_redeem_value
+      - growth_pct
+      properties:
+        asset:
+          type: string
+          example: BNB.BNB
+        asset_address:
+          type: string
+          example: bnb1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        last_add_height:
+          type: integer
+          format: int64
+          example: 82745
+        last_withdraw_height:
+          type: integer
+          format: int64
+          example: 82745
+        units:
+          type: string
+          example: '0'
+        asset_deposit_value:
+          type: string
+          example: '0'
+        asset_redeem_value:
+          type: string
+          example: '0'
+        growth_pct:
+          type: string
+          example: '0.02'
     Coin:
       type: object
       required:
@@ -1542,15 +1635,18 @@ components:
       $ref: '#/components/schemas/Pool'
     PoolsResponse:
       type: array
-      items: *id005
-    BucketResponse:
-      $ref: '#/components/schemas/Bucket'
-    BucketsResponse:
+      items: *id004
+    LiquidityProvidersResponse:
       type: array
-      items: *id006
+      items:
+        $ref: '#/components/schemas/LiquidityProviderSummary'
     LiquidityProviderResponse:
+      $ref: '#/components/schemas/LiquidityProvider'
+    SaverResponse:
+      $ref: '#/components/schemas/Saver'
+    SaversResponse:
       type: array
-      items: *id001
+      items: *id005
     TxResponse:
       type: object
       properties:
@@ -1606,10 +1702,10 @@ components:
       $ref: '#/components/schemas/Node'
     NodesResponse:
       type: array
-      items: *id007
+      items: *id006
     VaultsResponse:
       type: array
-      items: *id002
+      items: *id001
     VaultResponse:
       $ref: '#/components/schemas/Vault'
     VaultPubkeysResponse:
@@ -1695,10 +1791,10 @@ components:
           description: current amount of rune deposited
     InboundAddressesResponse:
       type: array
-      items: *id008
+      items: *id007
     LastBlockResponse:
       type: array
-      items: *id003
+      items: *id002
     VersionResponse:
       type: object
       required:
@@ -1780,10 +1876,10 @@ components:
           description: scheduled outbound value in RUNE
     OutboundResponse:
       type: array
-      items: *id009
+      items: *id008
     ScheduledResponse:
       type: array
-      items: *id010
+      items: *id009
     KeysignResponse:
       type: object
       properties:
@@ -1807,7 +1903,7 @@ components:
           type: string
     KeygenMetricsResponse:
       type: array
-      items: *id011
+      items: *id010
     MetricsResponse:
       type: object
       properties:
@@ -1825,7 +1921,7 @@ components:
                 $ref: '#/components/schemas/TssMetric'
     MayanameResponse:
       type: array
-      items: *id012
+      items: *id011
     MimirResponse:
       type: object
       additionalProperties:

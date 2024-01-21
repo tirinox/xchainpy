@@ -8,7 +8,7 @@ Method | HTTP request | Description
 [**liquidity_providers**](LiquidityProvidersApi.md#liquidity_providers) | **GET** /mayachain/pool/{asset}/liquidity_providers | 
 
 # **liquidity_provider**
-> list[LiquidityProvider] liquidity_provider(asset, address, height=height)
+> LiquidityProviderSummary liquidity_provider(asset, address, height=height)
 
 
 
@@ -45,7 +45,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**list[LiquidityProvider]**](LiquidityProvider.md)
+[**LiquidityProviderSummary**](LiquidityProviderSummary.md)
 
 ### Authorization
 
@@ -59,7 +59,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **liquidity_providers**
-> list[LiquidityProvider] liquidity_providers(asset, height=height)
+> LiquidityProvider liquidity_providers(asset, height=height)
 
 
 
@@ -94,7 +94,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**list[LiquidityProvider]**](LiquidityProvider.md)
+[**LiquidityProvider**](LiquidityProvider.md)
 
 ### Authorization
 

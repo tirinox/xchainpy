@@ -18,6 +18,11 @@ Name | Type | Description | Notes
 **withdraw_counter** | **str** |  | 
 **last_withdraw_counter_height** | **int** |  | [optional] 
 **bonded_nodes** | [**list[LPBondedNode]**](LPBondedNode.md) |  | 
+**cacao_redeem_value** | **str** |  | 
+**asset_redeem_value** | **str** |  | 
+**luvi_deposit_value** | **str** |  | 
+**luvi_redeem_value** | **str** |  | 
+**luvi_growth_pct** | **str** |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

@@ -1,4 +1,4 @@
-# BucketResponse
+# LiquidityProvidersResponse
 
 ## Properties
 Name | Type | Description | Notes
