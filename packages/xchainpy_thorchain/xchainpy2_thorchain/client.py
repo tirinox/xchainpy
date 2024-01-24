@@ -54,12 +54,14 @@ class THORChainClient(CosmosGaiaClient):
         :param explorer_providers: Dictionary of explorer providers for each network type. See: THOR_EXPLORERS
         :param wallet_index: int (wallet index, default 0) We can derive any number of addresses from a single seed
         """
+        self.thornode_api_client = ApiClient()
+
         self.explorers = explorer_providers
 
         if isinstance(client_urls, NodeURL):
             client_urls = {network: client_urls}
 
-        self.client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
+        self._client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
         self.fallback_client_urls = fallback_client_urls.copy() if fallback_client_urls else None
 
         self.chain_ids = chain_ids.copy() if chain_ids else DEFAULT_CHAIN_IDS.copy()
@@ -67,7 +69,7 @@ class THORChainClient(CosmosGaiaClient):
         root_derivation_paths = root_derivation_paths.copy() if root_derivation_paths else ROOT_DERIVATION_PATHS.copy()
         super().__init__(
             network, phrase, private_key, fee_bound, root_derivation_paths,
-            self.client_urls, self.chain_ids, self.explorers,
+            self._client_urls, self.chain_ids, self.explorers,
             wallet_index
         )
 
@@ -80,19 +82,23 @@ class THORChainClient(CosmosGaiaClient):
         self._gas_limit = DEFAULT_GAS_LIMIT_VALUE
         self._deposit_gas_limit = DEPOSIT_GAS_LIMIT_VALUE
 
-        self.thornode_api_client = ApiClient()
-        self.thornode_api_client.configuration.host = self.client_urls[self.network].node
-
         self._recreate_client()
         self._make_wallet()
 
+    def set_network(self, network: NetworkType):
+        super().set_network(network)
+        self._prefix = get_thor_address_prefix(network)
+        self.thornode_api_client.configuration.host = self._client_urls[self.network].node
+
+    set_network.__doc__ = CosmosGaiaClient.set_network.__doc__
+
     @property
     def server_url(self) -> str:
-        return self.client_urls[self.network].node
+        return self._client_urls[self.network].node
 
     @property
     def rpc_url(self) -> str:
-        return self.client_urls[self.network].rpc
+        return self._client_urls[self.network].rpc
 
     def validate_address(self, address: str) -> bool:
         if not super().validate_address(address):
@@ -182,7 +188,7 @@ class THORChainClient(CosmosGaiaClient):
         :param tx_hash: Tx Hash
         :return: Transaction data (raw, unparsed)
         """
-        clients = [self.client_urls[self.network]]
+        clients = [self._client_urls[self.network]]
         if self.fallback_client_urls:
             clients.extend(self.fallback_client_urls[self.network])
 

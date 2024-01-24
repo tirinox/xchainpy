@@ -64,7 +64,7 @@ class CosmosGaiaClient(XChainClient):
         if isinstance(client_urls, str):
             client_urls = {NetworkType.MAINNET: client_urls}
 
-        self.client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
+        self._client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
         self.chain_ids = chain_ids.copy() if chain_ids else COSMOS_CHAIN_IDS.copy()
 
         self._gas_asset = AssetATOM
@@ -83,6 +83,10 @@ class CosmosGaiaClient(XChainClient):
         self.cache = None
         self.tx_responses = {}
 
+    @property
+    def get_client_urls(self):
+        return self._client_urls
+
     def get_client(self) -> LedgerClient:
         """
         Please use this getter to obtain LedgerClient for specific Cosmos calls like delegation, staking etc.
@@ -95,7 +99,7 @@ class CosmosGaiaClient(XChainClient):
 
     @property
     def server_url(self):
-        return self.client_urls[self.network]
+        return self._client_urls[self.network]
 
     @property
     def rpc_url(self):

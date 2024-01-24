@@ -61,7 +61,7 @@ class MayaChainClient(CosmosGaiaClient):
         if isinstance(client_urls, NodeURL):
             client_urls = {network: client_urls}
 
-        self.client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
+        self._client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
         self.fallback_client_urls = fallback_client_urls.copy() if fallback_client_urls else None
 
         self.chain_ids = chain_ids.copy() if chain_ids else DEFAULT_CHAIN_IDS.copy()
@@ -71,7 +71,7 @@ class MayaChainClient(CosmosGaiaClient):
         root_derivation_paths = root_derivation_paths.copy() if root_derivation_paths else ROOT_DERIVATION_PATHS.copy()
         super().__init__(
             network, phrase, private_key, fee_bound, root_derivation_paths,
-            self.client_urls, self.chain_ids, self.explorers, wallet_index
+            self._client_urls, self.chain_ids, self.explorers, wallet_index
         )
 
         # Tune for MayaChain
@@ -90,11 +90,11 @@ class MayaChainClient(CosmosGaiaClient):
 
     @property
     def server_url(self) -> str:
-        return self.client_urls[self.network].node
+        return self._client_urls[self.network].node
 
     @property
     def rpc_url(self) -> str:
-        return self.client_urls[self.network].rpc
+        return self._client_urls[self.network].rpc
 
     def validate_address(self, address: str) -> bool:
         if not super().validate_address(address):
@@ -184,7 +184,7 @@ class MayaChainClient(CosmosGaiaClient):
         :param tx_hash: Tx Hash
         :return: Transaction data (raw, unparsed)
         """
-        clients = [self.client_urls[self.network]]
+        clients = [self._client_urls[self.network]]
         if self.fallback_client_urls:
             clients.extend(self.fallback_client_urls[self.network])
 

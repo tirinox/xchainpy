@@ -180,7 +180,7 @@ class BinanceChainClient(XChainClient):
         if isinstance(client_urls, str):
             client_urls = {network: client_urls}
 
-        self.client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
+        self._client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
         self.fallback_client_urls = fallback_client_urls.copy() if fallback_client_urls else None
 
         root_derivation_paths = root_derivation_paths.copy() \
@@ -218,7 +218,7 @@ class BinanceChainClient(XChainClient):
 
     @property
     def server_url(self) -> str:
-        return self.client_urls[self.network]
+        return self._client_urls[self.network]
 
     def validate_address(self, address: str) -> bool:
         try:
