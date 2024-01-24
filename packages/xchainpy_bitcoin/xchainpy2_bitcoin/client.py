@@ -22,7 +22,7 @@ class BitcoinClient(XChainClient):
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         address = address or self.get_address()
         result = await self._call_service(self.service.getbalance, address)
-        return [self.gas_amount(result)]
+        return [self.gas_base_amount(result)]
 
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 10,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
@@ -110,9 +110,9 @@ class BitcoinClient(XChainClient):
         return Fees(
             type=FeeType.PER_BYTE,
             fees={
-                FeeOption.AVERAGE: self.gas_amount(average).amount,
-                FeeOption.FAST: self.gas_amount(fast).amount,
-                FeeOption.FASTEST: self.gas_amount(fastest).amount,
+                FeeOption.AVERAGE: self.gas_base_amount(average).amount,
+                FeeOption.FAST: self.gas_base_amount(fast).amount,
+                FeeOption.FASTEST: self.gas_base_amount(fastest).amount,
             }
         )
 
@@ -232,7 +232,7 @@ class BitcoinClient(XChainClient):
             transfers.append(TokenTransfer(
                 from_address=inp.address,
                 to_address='',
-                amount=self.gas_amount(inp.value).amount,
+                amount=self.gas_base_amount(inp.value).amount,
                 asset=self._gas_asset,
                 tx_hash=tx.txid,
                 outbound=False,
@@ -249,7 +249,7 @@ class BitcoinClient(XChainClient):
             transfers.append(TokenTransfer(
                 from_address='',
                 to_address=output.address,
-                amount=self.gas_amount(output.value).amount,
+                amount=self.gas_base_amount(output.value).amount,
                 asset=self._gas_asset,
                 tx_hash=tx.txid,
                 outbound=True,
