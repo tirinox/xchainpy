@@ -18,7 +18,7 @@ from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_CACAO_
     DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_CACAO_FEE, \
     make_client_urls_from_ip_address, DEFAULT_MAYA_EXPLORERS, AssetMAYA, DENOM_MAYA, MAYA_DECIMAL, CACAO_DUST
 from .mrc20.api import MayaScanClient, MayaScanException
-from .mrc20.const import is_mrc20, make_mrc20_asset
+from .mrc20.const import is_mrc20, make_mrc20_asset, MRC20_DECIMALS
 from .mrc20.memo import MRC20Memo, MNFTMemo
 from .utils import build_deposit_tx_unsigned, get_maya_address_prefix, build_transfer_tx_draft
 
@@ -328,11 +328,7 @@ class MayaChainClient(CosmosGaiaClient):
 
         memo = MRC20Memo.transfer(what.asset.symbol, what.amount)
 
-        return await self.transfer(
-            self._maya_scan_tx_value_cacao(),
-            recipient, memo=memo,
-            check_balance=False,
-        )
+        return await self._mrc20_submit_tx(memo, recipient)
 
     async def transfer_mnft(self, symbol: str, ident: int, recipient: str):
         """
@@ -359,7 +355,8 @@ class MayaChainClient(CosmosGaiaClient):
         return CryptoAmount.automatic(amount, make_mrc20_asset(asset_name))
 
     async def close(self):
-        await self.maya_scan.close()
+        if self.maya_scan:
+            await self.maya_scan.close()
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, check_balance: bool = True) -> str:
@@ -391,3 +388,58 @@ class MayaChainClient(CosmosGaiaClient):
         return on_chain_balances
 
     get_balance.__doc__ = CosmosGaiaClient.get_balance.__doc__
+
+    async def _mrc20_submit_tx(self, memo: str, recipient=''):
+        if not recipient:
+            recipient = self.get_address()
+        return await self.transfer(
+            self._maya_scan_tx_value_cacao(),
+            recipient, memo=memo,
+            check_balance=False,
+        )
+
+    async def mrc20_cancel_order(self, ticker: Union[str, Asset], tx_hash: str):
+        """
+        Cancel MRC20 sell order
+        :param ticker: ticker of MRC20 token (e.g. GLD)
+        :param tx_hash: exact hash of the transaction that created the order
+        :return: txid of the cancel transaction
+        """
+        memo = MRC20Memo.cancel(ticker, tx_hash)
+        return await self._mrc20_submit_tx(memo)
+
+    async def mrc20_sell(self, ticker: Union[str, Asset], amount: Union[CryptoAmount, Amount, int, float],
+                         price: float):
+        """
+        Post an order to sell MRC20 token
+        :param ticker: ticker of MRC20 token (e.g. GLD)
+        :param amount: amount of MRC20 token to sell
+        :param price: price of MRC20 token in CACAO
+        :return: txid of the sell transaction
+        """
+        amount = Amount.automatic(amount, MRC20_DECIMALS)
+        price = Amount.automatic(price, MRC20_DECIMALS)
+
+        memo = MRC20Memo.sell(ticker, int(amount), int(price))
+        return await self._mrc20_submit_tx(memo)
+
+    async def mrc20_buy(self, ticker: Union[str, Asset],
+                        amount: Union[CryptoAmount, Amount, int, float],
+                        seller_address: str,
+                        tx_hash: str):
+        """
+        Buy MRC20 token from the seller
+        :param ticker: ticker of MRC20 token (e.g. GLD)
+        :param amount: amount of MRC20 token to buy
+        :param seller_address: seller address
+        :param tx_hash: exact hash of the transaction that created the order
+        :return: txid of the buy transaction
+        """
+        if not tx_hash:
+            raise ValueError("tx_hash of the selling tx is not specified")
+
+        if not self.validate_address(seller_address):
+            raise ValueError(f"Invalid seller address: {seller_address}")
+        amount = Amount.automatic(amount, MRC20_DECIMALS)
+        memo = MRC20Memo.buy(ticker, amount, tx_hash)
+        return await self._mrc20_submit_tx(memo, recipient=seller_address)
