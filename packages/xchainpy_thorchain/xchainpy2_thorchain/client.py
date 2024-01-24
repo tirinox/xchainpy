@@ -5,12 +5,13 @@ from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
-from xchainpy2_client import AssetInfo, XcTx, TxType, Fees, FeeType, TokenTransfer
 from xchainpy2_client import RootDerivationPaths, FeeBounds
+from xchainpy2_client import XcTx, TxType, Fees, FeeType, TokenTransfer
 from xchainpy2_client.fees import single_fee
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
+from xchainpy2_thornode import ApiClient, MimirApi, NetworkApi
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, \
     Asset, SYNTH_DELIMITER
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
@@ -78,6 +79,9 @@ class THORChainClient(CosmosGaiaClient):
         self._decimal = RUNE_DECIMAL
         self._gas_limit = DEFAULT_GAS_LIMIT_VALUE
         self._deposit_gas_limit = DEPOSIT_GAS_LIMIT_VALUE
+
+        self.thornode_api_client = ApiClient()
+        self.thornode_api_client.configuration.host = self.client_urls[self.network].node
 
         self._recreate_client()
         self._make_wallet()
@@ -260,7 +264,14 @@ class THORChainClient(CosmosGaiaClient):
             return await self.get_transaction_data_thornode(tx_id)
 
     async def get_fees(self, cache=None, tc_fee_rate=None) -> Fees:
-        return single_fee(FeeType.FLAT_FEE, DEFAULT_RUNE_FEE)
+        network_api = NetworkApi(self.thornode_api_client)
+        network_params = await network_api.network()
+
+        fee = network_params.native_tx_fee_rune
+        if not fee or not isinstance(fee, str) or not fee.isdigit() or int(fee) < 0:
+            raise Exception(f"Invalid fee: {fee}")
+
+        return single_fee(FeeType.FLAT_FEE, Amount.from_base(fee, self._decimal))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         if SYNTH_DELIMITER in denom:

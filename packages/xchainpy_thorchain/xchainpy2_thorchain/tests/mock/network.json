@@ -1,0 +1,18 @@
+{
+  "bond_reward_rune": "4083298377185",
+  "burned_bep_2_rune": "47115838110346964",
+  "burned_erc_20_rune": "1653783031763036",
+  "effective_security_bond": "6481738931596249",
+  "gas_spent_rune": "146312825733941",
+  "gas_withheld_rune": "186910781190876",
+  "native_outbound_fee_rune": "2000000",
+  "native_tx_fee_rune": "3120509",
+  "outbound_fee_multiplier": "15000",
+  "rune_price_in_tor": "404815947",
+  "tns_fee_per_block_rune": "20",
+  "tns_register_fee_rune": "1000000000",
+  "tor_price_in_rune": "24702584",
+  "total_bond_units": "2813052",
+  "total_reserve": "8299673989014005",
+  "vaults_migrating": false
+}
