@@ -16,7 +16,7 @@ async def main():
     balances = await bnb.get_balance()
     print(balances)
 
-    tx = await bnb.transfer(bnb.gas_amount(3330), bnb2.get_address())
+    tx = await bnb.transfer(bnb.gas_base_amount(3330), bnb2.get_address())
     print(f'Tx broadcast: {bnb.get_explorer_tx_url(tx)}')
 
     print(f'Sleeping until things settle down...')
