@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SWAGGER_LOCAL="./swagger-codegen-cli.jar"
-SWAGGER_VERSION=3.0.47
+SWAGGER_VERSION=3.0.52
 SWAGGER_CODEGEN="https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/${SWAGGER_VERSION}/swagger-codegen-cli-${SWAGGER_VERSION}.jar"
 
 function check_output_dir() {
