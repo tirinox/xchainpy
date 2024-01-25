@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime
+from math import ceil
 from operator import itemgetter
 from typing import Optional, List, Union
 from urllib.parse import urlencode
@@ -14,10 +15,9 @@ from cosmpy.aerial.wallet import LocalWallet
 from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PrivateKey, PublicKey
 from cosmpy.protos.cosmos.tx.v1beta1.service_pb2 import BroadcastTxRequest, BroadcastMode
-from math import ceil
 
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx, \
-    Fees, TxPage, AssetInfo, FeeType, FeeOption
+    Fees, TxPage, FeeType, FeeOption
 from xchainpy2_client.fees import single_fee
 from xchainpy2_crypto import derive_private_key, create_address
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, RUNE_DECIMAL, Asset, Amount, AssetATOM, \
@@ -82,6 +82,10 @@ class CosmosGaiaClient(XChainClient):
 
         self.cache = None
         self.tx_responses = {}
+
+        self.standard_tx_fee = DEFAULT_FEE
+
+        self.cache_fee_period = 600  # sec = 10 min
 
     @property
     def get_client_urls(self):
@@ -453,24 +457,8 @@ class CosmosGaiaClient(XChainClient):
         url = self.url_to_fetch_tx_data(tx_id)
         return await self._get_json(url)
 
-    async def get_fees(self, cache=None, tc_fee_rate=None) -> Fees:
-        """
-        Returns fees.
-        It tries to get chain fees from THORChain `inbound_addresses` first
-        :param cache: THORChainCache from the query module
-        :param tc_fee_rate: You can externally pass the fee rate having 8 decimals. (optional)
-        :return:
-        """
-        if tc_fee_rate is not None:
-            return single_fee(FeeType.FLAT_FEE, DEFAULT_FEE)
-
-        tc_fee_rate = await cache.get_fee_rates(self.chain)
-
-        # convert decimal: 1e8 (THORChain) to 1e6 (COSMOS)
-        # Similar to `fromCosmosToThorchain` in THORNode
-        decimal_diff = self._decimal - RUNE_DECIMAL
-        fee_rate = Amount.from_base(tc_fee_rate * 10 ** decimal_diff, self._decimal)
-        return single_fee(FeeType.FLAT_FEE, fee_rate)
+    async def get_fees(self) -> Fees:
+        return single_fee(FeeType.FLAT_FEE, self.standard_tx_fee)
 
     async def transfer(self, what: CryptoAmount,
                        recipient: str,

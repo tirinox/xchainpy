@@ -81,6 +81,7 @@ class THORChainClient(CosmosGaiaClient):
         self._decimal = RUNE_DECIMAL
         self._gas_limit = DEFAULT_GAS_LIMIT_VALUE
         self._deposit_gas_limit = DEPOSIT_GAS_LIMIT_VALUE
+        self.standard_tx_fee = DEFAULT_RUNE_FEE
 
         self._recreate_client()
         self._make_wallet()
@@ -269,7 +270,7 @@ class THORChainClient(CosmosGaiaClient):
         except TxLoadException:
             return await self.get_transaction_data_thornode(tx_id)
 
-    async def get_fees(self, cache=None, tc_fee_rate=None) -> Fees:
+    async def get_fees(self) -> Fees:
         network_api = NetworkApi(self.thornode_api_client)
         network_params = await network_api.network()
 

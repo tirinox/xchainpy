@@ -5,7 +5,7 @@ from typing import Optional, Union, List
 from bip_utils import Bech32ChecksumError
 from cosmpy.crypto.keypairs import PublicKey, PrivateKey
 
-from xchainpy2_client import AssetInfo, Fees, FeeType, XChainClient, XcTx, TxPage, TokenTransfer, TxType
+from xchainpy2_client import Fees, FeeType, XChainClient, XcTx, TxPage, TokenTransfer, TxType
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_client.fees import single_fee
 from xchainpy2_crypto import decode_address, create_address, derive_private_key
