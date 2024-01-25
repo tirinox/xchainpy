@@ -2,12 +2,13 @@ import asyncio
 from getpass import getpass
 
 from xchainpy2_crypto import KeyStore
-from xchainpy2_mayachain import MayaChainClient
+from xchainpy2_mayachain import MayaChainClient, DEFAULT_CLIENT_URLS
 from xchainpy2_mayanode import ApiClient as MayaApiClient, NetworkApi as MayaNetworkApi
 from xchainpy2_thorchain import THORChainClient
 from xchainpy2_thorchain_amm import THORMemo
 from xchainpy2_thorchain_query import URLs
 from xchainpy2_thornode import ApiClient as ThorApiClient
+from xchainpy2_utils import NetworkType
 
 KS_PATH = "path_to_keystore.txt"
 CACAO_ADD_AMOUNT = 10.0  # 10 cacao
@@ -31,7 +32,7 @@ async def main():
     thor_node_api.configuration.host = URLs.THORNode.NINE_REALMS
 
     maya_node_api = MayaApiClient()
-    maya_node_api.configuration.host = URLs.THORNode.MAYACHAIN
+    maya_node_api.configuration.host = DEFAULT_CLIENT_URLS[NetworkType.MAINNET].node
 
     maya_network_api = MayaNetworkApi(maya_node_api)
 

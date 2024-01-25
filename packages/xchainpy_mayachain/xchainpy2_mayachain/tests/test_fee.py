@@ -4,9 +4,8 @@ import pytest
 from aioresponses import aioresponses
 
 from xchainpy2_client import FeeType, FeeOption
-from xchainpy2_thorchain import THORChainClient
-from xchainpy2_thorchain_query import URLs
-from xchainpy2_utils import RUNE_DECIMAL, Amount
+from xchainpy2_mayachain import DEFAULT_CLIENT_URLS, MayaChainClient
+from xchainpy2_utils import Amount, CACAO_DECIMAL, NetworkType
 
 
 def load_json(file_name):
@@ -17,13 +16,14 @@ def load_json(file_name):
 
 
 @pytest.mark.asyncio
-async def test_fees_thornode():
+async def test_fee_mayanode():
     with aioresponses() as m:
-        client = THORChainClient()
+        client = MayaChainClient()
 
-        m.get(f'{URLs.THORNode.MAINNET}/thorchain/network', payload=load_json('network'))
+        base_url = DEFAULT_CLIENT_URLS[NetworkType.MAINNET].node
+        m.get(f'{base_url}/mayachain/mimir', payload=load_json('mimir'))
 
         fees = await client.get_fees()
         assert fees.type == FeeType.FLAT_FEE
         assert fees.fees[FeeOption.AVERAGE] == fees.fees[FeeOption.FAST] == fees.fees[FeeOption.FASTEST] == \
-            Amount.from_base(3120509, RUNE_DECIMAL)
+            Amount.from_base(43435934, CACAO_DECIMAL)

@@ -1,12 +1,13 @@
 import asyncio
 
 import xchainpy2_mayanode as maya
-from xchainpy2_thorchain_query import URLs
+from xchainpy2_mayachain import DEFAULT_CLIENT_URLS
+from xchainpy2_utils import NetworkType
 
 
 async def try_mayanode():
     api_client = maya.ApiClient()
-    api_client.configuration.host = URLs.THORNode.MAYACHAIN
+    api_client.configuration.host = DEFAULT_CLIENT_URLS[NetworkType.MAINNET].node
 
     health = maya.HealthApi(api_client)
     r = await health.ping()

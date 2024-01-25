@@ -12,6 +12,7 @@ from xchainpy2_client.fees import single_fee
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
+from xchainpy2_mayanode import MimirApi, ApiClient
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Amount, remove_0x_prefix, \
     Asset, SYNTH_DELIMITER, CACAO_DECIMAL, AssetCACAO
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_CACAO_NATIVE, ROOT_DERIVATION_PATHS, \
@@ -57,6 +58,7 @@ class MayaChainClient(CosmosGaiaClient):
         :param explorer_providers: Dictionary of explorer providers for each network type. See: THOR_EXPLORERS
         :param wallet_index: int (wallet index, default 0) We can derive any number of addresses from a single seed
         """
+        self.mayanode_api_client = ApiClient()
 
         if isinstance(client_urls, NodeURL):
             client_urls = {network: client_urls}
@@ -87,6 +89,7 @@ class MayaChainClient(CosmosGaiaClient):
         self._make_wallet()
 
         self.maya_scan = MayaScanClient()
+        self.mayanode_api_client.configuration.host = self._client_urls[self.network].node
 
     @property
     def server_url(self) -> str:
@@ -266,8 +269,18 @@ class MayaChainClient(CosmosGaiaClient):
             return await self.get_transaction_data_mayanode(tx_id)
 
     async def get_fees(self, cache=None, tc_fee_rate=None) -> Fees:
-        # todo! fee may be variable
-        return single_fee(FeeType.FLAT_FEE, DEFAULT_CACAO_FEE)
+        mimir_api = MimirApi(self.mayanode_api_client)
+        mimir_params = await mimir_api.mimir()
+
+        fee_param = mimir_params.get('NATIVETRANSACTIONFEE')
+        try:
+            fee_param = int(fee_param)
+            if fee_param < 0:
+                raise ValueError
+        except ValueError:
+            raise ValueError(f"Invalid native TX fee in Mimir: {fee_param}")
+
+        return single_fee(FeeType.FLAT_FEE, Amount.from_base(fee_param, self._decimal))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         if SYNTH_DELIMITER in denom:
