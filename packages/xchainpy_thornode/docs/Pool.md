@@ -20,6 +20,7 @@ Name | Type | Description | Notes
 **synth_mint_paused** | **bool** | whether additional synths cannot be minted | 
 **synth_supply_remaining** | **str** | the amount of synth supply remaining before the current max supply is reached | 
 **loan_collateral** | **str** | the amount of collateral collects for loans | 
+**loan_collateral_remaining** | **str** | the amount of remaining collateral collects for loans | 
 **loan_cr** | **str** | the current loan collateralization ratio | 
 **derived_depth_bps** | **str** | the depth of the derived virtual pool relative to L1 pool (in basis points) | 
 
