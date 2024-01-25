@@ -34,7 +34,7 @@ async def test_timeout_thornode(thornode_instance):
 async def test_timeout_midgard(thornode_instance, midgard_instance):
     with requests_mock.Mocker() as m:
         m.get(f'{URLs.Midgard.MAINNET}/v2/thorchain/pools', json=load_json('midgard_pools'))
-        m.get(f'{URLs.THORNode.MAINNET}/thorchain/inbound_addresses', json=load_json('thornode_pools'))
+        m.get(f'{URLs.THORNode.MAINNET}/thorchain/inbound_addresses', json=load_json('inbound_addresses'))
 
         # Client timeout is 0.01 seconds (very small)
 
