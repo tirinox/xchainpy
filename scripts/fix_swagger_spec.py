@@ -129,6 +129,14 @@ def fix_maya_liquidity_providers(spec):
     return spec
 
 
+def fix_thor_tx_details_nullable(spec):
+    # nullable: true
+    place = drill(spec, ['components', 'schemas', 'TxDetailsResponse', 'properties'])
+    place['actions']['nullable'] = True
+    place['out_txs']['nullable'] = True
+    return spec
+
+
 async def fetch(url):
     async with ClientSession() as session:
         user_agent = {
@@ -157,6 +165,7 @@ async def main():
     print('Fixing spec...')
     spec = fix_spec(spec)
     spec = fix_maya_liquidity_providers(spec)
+    spec = fix_thor_tx_details_nullable(spec)
     spec = add_readme(spec)
 
     with open(args.output, 'w') as f:
