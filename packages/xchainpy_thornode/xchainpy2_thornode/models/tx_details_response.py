@@ -168,8 +168,8 @@ class TxDetailsResponse(object):
         :param actions: The actions of this TxDetailsResponse.  # noqa: E501
         :type: list[TxOutItem]
         """
-        if actions is None:
-            raise ValueError("Invalid value for `actions`, must not be `None`")  # noqa: E501
+        # if actions is None:
+        #     raise ValueError("Invalid value for `actions`, must not be `None`")  # noqa: E501
 
         self._actions = actions
 
@@ -191,8 +191,8 @@ class TxDetailsResponse(object):
         :param out_txs: The out_txs of this TxDetailsResponse.  # noqa: E501
         :type: list[Tx]
         """
-        if out_txs is None:
-            raise ValueError("Invalid value for `out_txs`, must not be `None`")  # noqa: E501
+        # if out_txs is None:
+        #     raise ValueError("Invalid value for `out_txs`, must not be `None`")  # noqa: E501
 
         self._out_txs = out_txs
 
