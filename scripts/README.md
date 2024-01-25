@@ -41,3 +41,36 @@ setup(
     long_description_content_type="text/markdown",
 )
 ```
+
+### Manual fix of None in transaction details
+
+Go to `xchainpy2_thornode/models/tx_details_response.py`
+Comment out lines 171-172 amd 194-195
+
+```python
+    @actions.setter
+    def actions(self, actions):
+        """Sets the actions of this TxDetailsResponse.
+
+
+        :param actions: The actions of this TxDetailsResponse.  # noqa: E501
+        :type: list[TxOutItem]
+        """
+        # if actions is None:
+        #     raise ValueError("Invalid value for `actions`, must not be `None`")  # noqa: E501
+
+        self._actions = actions
+        
+    @out_txs.setter
+    def out_txs(self, out_txs):
+        """Sets the out_txs of this TxDetailsResponse.
+
+
+        :param out_txs: The out_txs of this TxDetailsResponse.  # noqa: E501
+        :type: list[Tx]
+        """
+        # if out_txs is None:
+        #     raise ValueError("Invalid value for `out_txs`, must not be `None`")  # noqa: E501
+
+        self._out_txs = out_txs
+```
