@@ -302,8 +302,8 @@ class TxOutItem(object):
         :param height: The height of this TxOutItem.  # noqa: E501
         :type: int
         """
-        if height is None:
-            raise ValueError("Invalid value for `height`, must not be `None`")  # noqa: E501
+        # if height is None:
+        #     raise ValueError("Invalid value for `height`, must not be `None`")  # noqa: E501
 
         self._height = height
 
