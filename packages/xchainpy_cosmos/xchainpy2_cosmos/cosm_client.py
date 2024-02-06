@@ -554,7 +554,7 @@ class CosmosGaiaClient(XChainClient):
         return self._prefix
 
     async def check_balance(self, address, amount: CryptoAmount):
-        fees = await self.get_fees(self.cache)
+        fees = await self.get_fees()
         fee = fees.fees[FeeOption.AVERAGE]
 
         balances = await self.get_balance(address)
