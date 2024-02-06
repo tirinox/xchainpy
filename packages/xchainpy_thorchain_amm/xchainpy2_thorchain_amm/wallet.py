@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from contextlib import suppress
 from typing import Optional, Set
 
 from xchainpy2_client import NoClient, XChainClient
@@ -111,3 +112,9 @@ class Wallet:
     async def get_inbound_for_chain(self, chain: Chain) -> Optional[InboundDetail]:
         details = await self.cache.get_inbound_details()
         return details.get(str(chain))
+
+    async def close(self):
+        for client in self.clients.values():
+            if hasattr(client, 'close'):
+                with suppress(Exception):
+                    await client.close()
