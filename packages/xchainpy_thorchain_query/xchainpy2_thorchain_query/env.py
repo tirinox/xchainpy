@@ -18,8 +18,6 @@ class URLs:
         STAGENET = 'https://stagenet-thornode.ninerealms.com'
         TESTNET = 'https://testnet.thornode.thorchain.info'
 
-        MAYACHAIN = 'https://mayanode.mayachain.info/'
-
     class RPC:
         PUBLIC = 'https://rpc.thorchain.info'
         NINE_REALMS = 'https://rpc.ninerealms.com'
