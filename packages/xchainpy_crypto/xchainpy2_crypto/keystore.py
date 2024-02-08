@@ -8,7 +8,7 @@ from Crypto.Cipher import AES
 from Crypto.Hash import BLAKE2b
 from Crypto.Util import Counter
 
-from .utils import validate_mnemonic
+from .utils import validate_mnemonic, generate_mnemonic
 
 CIPHER = 'aes-128-ctr'
 NBITS = 128
@@ -167,3 +167,8 @@ class KeyStore(NamedTuple):
         aes_cipher = AES.new(derived_key[0:16], AES.MODE_CTR, counter=ctr)
         phrase = aes_cipher.decrypt(cipher_bytes)
         return phrase.decode("utf8")
+
+    @classmethod
+    def generate_and_encrypt(cls, password: str, *args, **kwargs):
+        mnemonic = generate_mnemonic(*args, **kwargs)
+        return cls.encrypt_to_keystore(mnemonic, password)
