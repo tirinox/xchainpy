@@ -5,9 +5,10 @@ from decimal import Decimal
 from enum import Enum
 from typing import NamedTuple, List, Dict, Optional, Set
 
-from xchainpy2_client import FeeOption
 from xchainpy2_midgard import PoolDetail, THORNameDetails
-from xchainpy2_thornode import Pool, LiquidityProviderSummary, Saver, QuoteFees, LastBlock
+from xchainpy2_thorchain.memo import THORMemo, ActionType
+from xchainpy2_thornode import Pool, LiquidityProviderSummary, Saver, QuoteFees, LastBlock, TxSignersResponse, \
+    TxStatusResponse
 from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
 
 
@@ -139,6 +140,7 @@ class InboundDetail(NamedTuple):
     halted_chain: bool
     halted_trading: bool
     halted_lp: bool
+    dust_threshold: int
 
 
 InboundDetails = Dict[str, InboundDetail]
@@ -154,22 +156,6 @@ class InboundDetailCache:
 class NetworkValuesCache:
     last_refreshed: float
     network_values: Dict[str, int]
-
-
-class MidgardConfig(NamedTuple):
-    api_retries: int
-    midgard_base_urls: List[str]
-
-
-class EstimateSwapParams(NamedTuple):
-    input: CryptoAmount
-    destination_asset: Asset
-    destination_address: Address
-    slip_limit: Optional[Decimal] = None
-    affiliate_address: Optional[Address] = None
-    affiliate_fee_basis_points: Optional[int] = None
-    interface_id: Optional[str] = None
-    fee_option: Optional[FeeOption] = None
 
 
 class UnitData(NamedTuple):
@@ -193,33 +179,9 @@ class LPAmountTotal(NamedTuple):
     total: CryptoAmount
 
 
-class Block(NamedTuple):
-    current: int
-    last_added: Optional[int]
-    full_protection: int
-
-
 class ILProtectionData(NamedTuple):
     il_protection: Decimal
     total_days: float
-
-
-class ConstructMemo(NamedTuple):
-    input_amount: CryptoAmount
-    destination_asset: Asset
-    limit: Amount
-    destination_address: Address
-    affiliate_address: Address
-    affiliate_fee_basis_points: int
-    fee_option: Optional[FeeOption] = None
-    interface_id: str = ''
-
-
-class TxDetails(NamedTuple):
-    memo: str
-    to_address: str
-    expiry: datetime
-    tx_estimate: SwapEstimate
 
 
 class EstimateAddLP(NamedTuple):
@@ -323,17 +285,6 @@ class SwapOutput(NamedTuple):
     output: CryptoAmount
     swap_fee: CryptoAmount
     slip: Decimal
-
-
-class TxType(Enum):
-    Swap = 'Swap'
-    AddLP = 'AddLP'
-    WithdrawLP = 'WithdrawLP'
-    AddSaver = 'AddSaver'
-    WithdrawSaver = 'WithdrawSaver'
-    Refund = 'Refund'
-    Other = 'Other'
-    Unknown = 'Unknown'
 
 
 class InboundStatus(Enum):
@@ -443,15 +394,15 @@ class AddSaverInfo(NamedTuple):
     saver_pos: Optional[Saver] = None
 
 
-class TxProgress(NamedTuple):
-    tx_type: TxType
-    inbound_observed: Optional[InboundTx] = None
-    swap_info: Optional[SwapInfo] = None
-    add_lp_info: Optional[AddLpInfo] = None
-    add_saver_info: Optional[AddSaverInfo] = None
-    withdraw_lp_info: Optional[WithdrawInfo] = None
-    withdraw_saver_info: Optional[WithdrawInfo] = None
-    refund_info: Optional[RefundInfo] = None
+# class TxProgress(NamedTuple):
+#     tx_type: TxType
+#     inbound_observed: Optional[InboundTx] = None
+#     swap_info: Optional[SwapInfo] = None
+#     add_lp_info: Optional[AddLpInfo] = None
+#     add_saver_info: Optional[AddSaverInfo] = None
+#     withdraw_lp_info: Optional[WithdrawInfo] = None
+#     withdraw_saver_info: Optional[WithdrawInfo] = None
+#     refund_info: Optional[RefundInfo] = None
 
 
 class BlockInformation(NamedTuple):
@@ -496,3 +447,82 @@ class LoanCloseQuote(NamedTuple):
     expected_debt_down: int
     errors: List[str]
     recommended_min_amount_in: int
+
+
+class TxStatus(Enum):
+    UNKNOWN = 'unknown'
+    OBSERVED = 'observed'
+    DONE = 'done'
+    REFUNDED = 'refunded'
+    INCOMPLETE = 'incomplete'
+    BELOW_DUST = 'dust'
+
+    @classmethod
+    def finished(cls):
+        return cls.DONE, cls.REFUNDED, cls.BELOW_DUST
+
+
+class TxStage(Enum):
+    Unknown = 'Unknown'
+    InboundObserved = 'InboundObserved'
+    InboundConfirmationCounted = 'InboundConfirmationCounted'
+    InboundFinalised = 'InboundFinalised'
+    SwapFinalised = 'SwapFinalised'
+    OutboundDelayWait = 'OutboundDelayWait'
+    OutboundSigned = 'OutboundSigned'
+
+
+class TxDetails(NamedTuple):
+    txid: str
+    action_type: ActionType
+    status: TxStatus
+    stage: TxStage
+    signers: TxSignersResponse
+    status_details: TxStatusResponse
+
+    @property
+    def successful(self):
+        return self.status == TxStatus.DONE
+
+    @property
+    def failed(self):
+        return self.status in (TxStatus.REFUNDED, TxStatus.BELOW_DUST)
+
+    @property
+    def pending(self):
+        return not self.failed and not self.successful
+
+    @classmethod
+    def create(cls, signers: TxSignersResponse, status_details: TxStatusResponse):
+        memo = THORMemo.parse_memo(status_details.tx.memo)
+
+        stage = TxStage.Unknown
+        if cls.get_stage(status_details, 'inbound_observed'):
+            stage = TxStage.InboundObserved
+        if cls.get_stage(status_details, 'inbound_confirmation_counted'):
+            stage = TxStage.InboundConfirmationCounted
+        if cls.get_stage(status_details, 'inbound_finalised'):
+            stage = TxStage.InboundFinalised
+        if cls.get_stage(status_details, 'swap_status'):
+            stage = TxStage.SwapFinalised
+        if cls.get_stage(status_details, 'outbound_delay'):
+            stage = TxStage.OutboundDelayWait
+        if cls.get_stage(status_details, 'outbound_signed'):
+            stage = TxStage.OutboundSigned
+
+        return cls(
+            status_details.tx.id,
+            memo.action,
+            TxStatus.UNKNOWN,  # todo: set TxStatus
+            stage,
+            signers, status_details
+        )
+
+    @classmethod
+    def get_stage(cls, status_details, stage, key='completed', default=None):
+        stages = status_details.stages.to_dict()
+        stage_desc = stages.get(stage)
+        if stage_desc is None:
+            return
+
+        return stage_desc.get(key, default)
