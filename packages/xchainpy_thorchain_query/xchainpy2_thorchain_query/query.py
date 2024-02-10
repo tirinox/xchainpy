@@ -3,7 +3,8 @@ import math
 from datetime import datetime, timedelta
 from typing import Union, List, Optional
 
-from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, Saver, QuoteFees
+from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, Saver, QuoteFees, \
+    TxStatusResponse, TxSignersResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, Address, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \
     DEFAULT_ASSET_DECIMAL, YEAR
 from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
@@ -31,6 +32,46 @@ class THORChainQuery:
         self.chain_attributes = chain_attributes
         self.interface_id = interface_id
         self.native_decimal = native_decimal
+
+    @property
+    def native_chain_attributes(self):
+        return self.chain_attributes[self.native_asset.chain]
+
+    @property
+    def native_asset(self):
+        return self.cache.native_asset
+
+    @property
+    def native_block_time(self):
+        return self.chain_attributes[self.native_asset.chain].block_time
+
+    @staticmethod
+    def abbreviate_asset_string(asset: Asset, max_length=5):
+        if asset.contract and len(asset.contract) > max_length:
+            abbrev = asset.contract[:max_length]
+            asset = asset._replace(contract=abbrev)
+        return str(asset)
+
+    async def close(self):
+        await self.cache.close()
+
+    async def get_tx_details(self, txid: str) -> TxSignersResponse:
+        """
+        Get Tx Details
+        :param txid: Transaction hash (inbound)
+        :return: TxSignersResponse
+        """
+        return await self.cache.tx_api.tx_signers(txid)
+
+    async def get_tx_status(self, txid: str) -> TxStatusResponse:
+        """
+        Get Tx status and stages
+        :param txid:
+        :return: TxStatusResponse
+        """
+        return await self.cache.tx_api.tx_status(txid)
+
+    # ------ old stuff ----
 
     async def quote_swap(self,
                          from_address: Address,
@@ -851,25 +892,3 @@ class THORChainQuery:
             errors=errors,
             recommended_min_amount_in=int(resp.recommended_min_amount_in),
         )
-
-    @property
-    def native_chain_attributes(self):
-        return self.chain_attributes[self.native_asset.chain]
-
-    @property
-    def native_asset(self):
-        return self.cache.native_asset
-
-    @property
-    def native_block_time(self):
-        return self.chain_attributes[self.native_asset.chain].block_time
-
-    @staticmethod
-    def abbreviate_asset_string(asset: Asset, max_length=5):
-        if asset.contract and len(asset.contract) > max_length:
-            abbrev = asset.contract[:max_length]
-            asset = asset._replace(contract=abbrev)
-        return str(asset)
-
-    async def close(self):
-        await self.cache.close()
