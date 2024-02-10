@@ -24,6 +24,8 @@ DEFAULT_RUNE_FEE = Amount.from_asset(0.02, RUNE_DECIMAL)
 
 DEFAULT_EXPLORER_URL = 'https://viewblock.io/thorchain{path}{network_tag}'
 
+THOR_BASIS_POINT_MAX = 10_000
+
 
 def make_explorer_object(network_tag: str):
     return ExplorerProvider(

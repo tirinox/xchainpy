@@ -1,7 +1,6 @@
 import pytest
 
-from xchainpy2_thorchain_amm import ActionType
-from xchainpy2_thorchain_amm.memo import THORMemo, AUTO_OPTIMIZED
+from xchainpy2_thorchain.memo import THORMemo, AUTO_OPTIMIZED, ActionType
 
 
 def test_invalid_memo():

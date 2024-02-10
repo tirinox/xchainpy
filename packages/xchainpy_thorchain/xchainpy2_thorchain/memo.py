@@ -2,11 +2,44 @@
 See: https://dev.thorchain.org/thorchain-dev/concepts/memos
 """
 from dataclasses import dataclass
+from enum import Enum
 from typing import Union
 
 from xchainpy2_thorchain import RUNE_TICKER
 from xchainpy2_utils import Chain
-from .consts import ActionType, THOR_BASIS_POINT_MAX
+from .const import THOR_BASIS_POINT_MAX
+
+
+class ActionType(Enum):
+    # Standard
+    ADD_LIQUIDITY = 'addLiquidity'
+    SWAP = 'swap'
+    WITHDRAW = 'withdraw'
+    DONATE = 'donate'
+
+    # Name service
+    THORNAME = 'thorname'
+
+    # Lending
+    LOAN_OPEN = 'loan+'
+    LOAN_CLOSE = 'loan-'
+
+    # Node operator/bond provider
+    BOND = 'bond'
+    UNBOND = 'unbond'
+    LEAVE = 'leave'
+
+    # Prospective
+    LIMIT_ORDER = 'limit_order'
+
+    # Outbounds
+    REFUND = 'refund'
+    OUTBOUND = 'out'
+
+    # Special/dev-centric
+    RESERVE = 'reserve'
+    NOOP = 'noop'
+
 
 MEMO_ACTION_TABLE = {
     "add": ActionType.ADD_LIQUIDITY,
@@ -247,8 +280,12 @@ class THORMemo:
             if self.s_swap_quantity is not None:
                 limit_or_ss = f"{limit_or_ss}/{self.s_swap_interval}/{self.s_swap_quantity}"
 
+            dest_addr = self.dest_address
+            if self.refund_address and self.refund_address != dest_addr:
+                dest_addr += f"/{self.refund_address}"
+
             memo = (
-                f'=:{self.asset}:{self.dest_address}:{limit_or_ss}'
+                f'=:{self.asset}:{dest_addr}:{limit_or_ss}'
                 f':{self.affiliate_address}:{nothing_if_0(self.affiliate_fee_bp)}'
                 f':{self.dex_aggregator_address}:{self.final_asset_address}:{nothing_if_0(self.min_amount_out)}'
             )
