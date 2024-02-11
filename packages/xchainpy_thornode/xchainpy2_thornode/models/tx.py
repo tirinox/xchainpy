@@ -195,8 +195,8 @@ class Tx(object):
         :param gas: The gas of this Tx.  # noqa: E501
         :type: list[Coin]
         """
-        if gas is None:
-            raise ValueError("Invalid value for `gas`, must not be `None`")  # noqa: E501
+        # if gas is None:
+        #     raise ValueError("Invalid value for `gas`, must not be `None`")  # noqa: E501
 
         self._gas = gas
 
