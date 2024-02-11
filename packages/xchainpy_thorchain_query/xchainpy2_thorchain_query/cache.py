@@ -239,8 +239,15 @@ class THORChainCache:
         )
 
         network_values = {}
-        for k, v in chain_seq(constants.items(), mimir.items()):
+        scope = chain_seq(constants.int_64_values.items(), mimir.items())
+        for k, v in scope:
             network_values[k.upper()] = int(v)
+
+        for k, v in constants.bool_values.items():
+            network_values[k.upper()] = v == 'True'
+
+        for k, v in constants.string_values.items():
+            network_values[k.upper()] = v
 
         self._network_cache = NetworkValuesCache(time.monotonic(), network_values)
 
