@@ -122,7 +122,7 @@ class THORChainQuery:
                 if isinstance(data, str):
                     data = json.loads(data)
                 error = data.get('error', 'unknown error')
-                errors.append(f'Thornode request quote: {error}')
+                errors.append(str(error))
             except Exception:
                 errors.append('Could not pass error info.')
                 response = None
@@ -136,7 +136,8 @@ class THORChainQuery:
                 can_swap=False,
                 errors=errors,
                 recommended_min_amount_in=0,
-                details=response
+                streaming_swap_interval=0,
+                details=response,
             )
 
         if int(swap_quote.recommended_min_amount_in) and int(input_amount) < int(swap_quote.recommended_min_amount_in):
