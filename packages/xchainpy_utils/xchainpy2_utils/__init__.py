@@ -6,3 +6,4 @@ from .math import *
 from .seqs import *
 from .util import *
 from .dates import *
+from .swap import *
