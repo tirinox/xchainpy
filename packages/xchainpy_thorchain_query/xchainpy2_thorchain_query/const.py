@@ -1,6 +1,4 @@
-from decimal import Decimal
-
-from xchainpy2_utils import Amount, CryptoAmount, AssetRUNE, AssetCACAO, CACAO_DECIMAL, RUNE_DECIMAL, NetworkType, Asset
+from xchainpy2_utils import NetworkType, Asset
 
 DEFAULT_INTERFACE_ID = 'XChainPy2'
 
@@ -18,6 +16,9 @@ class Mimir:
     MAX_TX_OUT_OFFSET = 'MAXTXOUTOFFSET'
     TX_OUT_DELAY_RATE = 'TXOUTDELAYRATE'
     FULL_IL_PROTECTION_BLOCKS = 'FULLIMPLOSSPROTECTIONBLOCKS'
+
+    TNS_REGISTER_FEE = 'TNSREGISTERFEE'
+    TNS_FEE_PER_BLOCK = 'TNSFEEPERBLOCK'
 
     @staticmethod
     def pause_lp(chain):
@@ -56,3 +57,5 @@ USD_ASSETS = {
         Asset.from_string('ETH.USDT-0XA3910454BF2CB59B8B3A401589A3BACC5CA42306')
     ]
 }
+
+THORNAME_BLOCKS_ONE_YEAR = 5259600

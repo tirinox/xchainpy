@@ -6,12 +6,12 @@ from typing import Union, List, Optional
 
 from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, Saver, QuoteFees, \
     TxStatusResponse, TxSignersResponse
-from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, Address, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \
+from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \
     DEFAULT_ASSET_DECIMAL, YEAR
 from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
     get_chain_gas_asset
 from .cache import THORChainCache
-from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES
+from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES, THORNAME_BLOCKS_ONE_YEAR
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity, get_liquidity_protection_data
 from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
     LiquidityPosition, Block, PostionDepositValue, PoolRatios, WithdrawLiquidityPosition, EstimateWithdrawLP, \
@@ -898,3 +898,47 @@ class THORChainQuery:
             errors=errors,
             recommended_min_amount_in=int(resp.recommended_min_amount_in),
         )
+
+    async def estimate_thor_name(self, is_update: bool, thorname: str, expiry: datetime = None) -> CryptoAmount:
+        """
+        Estimate the cost of registering or updating a THORName
+        :param is_update:
+        :param thorname:
+        :param expiry:
+        :return:
+        """
+        thor_name_details = await self.cache.get_name_details(thorname)
+        if thor_name_details and thor_name_details.owner != '' and not is_update:
+            raise Exception("THORName already registered")
+
+        block = await self.cache.get_last_block()
+        current_thorchain_height = int(block[0].thorchain)
+
+        current_expire = int(thor_name_details.expire) if thor_name_details else 0
+
+        current_height_for_expiry = current_expire if is_update else current_thorchain_height
+
+        blocks_to_add_to_expiry = 0 if is_update else THORNAME_BLOCKS_ONE_YEAR
+
+        if expiry:
+            current_timestamp = datetime.now().timestamp()
+            expiry_timestamp = expiry.timestamp()
+            interval_to_expire = expiry_timestamp - current_timestamp
+            blocks_to_expire = int(interval_to_expire / self.native_block_time)
+            new_height_for_expiry = current_thorchain_height + blocks_to_expire
+            if current_expire:
+                blocks_to_add_to_expiry = new_height_for_expiry - current_height_for_expiry
+            else:
+                blocks_to_add_to_expiry = blocks_to_expire
+
+        # compute value
+        constants = await self.cache.get_network_values()
+        one_time_fee = Amount.zero(self.native_decimal) if is_update else Amount.from_base(
+            constants.get(Mimir.TNS_REGISTER_FEE, 0), self.native_decimal)
+        total_fee_per_block = Amount.from_base(
+            constants.get(Mimir.TNS_FEE_PER_BLOCK, 0) * max(blocks_to_add_to_expiry, 0),
+            self.native_decimal
+        )
+        total_cost_amount = one_time_fee + total_fee_per_block
+        total_cost = CryptoAmount(total_cost_amount, self.native_asset)
+        return total_cost
