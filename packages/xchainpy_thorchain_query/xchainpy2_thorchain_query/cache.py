@@ -16,7 +16,7 @@ from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress, T
     SaversApi, QueueApi, QuoteApi, LastBlock, LiquidityProviderSummary
 from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, CryptoAmount, RUNE_DECIMAL, CACAO_DECIMAL, Amount, \
     Address, NetworkType
-from xchainpy2_utils.swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
+from .swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
     get_double_swap_slip
 from .const import Mimir, TEN_MINUTES, SAME_ASSET_EXCHANGE_RATE, USD_ASSETS
 from .env import URLs

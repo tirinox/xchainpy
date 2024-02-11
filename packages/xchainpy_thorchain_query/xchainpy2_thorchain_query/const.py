@@ -29,9 +29,6 @@ class Mimir:
         return f'HALT{chain.upper()}TRADING'
 
 
-ETH_DECIMALS = 18
-AVAX_DECIMALS = 18
-
 DEFAULT_EXTRA_ADD_MINUTES = 15
 
 SAME_ASSET_EXCHANGE_RATE = 1.0

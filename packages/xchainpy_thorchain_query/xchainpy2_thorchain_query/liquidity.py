@@ -3,7 +3,7 @@ from decimal import Decimal
 from xchainpy2_thorchain_query.models import LiquidityPool, LPAmount, UnitData, Block, ILProtectionData, \
     PostionDepositValue
 from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE, Asset, calculate_days_from_blocks, DEFAULT_ASSET_DECIMAL
-from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, get_decimal
+from .swap import get_base_amount_with_diff_decimals, get_decimal
 
 
 def get_liquidity_units(liquidity: LPAmount, pool: LiquidityPool) -> int:

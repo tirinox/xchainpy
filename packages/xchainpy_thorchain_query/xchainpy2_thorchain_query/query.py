@@ -8,15 +8,15 @@ from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepos
     TxStatusResponse, TxSignersResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \
     DEFAULT_ASSET_DECIMAL, YEAR
-from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
-    get_chain_gas_asset
 from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES, THORNAME_BLOCKS_ONE_YEAR
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity, get_liquidity_protection_data
 from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
     LiquidityPosition, Block, PostionDepositValue, PoolRatios, WithdrawLiquidityPosition, EstimateWithdrawLP, \
     EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails, LoanOpenQuote, \
-    BlockInformation, LoanCloseQuote
+    BlockInformation, LoanCloseQuote, THORNameException
+from .swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
+    get_chain_gas_asset
 
 
 class THORChainQuery:
@@ -909,7 +909,7 @@ class THORChainQuery:
         """
         thor_name_details = await self.cache.get_name_details(thorname)
         if thor_name_details and thor_name_details.owner != '' and not is_update:
-            raise Exception("THORName already registered")
+            raise THORNameException("THORName already registered")
 
         block = await self.cache.get_last_block()
         current_thorchain_height = int(block[0].thorchain)
