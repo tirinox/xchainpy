@@ -8,8 +8,14 @@ from typing import NamedTuple, List, Dict, Optional, Set
 from xchainpy2_midgard import PoolDetail, THORNameDetails
 from xchainpy2_thorchain.memo import THORMemo, ActionType
 from xchainpy2_thornode import Pool, LiquidityProviderSummary, Saver, QuoteFees, LastBlock, TxSignersResponse, \
-    TxStatusResponse
+    TxStatusResponse, QuoteSwapResponse
 from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
+
+
+class Block(NamedTuple):
+    current: int
+    last_added: Optional[int]
+    full_protection: int
 
 
 class TotalFees(NamedTuple):
@@ -27,6 +33,29 @@ class SwapEstimate(NamedTuple):
     can_swap: bool
     errors: List[str]
     recommended_min_amount_in: int
+    streaming_swap_interval: int
+    details: QuoteSwapResponse
+
+    @property
+    def memo(self):
+        return self.details.memo
+
+    @property
+    def notes(self):
+        return self.details.notes
+
+    @property
+    def is_less_than_price_limit(self):
+        if self.errors:
+            return any(
+                'less than price limit' in e for e in self.errors
+            )
+        else:
+            return False
+
+    @property
+    def streaming_swap_quantity(self) -> int:
+        return self.details.max_streaming_quantity
 
 
 def get_rune_balance_of_node_pool(pool: Pool) -> Amount:
@@ -510,10 +539,28 @@ class TxDetails(NamedTuple):
         if cls.get_stage(status_details, 'outbound_signed'):
             stage = TxStage.OutboundSigned
 
+        status = TxStatus.UNKNOWN
+
+        if stage == TxStage.OutboundSigned:
+            if memo.action in (ActionType.SWAP, ActionType.WITHDRAW, ActionType.LOAN_OPEN,
+                               ActionType.UNBOND):
+                status = TxStatus.DONE
+        elif stage == TxStage.InboundFinalised:
+            if memo.action in (ActionType.ADD_LIQUIDITY, ActionType.BOND, ActionType.DONATE):
+                status = TxStatus.DONE
+        elif stage == TxStage.InboundObserved or stage == TxStage.InboundFinalised:
+            status = TxStatus.OBSERVED
+
+        refunds = cls.find_refunds(status_details)
+        if refunds:
+            status = TxStatus.REFUNDED
+
+        # todo: handle other cases and set appropriate TxStatus
+
         return cls(
             status_details.tx.id,
             memo.action,
-            TxStatus.UNKNOWN,  # todo: set TxStatus
+            status,
             stage,
             signers, status_details
         )
@@ -526,3 +573,14 @@ class TxDetails(NamedTuple):
             return
 
         return stage_desc.get(key, default)
+
+    @classmethod
+    def find_refunds(cls, status_details: TxStatusResponse):
+        return [
+            tx for tx in status_details.out_txs
+            if 'REFUND' in tx.memo.upper()
+        ]
+
+    @property
+    def has_refunds(self):
+        return bool(self.find_refunds(self.status_details))

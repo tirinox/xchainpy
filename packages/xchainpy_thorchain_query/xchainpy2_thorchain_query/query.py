@@ -1,4 +1,5 @@
 import asyncio
+import json
 import math
 from datetime import datetime, timedelta
 from typing import Union, List, Optional
@@ -12,7 +13,7 @@ from xchainpy2_utils.swap import get_base_amount_with_diff_decimals, calc_networ
 from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity, get_liquidity_protection_data
-from .models import TxDetails, SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
+from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
     LiquidityPosition, Block, PostionDepositValue, PoolRatios, WithdrawLiquidityPosition, EstimateWithdrawLP, \
     EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails, LoanOpenQuote, \
     BlockInformation, LoanCloseQuote
@@ -74,28 +75,28 @@ class THORChainQuery:
     # ------ old stuff ----
 
     async def quote_swap(self,
-                         from_address: Address,
                          amount: Amount,
                          from_asset: Union[Asset, str],
                          destination_address: str,
                          destination_asset: Union[Asset, str],
                          tolerance_bps: int = 0,
-                         interface_id=DEFAULT_INTERFACE_ID,
                          affiliate_bps=0,
                          affiliate_address='',
+                         streaming_interval=0,
+                         streaming_quantity=0,
                          height=0,
-                         ) -> TxDetails:
+                         ) -> SwapEstimate:
         """
-        Quote a swap transaction
-        :param from_address:
+        Quote a swap transaction. This is a read-only method and does not send any transactions.
         :param amount:
         :param from_asset:
         :param destination_address:
         :param destination_asset:
         :param tolerance_bps:
-        :param interface_id:
         :param affiliate_bps:
         :param affiliate_address:
+        :param streaming_interval:
+        :param streaming_quantity:
         :param height:
         :return:
         """
@@ -109,26 +110,33 @@ class THORChainQuery:
             swap_quote = await self.cache.quote_api.quoteswap(
                 height=height, from_asset=from_asset, to_asset=destination_asset, amount=int(input_amount),
                 destination=destination_address,
-                from_address=from_address, tolerance_bps=tolerance_bps,
-                affiliate_bps=affiliate_bps, affiliate=affiliate_address
+                tolerance_bps=tolerance_bps,
+                affiliate_bps=affiliate_bps, affiliate=affiliate_address,
+                streaming_interval=streaming_interval,
+                streaming_quantity=streaming_quantity,
             )
         except ValueError:
-            response = self.cache._thornode_client.last_response
-            error = response.data.get('error', 'unknown error')
-            error.append(f'Thornode request quote: {error}')
+            try:
+                response = self.cache._thornode_client.last_response
+                data = response.data
+                if isinstance(data, str):
+                    data = json.loads(data)
+                error = data.get('error', 'unknown error')
+                errors.append(f'Thornode request quote: {error}')
+            except Exception:
+                errors.append('Could not pass error info.')
+                response = None
 
             zero = CryptoAmount(Amount.zero(), AssetRUNE)
-            return TxDetails(
-                '', '', datetime.now(),
-                SwapEstimate(
-                    TotalFees(destination_asset, zero, zero),
-                    0,
-                    zero,
-                    0, 0,
-                    can_swap=False,
-                    errors=errors,
-                    recommended_min_amount_in=0
-                )
+            return SwapEstimate(
+                TotalFees(destination_asset, zero, zero),
+                0,
+                zero,
+                0, 0,
+                can_swap=False,
+                errors=errors,
+                recommended_min_amount_in=0,
+                details=response
             )
 
         if int(swap_quote.recommended_min_amount_in) and int(input_amount) < int(swap_quote.recommended_min_amount_in):
@@ -137,24 +145,21 @@ class THORChainQuery:
 
         fee_asset = Asset.from_string_exc(swap_quote.fees.asset)
 
-        return TxDetails(
-            memo=swap_quote.memo,
-            to_address=swap_quote.inbound_address,
-            expiry=datetime.fromtimestamp(swap_quote.expiry),  # timezone?
-            tx_estimate=SwapEstimate(
-                TotalFees(
-                    from_asset,
-                    affiliate_fee=CryptoAmount(Amount.from_base(swap_quote.fees.affiliate), fee_asset),
-                    outbound_fee=CryptoAmount(Amount.from_base(swap_quote.fees.outbound), fee_asset)
-                ),
-                slip_bps=int(swap_quote.slippage_bps),
-                net_output=CryptoAmount(Amount(int(swap_quote.expected_amount_out)), destination_asset),
-                outbound_delay_seconds=swap_quote.outbound_delay_seconds,
-                inbound_confirmation_seconds=swap_quote.inbound_confirmation_seconds,
-                can_swap=True,
-                errors=errors,
-                recommended_min_amount_in=int(swap_quote.recommended_min_amount_in)
-            )
+        return SwapEstimate(
+            TotalFees(
+                from_asset,
+                affiliate_fee=CryptoAmount(Amount.from_base(swap_quote.fees.affiliate), fee_asset),
+                outbound_fee=CryptoAmount(Amount.from_base(swap_quote.fees.outbound), fee_asset)
+            ),
+            slip_bps=int(swap_quote.slippage_bps),
+            net_output=CryptoAmount(Amount(int(swap_quote.expected_amount_out)), destination_asset),
+            outbound_delay_seconds=swap_quote.outbound_delay_seconds,
+            inbound_confirmation_seconds=swap_quote.inbound_confirmation_seconds,
+            can_swap=True,
+            errors=errors,
+            recommended_min_amount_in=int(swap_quote.recommended_min_amount_in),
+            streaming_swap_interval=streaming_interval,
+            details=swap_quote,
         )
 
     async def outbound_delay(self, outbound_amount: CryptoAmount) -> float:
@@ -194,7 +199,7 @@ class THORChainQuery:
         # Add OutboundAmount in rune to the outbound queue
         outbound_amount_total = outbound_amount + rune_value
 
-        # calculate the if outboundAmountTotal is over the volume threshold
+        # calculate if outboundAmountTotal is over the volume threshold
         volume_threshold = outbound_amount_total / min_tx_volume_threshold
 
         # check delay rate
@@ -362,7 +367,7 @@ class THORChainQuery:
 
         pool_share = get_pool_share(unit_data, pool_asset)
 
-        # Liquidity Unit Value Index = sprt(assetdepth * runeDepth) / Poolunits
+        # Liquidity Unit Value Index = sprt(assetDepth * runeDepth) / Pool_Units
         # Using this formula we can work out an individual position to find LUVI and then the growth rate
 
         deposit_luvi = math.sqrt(
