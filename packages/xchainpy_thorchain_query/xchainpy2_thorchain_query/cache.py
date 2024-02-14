@@ -438,12 +438,12 @@ class THORChainCache:
             self._name_cache.address_to_name[address] = thor_names
             return thor_names
         except ApiException as e:
-            if e.status == 404:
+            if getattr(e, 'status', 0) == 404:
                 self._name_cache.address_to_name[address] = set()
                 return set()
             else:
                 raise
-
+        
     async def load_names_by_address(self, address: str) -> List[THORNameDetails]:
         names = await self.get_names_by_address(address)
         if not names:

@@ -44,7 +44,7 @@ class THORChainQuery:
 
     @property
     def native_block_time(self):
-        return self.chain_attributes[self.native_asset.chain].block_time
+        return self.chain_attributes[Chain(self.native_asset.chain)].avg_block_time
 
     @staticmethod
     def abbreviate_asset_string(asset: Asset, max_length=5):
@@ -911,6 +911,9 @@ class THORChainQuery:
         if thor_name_details and thor_name_details.owner != '' and not is_update:
             raise THORNameException("THORName already registered")
 
+        if not thor_name_details and is_update:
+            raise THORNameException("THORName not registered")
+
         block = await self.cache.get_last_block()
         current_thorchain_height = int(block[0].thorchain)
 
@@ -935,10 +938,11 @@ class THORChainQuery:
         constants = await self.cache.get_network_values()
         one_time_fee = Amount.zero(self.native_decimal) if is_update else Amount.from_base(
             constants.get(Mimir.TNS_REGISTER_FEE, 0), self.native_decimal)
+        fee_per_block = constants.get(Mimir.TNS_FEE_PER_BLOCK, 0)
         total_fee_per_block = Amount.from_base(
-            constants.get(Mimir.TNS_FEE_PER_BLOCK, 0) * max(blocks_to_add_to_expiry, 0),
+            fee_per_block * max(blocks_to_add_to_expiry, 0),
             self.native_decimal
         )
-        total_cost_amount = one_time_fee + total_fee_per_block
+        total_cost_amount = one_time_fee.as_asset + total_fee_per_block.as_asset
         total_cost = CryptoAmount(total_cost_amount, self.native_asset)
         return total_cost
