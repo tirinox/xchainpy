@@ -134,6 +134,11 @@ class NameCache:
     name_last_refreshed: Dict[str, float]
 
     def put(self, name: str, n: Optional[THORNameDetails]):
+        if n is None and name:
+            self.name_details.pop(name, None)
+            self.name_last_refreshed[name] = time.monotonic()
+            return
+
         for entry in n.entries:
             self.address_to_name.setdefault(entry.address, set()).add(name)
         if name:
