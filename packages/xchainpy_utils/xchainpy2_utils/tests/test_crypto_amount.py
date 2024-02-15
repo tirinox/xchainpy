@@ -22,3 +22,16 @@ def test_fee_subtract():
     amt = CryptoAmount(Amount(100, 8), AssetRUNE)
     fee = CryptoAmount(Amount(1, 8), AssetRUNE)
     assert amt - fee == CryptoAmount(Amount(99, 8), AssetRUNE)
+
+
+def test_auto():
+    assert CryptoAmount.automatic(1, 'THOR.RUNE') == CryptoAmount(Amount(1, 8), AssetRUNE).as_base
+    assert CryptoAmount.automatic(1.0, 'THOR.RUNE') == CryptoAmount(Amount.automatic(1.0, 8), AssetRUNE)
+
+    assert (
+            CryptoAmount.automatic(333.5, 'ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7')
+            == CryptoAmount(Amount.automatic(333.5, 6),
+                            Asset.from_string('ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7'))
+    )
+
+    assert (CryptoAmount.automatic(40.0, AssetCACAO) == CryptoAmount(Amount.automatic(40.0, 10), AssetCACAO))

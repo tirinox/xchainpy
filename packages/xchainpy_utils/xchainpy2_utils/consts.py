@@ -1,68 +1,22 @@
 from decimal import Decimal
 from enum import Enum
-from typing import NamedTuple
 
 from .amount import CryptoAmount, Amount, DEFAULT_ASSET_DECIMAL
-from .asset import AssetBNB, AssetBTC, AssetLTC, AssetBCH, AssetETH, AssetRUNE, AssetATOM, AssetDOGE, AssetAVAX, \
-    AssetBSC, AssetCACAO
+from .asset import *
+from .decimals import *
 
-PACKAGE_VERSION = '0.0.6'
-
-
-class Chain(Enum):
-    Binance = "BNB"
-    Bitcoin = "BTC"
-    Ethereum = "ETH"
-    THORChain = "THOR"
-    Cosmos = "GAIA"
-    BitcoinCash = "BCH"
-    Litecoin = "LTC"
-    Doge = "DOGE"
-    Avax = "AVAX"
-    Maya = "MAYA"
-    BinanceSmartChain = "BSC"
-    Dash = "DASH"
-    Kujira = "KUJI"
-
-    UNKNOWN = 'Unknown'
-
-    @property
-    def is_utxo(self):
-        return self in UTXO_CHAINS
-
-    @property
-    def is_evm(self):
-        return self in EVM_CHAINS
-
-    @property
-    def is_cosmos(self):
-        return self in COSMOS_CHAINS
-
-
-UTXO_CHAINS = {Chain.Bitcoin, Chain.Litecoin, Chain.BitcoinCash, Chain.Doge, Chain.Dash}
-EVM_CHAINS = {Chain.Ethereum, Chain.BinanceSmartChain, Chain.Maya, Chain.Avax}
-COSMOS_CHAINS = {Chain.Cosmos, Chain.THORChain}
-
-RUNE_TICKER = 'RUNE'
+PACKAGE_VERSION = '0.0.10'  # fixme: is there a way to get this automatically?
 
 RAIDO_GLYPH = 'ᚱ'
 DOLLAR_SIGN = '$'
 
-RUNE_DECIMAL = 8
-CACAO_DECIMAL = 10
-
-ETH_DECIMALS = 18
-AVAX_DECIMALS = 18
-BSC_DECIMALS = 18
-
-ZERO_RUNE = CryptoAmount.zero(AssetRUNE)
-ZERO_CACAO = CryptoAmount.zero(AssetCACAO)
+RUNE_TICKER = 'RUNE'
 
 
 class DustAmount(NamedTuple):
     asset: CryptoAmount
-    rune: CryptoAmount = ZERO_RUNE
-    cacao: CryptoAmount = ZERO_CACAO
+    rune: CryptoAmount = CryptoAmount.zero(AssetRUNE)
+    cacao: CryptoAmount = CryptoAmount.zero(AssetCACAO)
 
 
 class ChainAttributes(NamedTuple):
@@ -86,21 +40,27 @@ DEFAULT_CHAIN_ATTRS = {
         6.25, 600,
         DustAmount(AMOUNT_10K_SAT, AssetBCH)
     ),
+    Chain.Doge: ChainAttributes(
+        10000, 60,
+        DustAmount(Amount.from_asset(Decimal("0.01")), AssetDOGE)  # 1 million sat
+    ),
+
     Chain.Ethereum: ChainAttributes(
         2, 13,
-        DustAmount(Amount.zero(decimals=18), AssetETH)
+        DustAmount(Amount.zero(decimals=ETH_DECIMALS), AssetETH)
     ),
     Chain.Avax: ChainAttributes(
         2, 3,
-        DustAmount(Amount.zero(decimals=18), AssetAVAX)
+        DustAmount(Amount.zero(decimals=AVAX_DECIMALS), AssetAVAX)
     ),
-    Chain.Doge: ChainAttributes(
-        10000, 60,
-        DustAmount(Amount.from_asset(Decimal("0.01"), 8), AssetDOGE)  # 1 million sat
+    Chain.BinanceSmartChain: ChainAttributes(
+        0, 3,
+        DustAmount(Amount.zero(decimals=BSC_DECIMALS), AssetBSC),
     ),
+
     Chain.Cosmos: ChainAttributes(
         0, 6,
-        DustAmount(Amount.zero(decimals=8), AssetATOM)
+        DustAmount(Amount.zero(decimals=ATOM_DECIMALS), AssetATOM)
     ),
     Chain.Binance: ChainAttributes(
         0, 6,
@@ -110,13 +70,9 @@ DEFAULT_CHAIN_ATTRS = {
         0, 6,
         DustAmount(Amount.zero(decimals=RUNE_DECIMAL), AssetRUNE)
     ),
-    Chain.BinanceSmartChain: ChainAttributes(
-        0, 3,
-        DustAmount(Amount.zero(decimals=8), AssetBSC),
-    ),
     Chain.Maya: ChainAttributes(
         0, 6,
-        DustAmount(Amount.zero(decimals=8), AssetCACAO),
+        DustAmount(Amount.zero(decimals=CACAO_DECIMAL), AssetCACAO),
     ),
 }
 

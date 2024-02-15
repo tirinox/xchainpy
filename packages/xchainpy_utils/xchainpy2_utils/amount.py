@@ -2,6 +2,7 @@ from decimal import Decimal, Context
 from enum import Enum
 from typing import NamedTuple, Union, List
 
+from .decimals import guess_decimals
 from .asset import Asset
 
 DECIMAL_CONTEXT = Context(prec=100)
@@ -187,10 +188,6 @@ class Amount(NamedTuple):
         return self.internal_amount == 0
 
 
-def amount(x) -> Amount:
-    return Amount.automatic(x)
-
-
 def format_big_int(x: int, decimals: int, trailing_zeros=False, prefix='$', postfix='') -> str:
     s = Amount.from_base(x, decimals).format(trailing_zeros)
     return f'{prefix}{s}{postfix}'
@@ -201,9 +198,18 @@ class CryptoAmount(NamedTuple):
     asset: Asset
 
     @classmethod
-    def automatic(cls, _amount: Union[Amount, str, int, float], asset: Union[Asset, str]):
+    def automatic(cls, _amount: Union[Amount, str, int, float], asset: Union[Asset, str], decimals=None):
+        """
+        :param _amount: Amount of asset
+        :param asset: an asset name or Asset instance
+        :param decimals: Decimals for this asset, if None, then it will be guessed automatically
+        :return:
+        """
+        if decimals is None:
+            decimals = guess_decimals(asset)
+
         return cls(
-            Amount.automatic(_amount),
+            Amount.automatic(_amount, decimals),
             Asset.automatic(asset),
         )
 
