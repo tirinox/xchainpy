@@ -3,11 +3,11 @@ from typing import Union
 
 from xchainpy2_mayachain import DEFAULT_CACAO_NETWORK_FEE
 from xchainpy2_thorchain import DEFAULT_RUNE_NETWORK_FEE
-from .models import LiquidityPool, SwapOutput, InboundDetail
+from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, AssetATOM, AssetBCH, AssetBNB, \
+    AssetBTC, AssetDOGE, AssetLTC, get_chain_gas_asset
 from xchainpy2_utils.amount import CryptoAmount, Amount
-from xchainpy2_utils.asset import Asset, AssetRUNE, AssetCACAO, AssetETH, AssetBSC, AssetAVAX, AssetATOM, AssetBCH, AssetBNB, \
-    AssetBTC, AssetDOGE, AssetLTC
 from xchainpy2_utils.consts import RUNE_DECIMAL, CACAO_DECIMAL, Chain, ETH_DECIMALS
+from .models import LiquidityPool, SwapOutput, InboundDetail
 
 
 def get_base_amount_with_diff_decimals(amount: Union[CryptoAmount, Amount], out_decimals: int) -> Decimal:
@@ -141,6 +141,7 @@ def get_double_swap_output(input_amount: CryptoAmount, pool1: LiquidityPool, poo
     output = get_swap_output(r, pool2, False)
     return output
 
+
 def calc_network_fee(asset: Asset, inbound: InboundDetail,
                      base_asset: Asset = AssetRUNE) -> CryptoAmount:
     """
@@ -221,38 +222,3 @@ def calc_outbound_fee(asset: Asset, inbound: InboundDetail, base_asset=AssetRUNE
         return DEFAULT_CACAO_NETWORK_FEE
     else:
         raise ValueError(f"Could not calculate outbound fee for {asset.chain} chain")
-
-
-def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
-    if isinstance(chain, str):
-        chain = Chain(chain)
-
-    if chain == Chain.Bitcoin:
-        return AssetBTC
-    elif chain == Chain.BitcoinCash:
-        return AssetBCH
-    elif chain == Chain.Litecoin:
-        return AssetLTC
-    elif chain == Chain.Doge:
-        return AssetDOGE
-    elif chain == Chain.Binance:
-        return AssetBNB
-    elif chain == Chain.Ethereum:
-        return AssetETH
-    elif chain == Chain.Avax:
-        return AssetAVAX
-    elif chain == Chain.Cosmos:
-        return AssetATOM
-    elif chain == Chain.BinanceSmartChain:
-        return AssetBSC
-    elif chain == Chain.THORChain:
-        return AssetRUNE
-    elif chain == Chain.Maya:
-        return AssetCACAO
-    else:
-        raise ValueError(f"Could not get gas asset for {chain} chain")
-
-
-def is_gas_asset(asset: Asset) -> bool:
-    # todo: should we check for synth?
-    return get_chain_gas_asset(Chain(asset.chain)) == asset
