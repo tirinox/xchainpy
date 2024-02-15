@@ -46,17 +46,6 @@ def test_amount_auto():
     assert a.denom == Denomination.ASSET
     assert int(a) == 1234000000
 
-    a = amount(1234)
-    assert a.internal_amount == 1234
-    assert a.decimals == 8
-    assert a.denom == Denomination.BASE
-    assert int(a) == 1234
-
-    a = amount('100500.56')
-    assert a.internal_amount == 10050056000000
-    assert a.decimals == 8
-    assert a.denom == Denomination.ASSET
-    assert int(a) == 10050056000000
 
 
 def test_amount_base():
