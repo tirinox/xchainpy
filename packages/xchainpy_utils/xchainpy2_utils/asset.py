@@ -144,7 +144,7 @@ def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
         return AssetBNB
     elif chain == Chain.Ethereum:
         return AssetETH
-    elif chain == Chain.Avax:
+    elif chain == Chain.Avalanche:
         return AssetAVAX
     elif chain == Chain.Cosmos:
         return AssetATOM

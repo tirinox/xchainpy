@@ -10,7 +10,7 @@ class Chain(Enum):
     BitcoinCash = "BCH"
     Litecoin = "LTC"
     Doge = "DOGE"
-    Avax = "AVAX"
+    Avalanche = "AVAX"
     Maya = "MAYA"
     BinanceSmartChain = "BSC"
     Dash = "DASH"
@@ -32,5 +32,5 @@ class Chain(Enum):
 
 
 UTXO_CHAINS = {Chain.Bitcoin, Chain.Litecoin, Chain.BitcoinCash, Chain.Doge, Chain.Dash}
-EVM_CHAINS = {Chain.Ethereum, Chain.BinanceSmartChain, Chain.Avax}
+EVM_CHAINS = {Chain.Ethereum, Chain.BinanceSmartChain, Chain.Avalanche}
 COSMOS_CHAINS = {Chain.Cosmos, Chain.THORChain, Chain.Maya, Chain.Binance}

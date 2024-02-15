@@ -5,7 +5,7 @@ from .amount import CryptoAmount, Amount, DEFAULT_ASSET_DECIMAL
 from .asset import *
 from .decimals import *
 
-PACKAGE_VERSION = '0.0.10'  # fixme: is there a way to get this automatically?
+PACKAGE_VERSION = '0.0.11'  # fixme: is there a way to get this automatically?
 
 RAIDO_GLYPH = 'ᚱ'
 DOLLAR_SIGN = '$'
@@ -49,7 +49,7 @@ DEFAULT_CHAIN_ATTRS = {
         2, 13,
         DustAmount(Amount.zero(decimals=ETH_DECIMALS), AssetETH)
     ),
-    Chain.Avax: ChainAttributes(
+    Chain.Avalanche: ChainAttributes(
         2, 3,
         DustAmount(Amount.zero(decimals=AVAX_DECIMALS), AssetAVAX)
     ),
