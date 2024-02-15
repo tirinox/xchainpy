@@ -82,3 +82,20 @@ def test_well_known_assets():
 
     for asset in (AssetBNB, AssetRUNE, AssetBTC, AssetATOM, AssetAVAX, AssetBCH, AssetCACAO, AssetDOGE, AssetLTC):
         assert asset.is_valid
+
+
+def test_equality():
+    camel = 'etH.UsDt-0XDAC17F958D2EE523a2206206994597C13D831Ec7'
+    a = Asset.from_string(camel)
+    b = Asset.from_string(camel.upper())
+    c = Asset.from_string(camel.lower())
+    assert a == b == c
+
+    c = c.synth
+    assert a != c
+    b = b.synth
+    assert c == b
+
+    fox = 'etH.UsDt-0XDAC17F958D2EE523a2206206994597C13D831Ec8'  # 8 != 7
+    d = Asset.from_string(fox)
+    assert a != d

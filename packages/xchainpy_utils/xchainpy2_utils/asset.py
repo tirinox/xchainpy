@@ -1,5 +1,6 @@
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Union
 
+from .chain import Chain
 from .util import XChainProtocol
 
 SYNTH_DELIMITER = '/'
@@ -95,6 +96,23 @@ class Asset(NamedTuple):
     def dummy(cls):
         return cls('', '')
 
+    @property
+    def is_gas(self):
+        return is_gas_asset(self)
+
+    def upper(self):
+        return self._replace(
+            symbol=self.symbol.upper(),
+            contract=self.contract.upper(),
+            chain=self.chain.upper() if self.chain else self.chain
+        )
+
+    def __eq__(self, other: 'Asset'):
+        if not isinstance(other, Asset):
+            return False
+        a, b = self.upper(), other.upper()
+        return a.chain == b.chain and a.symbol == b.symbol and a.contract == b.contract and a.synth == b.synth
+
 
 AssetBTC = Asset.from_string('BTC.BTC')
 AssetETH = Asset.from_string('ETH.ETH')
@@ -108,3 +126,38 @@ AssetRUNE = Asset.from_string('THOR.RUNE')
 AssetATOM = Asset.from_string('GAIA.ATOM')
 AssetCACAO = Asset.from_string('MAYA.CACAO')
 AssetDASH = Asset.from_string('DASH.DASH')
+
+
+def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
+    if isinstance(chain, str):
+        chain = Chain(chain)
+
+    if chain == Chain.Bitcoin:
+        return AssetBTC
+    elif chain == Chain.BitcoinCash:
+        return AssetBCH
+    elif chain == Chain.Litecoin:
+        return AssetLTC
+    elif chain == Chain.Doge:
+        return AssetDOGE
+    elif chain == Chain.Binance:
+        return AssetBNB
+    elif chain == Chain.Ethereum:
+        return AssetETH
+    elif chain == Chain.Avax:
+        return AssetAVAX
+    elif chain == Chain.Cosmos:
+        return AssetATOM
+    elif chain == Chain.BinanceSmartChain:
+        return AssetBSC
+    elif chain == Chain.THORChain:
+        return AssetRUNE
+    elif chain == Chain.Maya:
+        return AssetCACAO
+    else:
+        raise ValueError(f"Could not get gas asset for {chain} chain")
+
+
+def is_gas_asset(asset: Asset) -> bool:
+    # todo: should we check for synth?
+    return get_chain_gas_asset(Chain(asset.chain)) == asset
