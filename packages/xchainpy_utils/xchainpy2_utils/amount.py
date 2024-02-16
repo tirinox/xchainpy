@@ -2,8 +2,8 @@ from decimal import Decimal, Context
 from enum import Enum
 from typing import NamedTuple, Union, List
 
-from .decimals import guess_decimals
 from .asset import Asset
+from .decimals import guess_decimals
 
 DECIMAL_CONTEXT = Context(prec=100)
 DC = DECIMAL_CONTEXT
@@ -38,7 +38,11 @@ class Amount(NamedTuple):
             return self.internal_amount / self.ten_power
 
     def __str__(self):
-        return f'Amount({self.internal_amount} [{self.denom.name}])'
+        flag = 'B' if self.denom == self.denom.BASE else 'A'
+        return f"{float(self)} {flag}/{self.decimals}"
+
+    def __repr__(self):
+        return f"Amount({self!s})"
 
     def __add__(self, other):
         if self.denom != other.denom:
@@ -250,7 +254,10 @@ class CryptoAmount(NamedTuple):
         return self.amount >= other.amount
 
     def __str__(self):
-        return f'{float(self.amount.format())} {self.asset}'
+        return f'{self.amount} {self.asset}'
+
+    def __repr__(self):
+        return f'CryptoAmount({self!s})'
 
     def check(self, a: 'CryptoAmount'):
         if isinstance(a, CryptoAmount):

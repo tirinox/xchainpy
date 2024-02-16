@@ -31,6 +31,9 @@ class Asset(NamedTuple):
             s += f'-{self.contract}'
         return s
 
+    def __repr__(self):
+        return f"Asset({self!s})"
+
     @staticmethod
     def get_name_and_contract(input_str):
         components = input_str.split('-', maxsplit=2)
