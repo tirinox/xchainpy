@@ -572,7 +572,7 @@ class CosmosGaiaClient(XChainClient):
         extra_fee = fee if is_native else Amount.from_base(0, self._decimal)
 
         if asset_balance is None or asset_balance.amount.as_base < amount.amount.as_base + extra_fee.as_base:
-            raise ValueError(f"Insufficient funds: {amount.amount} {amount.asset}")
+            raise ValueError(f"Insufficient funds: {amount} is required. Balance is {asset_balance}")
 
         if native_balance is None or native_balance.amount < fee:
             raise ValueError(f"Insufficient funds to pay fee: {fee.amount} {self._gas_asset}")
