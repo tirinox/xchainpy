@@ -40,6 +40,8 @@ class ActionType(Enum):
     RESERVE = 'reserve'
     NOOP = 'noop'
 
+    UNKNOWN = '_unknown_'
+
 
 MEMO_ACTION_TABLE = {
     "add": ActionType.ADD_LIQUIDITY,
