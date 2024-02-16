@@ -53,12 +53,9 @@ class Wallet:
                  concurrency: int = 5):
         self._semaphore = asyncio.Semaphore(concurrency)
 
-        if not query_api:
-            self.query_api = THORChainQuery()
-        else:
-            self.query_api = query_api
+        self.query_api = query_api or THORChainQuery()
 
-        self.enabled_chains = enabled_chains
+        self._enabled_chains = enabled_chains
 
         self.network = self.cache.network
 
@@ -76,9 +73,9 @@ class Wallet:
         return self.clients.get(chain)
 
     def is_chain_enabled(self, chain: Chain):
-        if not self.enabled_chains:
+        if not self._enabled_chains:
             return True
-        return chain in self.enabled_chains
+        return chain in self._enabled_chains
 
     def _init_evm_helpers(self):
         for chain in EVM_CHAINS:
@@ -86,13 +83,14 @@ class Wallet:
                 self._evm_helpers[chain] = EVMHelper(self.get_client(chain), self.cache)
 
     def _create_clients(self, phrase):
-        for chain, chain_class in self.CLIENT_CLASSES.items():
-            if self.is_chain_enabled(chain):
-                if issubclass(chain_class, NoClient):
-                    raise ImportError(f"{chain} client is not found. Try to install it by running"
-                                      f" 'pip install xchainpy2_{chain}' or remove it from the enabled chains set in "
-                                      f"config(WalletSettings).")
-                self.clients[chain] = chain_class(phrase=phrase)
+        for chain in self._enabled_chains:
+            chain_class = self.CLIENT_CLASSES.get(chain)
+            if not chain_class or issubclass(chain_class, NoClient):
+                raise ImportError(f"{chain} client is not found. Try to install it by running"
+                                  f" 'pip install xchainpy2_{chain.value.lower()}' "
+                                  f"or remove it from the enabled chains set in "
+                                  f"config(WalletSettings).")
+            self.clients[chain] = chain_class(phrase=phrase)
 
     async def get_all_balances(self) -> AllBalances:
         result = AllBalances(
@@ -118,3 +116,8 @@ class Wallet:
             if hasattr(client, 'close'):
                 with suppress(Exception):
                     await client.close()
+                    await client.purge_client()
+
+    def explorer_url_tx(self, tx_id: str):
+        thorchain: THORChainClient = self.clients.get(Chain.THORChain)
+        return thorchain.get_explorer_tx_url(tx_id)
