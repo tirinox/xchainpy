@@ -104,11 +104,12 @@ class THORChainQuery:
         from_asset = str(from_asset) if isinstance(from_asset, Asset) else from_asset
         destination_asset = str(destination_asset) if isinstance(destination_asset, Asset) else destination_asset
         input_amount = get_base_amount_with_diff_decimals(amount, DEFAULT_ASSET_DECIMAL)
+        input_amount = int(input_amount)
 
         try:
             swap_quote: QuoteSwapResponse
             swap_quote = await self.cache.quote_api.quoteswap(
-                height=height, from_asset=from_asset, to_asset=destination_asset, amount=int(input_amount),
+                height=height, from_asset=from_asset, to_asset=destination_asset, amount=input_amount,
                 destination=destination_address,
                 tolerance_bps=tolerance_bps,
                 affiliate_bps=affiliate_bps, affiliate=affiliate_address,

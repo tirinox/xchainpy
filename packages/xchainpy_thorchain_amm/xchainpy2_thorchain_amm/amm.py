@@ -1,4 +1,5 @@
-from typing import Union
+from datetime import datetime
+from typing import Union, Optional
 
 from xchainpy2_client import FeeOption
 from xchainpy2_thorchain import THORChainClient
@@ -15,8 +16,8 @@ class SwapException(Exception):
 
 
 class THORChainAMM:
-    def __init__(self, query: THORChainQuery, wallet: Wallet):
-        self.query = query
+    def __init__(self, wallet: Wallet, query: Optional[THORChainQuery] = None):
+        self.query = query or wallet.query_api or THORChainQuery()
         self.wallet = wallet
 
     async def do_swap(self, input_amount: CryptoAmount,
@@ -42,18 +43,25 @@ class THORChainAMM:
         :param fee_option: fee option to use for swap (refer to input chain client for fee options)
         :return: hash of the inbound transaction (used to track transaction status)
         """
-        validation_errors = await self._validate_swap(input_amount, destination_asset, destination_address,
-                                                      tolerance_bps, affiliate_bps,
-                                                      affiliate_address)
+        if not destination_address:
+            dest_chain = self._dest_chain(Asset.automatic(destination_asset))
+            dest_client = self.wallet.get_client(dest_chain)
+            if not dest_client:
+                raise SwapException('No destination address')
+            destination_address = dest_client.get_address()
 
-        if validation_errors:
-            raise SwapException(f'Invalid swap: {validation_errors}', validation_errors)
+        validation_error = await self._validate_swap(input_amount, destination_asset, destination_address,
+                                                     tolerance_bps, affiliate_bps,
+                                                     affiliate_address)
+
+        if validation_error:
+            raise SwapException(f'Invalid swap: {validation_error}')
 
         estimate = await self.query.quote_swap(
             input_amount.amount,
             input_amount.asset,
-            destination_asset,
             destination_address,
+            destination_asset,
             tolerance_bps,
             affiliate_bps,
             affiliate_address,
@@ -89,8 +97,36 @@ class THORChainAMM:
     async def remove_savers(self):
         ...
 
-    async def register_name(self):
-        ...
+    async def register_name(self, thorname: str, owner: str = '',
+                            chain: Chain = Chain.THORChain, chain_address: str = '',
+                            preferred_asset: Optional[Asset] = None,
+                            expiry: datetime = None):
+        """
+        Register a THORName with a default expirity of one year. By default,
+         chain and chainAddress is getting from wallet instance and is BTC.
+        :param thorname: The THORName to register
+        :param owner:  The owner of the THORName (optional)
+        :param chain: The chain associated with the THORName (optional)
+        :param chain_address: The address associated with the THORName (optional)
+        :param preferred_asset: Preferred asset associated with the THORName (optional)
+        :param expiry:  Expiry date for the THORName (optional)
+        :return:
+        """
+
+    async def update_name(self, thorname: str, owner: str = '',
+                          chain: Chain = Chain.THORChain, chain_address: str = '',
+                          preferred_asset: Optional[Asset] = None,
+                          expiry: datetime = None):
+        """
+        Register a THORName
+        :param thorname: The THORName to register
+        :param owner:  The owner of the THORName (optional)
+        :param chain: The chain associated with the THORName (optional)
+        :param chain_address: The address associated with the THORName (optional)
+        :param preferred_asset: Preferred asset associated with the THORName (optional)
+        :param expiry:  Expiry date for the THORName (optional)
+        :return:
+        """
 
     # -----------------------------------------
 
@@ -100,7 +136,7 @@ class THORChainAMM:
 
     @staticmethod
     def is_thorchain_asset(asset: Asset) -> bool:
-        return asset.chain == Chain.THORChain or asset.synth
+        return asset.chain == Chain.THORChain.value or asset.synth
 
     async def _swap_thorchain_asset(self, input_amount: CryptoAmount, quote: SwapEstimate) -> str:
         client = self.wallet.get_client(Chain.THORChain)
@@ -122,56 +158,52 @@ class THORChainAMM:
         else:
             return await client.transfer(input_amount, quote.details.inbound_address, memo=quote.memo)
 
+    def _dest_chain(self, dest_asset: Asset) -> Chain:
+        return Chain.THORChain if self.is_thorchain_asset(dest_asset) else Chain(dest_asset.chain)
+
     async def _validate_swap(self,
                              input_amount: CryptoAmount,
                              destination_asset: Union[Asset, str], destination_address: str = '',
                              tolerance_bps=0.0,
                              affiliate_bps=0.0,
                              affiliate_address: str = ''):
-
-        errors = []
-
         if not input_amount.asset.chain or not input_amount.asset.symbol:
-            errors.append('Invalid input asset')
-            return errors
+            return 'Invalid input asset'
 
         destination_asset = Asset.automatic(destination_asset)
         if not destination_asset.chain or not destination_asset.symbol:
-            errors.append('Invalid destination asset')
-            return errors
+            return f'Invalid destination asset "{destination_asset}"'
 
-        chain = Chain.THORChain if self.is_thorchain_asset(destination_asset) else Chain(destination_asset.chain)
+        chain = self._dest_chain(destination_asset)
 
         if not destination_address:
-            errors.append('Destination address is required')
+            return 'Destination address is required'
         else:
             client = self.wallet.get_client(chain)
             if not client:
-                errors.append(f'Client for {chain} not found')
-            elif client.validate_address(destination_address):
-                errors.append(f'Invalid destination address: {destination_address}')
+                return f'Client for {chain} not found'
+            elif not client.validate_address(destination_address):
+                return f'Address validation failed "{destination_address}" is invalid for "{chain}"'
 
         if tolerance_bps < 0 or tolerance_bps > THOR_BASIS_POINT_MAX:
-            errors.append(f'Invalid tolerance: {tolerance_bps}; must be between 0 and {THOR_BASIS_POINT_MAX}')
+            return f'Invalid tolerance: {tolerance_bps}; must be between 0 and {THOR_BASIS_POINT_MAX}'
 
         if affiliate_bps < 0 or affiliate_bps > THOR_BASIS_POINT_MAX:
-            errors.append(f'Invalid affiliate fee: {affiliate_bps}; must be between 0 and {THOR_BASIS_POINT_MAX}')
+            return f'Invalid affiliate fee: {affiliate_bps}; must be between 0 and {THOR_BASIS_POINT_MAX}'
 
         if affiliate_address:
             is_valid = self.wallet.get_client(Chain.THORChain).validate_address(affiliate_address)
             if not is_valid:
                 thor_name = await self.query.cache.get_name_details(affiliate_address)
                 if not thor_name:
-                    errors.append(f'Affiliate address "{affiliate_address}" is not a valid THORChain address')
+                    return f'Affiliate address "{affiliate_address}" is not a valid THORChain address'
 
         if input_amount.amount.internal_amount <= 0:
-            errors.append(f'Invalid input amount: {input_amount.amount}; must be greater than 0')
+            return f'Invalid input amount: {input_amount.amount}; must be greater than 0'
 
         if input_amount.asset.synth:
-            return errors
+            return
 
         if self.is_erc20_asset(input_amount.asset):
             # todo: validate allowance
-            errors.append('ERC20 allowance not implemented yet...')
-
-        return errors
+            return 'ERC20 allowance not implemented yet...'
