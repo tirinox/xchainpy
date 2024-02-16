@@ -1,3 +1,4 @@
+from contextlib import suppress
 from datetime import datetime
 from typing import Union, Optional
 
@@ -210,3 +211,11 @@ class THORChainAMM:
 
     def tracker(self):
         return TransactionTracker(self.query.cache)
+
+    async def close(self):
+        with suppress(Exception):
+            await self.wallet.close()
+        with suppress(Exception):
+            await self.query.close()
+        with suppress(Exception):
+            await self.query.cache.close()
