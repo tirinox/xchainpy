@@ -2,6 +2,7 @@ import asyncio
 import os
 
 from xchainpy2_thorchain_amm import Wallet, THORChainAMM
+from xchainpy2_thorchain_query import TransactionTracker
 from xchainpy2_utils import CryptoAmount, AssetAVAX, Chain, AssetBNB, AssetATOM, Asset
 
 
@@ -23,6 +24,10 @@ async def main(seed_phrase):
         tolerance_bps=1000,
     )
     print(f"Swap tx hash: {tx_hash}, {wallet.explorer_url_tx(tx_hash)}")
+
+    tracker = amm.tracker()
+    async for status in tracker.poll(tx_hash):
+        print(f'Status: {status}')
 
     await wallet.close()
 

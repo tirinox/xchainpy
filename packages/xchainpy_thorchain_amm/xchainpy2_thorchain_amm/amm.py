@@ -3,7 +3,7 @@ from typing import Union, Optional
 
 from xchainpy2_client import FeeOption
 from xchainpy2_thorchain import THORChainClient
-from xchainpy2_thorchain_query import THORChainQuery, SwapEstimate
+from xchainpy2_thorchain_query import THORChainQuery, SwapEstimate, TransactionTracker
 from xchainpy2_utils import CryptoAmount, Asset, Chain, is_gas_asset
 from .consts import THOR_BASIS_POINT_MAX
 from .wallet import Wallet
@@ -207,3 +207,6 @@ class THORChainAMM:
         if self.is_erc20_asset(input_amount.asset):
             # todo: validate allowance
             return 'ERC20 allowance not implemented yet...'
+
+    def tracker(self):
+        return TransactionTracker(self.query.cache)
