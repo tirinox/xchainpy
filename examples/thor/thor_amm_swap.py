@@ -2,8 +2,8 @@ import asyncio
 import os
 
 from xchainpy2_thorchain_amm import Wallet, THORChainAMM
-from xchainpy2_thorchain_query import TransactionTracker
-from xchainpy2_utils import CryptoAmount, AssetAVAX, Chain, AssetBNB, AssetATOM, Asset
+from xchainpy2_thorchain_query import TxDetails
+from xchainpy2_utils import CryptoAmount, Chain, AssetRUNE
 
 
 async def main(seed_phrase):
@@ -18,18 +18,25 @@ async def main(seed_phrase):
     balances = await wallet.get_all_balances()
     print(f"Balances: {balances}")
 
+    # tx_hash = await amm.do_swap(
+    #     CryptoAmount.automatic("1.5", 'THOR.RUNE'),
+    #     AssetATOM,
+    #     tolerance_bps=3000,
+    # )
     tx_hash = await amm.do_swap(
-        CryptoAmount.automatic("2.0", 'THOR.RUNE'),
-        Asset.from_string('BNB.BUSD-bd1'),
-        tolerance_bps=1000,
+        CryptoAmount.automatic("0.0012", 'BNB.BNB'),
+        AssetRUNE,
+        tolerance_bps=3000,
     )
-    print(f"Swap tx hash: {tx_hash}, {wallet.explorer_url_tx(tx_hash)}")
+
+    print(f"Swap has been broadcasted. TX hash is {tx_hash}, {wallet.explorer_url_tx(tx_hash)}")
 
     tracker = amm.tracker()
     async for status in tracker.poll(tx_hash):
-        print(f'Status: {status}')
+        status: TxDetails
+        print(f'Status: {status.status}; stage: {status.stage}')
 
-    await wallet.close()
+    await amm.close()
 
 
 if __name__ == "__main__":
