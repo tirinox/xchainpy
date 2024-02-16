@@ -531,29 +531,40 @@ class TxDetails(NamedTuple):
         return not self.failed and not self.successful
 
     @classmethod
-    def create(cls, signers: TxSignersResponse, status_details: TxStatusResponse):
+    def create(cls, signers: Optional[TxSignersResponse], status_details: Optional[TxStatusResponse],
+               tx_hash=''):
+        if not signers or not status_details:
+            return cls(
+                tx_hash, ActionType.UNKNOWN, TxStatus.UNKNOWN, TxStage.Unknown, signers, status_details
+            )
+
         memo = THORMemo.parse_memo(status_details.tx.memo)
 
         stage = TxStage.Unknown
+        status = TxStatus.UNKNOWN
+
         if cls.get_stage(status_details, 'inbound_observed'):
             stage = TxStage.InboundObserved
         if cls.get_stage(status_details, 'inbound_confirmation_counted'):
             stage = TxStage.InboundConfirmationCounted
+            status = TxStatus.OBSERVED
         if cls.get_stage(status_details, 'inbound_finalised'):
             stage = TxStage.InboundFinalised
-        if cls.get_stage(status_details, 'swap_status'):
+            status = TxStatus.OBSERVED
+        if cls.get_stage(status_details, 'swap_finalised'):
             stage = TxStage.SwapFinalised
         if cls.get_stage(status_details, 'outbound_delay'):
             stage = TxStage.OutboundDelayWait
         if cls.get_stage(status_details, 'outbound_signed'):
             stage = TxStage.OutboundSigned
 
-        status = TxStatus.UNKNOWN
-
         if stage == TxStage.OutboundSigned:
             if memo.action in (ActionType.SWAP, ActionType.WITHDRAW, ActionType.LOAN_OPEN,
                                ActionType.UNBOND):
                 status = TxStatus.DONE
+        elif stage == TxStage.SwapFinalised and status_details.out_txs:
+            # outbound inside THORChain blockchain
+            status = TxStatus.DONE
         elif stage == TxStage.InboundFinalised:
             if memo.action in (ActionType.ADD_LIQUIDITY, ActionType.BOND, ActionType.DONATE):
                 status = TxStatus.DONE
@@ -593,3 +604,7 @@ class TxDetails(NamedTuple):
     @property
     def has_refunds(self):
         return bool(self.find_refunds(self.status_details))
+
+    @property
+    def has_out_txs(self):
+        return bool(self.status_details.out_txs)
