@@ -588,7 +588,7 @@ class TxDetails(NamedTuple):
         return [
             tx for tx in status_details.out_txs
             if 'REFUND' in tx.memo.upper()
-        ]
+        ] if status_details.out_txs else []
 
     @property
     def has_refunds(self):

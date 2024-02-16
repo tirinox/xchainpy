@@ -51,13 +51,12 @@ class TransactionTrackerAsyncGenerator:
     def __aiter__(self):
         return self
 
-    async def __anext__(self):
+    async def __anext__(self) -> TxDetails:
         if self._previous_status in TxStatus.finished():
             raise StopIteration
 
         while True:
             details = await self.tracker.check_tx_progress(self.txid)
-            print('.')
             if details.status == self._previous_status:
                 await asyncio.sleep(self.interval)
             else:
