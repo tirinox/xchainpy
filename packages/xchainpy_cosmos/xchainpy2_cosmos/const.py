@@ -8,11 +8,13 @@ COSMOS_DECIMAL = 6
 
 # Default gas limit
 # As same as definition in Cosmosstation's web wallet
-DEFAULT_GAS_LIMIT = '200000'
+DEFAULT_GAS_LIMIT = 90_000
+
+FEE_MINIMUM_GAS_PRICE = 0.006
 
 # Default fee
 # As same as definition in Cosmosstation's web wallet
-DEFAULT_FEE = Amount.from_base(5000, COSMOS_DECIMAL)
+DEFAULT_FEE = Amount.from_base(int(DEFAULT_GAS_LIMIT * FEE_MINIMUM_GAS_PRICE), COSMOS_DECIMAL)
 
 # Chain identifier for Cosmos chain
 GAIA_CHAIN_KEY = 'GAIA'

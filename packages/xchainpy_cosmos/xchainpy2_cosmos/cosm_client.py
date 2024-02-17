@@ -20,11 +20,12 @@ from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx,
     Fees, TxPage, FeeType, FeeOption
 from xchainpy2_client.fees import single_fee
 from xchainpy2_crypto import derive_private_key, create_address
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount, RUNE_DECIMAL, Asset, Amount, AssetATOM, \
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, Amount, AssetATOM, \
     unique_by_key, batched, NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER, flatten
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_DERIVATION_PATHS, COSMOS_ADDR_PREFIX, \
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
-    MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE, DEFAULT_GAS_LIMIT, DEFAULT_REST_USER_AGENT
+    MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE, DEFAULT_GAS_LIMIT, DEFAULT_REST_USER_AGENT, \
+    FEE_MINIMUM_GAS_PRICE
 from .models import TxHistoryResponse, TxLoadException
 from .utils import parse_tx_response_json
 
@@ -73,6 +74,8 @@ class CosmosGaiaClient(XChainClient):
         self._denom = COSMOS_DENOM
         self._decimal = COSMOS_DECIMAL
         self._gas_limit = DEFAULT_GAS_LIMIT
+
+        self._fee_minimum_gas_price = FEE_MINIMUM_GAS_PRICE
 
         self._client: Optional[LedgerClient] = None
         self._recreate_client()
@@ -130,7 +133,7 @@ class CosmosGaiaClient(XChainClient):
             url=rest_url,
             fee_denomination=self._denom,
             staking_denomination=self._denom,
-            fee_minimum_gas_price=0,
+            fee_minimum_gas_price=self._fee_minimum_gas_price,
         ))
 
     def set_chain_id(self, chain_id: str):
@@ -488,7 +491,7 @@ class CosmosGaiaClient(XChainClient):
             tx,
             self._wallet,
             None,  # account
-            int(self._gas_limit),
+            self._gas_limit,
             memo
         )
 
@@ -571,8 +574,9 @@ class CosmosGaiaClient(XChainClient):
         is_native = amount.asset == self._gas_asset
         extra_fee = fee if is_native else Amount.from_base(0, self._decimal)
 
-        if asset_balance is None or asset_balance.amount.as_base < amount.amount.as_base + extra_fee.as_base:
-            raise ValueError(f"Insufficient funds: {amount} is required. Balance is {asset_balance}")
+        if (asset_balance is None
+                or asset_balance.amount.as_base < (required := amount.amount.as_base + extra_fee.as_base)):
+            raise ValueError(f"Insufficient funds: {required} is required. Balance is {asset_balance}")
 
         if native_balance is None or native_balance.amount < fee:
             raise ValueError(f"Insufficient funds to pay fee: {fee.amount} {self._gas_asset}")

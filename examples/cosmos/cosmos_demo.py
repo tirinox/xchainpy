@@ -25,8 +25,6 @@ async def demo_read_txs():
     txs = await client.search_tx_from_rpc(message_sender=demo_addy)
     print(txs)
 
-    # tx_id = txs.tx_responses[0].txhash
-
 
 async def main():
     await demo_read_txs()
