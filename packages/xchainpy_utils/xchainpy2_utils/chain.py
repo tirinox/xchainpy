@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class Chain(Enum):
+    # These values must correspond to the chain names in THORChain; do not change them without a good reason
     Binance = "BNB"
     Bitcoin = "BTC"
     Ethereum = "ETH"
