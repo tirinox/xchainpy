@@ -14,7 +14,7 @@ from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidit
 from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
     LiquidityPosition, Block, PostionDepositValue, PoolRatios, WithdrawLiquidityPosition, EstimateWithdrawLP, \
     EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails, LoanOpenQuote, \
-    BlockInformation, LoanCloseQuote, THORNameException
+    BlockInformation, LoanCloseQuote, THORNameException, THORNameEstimate
 from .swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
     get_chain_gas_asset
 
@@ -900,12 +900,12 @@ class THORChainQuery:
             recommended_min_amount_in=int(resp.recommended_min_amount_in),
         )
 
-    async def estimate_thor_name(self, is_update: bool, thorname: str, expiry: datetime = None) -> CryptoAmount:
+    async def estimate_thor_name(self, is_update: bool, thorname: str, expiry: datetime = None) -> THORNameEstimate:
         """
         Estimate the cost of registering or updating a THORName
-        :param is_update:
-        :param thorname:
-        :param expiry:
+        :param is_update: bool - True if updating an existing THORName
+        :param thorname: str - the THORName to register or update
+        :param expiry: datetime - the desired expiry date of the THORName
         :return:
         """
         thor_name_details = await self.cache.get_name_details(thorname)
@@ -915,8 +915,7 @@ class THORChainQuery:
         if not thor_name_details and is_update:
             raise THORNameException("THORName not registered")
 
-        block = await self.cache.get_last_block()
-        current_thorchain_height = int(block[0].thorchain)
+        current_thorchain_height = await self.cache.get_native_block_height()
 
         current_expire = int(thor_name_details.expire) if thor_name_details else 0
 
@@ -946,4 +945,9 @@ class THORChainQuery:
         )
         total_cost_amount = one_time_fee.as_asset + total_fee_per_block.as_asset
         total_cost = CryptoAmount(total_cost_amount, self.native_asset)
-        return total_cost
+
+        return THORNameEstimate(
+            total_cost,
+            thor_name_details,
+            current_thorchain_height
+        )

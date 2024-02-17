@@ -15,12 +15,12 @@ async def test_estimate_thor_name():
 
         r = await query.estimate_thor_name(False, 'fefefwfebfghh')
         # 10 rune once + 1 rune / year
-        assert 11 < float(r.amount) < 12
+        assert 11 < float(r.cost.amount) < 12
 
         r = await query.estimate_thor_name(False, 'fefefwfebfghh',
                                            expiry=datetime.datetime.now() + datetime.timedelta(days=365 * 3))
         # 10 rune once + 1 rune / year => 13
-        assert 13 < float(r.amount) < 13.5
+        assert 13 < float(r.cost.amount) < 13.5
 
         with pytest.raises(THORNameException):
             # not registered, cannot update
