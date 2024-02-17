@@ -75,6 +75,7 @@ class MayaChainClient(CosmosGaiaClient):
             network, phrase, private_key, fee_bound, root_derivation_paths,
             self._client_urls, self.chain_ids, self.explorers, wallet_index
         )
+        self._fee_minimum_gas_price = 0
 
         # Tune for MayaChain
         self.chain = Chain.Maya
