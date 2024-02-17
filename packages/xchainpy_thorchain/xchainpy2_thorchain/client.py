@@ -86,6 +86,9 @@ class THORChainClient(CosmosGaiaClient):
         self._recreate_client()
         self._make_wallet()
 
+    async def close(self):
+        await self.thornode_api_client.rest_client.pool_manager.close()
+
     def set_network(self, network: NetworkType):
         super().set_network(network)
         self._prefix = get_thor_address_prefix(network)
