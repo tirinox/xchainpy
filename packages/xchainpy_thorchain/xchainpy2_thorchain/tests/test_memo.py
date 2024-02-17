@@ -211,7 +211,7 @@ def test_thor_name():
     assert m.build() == f'~:acc-test:THOR:{THOR_ADDR_1}:{THOR_ADDR_2}'
     assert THORMemo.parse_memo(f'N:acc-test:THOR:{THOR_ADDR_1}:{THOR_ADDR_2}') == m
 
-    m = THORMemo.thorname_set_preferred('some_name', 'THOR', THOR_ADDR_1, USDC, THOR_ADDR_2)
+    m = THORMemo.thorname_register_or_renew('some_name', 'THOR', THOR_ADDR_1, THOR_ADDR_2, USDC)
     assert m.action == ActionType.THORNAME
     assert m.name == 'some_name'
     assert m.chain == 'THOR'

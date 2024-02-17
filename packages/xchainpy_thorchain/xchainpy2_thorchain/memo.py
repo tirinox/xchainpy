@@ -110,7 +110,7 @@ class THORMemo:
     owner: str = ''
     chain: str = Chain.THORChain.value
     affiliate_asset: str = ''
-    name_expiry: int = 0
+    name_expiry: Union[str, int] = ''
 
     @property
     def has_affiliate_part(self):
@@ -183,13 +183,13 @@ class THORMemo:
         elif tx_type == ActionType.THORNAME:
             # ~:name:chain:address:?owner:?preferredAsset:?expiry
             # 0 1    2     3       4      5               6
-            return cls.thorname_set_preferred(
+            return cls.thorname_register_or_renew(
                 name=ith(components, 1),
                 chain=ith(components, 2),
                 address=ith(components, 3),
                 thor_owner=ith(components, 4, ''),
                 preferred_asset=ith(components, 5, ''),
-                expiry=ith(components, 6, 0, is_number=True),
+                expiry=ith(components, 6, ''),
             )
 
         elif tx_type == ActionType.DONATE:
@@ -414,24 +414,17 @@ class THORMemo:
         )
 
     @classmethod
-    def thorname_register_or_renew(cls, name: str, chain: str, address: str, thor_owner: str = ''):
+    def thorname_register_or_renew(cls, name: str, chain: str, address: str, thor_owner: str = '',
+                                   preferred_asset: str = '',
+                                   expiry=''):
         return cls(
             ActionType.THORNAME,
             name=name,
             chain=chain,
             dest_address=address,
             owner=thor_owner,
-        )
-
-    @classmethod
-    def thorname_set_preferred(cls, name: str, chain: str, address: str, preferred_asset: str, thor_owner: str = '',
-                               expiry: int = 0):
-        return cls(
-            ActionType.THORNAME,
-            name=name, chain=chain, dest_address=address,
-            owner=thor_owner,
-            affiliate_asset=preferred_asset,
             name_expiry=expiry,
+            affiliate_asset=preferred_asset,
         )
 
     @classmethod
