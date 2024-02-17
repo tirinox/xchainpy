@@ -725,7 +725,6 @@ class AsyncHttpApiClient(BaseApiClient):
         return AsyncHttpApiClient(env, requests_params, loop=loop)
 
     def _init_session(self, **kwargs):
-
         loop = kwargs.get('loop', asyncio.get_event_loop())
         session = aiohttp.ClientSession(
             loop=loop,
@@ -861,7 +860,6 @@ class AsyncHttpApiClient(BaseApiClient):
             req_path += f'?sync=1'
 
         res = await self._post(req_path, data=data)
-        msg.wallet.increment_account_sequence()
         return res
 
     broadcast_msg.__doc__ = HttpApiClient.broadcast_msg.__doc__

@@ -27,8 +27,8 @@ async def main():
     tx = await bnb2.transfer(max_sendable, bnb.get_address())
     print(f'Tx broadcast: {bnb.get_explorer_tx_url(tx)}')
 
-    await bnb.close_session()
-    await bnb2.close_session()
+    await bnb.close()
+    await bnb2.close()
 
 
 asyncio.run(main())

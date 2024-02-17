@@ -21,7 +21,7 @@ async def main():
     tx = await bnb.get_transaction_data(TX_ID_SWAP)
     print(tx)
 
-    await bnb.close_session()
+    await bnb.close()
 
 
 asyncio.run(main())

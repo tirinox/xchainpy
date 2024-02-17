@@ -247,7 +247,7 @@ class BinanceChainClient(XChainClient):
     def _make_asset(self, symbol: str) -> Asset:
         return Asset.from_string(f"{self.chain.value}.{symbol}")
 
-    async def close_session(self):
+    async def close(self):
         await self.client.session.close()
 
     def parse_tx_data(self, raw: dict, my_address: str = '') -> XcTx:
