@@ -3,7 +3,7 @@ import os
 
 from xchainpy2_thorchain_amm import Wallet, THORChainAMM
 from xchainpy2_thorchain_query import TxDetails
-from xchainpy2_utils import CryptoAmount, Chain, AssetRUNE
+from xchainpy2_utils import Chain, CryptoAmount, AssetATOM
 
 
 async def main(seed_phrase):
@@ -18,16 +18,16 @@ async def main(seed_phrase):
     balances = await wallet.get_all_balances()
     print(f"Balances: {balances}")
 
-    # tx_hash = await amm.do_swap(
-    #     CryptoAmount.automatic("1.5", 'THOR.RUNE'),
-    #     AssetATOM,
-    #     tolerance_bps=3000,
-    # )
     tx_hash = await amm.do_swap(
-        CryptoAmount.automatic("0.0012", 'BNB.BNB'),
-        AssetRUNE,
+        CryptoAmount.automatic("1.5", 'THOR.RUNE'),
+        AssetATOM,
         tolerance_bps=3000,
     )
+    # tx_hash = await amm.do_swap(
+    #     CryptoAmount.automatic("0.0012", 'BNB.BNB'),
+    #     AssetRUNE,
+    #     tolerance_bps=3000,
+    # )
 
     print(f"Swap has been broadcasted. TX hash is {tx_hash}, {wallet.explorer_url_tx(tx_hash)}")
 

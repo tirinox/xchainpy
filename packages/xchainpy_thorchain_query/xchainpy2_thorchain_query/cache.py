@@ -16,14 +16,14 @@ from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress, T
     SaversApi, QueueApi, QuoteApi, LastBlock, LiquidityProviderSummary
 from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, CryptoAmount, RUNE_DECIMAL, CACAO_DECIMAL, Amount, \
     Address, NetworkType
-from .swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
-    get_double_swap_slip
 from .const import Mimir, TEN_MINUTES, SAME_ASSET_EXCHANGE_RATE, USD_ASSETS
 from .env import URLs
 from .midgard import MidgardAPIClient
 from .models import PoolCache, InboundDetailCache, NetworkValuesCache, LiquidityPool, InboundDetail, SwapOutput, \
     InboundDetails, NameCache, LastBlockCache
 from .patch_clients import request_api_with_backup_hosts
+from .swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
+    get_double_swap_slip
 from .thornode import THORNodeAPIClient
 
 logger = logging.getLogger('THORChainCache')
@@ -36,14 +36,24 @@ DEFAULT_THORNODE.configuration.host = URLs.THORNode.MAINNET
 
 
 class THORChainCache:
-    def __init__(self, midgard_client: MidgardAPIClient = DEFAULT_MIDGARD,
-                 thornode_client: THORNodeAPIClient = DEFAULT_THORNODE,
+    def __init__(self, midgard_client: MidgardAPIClient = None,
+                 thornode_client: THORNodeAPIClient = None,
                  expire_pool: float = TEN_MINUTES,
                  expire_inbound: float = TEN_MINUTES,
                  expire_network: float = TEN_MINUTES,
                  native_asset: Asset = AssetRUNE,
                  network: NetworkType = NetworkType.MAINNET,
                  stable_coins: List[Asset] = None):
+
+        if not midgard_client:
+            midgard_client = MidgardAPIClient()
+            midgard_client.configuration.host = (
+                URLs.Midgard.MAINNET if network == NetworkType.MAINNET else URLs.Midgard.STAGENET)
+        if not thornode_client:
+            thornode_client = THORNodeAPIClient()
+            thornode_client.configuration.host = (
+                URLs.THORNode.MAINNET if network == NetworkType.MAINNET else URLs.THORNode.STAGENET)
+
         self._midgard_client = midgard_client
         self._thornode_client = thornode_client
         self._pool_cache = PoolCache(0, {})
@@ -177,25 +187,25 @@ class THORChainCache:
                 raise LookupError('Missing required inbound info')
 
             halted = bool(
-                    inbound.halted or
-                    # is it necessary?
-                    mimir.get(Mimir.HALT_CHAIN_GLOBAL, False) or
-                    mimir.get(Mimir.halt_trading(inbound.chain), False)
+                inbound.halted or
+                # is it necessary?
+                mimir.get(Mimir.HALT_CHAIN_GLOBAL, False) or
+                mimir.get(Mimir.halt_trading(inbound.chain), False)
             )
 
             halted_trading = bool(
-                    inbound.global_trading_paused or
-                    inbound.chain_trading_paused or
-                    # is it necessary?
-                    mimir.get(Mimir.HALT_TRADING, False) or
-                    mimir.get(Mimir.halt_trading(inbound.chain), False)
+                inbound.global_trading_paused or
+                inbound.chain_trading_paused or
+                # is it necessary?
+                mimir.get(Mimir.HALT_TRADING, False) or
+                mimir.get(Mimir.halt_trading(inbound.chain), False)
             )
 
             halted_lp = bool(
-                    inbound.chain_lp_actions_paused or
-                    # is it necessary?
-                    mimir.get(Mimir.PAUSE_LP, False) or
-                    mimir.get(Mimir.pause_lp(inbound.chain))
+                inbound.chain_lp_actions_paused or
+                # is it necessary?
+                mimir.get(Mimir.PAUSE_LP, False) or
+                mimir.get(Mimir.pause_lp(inbound.chain))
             )
 
             inbound_map[inbound.chain] = InboundDetail(
@@ -443,7 +453,7 @@ class THORChainCache:
                 return set()
             else:
                 raise
-        
+
     async def load_names_by_address(self, address: str) -> List[THORNameDetails]:
         names = await self.get_names_by_address(address)
         if not names:
