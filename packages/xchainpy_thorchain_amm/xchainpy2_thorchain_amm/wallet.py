@@ -116,7 +116,7 @@ class Wallet:
             if hasattr(client, 'close'):
                 with suppress(Exception):
                     await client.close()
-                    await client.purge_client()
+            client.purge_client()
 
     def explorer_url_tx(self, tx_id: str):
         thorchain: THORChainClient = self.clients.get(Chain.THORChain)
