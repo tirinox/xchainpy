@@ -72,6 +72,7 @@ class THORChainClient(CosmosGaiaClient):
             self._client_urls, self.chain_ids, self.explorers,
             wallet_index
         )
+        self._fee_minimum_gas_price = 0
 
         # Tune for THORChain
         self.chain = Chain.THORChain
