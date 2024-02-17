@@ -1,9 +1,10 @@
+import logging
 from contextlib import suppress
 from datetime import datetime
 from typing import Union, Optional
 
 from xchainpy2_client import FeeOption
-from xchainpy2_thorchain import THORChainClient
+from xchainpy2_thorchain import THORChainClient, THORMemo, THOR_BLOCK_TIME_SEC
 from xchainpy2_thorchain_query import THORChainQuery, SwapEstimate, TransactionTracker
 from xchainpy2_utils import CryptoAmount, Asset, Chain, is_gas_asset
 from .consts import THOR_BASIS_POINT_MAX
@@ -98,13 +99,51 @@ class THORChainAMM:
     async def remove_savers(self):
         ...
 
-    async def register_name(self, thorname: str, owner: str = '',
+    async def register_name(self, payment: CryptoAmount, thorname: str, owner: str = '',
                             chain: Chain = Chain.THORChain, chain_address: str = '',
                             preferred_asset: Optional[Asset] = None,
                             expiry: datetime = None):
         """
         Register a THORName with a default expirity of one year. By default,
          chain and chainAddress is getting from wallet instance and is BTC.
+        :param payment: How much to pay for the THORName (normally 10 Rune one time and 1 Rune per year)
+        :param thorname: The THORName to register
+        :param owner:  The owner of the THORName (optional)
+        :param chain: The chain associated with the THORName (optional)
+        :param chain_address: The address associated with the THORName (optional)
+        :param preferred_asset: Preferred asset associated with the THORName (optional)
+        :param expiry:  Expiry date for the THORName (optional)
+        :return:
+        """
+        if not self.validate_thorname(thorname):
+            raise Exception('Invalid THORName')
+
+        est = await self.query.estimate_thor_name(False, thorname, expiry)
+
+        expiry_block = ''
+        if expiry:
+            current_block = await self.query.cache.get_native_block_height()
+            expiry_block = current_block + (expiry - datetime.now()).total_seconds() / THOR_BLOCK_TIME_SEC
+            if expiry_block < current_block:
+                logging.warning(f'Expiry block is in the past: {expiry_block} < {current_block}')
+
+        memo = THORMemo.thorname_register_or_renew(thorname, chain.value, chain_address, owner,
+                                                   preferred_asset=str(preferred_asset) if preferred_asset else '',
+                                                   expiry=expiry_block)
+
+        # noinspection PyTypeChecker
+        thor_client: THORChainClient = self.wallet.get_client(Chain.THORChain)
+        if not thor_client:
+            raise Exception('THORChain client not found')
+
+        return await thor_client.deposit(payment, memo)
+
+    async def update_name(self, thorname: str, owner: str = '',
+                          chain: Chain = Chain.THORChain, chain_address: str = '',
+                          preferred_asset: Optional[Asset] = None,
+                          expiry: datetime = None):
+        """
+        Update a THORName
         :param thorname: The THORName to register
         :param owner:  The owner of the THORName (optional)
         :param chain: The chain associated with the THORName (optional)
@@ -114,20 +153,44 @@ class THORChainAMM:
         :return:
         """
 
-    async def update_name(self, thorname: str, owner: str = '',
-                          chain: Chain = Chain.THORChain, chain_address: str = '',
-                          preferred_asset: Optional[Asset] = None,
-                          expiry: datetime = None):
-        """
-        Register a THORName
-        :param thorname: The THORName to register
-        :param owner:  The owner of the THORName (optional)
-        :param chain: The chain associated with the THORName (optional)
-        :param chain_address: The address associated with the THORName (optional)
-        :param preferred_asset: Preferred asset associated with the THORName (optional)
-        :param expiry:  Expiry date for the THORName (optional)
-        :return:
-        """
+        if not self.validate_thorname(thorname):
+            raise Exception('Invalid THORName')
+
+        est = await self.query.estimate_thor_name(True, thorname, expiry)
+
+        expiry_block = ''
+        if expiry:
+            current_block = await self.query.cache.get_native_block_height()
+            expiry_block = current_block + (expiry - datetime.now()).total_seconds() / THOR_BLOCK_TIME_SEC
+            if expiry_block < current_block:
+                logging.warning(f'Expiry block is in the past: {expiry_block} < {current_block}')
+
+        memo = THORMemo.thorname_register_or_renew(thorname, chain.value, chain_address, owner,
+                                                   preferred_asset=str(preferred_asset) if preferred_asset else '',
+                                                   expiry=expiry_block)
+
+        # noinspection PyTypeChecker
+        thor_client: THORChainClient = self.wallet.get_client(Chain.THORChain)
+        if not thor_client:
+            raise Exception('THORChain client not found')
+
+        return await thor_client.deposit(est.cost, memo)
+
+    @staticmethod
+    def validate_thorname(name: str):
+        # The THORName's string. Must be Between 1-30 hexadecimal characters and -_+ special characters.;
+        if not name:
+            return False
+
+        if len(name) < 1 or len(name) > 30:
+            return False
+
+        # must contain only letters, digits and +_-
+        for c in name:
+            if not c.isalnum() and c not in '-_+':
+                return False
+
+        return True
 
     # -----------------------------------------
 
