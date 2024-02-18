@@ -3,8 +3,6 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List, Union
 
-from typing_extensions import deprecated
-
 from xchainpy2_client.explorer import ExplorerProvider
 from xchainpy2_client.models import XcTx, Fees, TxPage, \
     FeeBounds, Fee, RootDerivationPaths, AssetInfo, FeeOption
@@ -220,6 +218,18 @@ class XChainClient(abc.ABC):
     @abc.abstractmethod
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         pass
+
+    async def has_balance(self, amount: CryptoAmount):
+        """
+        Check if the wallet has enough balance to send the given amount
+        :param amount: amount to send
+        :return: True if the wallet has enough balance, False otherwise
+        """
+        balances = await self.get_balance()
+        balance = next((b for b in balances if b.asset == amount.asset), None)
+        if not balance:
+            return False
+        return balance.amount >= amount.amount
 
     def get_full_derivation_path(self, wallet_index: int) -> str:
         if self.root_derivation_paths:
