@@ -109,7 +109,6 @@ class THORChainAMM:
     async def register_name(self, thorname: str,
                             chain: Chain = Chain.THORChain, chain_address: str = '',
                             owner: str = '',
-                            preferred_asset: Optional[Asset] = None,
                             days: float = 365):
         """
         Register a THORName with a default expiry of one year. By default,
@@ -118,9 +117,8 @@ class THORChainAMM:
         :param chain: The chain associated with the THORName (optional)
         :param chain_address: The address associated with the THORName (optional)
         :param owner: The owner of the THORName; may be different from the sender (optional)
-        :param preferred_asset: Preferred asset associated with the THORName (optional)
         :param days: Expiry date for the THORName (optional)
-        :return:
+        :return: str TX hash
         """
         if days <= 0:
             raise THORNameException('Invalid expiry days. If you want to unregister, use unregister_name() instead.')
@@ -131,8 +129,56 @@ class THORChainAMM:
             raise THORNameException(f'Cannot register THORName: {estimate.reason}')
 
         return await self.general_thorname_call(
-            estimate.cost, thorname, chain, chain_address, owner, preferred_asset,
+            estimate.cost, thorname, chain, chain_address, owner, None,
             estimate.expiry_block_from_date(expiry)
+        )
+
+    async def set_preferred_asset_name(self, thorname: str, preferred_asset: Union[Asset, str],
+                                       chain: Chain, chain_address: str,
+                                       owner: str = '') -> str:
+        """
+        Set the preferred asset for a THORName
+        :param thorname: The THORName to set the preferred asset for
+        :param preferred_asset: Asset to set as preferred
+        :param chain: Chain to set the preferred asset for
+        :param chain_address: Address to collect affiliate fee
+        :param owner: The owner of the THORName; may be different from the sender (optional)
+        :return: str TX hash
+        """
+        if not preferred_asset:
+            raise THORNameException('Invalid preferred asset')
+
+        if not owner:
+            owner = self._get_thorchain_client().get_address()
+
+        return await self.general_thorname_call(
+            CryptoAmount.zero(AssetRUNE),
+            thorname,
+            chain=chain,
+            chain_address=chain_address,
+            owner=owner,
+            preferred_asset=preferred_asset
+        )
+
+    async def set_name_alias_for_chain(self, thorname: str, chain: Chain, chain_address: str,
+                                       owner: str = '') -> str:
+        """
+        Add or update an alias for a THORName on a specific chain
+        :param thorname: THORName to add or update an alias for
+        :param chain: The chain to add or update an alias for
+        :param chain_address: The address to add or update an alias for
+        :param owner: The owner of the THORName; may be different from the sender (optional)
+        :return: str TX hash
+        """
+        if not owner:
+            owner = self._get_thorchain_client().get_address()
+
+        return await self.general_thorname_call(
+            CryptoAmount.zero(AssetRUNE),
+            thorname,
+            chain=chain,
+            chain_address=chain_address,
+            owner=owner
         )
 
     async def renew_name(self, thorname: str, days: float, thor_address: str = '') -> str:
@@ -163,7 +209,7 @@ class THORChainAMM:
         :param chain: The chain associated with the THORName (optional)
         :param chain_address: The address associated with the THORName (optional)
         :param thorname: The THORName to unregister
-        :return: TX hash
+        :return: str TX hash
         """
         if not chain_address:
             chain_address = self._get_thorchain_client().get_address()
@@ -195,7 +241,7 @@ class THORChainAMM:
         :param preferred_asset: Preferred asset associated with the THORName (optional)
         :param expiry_block: Expiry block for the THORName (optional)
         :param check_balance: Check the balance before sending the transaction (optional)
-        :return:
+        :return: str TX hash
         """
         if not self.validate_thorname(thorname):
             raise THORNameException('Invalid THORName')
