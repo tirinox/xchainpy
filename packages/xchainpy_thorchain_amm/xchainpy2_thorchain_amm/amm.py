@@ -1,20 +1,27 @@
-import logging
+import datetime
 from contextlib import suppress
-from datetime import datetime
 from typing import Union, Optional
 
 from xchainpy2_client import FeeOption
-from xchainpy2_thorchain import THORChainClient, THORMemo, THOR_BLOCK_TIME_SEC
+from xchainpy2_thorchain import THORChainClient, THORMemo
 from xchainpy2_thorchain_query import THORChainQuery, SwapEstimate, TransactionTracker
-from xchainpy2_utils import CryptoAmount, Asset, Chain, is_gas_asset
+from xchainpy2_utils import CryptoAmount, Asset, Chain, is_gas_asset, AssetRUNE
 from .consts import THOR_BASIS_POINT_MAX
 from .wallet import Wallet
 
 
-class SwapException(Exception):
+class AMMException(Exception):
     def __init__(self, message, errors: list = None):
         super().__init__(message)
         self.errors = errors
+
+
+class SwapException(AMMException):
+    ...
+
+
+class THORNameException(AMMException):
+    ...
 
 
 class THORChainAMM:
@@ -41,7 +48,7 @@ class THORChainAMM:
         :param affiliate_bps: affiliate fee in basis points (0-10000)
         :param affiliate_address: affiliate address to collect affiliate fee
         :param streaming_interval: streaming interval in THORChain blocks (6 sec), 0 to disable streaming
-        :param streaming_quantity: streaming swap quantity, 0 for automatic
+        :param streaming_quantity: sub swap quantity, 0 for automatic
         :param fee_option: fee option to use for swap (refer to input chain client for fee options)
         :return: hash of the inbound transaction (used to track transaction status)
         """
@@ -79,7 +86,7 @@ class THORChainAMM:
             return await self._swap_thorchain_asset(input_amount, estimate)
         else:
             # do a transfer / contract call
-            return await self._swap_other_asset(input_amount, estimate)
+            return await self._swap_other_asset(input_amount, estimate, fee_option)
 
     async def add_liquidity(self):
         ...
@@ -99,82 +106,111 @@ class THORChainAMM:
     async def remove_savers(self):
         ...
 
-    async def register_name(self, payment: CryptoAmount, thorname: str, owner: str = '',
+    async def register_name(self, thorname: str,
                             chain: Chain = Chain.THORChain, chain_address: str = '',
+                            owner: str = '',
                             preferred_asset: Optional[Asset] = None,
-                            expiry: datetime = None):
+                            days: float = 365):
         """
-        Register a THORName with a default expirity of one year. By default,
+        Register a THORName with a default expiry of one year. By default,
          chain and chainAddress is getting from wallet instance and is BTC.
+        :param thorname: The THORName to register
+        :param chain: The chain associated with the THORName (optional)
+        :param chain_address: The address associated with the THORName (optional)
+        :param owner: The owner of the THORName; may be different from the sender (optional)
+        :param preferred_asset: Preferred asset associated with the THORName (optional)
+        :param days: Expiry date for the THORName (optional)
+        :return:
+        """
+        if days <= 0:
+            raise THORNameException('Invalid expiry days. If you want to unregister, use unregister_name() instead.')
+
+        expiry = datetime.datetime.now() + datetime.timedelta(days=days)
+        estimate = await self.query.estimate_thor_name(False, thorname, expiry)
+        if not estimate.can_register:
+            raise THORNameException(f'Cannot register THORName: {estimate.reason}')
+
+        return await self.general_thorname_call(
+            estimate.cost, thorname, chain, chain_address, owner, preferred_asset,
+            estimate.expiry_block_from_date(expiry)
+        )
+
+    async def renew_name(self, thorname: str, days: float, thor_address: str = '') -> str:
+        """
+        Renew a THORName
+        :param thorname: The THORName to renew
+        :param days: Expiry date for the THORName
+        :param thor_address: The THOR address associated with the THORName, if different from the sender
+        :return: str TX hash
+        """
+
+        if days <= 0:
+            raise THORNameException('Invalid expiry days. If you want to unregister, use unregister_name() instead.')
+
+        expiry = datetime.datetime.now() + datetime.timedelta(days=days)
+        estimate = await self.query.estimate_thor_name(True, thorname, expiry)
+        if not estimate.can_register:
+            raise THORNameException(f'Cannot renew THORName: {estimate.reason}')
+
+        if not thor_address:
+            thor_address = self._get_thorchain_client().get_address()
+
+        return await self.general_thorname_call(estimate.cost, thorname, Chain.THORChain, thor_address)
+
+    async def unregister_name(self, thorname: str, chain: Optional[Chain] = None, chain_address: str = ''):
+        """
+        Unregister a THORName
+        :param chain: The chain associated with the THORName (optional)
+        :param chain_address: The address associated with the THORName (optional)
+        :param thorname: The THORName to unregister
+        :return: TX hash
+        """
+        if not chain_address:
+            chain_address = self._get_thorchain_client().get_address()
+
+        if not chain:
+            chain = Chain.THORChain
+
+        return await self.general_thorname_call(
+            CryptoAmount.zero(AssetRUNE),
+            thorname,
+            chain=chain,
+            chain_address=chain_address,
+            expiry_block=1242  # define a block in the past to unregister
+        )
+
+    async def general_thorname_call(self, payment: CryptoAmount, thorname: str,
+                                    chain: Chain = Chain.THORChain, chain_address: str = '',
+                                    owner: str = '',
+                                    preferred_asset: Optional[Asset] = None,
+                                    expiry_block: Optional[int] = None,
+                                    check_balance: bool = True):
+        """
+        General THORName call to register, update, or unregister a THORName
         :param payment: How much to pay for the THORName (normally 10 Rune one time and 1 Rune per year)
         :param thorname: The THORName to register
-        :param owner:  The owner of the THORName (optional)
         :param chain: The chain associated with the THORName (optional)
         :param chain_address: The address associated with the THORName (optional)
+        :param owner: The owner of the THORName; may be different from the sender (optional)
         :param preferred_asset: Preferred asset associated with the THORName (optional)
-        :param expiry:  Expiry date for the THORName (optional)
+        :param expiry_block: Expiry block for the THORName (optional)
+        :param check_balance: Check the balance before sending the transaction (optional)
         :return:
         """
         if not self.validate_thorname(thorname):
-            raise Exception('Invalid THORName')
+            raise THORNameException('Invalid THORName')
 
-        est = await self.query.estimate_thor_name(False, thorname, expiry)
+        expiry_block = '' if expiry_block is None else str(expiry_block)
+        preferred_asset = str(preferred_asset) if preferred_asset else ''
 
-        expiry_block = ''
-        if expiry:
-            current_block = await self.query.cache.get_native_block_height()
-            expiry_block = current_block + (expiry - datetime.now()).total_seconds() / THOR_BLOCK_TIME_SEC
-            if expiry_block < current_block:
-                logging.warning(f'Expiry block is in the past: {expiry_block} < {current_block}')
+        memo = THORMemo.thorname_register_or_renew(
+            thorname, chain.value, chain_address, owner,
+            preferred_asset=preferred_asset,
+            expiry=expiry_block
+        )
 
-        memo = THORMemo.thorname_register_or_renew(thorname, chain.value, chain_address, owner,
-                                                   preferred_asset=str(preferred_asset) if preferred_asset else '',
-                                                   expiry=expiry_block)
-
-        # noinspection PyTypeChecker
-        thor_client: THORChainClient = self.wallet.get_client(Chain.THORChain)
-        if not thor_client:
-            raise Exception('THORChain client not found')
-
-        return await thor_client.deposit(payment, memo)
-
-    async def update_name(self, thorname: str, owner: str = '',
-                          chain: Chain = Chain.THORChain, chain_address: str = '',
-                          preferred_asset: Optional[Asset] = None,
-                          expiry: datetime = None):
-        """
-        Update a THORName
-        :param thorname: The THORName to register
-        :param owner:  The owner of the THORName (optional)
-        :param chain: The chain associated with the THORName (optional)
-        :param chain_address: The address associated with the THORName (optional)
-        :param preferred_asset: Preferred asset associated with the THORName (optional)
-        :param expiry:  Expiry date for the THORName (optional)
-        :return:
-        """
-
-        if not self.validate_thorname(thorname):
-            raise Exception('Invalid THORName')
-
-        est = await self.query.estimate_thor_name(True, thorname, expiry)
-
-        expiry_block = ''
-        if expiry:
-            current_block = await self.query.cache.get_native_block_height()
-            expiry_block = current_block + (expiry - datetime.now()).total_seconds() / THOR_BLOCK_TIME_SEC
-            if expiry_block < current_block:
-                logging.warning(f'Expiry block is in the past: {expiry_block} < {current_block}')
-
-        memo = THORMemo.thorname_register_or_renew(thorname, chain.value, chain_address, owner,
-                                                   preferred_asset=str(preferred_asset) if preferred_asset else '',
-                                                   expiry=expiry_block)
-
-        # noinspection PyTypeChecker
-        thor_client: THORChainClient = self.wallet.get_client(Chain.THORChain)
-        if not thor_client:
-            raise Exception('THORChain client not found')
-
-        return await thor_client.deposit(est.cost, memo)
+        thor_client = self._get_thorchain_client()
+        return await thor_client.deposit(payment, memo, check_balance=check_balance)
 
     @staticmethod
     def validate_thorname(name: str):
@@ -202,25 +238,31 @@ class THORChainAMM:
     def is_thorchain_asset(asset: Asset) -> bool:
         return asset.chain == Chain.THORChain.value or asset.synth
 
-    async def _swap_thorchain_asset(self, input_amount: CryptoAmount, quote: SwapEstimate) -> str:
+    def _get_thorchain_client(self) -> THORChainClient:
         client = self.wallet.get_client(Chain.THORChain)
         if not client:
-            raise Exception('THORChain client not found')
+            raise AMMException('THORChain client not found')
         if not isinstance(client, THORChainClient):
-            raise Exception('Invalid THORChain client')
+            raise AMMException('Invalid THORChain client')
+        return client
+
+    async def _swap_thorchain_asset(self, input_amount: CryptoAmount, quote: SwapEstimate) -> str:
+        client = self._get_thorchain_client()
         return await client.deposit(input_amount, quote.memo)
 
-    async def _swap_other_asset(self, input_amount: CryptoAmount, quote: SwapEstimate) -> str:
+    async def _swap_other_asset(self, input_amount: CryptoAmount, quote: SwapEstimate,
+                                fee_option=FeeOption.FAST) -> str:
         chain = Chain(input_amount.asset.chain)
         client = self.wallet.get_client(chain)
         if not client:
-            raise Exception(f'{input_amount.asset.chain} client not found')
+            raise SwapException(f'{input_amount.asset.chain} client not found')
 
         if chain.is_evm:
             # todo: implement EVM chain swap
             raise NotImplementedError('EVM chain swap not supported yet')
         else:
-            return await client.transfer(input_amount, quote.details.inbound_address, memo=quote.memo)
+            return await client.transfer(input_amount, quote.details.inbound_address, memo=quote.memo,
+                                         fee_option=fee_option)
 
     def _dest_chain(self, dest_asset: Asset) -> Chain:
         return Chain.THORChain if self.is_thorchain_asset(dest_asset) else Chain(dest_asset.chain)
