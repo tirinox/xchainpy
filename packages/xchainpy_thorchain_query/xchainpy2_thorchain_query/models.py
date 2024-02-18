@@ -262,6 +262,10 @@ class EstimateWithdrawSaver(NamedTuple):
     dust_amount: CryptoAmount
     errors: List[str]
 
+    @property
+    def can_withdraw(self):
+        return not self.errors
+
 
 class WithdrawLiquidityPosition(NamedTuple):
     asset: Asset

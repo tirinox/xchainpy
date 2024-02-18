@@ -112,6 +112,9 @@ class THORMemo:
     affiliate_asset: str = ''
     name_expiry: Union[str, int] = ''
 
+    def __str__(self):
+        return self.build()
+
     @property
     def has_affiliate_part(self):
         return self.affiliate_address and self.affiliate_fee_bp > 0

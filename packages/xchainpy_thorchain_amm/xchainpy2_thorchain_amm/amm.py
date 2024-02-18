@@ -100,11 +100,66 @@ class THORChainAMM:
     async def repay_loan(self):
         ...
 
-    async def add_savers(self):
-        ...
+    async def add_savers(self, input_amount: CryptoAmount, fee_option=FeeOption.FAST):
+        """
+        Adds assets to a savers value
+        :param input_amount: CryptoAmount to add to the savers value
+        :param fee_option: fee option to use for transfer
+        :return: str TX hash submitted to the network
+        """
+        if input_amount.amount.internal_amount <= 0:
+            raise AMMException(f'Invalid input amount: {input_amount.amount}; must be greater than 0')
 
-    async def remove_savers(self):
-        ...
+        if input_amount.asset.synth:
+            raise AMMException(f'Cannot add savers for synthetic assets: {input_amount.asset}')
+
+        if input_amount.asset.chain == Chain.THORChain.value:
+            raise AMMException(f'Cannot add RUNE to savers vault')
+
+        estimate = await self.query.estimate_add_saver(input_amount)
+        if not estimate.can_add_saver:
+            raise AMMException(f'Cannot add savers: {estimate.errors}', estimate.errors)
+
+        return await self.general_deposit(input_amount, estimate.to_address, estimate.memo, fee_option)
+
+    async def withdraw_savers(self, asset: Union[Asset, str], address: str, withdraw_bps: int,
+                              fee_option=FeeOption.FAST):
+        """
+        Withdraw assets from a savers value
+        :param asset: Asset to withdraw from the savers value
+        :param address: Address to withdraw to
+        :param withdraw_bps: Percentage of the savers value to withdraw (0-10000)
+        :param fee_option: Fee option to use for transfer (optional, default: FeeOption.FAST)
+        :return:
+        """
+        asset = Asset.automatic(asset)
+        if not asset.chain or not asset.symbol:
+            raise AMMException(f'Invalid asset: {asset}')
+
+        estimate = await self.query.estimate_withdraw_saver(asset, address, withdraw_bps)
+        if not estimate.can_withdraw:
+            raise AMMException(f'Cannot withdraw savers: {estimate.errors}', estimate.errors)
+
+        return await self.general_deposit(estimate.dust_amount, estimate.to_address, estimate.memo, fee_option)
+
+    async def general_deposit(self, input_amount: CryptoAmount, to_address: str, memo: str, fee_option=FeeOption.FAST):
+        chain = Chain(input_amount.asset.chain)
+        client = self.wallet.get_client(chain)
+        memo = str(memo)
+
+        if not input_amount.asset.chain or not input_amount.asset.symbol:
+            raise AMMException(f'Invalid asset: {input_amount.asset}')
+
+        # EVM chain case
+        if chain.is_evm:
+            # todo
+            raise NotImplementedError('EVM chain add savers not supported yet')
+        elif chain.is_utxo:
+            fees = await client.get_fees()
+            fee = int(fees.fees[fee_option])
+            return await client.transfer(input_amount, to_address, memo=memo, fee_rate=fee)
+        else:
+            return await client.transfer(input_amount, to_address, memo=memo)
 
     async def register_name(self, thorname: str,
                             chain: Chain = Chain.THORChain, chain_address: str = '',
@@ -253,7 +308,7 @@ class THORChainAMM:
             thorname, chain.value, chain_address, owner,
             preferred_asset=preferred_asset,
             expiry=expiry_block
-        )
+        ).build()
 
         thor_client = self._get_thorchain_client()
         return await thor_client.deposit(payment, memo, check_balance=check_balance)
