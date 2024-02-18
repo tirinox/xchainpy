@@ -14,7 +14,7 @@ from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidit
 from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
     LiquidityPosition, Block, PostionDepositValue, PoolRatios, WithdrawLiquidityPosition, EstimateWithdrawLP, \
     EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails, LoanOpenQuote, \
-    BlockInformation, LoanCloseQuote, THORNameException, THORNameEstimate
+    BlockInformation, LoanCloseQuote, THORNameEstimate
 from .swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
     get_chain_gas_asset
 
@@ -910,10 +910,10 @@ class THORChainQuery:
         """
         thor_name_details = await self.cache.get_name_details(thorname)
         if thor_name_details and thor_name_details.owner != '' and not is_update:
-            raise THORNameException("THORName already registered")
+            return THORNameEstimate.error("THORName already registered; cannot register again", 0)
 
         if not thor_name_details and is_update:
-            raise THORNameException("THORName not registered")
+            return THORNameEstimate.error("THORName not found; cannot update", 0)
 
         current_thorchain_height = await self.cache.get_native_block_height()
 
@@ -947,7 +947,9 @@ class THORChainQuery:
         total_cost = CryptoAmount(total_cost_amount, self.native_asset)
 
         return THORNameEstimate(
-            total_cost,
-            thor_name_details,
-            current_thorchain_height
+            can_register=True,
+            reason='',
+            cost=total_cost,
+            details=thor_name_details,
+            last_block_number=current_thorchain_height
         )

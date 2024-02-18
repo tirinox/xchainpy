@@ -6,12 +6,9 @@ from enum import Enum
 from typing import NamedTuple, List, Dict, Optional, Set
 
 from xchainpy2_midgard import PoolDetail, THORNameDetails
+from xchainpy2_thorchain import THOR_BLOCK_TIME_SEC
 from xchainpy2_thornode import Pool, LiquidityProviderSummary, Saver, QuoteFees, LastBlock, QuoteSwapResponse
 from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
-
-
-class THORNameException(Exception):
-    ...
 
 
 class Block(NamedTuple):
@@ -475,6 +472,15 @@ class LoanCloseQuote(NamedTuple):
 
 
 class THORNameEstimate(NamedTuple):
+    can_register: bool
+    reason: str
     cost: CryptoAmount
     details: Optional[THORNameDetails] = None
     last_block_number: int = 0
+
+    def expiry_block_from_date(self, expiry: datetime) -> int:
+        return (expiry - datetime.now()).total_seconds() / THOR_BLOCK_TIME_SEC + self.last_block_number
+
+    @classmethod
+    def error(cls, reason: str, last_block_number: int) -> 'THORNameEstimate':
+        return cls(False, reason, CryptoAmount.zero(Asset.from_string('')), None, last_block_number)
