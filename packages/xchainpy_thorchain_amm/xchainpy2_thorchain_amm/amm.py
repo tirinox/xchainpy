@@ -90,16 +90,20 @@ class THORChainAMM:
     async def add_liquidity_asset_only(self):
         raise NotImplementedError('Add liquidity not implemented yet')
 
-
     async def withdraw_liquidity(self, asset: Union[Asset, str],
                                  mode: WithdrawMode, withdraw_bps: int = THOR_BASIS_POINT_MAX):
         asset = Asset.automatic(asset)
 
-        rune_address = self._get_thorchain_client().get_address()
-        asset_client = self.wallet.get_client(Chain(asset.chain))
-        if not asset_client:
-            raise AMMException(f'Client for {asset.chain} not found')
-        asset_address = asset_client.get_address()
+        rune_address = ''
+        if mode == WithdrawMode.RuneOnly or mode == WithdrawMode.Symmetric:
+            rune_address = self._get_thorchain_client().get_address()
+
+        asset_address = ''
+        if mode == WithdrawMode.AssetOnly or mode == WithdrawMode.Symmetric:
+            asset_client = self.wallet.get_client(Chain(asset.chain))
+            if not asset_client:
+                raise AMMException(f'Client for {asset.chain} not found')
+            asset_address = asset_client.get_address()
 
         if not rune_address or not asset_address:
             raise AMMException('Cannot determine addresses for liquidity withdrawal')
@@ -112,10 +116,42 @@ class THORChainAMM:
 
         return await self.general_deposit(estimate.deposit_amount, estimate.inbound_address, estimate.memo)
 
-    async def borrow(self):
+    async def open_loan(self,
+                        amount: CryptoAmount,
+                        target_asset: Union[str, Asset],
+                        destination_address: str,
+                        min_out: int = 0,
+                        affiliate: str = '',
+                        affiliate_bps: int = 0,
+                        fee_option=FeeOption.FAST):
+        """
+        Open a loan or add assets to an existing loan.
+        Payload is the collateral to open the loan with. Must be L1 supported by THORChain.
+        :param amount: Payload, collateral to open the loan with.
+        :param target_asset: Target debt asset identifier.	Can be shortened.
+        :param destination_address: The destination address to send the debt to. Can use THORName.
+        :param min_out: Similar to LIM, Min debt amount, else a refund.	Optional, 1e8 format.
+        :param affiliate: The affiliate address. The affiliate is added to the pool as an LP. Optional. Must be THORName or THOR Address.
+        :param affiliate_bps: The affiliate fee. Fee is allocated to the affiliate.	Optional. Limited from 0 to 1000 Basis Points.
+        :param fee_option: Fee option to use for transfer (optional, default: FeeOption.FAST)
+        :return: str TX hash submitted to the network
+        """
         raise NotImplementedError('Borrow not implemented yet')
 
-    async def repay_loan(self):
+    async def repay_loan(self,
+                         amount: CryptoAmount,
+                         destination_address: str,
+                         min_out: int = 0,
+                         fee_option=FeeOption.FAST):
+        """
+        Repay a loan (or part of it) with assets.
+        :param amount: Amount and asset to repay. Target collateral asset identifier. Can be shortened.
+        :param destination_address: The destination address to send the collateral to. Can use THORName.
+        :param min_out: Similar to LIM, Min collateral to receive else a refund. Optional, 1e8 format,
+        loan needs to be fully repaid to close.
+        :param fee_option: Fee option to use for transfer (optional, default: FeeOption.FAST)
+        :return: str TX hash submitted to the network
+        """
         raise NotImplementedError('Repay not implemented yet')
 
     async def add_savers(self, input_amount: CryptoAmount, fee_option=FeeOption.FAST):
