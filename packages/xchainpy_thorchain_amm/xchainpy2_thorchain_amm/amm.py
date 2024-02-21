@@ -4,24 +4,11 @@ from typing import Union, Optional
 
 from xchainpy2_client import FeeOption
 from xchainpy2_thorchain import THORChainClient, THORMemo
-from xchainpy2_thorchain_query import THORChainQuery, SwapEstimate, TransactionTracker
+from xchainpy2_thorchain_query import THORChainQuery, SwapEstimate, TransactionTracker, WithdrawMode
 from xchainpy2_utils import CryptoAmount, Asset, Chain, is_gas_asset, AssetRUNE
+from . import AMMException, SwapException, THORNameException
 from .consts import THOR_BASIS_POINT_MAX
 from .wallet import Wallet
-
-
-class AMMException(Exception):
-    def __init__(self, message, errors: list = None):
-        super().__init__(message)
-        self.errors = errors
-
-
-class SwapException(AMMException):
-    ...
-
-
-class THORNameException(AMMException):
-    ...
 
 
 class THORChainAMM:
@@ -88,17 +75,48 @@ class THORChainAMM:
             # do a transfer / contract call
             return await self._swap_other_asset(input_amount, estimate, fee_option)
 
-    async def add_liquidity(self):
-        ...
+    async def donate(self):
+        raise NotImplementedError('Donate not implemented yet')
 
-    async def remove_liquidity(self):
-        ...
+    async def add_liquidity_rune_side(self):
+        raise NotImplementedError('Add liquidity not implemented yet')
+
+    async def add_liquidity_asset_side(self):
+        raise NotImplementedError('Add liquidity not implemented yet')
+
+    async def add_liquidity_rune_only(self):
+        raise NotImplementedError('Add liquidity not implemented yet')
+
+    async def add_liquidity_asset_only(self):
+        raise NotImplementedError('Add liquidity not implemented yet')
+
+
+    async def withdraw_liquidity(self, asset: Union[Asset, str],
+                                 mode: WithdrawMode, withdraw_bps: int = THOR_BASIS_POINT_MAX):
+        asset = Asset.automatic(asset)
+
+        rune_address = self._get_thorchain_client().get_address()
+        asset_client = self.wallet.get_client(Chain(asset.chain))
+        if not asset_client:
+            raise AMMException(f'Client for {asset.chain} not found')
+        asset_address = asset_client.get_address()
+
+        if not rune_address or not asset_address:
+            raise AMMException('Cannot determine addresses for liquidity withdrawal')
+
+        estimate = await self.query.estimate_withdraw_lp(asset, mode, withdraw_bps,
+                                                         rune_address, asset_address)
+
+        if not estimate.can_withdraw:
+            raise AMMException(f'Cannot withdraw liquidity: {estimate.errors}', estimate.errors)
+
+        return await self.general_deposit(estimate.deposit_amount, estimate.inbound_address, estimate.memo)
 
     async def borrow(self):
-        ...
+        raise NotImplementedError('Borrow not implemented yet')
 
     async def repay_loan(self):
-        ...
+        raise NotImplementedError('Repay not implemented yet')
 
     async def add_savers(self, input_amount: CryptoAmount, fee_option=FeeOption.FAST):
         """
@@ -107,15 +125,6 @@ class THORChainAMM:
         :param fee_option: fee option to use for transfer
         :return: str TX hash submitted to the network
         """
-        if input_amount.amount.internal_amount <= 0:
-            raise AMMException(f'Invalid input amount: {input_amount.amount}; must be greater than 0')
-
-        if input_amount.asset.synth:
-            raise AMMException(f'Cannot add savers for synthetic assets: {input_amount.asset}')
-
-        if input_amount.asset.chain == Chain.THORChain.value:
-            raise AMMException(f'Cannot add RUNE to savers vault')
-
         estimate = await self.query.estimate_add_saver(input_amount)
         if not estimate.can_add_saver:
             raise AMMException(f'Cannot add savers: {estimate.errors}', estimate.errors)
@@ -133,8 +142,6 @@ class THORChainAMM:
         :return:
         """
         asset = Asset.automatic(asset)
-        if not asset.chain or not asset.symbol:
-            raise AMMException(f'Invalid asset: {asset}')
 
         estimate = await self.query.estimate_withdraw_saver(asset, address, withdraw_bps)
         if not estimate.can_withdraw:
@@ -142,24 +149,46 @@ class THORChainAMM:
 
         return await self.general_deposit(estimate.dust_amount, estimate.to_address, estimate.memo, fee_option)
 
-    async def general_deposit(self, input_amount: CryptoAmount, to_address: str, memo: str, fee_option=FeeOption.FAST):
+    async def general_deposit(self, input_amount: CryptoAmount,
+                              to_address: str,
+                              memo: str,
+                              fee_option=FeeOption.FAST,
+                              check_balance=True):
+        """
+        General deposit function to deposit assets to a specific inbound address with a memo.
+        In case of Rune, it will invoke a MsgDeposit in the THORChain.
+        In case of other assets, it will invoke a transfer to the inbound address with the memo.
+        :param input_amount: Input amount and asset to deposit
+        :param to_address: Inbound address to deposit to
+        :param memo: Memo to include with the deposit to identify your intent
+        :param fee_option: Fee option to use for transfer (optional, default: FeeOption.FAST)
+        :param check_balance: Check the balance before sending the transaction (optional, default: True)
+        :return:
+        """
         chain = Chain(input_amount.asset.chain)
+
+        # noinspection PyTypeChecker
         client = self.wallet.get_client(chain)
         memo = str(memo)
 
         if not input_amount.asset.chain or not input_amount.asset.symbol:
             raise AMMException(f'Invalid asset: {input_amount.asset}')
 
-        # EVM chain case
-        if chain.is_evm:
-            # todo
+        if self.is_thorchain_asset(input_amount.asset):
+            client: THORChainClient
+            # invoke a THORChain's MsgDeposit call
+            return await client.deposit(input_amount, memo, check_balance=check_balance)
+        elif chain.is_evm:
+            # ToDo: EVM chain case
             raise NotImplementedError('EVM chain add savers not supported yet')
         elif chain.is_utxo:
             fees = await client.get_fees()
             fee = int(fees.fees[fee_option])
-            return await client.transfer(input_amount, to_address, memo=memo, fee_rate=fee)
+            return await client.transfer(input_amount, to_address, memo=memo, fee_rate=fee,
+                                         check_balance=check_balance)
         else:
-            return await client.transfer(input_amount, to_address, memo=memo)
+            return await client.transfer(input_amount, to_address, memo=memo,
+                                         check_balance=check_balance)
 
     async def register_name(self, thorname: str,
                             chain: Chain = Chain.THORChain, chain_address: str = '',
