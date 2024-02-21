@@ -4,6 +4,8 @@ import math
 from datetime import datetime, timedelta
 from typing import Union, List, Optional
 
+from xchainpy2_thorchain import THORMemo
+from xchainpy2_thorchain_amm import THOR_BASIS_POINT_MAX
 from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, Saver, QuoteFees, \
     TxStatusResponse, TxSignersResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \
@@ -12,9 +14,9 @@ from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES, THORNAME_BLOCKS_ONE_YEAR
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity, get_liquidity_protection_data
 from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
-    LiquidityPosition, Block, PostionDepositValue, PoolRatios, WithdrawLiquidityPosition, EstimateWithdrawLP, \
+    LiquidityPosition, Block, PositionDepositValue, PoolRatios, EstimateWithdrawLP, \
     EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails, LoanOpenQuote, \
-    BlockInformation, LoanCloseQuote, THORNameEstimate
+    BlockInformation, LoanCloseQuote, THORNameEstimate, WithdrawMode
 from .swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
     get_chain_gas_asset
 
@@ -362,7 +364,7 @@ class THORChainQuery:
             full_protection=network_values.get(Mimir.FULL_IL_PROTECTION_BLOCKS, 0),
         )
 
-        current_lp = PostionDepositValue(
+        current_lp = PositionDepositValue(
             asset=Amount.from_base(liquidity_provider.asset_deposit_value),
             rune=Amount.from_base(liquidity_provider.rune_deposit_value),
         )
@@ -405,17 +407,48 @@ class THORChainQuery:
             rune_to_asset=asset_pool.rune_to_asset_ratio,
         )
 
-    async def estimate_withdraw_lp(self, param: WithdrawLiquidityPosition) -> EstimateWithdrawLP:
+    async def estimate_withdraw_lp(self, asset: Asset,
+                                   mode: WithdrawMode,
+                                   withdraw_bps: int = THOR_BASIS_POINT_MAX,
+                                   asset_address: Optional[str] = None,
+                                   rune_address: Optional[str] = None,
+                                   ) -> EstimateWithdrawLP:
         """
         Estimate the withdrawal of liquidity
-        :param param: WithdrawLiquidityPosition
+        :param asset: Pool to withdraw from
+        :param mode: withdrawal mode (asset, rune, symmetric)
+        :param withdraw_bps: basis points to withdraw 0..10k (0..100%)
+        :param asset_address: asset address (optional)
+        :param rune_address: rune address (optional)
         :return:
         """
+        asset = Asset.automatic(asset)
+        if not asset.chain or not asset.symbol:
+            return EstimateWithdrawLP.make_error(f"Invalid asset {asset}", mode)
+
+        if withdraw_bps <= 0 or withdraw_bps > THOR_BASIS_POINT_MAX:
+            return EstimateWithdrawLP.make_error(f"Invalid withdraw basis points {withdraw_bps}; "
+                                                 f"must be 0..{THOR_BASIS_POINT_MAX}", mode)
+
         # Caution Dust Limits: BTC, BCH, LTC chains 10k sats; DOGE 1m Sats; ETH 0 wei; THOR 0 RUNE.
-        asset_or_rune_address = param.rune_address if param.rune_address else param.asset_address
-        member_detail = await self.check_liquidity_position(param.asset, asset_or_rune_address)
-        dust_values = DEFAULT_CHAIN_ATTRS[param.asset.chain].dust
-        asset_pool = await self.cache.get_pool_for_asset(param.asset)
+        member_address = rune_address if rune_address else asset_address
+
+        member_detail = await self.check_liquidity_position(asset, member_address)
+        if not member_detail or not member_detail.position.units:
+            return EstimateWithdrawLP.make_error(f"Address {member_address} has no liquidity position for {asset}",
+                                                 mode)
+
+        dust_values = DEFAULT_CHAIN_ATTRS[asset.chain].dust
+        asset_pool = await self.cache.get_pool_for_asset(asset)
+        if not asset_pool:
+            return EstimateWithdrawLP.make_error(f"Could not find pool for asset {asset}", mode)
+
+        inbound_address = ''
+        if not rune_address and asset_address:
+            inbound_details = await self.cache.get_inbound_details()
+            inbound_address = inbound_details.get(asset.chain, {}).get('address', '')
+            if not inbound_address:
+                return EstimateWithdrawLP.make_error(f"Could not find inbound address for {asset}", mode)
 
         # get pool share from unit data
         pool_share = get_pool_share(
@@ -430,12 +463,12 @@ class THORChainQuery:
         slip = get_slip_on_liquidity(pool_share, asset_pool)
 
         # TODO make sure we compare wait times for withdrawing both rune and asset OR just rune OR just asset
+        withdraw_part = withdraw_bps / THOR_BASIS_POINT_MAX
         wait_time_sec_for_asset, wait_time_sec_for_rune = await asyncio.gather(
-            self.get_confirmation_counting(pool_share.asset / (param.percentage / 100)),
-            self.get_confirmation_counting(pool_share.rune / (param.percentage / 100))
+            self.get_confirmation_counting(pool_share.asset / withdraw_part),
+            self.get_confirmation_counting(pool_share.rune / withdraw_part)
         )
 
-        wait_time_in_sec = 0
         # todo: is it cacao for maya?
         if member_detail.position.rune_address and member_detail.position.asset_address:
             wait_time_in_sec = max(wait_time_sec_for_asset, wait_time_sec_for_rune)
@@ -445,12 +478,12 @@ class THORChainQuery:
             wait_time_in_sec = wait_time_sec_for_asset
 
         all_inbound_details = await self.cache.get_inbound_details()
-        inbound_details = all_inbound_details.get(param.asset.chain, None)
+        inbound_details = all_inbound_details.get(asset.chain, None)
 
         rune_inbound = calc_network_fee(self.cache.native_asset, inbound_details)
-        asset_inbound = calc_network_fee(param.asset, inbound_details)
+        asset_inbound = calc_network_fee(asset, inbound_details)
         rune_outbound = calc_outbound_fee(self.cache.native_asset, inbound_details)
-        asset_outbound = calc_outbound_fee(param.asset, inbound_details)
+        asset_outbound = calc_outbound_fee(asset, inbound_details)
 
         # todo cacao?
         total_dust_in_rune, in_asset_fee_in_rune, out_asset_fee_in_rune = await asyncio.gather(
@@ -459,9 +492,16 @@ class THORChainQuery:
             self.cache.convert(asset_outbound, self.cache.native_asset),
         )
 
+        memo = THORMemo.withdraw().build() # todo
+
+        deposit_amount = CryptoAmount.zero(asset)  # todo!
+
         return EstimateWithdrawLP(
-            member_detail.position.asset_address,
-            member_detail.position.rune_address,
+            can_withdraw=True,
+            mode=mode,
+            deposit_amount=deposit_amount,
+            asset_address=member_detail.position.asset_address,
+            rune_address=member_detail.position.rune_address,
             slip_percent=float(slip) * 100.0,
             inbound_fee=LPAmountTotal(
                 rune_inbound,
@@ -484,6 +524,9 @@ class THORChainQuery:
             estimated_wait_seconds=wait_time_in_sec,
             impermanent_loss_protection=member_detail.impermanent_loss_protection,
             asset_pool=asset_pool.pool.asset,
+            errors=[],
+            memo=memo,
+            inbound_address=inbound_address,
         )
 
     async def estimate_add_saver(self, add_amount: CryptoAmount) -> EstimateAddSaver:
@@ -495,6 +538,9 @@ class THORChainQuery:
         """
         # check for errors before sending quote
         errors = await self.get_add_savers_estimate_errors(add_amount)
+
+        if errors:
+            return EstimateAddSaver.make_error(errors, add_amount.asset)
 
         # request param amount should always be in 1e8 which is why we pass in adjusted decimals if chain decimals != 8
         if add_amount.amount.decimals != DEFAULT_ASSET_DECIMAL:
@@ -521,24 +567,7 @@ class THORChainQuery:
 
         # Error handling
         if errors:
-            return EstimateAddSaver(
-                add_amount,
-                CryptoAmount.zero_from(add_amount),
-                -1,
-                SaverFees(
-                    CryptoAmount.zero_from(add_amount),
-                    add_amount.asset,
-                    CryptoAmount.zero_from(add_amount),
-                ),
-                datetime.fromtimestamp(0),
-                to_address='',
-                memo='',
-                saver_cap_filled_percent=-1,
-                estimated_wait_time=-1,
-                can_add_saver=False,
-                errors=errors,
-                recommended_min_amount_in=0
-            )
+            return EstimateAddSaver.make_error(errors, add_amount.asset)
 
         # Calculate transaction expiry time of the vault address
         current_date_time = datetime.now()
@@ -583,6 +612,15 @@ class THORChainQuery:
     async def get_add_savers_estimate_errors(self, add_amount: CryptoAmount) -> List[str]:
         errors = []
 
+        if add_amount.amount.internal_amount <= 0:
+            errors.append(f'Invalid input amount: {add_amount.amount}; must be greater than 0')
+
+        if add_amount.asset.synth:
+            errors.append(f'Cannot add savers for synthetic assets: {add_amount.asset}')
+
+        if add_amount.asset.chain == Chain.THORChain.value:
+            errors.append(f'Cannot add RUNE to savers vault')
+
         pools = await self.cache.get_pools()
         saver_pools = [pool for pool in pools.values() if pool.thornode_details.savers_depth != "0"]
         saver_pool = next((pool for pool in saver_pools if pool.asset == add_amount.asset), None)
@@ -619,31 +657,26 @@ class THORChainQuery:
         :return: EstimateWithdrawSaver
         """
         errors = []
+
+        if not asset.chain or not asset.symbol:
+            errors.append(f'Invalid asset: {asset}')
+
+        if withdraw_bps < 0 or withdraw_bps > THOR_BASIS_POINT_MAX:
+            errors.append(f'Invalid withdraw basis points: {withdraw_bps}; '
+                          f'must be between 0 and {THOR_BASIS_POINT_MAX}')
+
         if asset == self.native_asset or asset.synth:
             errors.append(f"Native Rune and synth assets are not supported only L1's")
+
+        if errors:
+            return EstimateWithdrawSaver.make_error(errors, asset)
 
         # Check to see if there is a position before calling withdraw quote
         check_position = await self.get_saver_position(asset, address)
 
-        default_dummy_response = EstimateWithdrawSaver(
-            CryptoAmount.zero(asset),
-            fee=SaverFees(
-                CryptoAmount.zero(asset),
-                asset,
-                check_position.outbound_fee,
-            ),
-            expiry=datetime.fromtimestamp(0),
-            to_address='',
-            memo='',
-            estimated_wait_time=-1,
-            slip_basis_points=-1,
-            dust_amount=CryptoAmount.zero(asset),
-            errors=errors
-        )
-
         if check_position.errors:
-            default_dummy_response.errors.extend(check_position.errors)
-            return default_dummy_response
+            errors.extend(check_position.errors)
+            return EstimateWithdrawSaver.make_error(errors, asset)
 
         # Request withdraw quote
         withdraw_quote = await self.cache.quote_api.quotesaverwithdraw(
@@ -653,12 +686,13 @@ class THORChainQuery:
             withdraw_bps=withdraw_bps
         )
 
-        if hasattr(withdraw_quote, 'error'):
+        if not withdraw_quote:
+            errors.append(f"Thornode request quote failed")
+        elif hasattr(withdraw_quote, 'error'):
             errors.append(f"Thornode request quote failed: {withdraw_quote.error}")
 
         if errors:
-            default_dummy_response.errors.extend(errors)
-            return default_dummy_response
+            return EstimateWithdrawSaver.make_error(errors, asset)
 
         # Calculate transaction expiry time of the vault address
         current_date_time = datetime.now()
@@ -683,7 +717,7 @@ class THORChainQuery:
             errors=errors
         )
 
-    async def get_saver_position(self, asset: Asset, address: str, height: int = 0,
+    async def get_saver_position(self, asset: Asset, address: str,
                                  inbound_details: Optional[InboundDetails] = None
                                  ) -> Optional[SaversPosition]:
         """
@@ -691,7 +725,6 @@ class THORChainQuery:
         :param inbound_details: Inbound details
         :param asset: asset (pool) to check
         :param address: saver's address
-        :param height: optional height (default is the last block)
         :return:
         """
         errors = []

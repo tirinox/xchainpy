@@ -200,8 +200,13 @@ class LPAmount(NamedTuple):
     rune: CryptoAmount
     asset: CryptoAmount
 
+    @classmethod
+    def zero(cls, asset: Asset = None) -> 'LPAmount':
+        asset = asset or Asset.from_string('')
+        return cls(CryptoAmount.zero(asset), CryptoAmount.zero(asset))
 
-class PostionDepositValue(NamedTuple):
+
+class PositionDepositValue(NamedTuple):
     rune: Amount
     asset: Amount
 
@@ -210,6 +215,11 @@ class LPAmountTotal(NamedTuple):
     rune: CryptoAmount
     asset: CryptoAmount
     total: CryptoAmount
+
+    @classmethod
+    def zero(cls, asset: Asset = None) -> 'LPAmountTotal':
+        asset = asset or Asset.from_string('')
+        return cls(CryptoAmount.zero(asset), CryptoAmount.zero(asset), CryptoAmount.zero(asset))
 
 
 class ILProtectionData(NamedTuple):
@@ -230,7 +240,15 @@ class EstimateAddLP(NamedTuple):
     recommended_min_amount_in: int
 
 
+class WithdrawMode(Enum):
+    RuneOnly = 'RuneOnly'
+    AssetOnly = 'AssetOnly'
+    Symmetric = 'Symmetric'
+
+
 class EstimateWithdrawLP(NamedTuple):
+    can_withdraw: bool
+    deposit_amount: CryptoAmount
     asset_address: Optional[str]
     rune_address: Optional[str]
     slip_percent: float
@@ -243,6 +261,21 @@ class EstimateWithdrawLP(NamedTuple):
     impermanent_loss_protection: ILProtectionData
     estimated_wait_seconds: int
     asset_pool: str
+    errors: List[str]
+    memo: str
+    inbound_address: str
+    mode: WithdrawMode
+
+    @classmethod
+    def make_error(cls, error, mode):
+        zero = CryptoAmount.zero(Asset.from_string(''))
+        return cls(
+            False, zero, None, None, 0,
+            LPAmountTotal.zero(), LPAmountTotal.zero(), LPAmountTotal.zero(),
+            zero, zero,
+            '', ILProtectionData(Decimal(0), 0), 0, '', [error],
+            '', '', mode
+        )
 
 
 class SaverFees(NamedTuple):
@@ -265,6 +298,13 @@ class EstimateWithdrawSaver(NamedTuple):
     @property
     def can_withdraw(self):
         return not self.errors
+
+    @classmethod
+    def make_error(cls, errors, asset: Asset):
+        return cls(
+            CryptoAmount.zero(asset), SaverFees(CryptoAmount.zero(asset), asset, CryptoAmount.zero(asset)),
+            datetime.now(), '', 0, 0, CryptoAmount.zero(asset), errors
+        )
 
 
 class WithdrawLiquidityPosition(NamedTuple):
@@ -293,6 +333,7 @@ class GetSaver(NamedTuple):
 
 
 class EstimateAddSaver(NamedTuple):
+    can_add_saver: bool
     asset_amount: CryptoAmount
     estimated_deposit_value: CryptoAmount
     slip_basis_points: int
@@ -302,9 +343,17 @@ class EstimateAddSaver(NamedTuple):
     memo: str
     saver_cap_filled_percent: float
     estimated_wait_time: int
-    can_add_saver: bool
     errors: List[str]
     recommended_min_amount_in: int
+
+    @classmethod
+    def make_error(cls, errors, asset: Asset):
+        return cls(
+            False,
+            CryptoAmount.zero(asset), CryptoAmount.zero(asset), 0,
+            SaverFees(CryptoAmount.zero(asset), asset, CryptoAmount.zero(asset)),
+            datetime.now(), '', '', 0, 0, errors, 0
+        )
 
 
 class SaversPosition(NamedTuple):

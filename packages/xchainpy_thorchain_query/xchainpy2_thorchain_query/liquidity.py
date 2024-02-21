@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from xchainpy2_thorchain_query.models import LiquidityPool, LPAmount, UnitData, Block, ILProtectionData, \
-    PostionDepositValue
+    PositionDepositValue
 from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE, Asset, calculate_days_from_blocks, DEFAULT_ASSET_DECIMAL
 from .swap import get_base_amount_with_diff_decimals, get_decimal
 
@@ -64,7 +64,7 @@ def get_slip_on_liquidity(stake: LPAmount, pool: LiquidityPool) -> Decimal:
     return result
 
 
-def get_liquidity_protection_data(deposit_value: PostionDepositValue,
+def get_liquidity_protection_data(deposit_value: PositionDepositValue,
                                   pool_share:
                                   LPAmount,
                                   block: Block) -> ILProtectionData:
