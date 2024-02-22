@@ -75,8 +75,54 @@ class THORChainAMM:
             # do a transfer / contract call
             return await self._swap_other_asset(input_amount, estimate, fee_option)
 
-    async def donate(self):
-        raise NotImplementedError('Donate not implemented yet')
+    async def donate(self, amount: CryptoAmount, pool: Union[Asset, str] = '',
+                     fee_option=FeeOption.FAST, check_balance=True):
+        """
+        Donate to a pool
+        :param amount: CryptoAmount to donate
+        :param pool: Pool name to donate to; can be empty if you donate non-Rune assets
+        :param fee_option: Fee option to use for transfer (optional, default: FeeOption.FAST)
+        :param check_balance: Check the balance before sending the transaction (optional, default: True)
+        :return:
+        """
+        if amount.amount.internal_amount <= 0:
+            raise AMMException(f'Invalid donation amount: {amount.amount}')
+
+        asset = Asset.automatic(amount.asset).upper()
+
+        if asset.synth:
+            raise AMMException(f'Donating synth assets is not allowed')
+
+        if self.is_thorchain_asset(amount.asset) and not pool:
+            raise AMMException(f'Pool name is required for Rune donations')
+        else:
+            pool = str(asset)
+
+        pools = await self.query.cache.get_pools()
+        if not pools:
+            raise AMMException('No pools found')
+
+        if pool not in pools:
+            raise AMMException(f'No pool found for {pool}')
+
+        memo = THORMemo.donate(pool).build()
+
+        if self.is_thorchain_asset(amount.asset):
+            inbound_address = ''
+        else:
+            inbound_details = await self.query.cache.get_inbound_details()
+            if not inbound_details:
+                raise AMMException('Could not get inbound details')
+            inbound_chain_details = inbound_details.get(asset.chain)
+            if not inbound_chain_details:
+                raise AMMException(f'No inbound details for {asset.chain}')
+            if inbound_chain_details.halted_lp:
+                raise AMMException(f'LP actions are halted on {asset.chain} chain')
+
+            inbound_address = inbound_chain_details.address
+
+        return await self.general_deposit(amount, inbound_address, memo, fee_option, check_balance)
+
 
     async def add_liquidity_rune_side(self):
         raise NotImplementedError('Add liquidity not implemented yet')
