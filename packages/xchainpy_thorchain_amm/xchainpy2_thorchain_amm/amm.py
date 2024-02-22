@@ -5,9 +5,9 @@ from typing import Union, Optional
 from xchainpy2_client import FeeOption
 from xchainpy2_thorchain import THORChainClient, THORMemo
 from xchainpy2_thorchain_query import THORChainQuery, SwapEstimate, TransactionTracker, WithdrawMode
-from xchainpy2_utils import CryptoAmount, Asset, Chain, is_gas_asset, AssetRUNE
-from . import AMMException, SwapException, THORNameException
+from xchainpy2_utils import CryptoAmount, Asset, Chain, is_gas_asset, AssetRUNE, Amount
 from .consts import THOR_BASIS_POINT_MAX
+from .models import AMMException, SwapException, THORNameException
 from .wallet import Wallet
 
 
@@ -85,18 +85,15 @@ class THORChainAMM:
         :param check_balance: Check the balance before sending the transaction (optional, default: True)
         :return:
         """
-        if amount.amount.internal_amount <= 0:
-            raise AMMException(f'Invalid donation amount: {amount.amount}')
+        self._validate_crypto_amount(amount)
 
-        asset = Asset.automatic(amount.asset).upper()
-
-        if asset.synth:
+        if amount.asset.synth:
             raise AMMException(f'Donating synth assets is not allowed')
 
         if self.is_thorchain_asset(amount.asset) and not pool:
             raise AMMException(f'Pool name is required for Rune donations')
         else:
-            pool = str(asset)
+            pool = str(amount.asset)
 
         pools = await self.query.cache.get_pools()
         if not pools:
@@ -113,30 +110,72 @@ class THORChainAMM:
             inbound_details = await self.query.cache.get_inbound_details()
             if not inbound_details:
                 raise AMMException('Could not get inbound details')
-            inbound_chain_details = inbound_details.get(asset.chain)
+            inbound_chain_details = inbound_details.get(amount.asset.chain)
             if not inbound_chain_details:
-                raise AMMException(f'No inbound details for {asset.chain}')
+                raise AMMException(f'No inbound details for {amount.asset.chain}')
             if inbound_chain_details.halted_lp:
-                raise AMMException(f'LP actions are halted on {asset.chain} chain')
+                raise AMMException(f'LP actions are halted on {amount.asset.chain} chain')
 
             inbound_address = inbound_chain_details.address
 
         return await self.general_deposit(amount, inbound_address, memo, fee_option, check_balance)
 
+    async def add_liquidity_rune_side(self, amount: Amount,
+                                      pool: Union[Asset, str],
+                                      paired_address: str,
+                                      affiliate_address: str = '',
+                                      affiliate_bps: int = 0,
+                                      check_balance=True):
 
-    async def add_liquidity_rune_side(self):
-        raise NotImplementedError('Add liquidity not implemented yet')
+        self._validate_bps(affiliate_bps, 'affiliate_bps')
+        self._validate_crypto_amount(CryptoAmount(amount, AssetRUNE))
 
-    async def add_liquidity_asset_side(self):
-        raise NotImplementedError('Add liquidity not implemented yet')
+        if affiliate_address and not self._validate_affiliate_address(affiliate_address):
+            raise AMMException(f'Invalid affiliate address: {affiliate_address}')
 
-    async def add_liquidity_rune_only(self):
-        raise NotImplementedError('Add liquidity not implemented yet')
+        pool_name = Asset.automatic(pool).upper()
+        memo = THORMemo.add_liquidity(pool_name, paired_address).build()
 
-    async def add_liquidity_asset_only(self):
-        raise NotImplementedError('Add liquidity not implemented yet')
+        return await self.general_deposit(CryptoAmount(amount, AssetRUNE), '',
+                                          memo, FeeOption.FAST, check_balance)
 
-    async def withdraw_liquidity(self, asset: Union[Asset, str],
+    async def add_liquidity_asset_side(self,
+                                       amount: CryptoAmount,
+                                       paired_rune_address: str,
+                                       affiliate_address: str = '',
+                                       affiliate_bps: int = 0,
+                                       check_balance=True):
+        self._validate_bps(affiliate_bps, 'affiliate_bps')
+        self._validate_crypto_amount(amount)
+
+        if affiliate_address:
+            if not await self._validate_affiliate_address(affiliate_address):
+                raise AMMException(f'Invalid affiliate address: {affiliate_address}')
+
+        pool_name = str(amount.asset)
+
+        memo = THORMemo.add_liquidity(pool_name, paired_rune_address).build()
+        return await self.general_deposit(amount, '', memo, FeeOption.FAST, check_balance)
+
+    async def add_liquidity_rune_only(self,
+                                      amount: Amount,
+                                      pool: Union[Asset, str],
+                                      affiliate_address: str = '',
+                                      affiliate_bps: int = 0,
+                                      check_balance=True):
+        return await self.add_liquidity_rune_side(amount, pool, '',
+                                                  affiliate_address, affiliate_bps,
+                                                  check_balance)
+
+    async def add_liquidity_asset_only(self,
+                                       amount: CryptoAmount,
+                                       affiliate_address: str = '',
+                                       affiliate_bps: int = 0,
+                                       check_balance=True):
+        raise await self.add_liquidity_asset_side(amount, '', affiliate_address, affiliate_bps, check_balance)
+
+    async def withdraw_liquidity(self,
+                                 asset: Union[Asset, str],
                                  mode: WithdrawMode, withdraw_bps: int = THOR_BASIS_POINT_MAX):
         asset = Asset.automatic(asset)
 
@@ -200,7 +239,9 @@ class THORChainAMM:
         """
         raise NotImplementedError('Repay not implemented yet')
 
-    async def add_savers(self, input_amount: CryptoAmount, fee_option=FeeOption.FAST):
+    async def add_savers(self,
+                         input_amount: CryptoAmount,
+                         fee_option=FeeOption.FAST):
         """
         Adds assets to a savers value
         :param input_amount: CryptoAmount to add to the savers value
@@ -213,7 +254,10 @@ class THORChainAMM:
 
         return await self.general_deposit(input_amount, estimate.to_address, estimate.memo, fee_option)
 
-    async def withdraw_savers(self, asset: Union[Asset, str], address: str, withdraw_bps: int,
+    async def withdraw_savers(self,
+                              asset: Union[Asset, str],
+                              address: str,
+                              withdraw_bps: int,
                               fee_option=FeeOption.FAST):
         """
         Withdraw assets from a savers value
@@ -231,7 +275,8 @@ class THORChainAMM:
 
         return await self.general_deposit(estimate.dust_amount, estimate.to_address, estimate.memo, fee_option)
 
-    async def general_deposit(self, input_amount: CryptoAmount,
+    async def general_deposit(self,
+                              input_amount: CryptoAmount,
                               to_address: str,
                               memo: str,
                               fee_option=FeeOption.FAST,
@@ -253,6 +298,18 @@ class THORChainAMM:
         client = self.wallet.get_client(chain)
         memo = str(memo)
 
+        # determine the inbound address if not provided
+        if not to_address:
+            inbound_details = await self.query.cache.get_inbound_details()
+            if not inbound_details:
+                raise AMMException('Could not get inbound details')
+            inbound_chain_details = inbound_details.get(chain.value)
+            if not inbound_chain_details:
+                raise AMMException(f'No inbound details for {chain}')
+            if inbound_chain_details.halted_chain:
+                raise AMMException(f'Actions are halted on {chain} chain')
+            to_address = inbound_chain_details.address
+
         if not input_amount.asset.chain or not input_amount.asset.symbol:
             raise AMMException(f'Invalid asset: {input_amount.asset}')
 
@@ -272,7 +329,8 @@ class THORChainAMM:
             return await client.transfer(input_amount, to_address, memo=memo,
                                          check_balance=check_balance)
 
-    async def register_name(self, thorname: str,
+    async def register_name(self,
+                            thorname: str,
                             chain: Chain = Chain.THORChain, chain_address: str = '',
                             owner: str = '',
                             days: float = 365):
@@ -299,7 +357,8 @@ class THORChainAMM:
             estimate.expiry_block_from_date(expiry)
         )
 
-    async def set_preferred_asset_name(self, thorname: str, preferred_asset: Union[Asset, str],
+    async def set_preferred_asset_name(self,
+                                       thorname: str, preferred_asset: Union[Asset, str],
                                        chain: Chain, chain_address: str,
                                        owner: str = '') -> str:
         """
@@ -326,7 +385,8 @@ class THORChainAMM:
             preferred_asset=preferred_asset
         )
 
-    async def set_name_alias_for_chain(self, thorname: str, chain: Chain, chain_address: str,
+    async def set_name_alias_for_chain(self,
+                                       thorname: str, chain: Chain, chain_address: str,
                                        owner: str = '') -> str:
         """
         Add or update an alias for a THORName on a specific chain
@@ -347,7 +407,8 @@ class THORChainAMM:
             owner=owner
         )
 
-    async def renew_name(self, thorname: str, days: float, thor_address: str = '') -> str:
+    async def renew_name(self,
+                         thorname: str, days: float, thor_address: str = '') -> str:
         """
         Renew a THORName
         :param thorname: The THORName to renew
@@ -440,6 +501,17 @@ class THORChainAMM:
 
         return True
 
+    def tracker(self):
+        return TransactionTracker(self.query.cache)
+
+    async def close(self):
+        with suppress(Exception):
+            await self.wallet.close()
+        with suppress(Exception):
+            await self.query.close()
+        with suppress(Exception):
+            await self.query.cache.close()
+
     # -----------------------------------------
 
     @staticmethod
@@ -482,8 +554,8 @@ class THORChainAMM:
     async def _validate_swap(self,
                              input_amount: CryptoAmount,
                              destination_asset: Union[Asset, str], destination_address: str = '',
-                             tolerance_bps=0.0,
-                             affiliate_bps=0.0,
+                             tolerance_bps=0,
+                             affiliate_bps=0,
                              affiliate_address: str = ''):
         if not input_amount.asset.chain or not input_amount.asset.symbol:
             return 'Invalid input asset'
@@ -503,18 +575,12 @@ class THORChainAMM:
             elif not client.validate_address(destination_address):
                 return f'Address validation failed "{destination_address}" is invalid for "{chain}"'
 
-        if tolerance_bps < 0 or tolerance_bps > THOR_BASIS_POINT_MAX:
-            return f'Invalid tolerance: {tolerance_bps}; must be between 0 and {THOR_BASIS_POINT_MAX}'
-
-        if affiliate_bps < 0 or affiliate_bps > THOR_BASIS_POINT_MAX:
-            return f'Invalid affiliate fee: {affiliate_bps}; must be between 0 and {THOR_BASIS_POINT_MAX}'
+        self._validate_bps(tolerance_bps, 'tolerance_bps')
+        self._validate_bps(affiliate_bps, 'affiliate_bps')
 
         if affiliate_address:
-            is_valid = self.wallet.get_client(Chain.THORChain).validate_address(affiliate_address)
-            if not is_valid:
-                thor_name = await self.query.cache.get_name_details(affiliate_address)
-                if not thor_name:
-                    return f'Affiliate address "{affiliate_address}" is not a valid THORChain address'
+            if not await self._validate_affiliate_address(affiliate_address):
+                return f'Affiliate address "{affiliate_address}" is not a valid THORChain address'
 
         if input_amount.amount.internal_amount <= 0:
             return f'Invalid input amount: {input_amount.amount}; must be greater than 0'
@@ -526,13 +592,32 @@ class THORChainAMM:
             # todo: validate allowance
             return 'ERC20 allowance not implemented yet...'
 
-    def tracker(self):
-        return TransactionTracker(self.query.cache)
+    async def _validate_affiliate_address(self, affiliate_address: str) -> bool:
+        if affiliate_address:
+            is_valid = self._get_thorchain_client().validate_address(affiliate_address)
+            if not is_valid:
+                thor_name = await self.query.cache.get_name_details(affiliate_address)
+                if not thor_name:
+                    return True
+            return False
+        else:
+            return True
 
-    async def close(self):
-        with suppress(Exception):
-            await self.wallet.close()
-        with suppress(Exception):
-            await self.query.close()
-        with suppress(Exception):
-            await self.query.cache.close()
+    @staticmethod
+    def _validate_bps(bps: int, tag: str = ''):
+        if bps < 0 or bps > THOR_BASIS_POINT_MAX:
+            raise AMMException(f'Invalid basis points ({tag}): {bps}; must be between 0 and {THOR_BASIS_POINT_MAX}')
+        return True
+
+    @staticmethod
+    def _validate_crypto_amount(amount: CryptoAmount, allow_synthetic: bool = False):
+        if amount.amount.internal_amount <= 0:
+            raise AMMException(f'Invalid amount: {amount.amount}')
+
+        if not amount.asset.chain or not amount.asset.symbol:
+            raise AMMException(f'Invalid asset: {amount.asset}')
+
+        if not allow_synthetic and amount.asset.synth:
+            raise AMMException(f'Synthetic assets are not allowed: {amount.asset}')
+
+        return True
