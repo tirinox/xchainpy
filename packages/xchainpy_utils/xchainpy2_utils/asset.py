@@ -64,9 +64,9 @@ class Asset(NamedTuple):
     @classmethod
     def automatic(cls, x) -> Optional['Asset']:
         if isinstance(x, str):
-            return cls.from_string(x)
+            return cls.from_string(x).upper()
         elif isinstance(x, Asset):
-            return x
+            return x.upper()
 
     @property
     def as_native(self):
