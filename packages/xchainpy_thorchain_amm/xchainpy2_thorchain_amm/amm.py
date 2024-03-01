@@ -5,7 +5,7 @@ from typing import Union, Optional
 from xchainpy2_client import FeeOption
 from xchainpy2_thorchain import THORChainClient, THORMemo
 from xchainpy2_thorchain_query import THORChainQuery, SwapEstimate, TransactionTracker, WithdrawMode
-from xchainpy2_utils import CryptoAmount, Asset, Chain, is_gas_asset, AssetRUNE, Amount
+from xchainpy2_utils import CryptoAmount, Asset, Chain, is_gas_asset, AssetRUNE
 from .consts import THOR_BASIS_POINT_MAX
 from .models import AMMException, SwapException, THORNameException
 from .wallet import Wallet
@@ -120,15 +120,17 @@ class THORChainAMM:
 
         return await self.general_deposit(amount, inbound_address, memo, fee_option, check_balance)
 
-    async def add_liquidity_rune_side(self, amount: Amount,
+    async def add_liquidity_rune_side(self, amount: CryptoAmount,
                                       pool: Union[Asset, str],
                                       paired_address: str,
                                       affiliate_address: str = '',
                                       affiliate_bps: int = 0,
                                       check_balance=True):
+        if amount.asset != AssetRUNE:
+            raise AMMException(f'Invalid asset: {amount.asset}; must be Rune')
 
         self._validate_bps(affiliate_bps, 'affiliate_bps')
-        self._validate_crypto_amount(CryptoAmount(amount, AssetRUNE))
+        self._validate_crypto_amount(amount)
 
         if affiliate_address and not self._validate_affiliate_address(affiliate_address):
             raise AMMException(f'Invalid affiliate address: {affiliate_address}')
@@ -136,7 +138,7 @@ class THORChainAMM:
         pool_name = Asset.automatic(pool).upper()
         memo = THORMemo.add_liquidity(pool_name, paired_address).build()
 
-        return await self.general_deposit(CryptoAmount(amount, AssetRUNE), '',
+        return await self.general_deposit(amount, '',
                                           memo, FeeOption.FAST, check_balance)
 
     async def add_liquidity_asset_side(self,
@@ -158,11 +160,14 @@ class THORChainAMM:
         return await self.general_deposit(amount, '', memo, FeeOption.FAST, check_balance)
 
     async def add_liquidity_rune_only(self,
-                                      amount: Amount,
+                                      amount: CryptoAmount,
                                       pool: Union[Asset, str],
                                       affiliate_address: str = '',
                                       affiliate_bps: int = 0,
                                       check_balance=True):
+        if amount.asset != AssetRUNE:
+            raise AMMException(f'Invalid asset: {amount.asset}; must be Rune')
+
         return await self.add_liquidity_rune_side(amount, pool, '',
                                                   affiliate_address, affiliate_bps,
                                                   check_balance)
@@ -173,6 +178,26 @@ class THORChainAMM:
                                        affiliate_bps: int = 0,
                                        check_balance=True):
         raise await self.add_liquidity_asset_side(amount, '', affiliate_address, affiliate_bps, check_balance)
+
+    async def add_liquidity_symmetric(self,
+                                      asset_amount: CryptoAmount,
+                                      rune_amount: CryptoAmount,
+                                      paired_address: str,
+                                      affiliate_address: str = '',
+                                      affiliate_bps: int = 0,
+                                      check_balance=True) -> (str, str):
+        stage1 = await self.add_liquidity_rune_side(rune_amount, '',
+                                                    paired_address,
+                                                    affiliate_address, affiliate_bps,
+                                                    check_balance)
+        if not stage1:
+            raise AMMException('Rune side liquidity addition failed.')
+
+        stage2 = await self.add_liquidity_asset_side(asset_amount,
+                                                     paired_address,
+                                                     affiliate_address, affiliate_bps,
+                                                     check_balance)
+        return stage1, stage2
 
     async def withdraw_liquidity(self,
                                  asset: Union[Asset, str],

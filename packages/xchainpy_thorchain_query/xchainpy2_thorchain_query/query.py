@@ -4,8 +4,7 @@ import math
 from datetime import datetime, timedelta
 from typing import Union, List, Optional
 
-from xchainpy2_thorchain import THORMemo
-from xchainpy2_thorchain_amm import THOR_BASIS_POINT_MAX
+from xchainpy2_thorchain import THORMemo, THOR_BASIS_POINT_MAX
 from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, Saver, QuoteFees, \
     TxStatusResponse, TxSignersResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \

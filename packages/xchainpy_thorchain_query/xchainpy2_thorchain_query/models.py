@@ -302,8 +302,11 @@ class EstimateWithdrawSaver(NamedTuple):
     @classmethod
     def make_error(cls, errors, asset: Asset):
         return cls(
-            CryptoAmount.zero(asset), SaverFees(CryptoAmount.zero(asset), asset, CryptoAmount.zero(asset)),
-            datetime.now(), '', 0, 0, CryptoAmount.zero(asset), errors
+            CryptoAmount.zero(asset),
+            SaverFees(CryptoAmount.zero(asset), asset, CryptoAmount.zero(asset)),
+            datetime.now(), '', '', 0, 0,
+            CryptoAmount.zero(asset),
+            errors
         )
 
 
@@ -324,12 +327,6 @@ class LiquidityPosition(NamedTuple):
 class PoolRatios(NamedTuple):
     asset_to_rune: Decimal
     rune_to_asset: Decimal
-
-
-class GetSaver(NamedTuple):
-    asset: Asset
-    address: Address
-    height: Optional[int] = None
 
 
 class EstimateAddSaver(NamedTuple):
