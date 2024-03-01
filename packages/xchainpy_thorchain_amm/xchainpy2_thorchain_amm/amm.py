@@ -32,7 +32,8 @@ class THORChainAMM:
                       streaming_interval=0,
                       streaming_quantity=0) -> str:
         """
-        Do a swap using the THORChain protocol AMM
+        Do a swap using the THORChain protocol AMM;
+        In case of EVM ERC20-like tokens, it will approve the token and then do the swap.
 
         :param input_amount: input amount and asset to swap
         :param destination_asset: output asset to swap to
@@ -145,7 +146,7 @@ class THORChainAMM:
         pool_name = Asset.automatic(pool).upper()
         memo = THORMemo.add_liquidity(pool_name, paired_address).build()
 
-        return await self.general_deposit(amount, '', memo, FeeOption.FAST)
+        return await self.general_deposit(amount, '', memo)
 
     async def add_liquidity_asset_side(self,
                                        amount: CryptoAmount,
@@ -173,7 +174,7 @@ class THORChainAMM:
         pool_name = str(amount.asset)
 
         memo = THORMemo.add_liquidity(pool_name, paired_rune_address).build()
-        return await self.general_deposit(amount, '', memo, FeeOption.FAST)
+        return await self.general_deposit(amount, '', memo)
 
     async def add_liquidity_rune_only(self,
                                       amount: CryptoAmount,
@@ -289,8 +290,10 @@ class THORChainAMM:
         :param target_asset: Target debt asset identifier.	Can be shortened.
         :param destination_address: The destination address to send the debt to. Can use THORName.
         :param min_out: Similar to LIM, Min debt amount, else a refund.	Optional, 1e8 format.
-        :param affiliate: The affiliate address. The affiliate is added to the pool as an LP. Optional. Must be THORName or THOR Address.
-        :param affiliate_bps: The affiliate fee. Fee is allocated to the affiliate.	Optional. Limited from 0 to 1000 Basis Points.
+        :param affiliate: The affiliate address. The affiliate is added to the pool as an LP. Optional.
+        Must be THORName or THOR Address.
+        :param affiliate_bps: The affiliate fee. Fee is allocated to the affiliate.	Optional.
+        Limited from 0 to 1000 Basis Points.
         :return: str TX hash submitted to the network
         """
         raise NotImplementedError('Borrow not implemented yet')
