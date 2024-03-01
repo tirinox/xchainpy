@@ -4,7 +4,7 @@ from typing import Union, Optional
 
 from xchainpy2_client import FeeOption
 from xchainpy2_thorchain import THORChainClient, THORMemo
-from xchainpy2_thorchain_query import THORChainQuery, SwapEstimate, TransactionTracker, WithdrawMode
+from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode
 from xchainpy2_utils import CryptoAmount, Asset, Chain, is_gas_asset, AssetRUNE
 from .consts import THOR_BASIS_POINT_MAX
 from .models import AMMException, SwapException, THORNameException
@@ -12,19 +12,25 @@ from .wallet import Wallet
 
 
 class THORChainAMM:
-    def __init__(self, wallet: Wallet, query: Optional[THORChainQuery] = None):
+    def __init__(self, wallet: Wallet, query: Optional[THORChainQuery] = None,
+                 dry_run: bool = False,
+                 check_balance: bool = True,
+                 fee_option: FeeOption = FeeOption.FAST):
         self.query = query or wallet.query_api or THORChainQuery()
         self.wallet = wallet
+        self.dry_run = dry_run
+        self.check_balance = check_balance
+        self.fee_option = fee_option
 
-    async def do_swap(self, input_amount: CryptoAmount,
+    async def do_swap(self,
+                      input_amount: CryptoAmount,
                       destination_asset: Union[Asset, str],
                       destination_address: str = '',
                       tolerance_bps=0,
                       affiliate_bps=0,
                       affiliate_address: str = '',
                       streaming_interval=0,
-                      streaming_quantity=0,
-                      fee_option=FeeOption.FAST) -> str:
+                      streaming_quantity=0) -> str:
         """
         Do a swap using the THORChain protocol AMM
 
@@ -36,7 +42,6 @@ class THORChainAMM:
         :param affiliate_address: affiliate address to collect affiliate fee
         :param streaming_interval: streaming interval in THORChain blocks (6 sec), 0 to disable streaming
         :param streaming_quantity: sub swap quantity, 0 for automatic
-        :param fee_option: fee option to use for swap (refer to input chain client for fee options)
         :return: hash of the inbound transaction (used to track transaction status)
         """
         if not destination_address:
@@ -68,21 +73,13 @@ class THORChainAMM:
         if not estimate.can_swap:
             raise SwapException(f'Swap is not possible: {estimate.errors}', estimate.errors)
 
-        if self.is_thorchain_asset(input_amount.asset):
-            # do a deposit
-            return await self._swap_thorchain_asset(input_amount, estimate)
-        else:
-            # do a transfer / contract call
-            return await self._swap_other_asset(input_amount, estimate, fee_option)
+        return await self.general_deposit(input_amount, estimate.details.inbound_address, estimate.memo)
 
-    async def donate(self, amount: CryptoAmount, pool: Union[Asset, str] = '',
-                     fee_option=FeeOption.FAST, check_balance=True):
+    async def donate(self, amount: CryptoAmount, pool: Union[Asset, str] = ''):
         """
         Donate to a pool
         :param amount: CryptoAmount to donate
         :param pool: Pool name to donate to; can be empty if you donate non-Rune assets
-        :param fee_option: Fee option to use for transfer (optional, default: FeeOption.FAST)
-        :param check_balance: Check the balance before sending the transaction (optional, default: True)
         :return:
         """
         self._validate_crypto_amount(amount)
@@ -118,14 +115,13 @@ class THORChainAMM:
 
             inbound_address = inbound_chain_details.address
 
-        return await self.general_deposit(amount, inbound_address, memo, fee_option, check_balance)
+        return await self.general_deposit(amount, inbound_address, memo)
 
     async def add_liquidity_rune_side(self, amount: CryptoAmount,
                                       pool: Union[Asset, str],
                                       paired_address: str,
                                       affiliate_address: str = '',
-                                      affiliate_bps: int = 0,
-                                      check_balance=True):
+                                      affiliate_bps: int = 0):
         """
         Add liquidity to a pool on the Rune side.
         Attention: you must also add liquidity to the paired asset side (add_liquidity_asset_side)
@@ -135,7 +131,6 @@ class THORChainAMM:
         :param paired_address: Address of the paired asset
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
         :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
-        :param check_balance: Check the balance before sending the transaction (optional, default: True)
         :return: TX hash submitted to the network
         """
         if amount.asset != AssetRUNE:
@@ -150,15 +145,13 @@ class THORChainAMM:
         pool_name = Asset.automatic(pool).upper()
         memo = THORMemo.add_liquidity(pool_name, paired_address).build()
 
-        return await self.general_deposit(amount, '',
-                                          memo, FeeOption.FAST, check_balance)
+        return await self.general_deposit(amount, '', memo, FeeOption.FAST)
 
     async def add_liquidity_asset_side(self,
                                        amount: CryptoAmount,
                                        paired_rune_address: str,
                                        affiliate_address: str = '',
-                                       affiliate_bps: int = 0,
-                                       check_balance=True):
+                                       affiliate_bps: int = 0):
         """
         Add liquidity to a pool on the asset side.
         Attention: you must also add liquidity to the Rune side (add_liquidity_rune_side); if you don't,
@@ -167,7 +160,6 @@ class THORChainAMM:
         :param paired_rune_address: Address of the paired Rune
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
         :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
-        :param check_balance: Check the balance before sending the transaction (optional, default: True)
         :return: TX hash submitted to the network
         """
 
@@ -181,52 +173,46 @@ class THORChainAMM:
         pool_name = str(amount.asset)
 
         memo = THORMemo.add_liquidity(pool_name, paired_rune_address).build()
-        return await self.general_deposit(amount, '', memo, FeeOption.FAST, check_balance)
+        return await self.general_deposit(amount, '', memo, FeeOption.FAST)
 
     async def add_liquidity_rune_only(self,
                                       amount: CryptoAmount,
                                       pool: Union[Asset, str],
                                       affiliate_address: str = '',
-                                      affiliate_bps: int = 0,
-                                      check_balance=True):
+                                      affiliate_bps: int = 0):
         """
         Add liquidity to a pool on the Rune side only.
         :param amount: Amount of Rune to add
         :param pool: Pool name to add liquidity to
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
         :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
-        :param check_balance: Check the balance before sending the transaction (optional, default: True)
         :return: String TX hash submitted to the network
         """
         if amount.asset != AssetRUNE:
             raise AMMException(f'Invalid asset: {amount.asset}; must be Rune')
 
         return await self.add_liquidity_rune_side(amount, pool, '',
-                                                  affiliate_address, affiliate_bps,
-                                                  check_balance)
+                                                  affiliate_address, affiliate_bps)
 
     async def add_liquidity_asset_only(self,
                                        amount: CryptoAmount,
                                        affiliate_address: str = '',
-                                       affiliate_bps: int = 0,
-                                       check_balance=True):
+                                       affiliate_bps: int = 0):
         """
         Add liquidity to a pool on the asset side only.
         :param amount: Amount of the asset to add
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
         :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
-        :param check_balance: Check the balance before sending the transaction (optional, default: True)
         :return: String TX hash submitted to the network
         """
         raise await self.add_liquidity_asset_side(amount, '',
-                                                  affiliate_address, affiliate_bps, check_balance)
+                                                  affiliate_address, affiliate_bps)
 
     async def add_liquidity_symmetric(self,
                                       asset_amount: CryptoAmount,
                                       rune_amount: CryptoAmount,
                                       affiliate_address: str = '',
-                                      affiliate_bps: int = 0,
-                                      check_balance=True) -> (str, str):
+                                      affiliate_bps: int = 0) -> (str, str):
         """
         Add liquidity to a pool on both sides (Rune and asset) at the same time.
 
@@ -234,33 +220,37 @@ class THORChainAMM:
         :param rune_amount: Amount of Rune to add
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
         :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
-        :param check_balance: Check the balance before sending the transaction (optional, default: True)
         :return: Tuple of TX hashes submitted to the network
         """
         asset_chain = Chain(asset_amount.asset.chain)
         asset_client = self.wallet.get_client(asset_chain)
         if not asset_client:
             raise AMMException(f'Client for {asset_chain} not found')
-        
+
         asset_address = asset_client.get_address()
         rune_address = self._get_thorchain_client().get_address()
 
         stage1 = await self.add_liquidity_rune_side(rune_amount, '',
                                                     asset_address,
-                                                    affiliate_address, affiliate_bps,
-                                                    check_balance)
+                                                    affiliate_address, affiliate_bps)
         if not stage1:
             raise AMMException('Rune side liquidity addition failed.')
 
         stage2 = await self.add_liquidity_asset_side(asset_amount,
                                                      rune_address,
-                                                     affiliate_address, affiliate_bps,
-                                                     check_balance)
+                                                     affiliate_address, affiliate_bps)
         return stage1, stage2
 
     async def withdraw_liquidity(self,
                                  asset: Union[Asset, str],
                                  mode: WithdrawMode, withdraw_bps: int = THOR_BASIS_POINT_MAX):
+        """
+        Withdraw liquidity from a pool
+        :param asset: The pool name to withdraw liquidity from
+        :param mode: Withdraw mode (RuneOnly, AssetOnly, Symmetric)
+        :param withdraw_bps: Percentage of the pool to withdraw (0-10000)
+        :return: TX hash submitted to the network
+        """
         asset = Asset.automatic(asset)
 
         rune_address = ''
@@ -291,8 +281,7 @@ class THORChainAMM:
                         destination_address: str,
                         min_out: int = 0,
                         affiliate: str = '',
-                        affiliate_bps: int = 0,
-                        fee_option=FeeOption.FAST):
+                        affiliate_bps: int = 0):
         """
         Open a loan or add assets to an existing loan.
         Payload is the collateral to open the loan with. Must be L1 supported by THORChain.
@@ -302,7 +291,6 @@ class THORChainAMM:
         :param min_out: Similar to LIM, Min debt amount, else a refund.	Optional, 1e8 format.
         :param affiliate: The affiliate address. The affiliate is added to the pool as an LP. Optional. Must be THORName or THOR Address.
         :param affiliate_bps: The affiliate fee. Fee is allocated to the affiliate.	Optional. Limited from 0 to 1000 Basis Points.
-        :param fee_option: Fee option to use for transfer (optional, default: FeeOption.FAST)
         :return: str TX hash submitted to the network
         """
         raise NotImplementedError('Borrow not implemented yet')
@@ -310,45 +298,38 @@ class THORChainAMM:
     async def repay_loan(self,
                          amount: CryptoAmount,
                          destination_address: str,
-                         min_out: int = 0,
-                         fee_option=FeeOption.FAST):
+                         min_out: int = 0):
         """
         Repay a loan (or part of it) with assets.
         :param amount: Amount and asset to repay. Target collateral asset identifier. Can be shortened.
         :param destination_address: The destination address to send the collateral to. Can use THORName.
         :param min_out: Similar to LIM, Min collateral to receive else a refund. Optional, 1e8 format,
         loan needs to be fully repaid to close.
-        :param fee_option: Fee option to use for transfer (optional, default: FeeOption.FAST)
         :return: str TX hash submitted to the network
         """
         raise NotImplementedError('Repay not implemented yet')
 
-    async def add_savers(self,
-                         input_amount: CryptoAmount,
-                         fee_option=FeeOption.FAST):
+    async def add_savers(self, input_amount: CryptoAmount):
         """
         Adds assets to a savers value
         :param input_amount: CryptoAmount to add to the savers value
-        :param fee_option: fee option to use for transfer
         :return: str TX hash submitted to the network
         """
         estimate = await self.query.estimate_add_saver(input_amount)
         if not estimate.can_add_saver:
             raise AMMException(f'Cannot add savers: {estimate.errors}', estimate.errors)
 
-        return await self.general_deposit(input_amount, estimate.to_address, estimate.memo, fee_option)
+        return await self.general_deposit(input_amount, estimate.to_address, estimate.memo)
 
     async def withdraw_savers(self,
                               asset: Union[Asset, str],
                               address: str,
-                              withdraw_bps: int,
-                              fee_option=FeeOption.FAST):
+                              withdraw_bps: int):
         """
         Withdraw assets from a savers value
         :param asset: Asset to withdraw from the savers value
         :param address: Address to withdraw to
         :param withdraw_bps: Percentage of the savers value to withdraw (0-10000)
-        :param fee_option: Fee option to use for transfer (optional, default: FeeOption.FAST)
         :return:
         """
         asset = Asset.automatic(asset)
@@ -357,14 +338,12 @@ class THORChainAMM:
         if not estimate.can_withdraw:
             raise AMMException(f'Cannot withdraw savers: {estimate.errors}', estimate.errors)
 
-        return await self.general_deposit(estimate.dust_amount, estimate.to_address, estimate.memo, fee_option)
+        return await self.general_deposit(estimate.dust_amount, estimate.to_address, estimate.memo)
 
     async def general_deposit(self,
                               input_amount: CryptoAmount,
                               to_address: str,
-                              memo: str,
-                              fee_option=FeeOption.FAST,
-                              check_balance=True):
+                              memo: str):
         """
         General deposit function to deposit assets to a specific inbound address with a memo.
         In case of Rune, it will invoke a MsgDeposit in the THORChain.
@@ -372,8 +351,6 @@ class THORChainAMM:
         :param input_amount: Input amount and asset to deposit
         :param to_address: Inbound address to deposit to
         :param memo: Memo to include with the deposit to identify your intent
-        :param fee_option: Fee option to use for transfer (optional, default: FeeOption.FAST)
-        :param check_balance: Check the balance before sending the transaction (optional, default: True)
         :return:
         """
         chain = Chain(input_amount.asset.chain)
@@ -399,19 +376,31 @@ class THORChainAMM:
 
         if self.is_thorchain_asset(input_amount.asset):
             client: THORChainClient
+
+            if self.dry_run:
+                return f'Dry-run: THORChain deposit {input_amount} to {to_address!r} with memo {memo!r}'
+
             # invoke a THORChain's MsgDeposit call
-            return await client.deposit(input_amount, memo, check_balance=check_balance)
+            return await client.deposit(input_amount, memo, check_balance=self.check_balance)
         elif chain.is_evm:
             # ToDo: EVM chain case
             raise NotImplementedError('EVM chain add savers not supported yet')
-        elif chain.is_utxo:
-            fees = await client.get_fees()
-            fee = int(fees.fees[fee_option])
-            return await client.transfer(input_amount, to_address, memo=memo, fee_rate=fee,
-                                         check_balance=check_balance)
         else:
-            return await client.transfer(input_amount, to_address, memo=memo,
-                                         check_balance=check_balance)
+            if chain.is_utxo:
+                fees = await client.get_fees()
+                fee_rate = int(fees.fees[self.fee_option])
+            else:
+                fee_rate = None
+
+            if self.dry_run:
+                chain_tag = 'UTXO' if chain.is_utxo else 'Other'
+                return (f'Dry-run: transfer (chain: {chain_tag}) '
+                        f'{input_amount} to {to_address!r} with memo {memo!r};'
+                        f'fee_rate: {fee_rate}')
+
+            return await client.transfer(input_amount, to_address,
+                                         memo=memo, fee_rate=fee_rate,
+                                         check_balance=self.check_balance)
 
     async def register_name(self,
                             thorname: str,
@@ -452,7 +441,7 @@ class THORChainAMM:
         :param chain: Chain to set the preferred asset for
         :param chain_address: Address to collect affiliate fee
         :param owner: The owner of the THORName; may be different from the sender (optional)
-        :return: str TX hash
+        :return: str hash of the transaction
         """
         if not preferred_asset:
             raise THORNameException('Invalid preferred asset')
@@ -540,8 +529,7 @@ class THORChainAMM:
                                     chain: Chain = Chain.THORChain, chain_address: str = '',
                                     owner: str = '',
                                     preferred_asset: Optional[Asset] = None,
-                                    expiry_block: Optional[int] = None,
-                                    check_balance: bool = True):
+                                    expiry_block: Optional[int] = None):
         """
         General THORName call to register, update, or unregister a THORName
         :param payment: How much to pay for the THORName (normally 10 Rune one time and 1 Rune per year)
@@ -551,11 +539,13 @@ class THORChainAMM:
         :param owner: The owner of the THORName; may be different from the sender (optional)
         :param preferred_asset: Preferred asset associated with the THORName (optional)
         :param expiry_block: Expiry block for the THORName (optional)
-        :param check_balance: Check the balance before sending the transaction (optional)
         :return: str TX hash
         """
         if not self.validate_thorname(thorname):
             raise THORNameException('Invalid THORName')
+
+        if payment.asset != AssetRUNE:
+            raise THORNameException('Invalid payment asset; must be Rune')
 
         expiry_block = '' if expiry_block is None else str(expiry_block)
         preferred_asset = str(preferred_asset) if preferred_asset else ''
@@ -566,8 +556,7 @@ class THORChainAMM:
             expiry=expiry_block
         ).build()
 
-        thor_client = self._get_thorchain_client()
-        return await thor_client.deposit(payment, memo, check_balance=check_balance)
+        return await self.general_deposit(payment, '', memo)
 
     @staticmethod
     def validate_thorname(name: str):
@@ -613,24 +602,6 @@ class THORChainAMM:
         if not isinstance(client, THORChainClient):
             raise AMMException('Invalid THORChain client')
         return client
-
-    async def _swap_thorchain_asset(self, input_amount: CryptoAmount, quote: SwapEstimate) -> str:
-        client = self._get_thorchain_client()
-        return await client.deposit(input_amount, quote.memo)
-
-    async def _swap_other_asset(self, input_amount: CryptoAmount, quote: SwapEstimate,
-                                fee_option=FeeOption.FAST) -> str:
-        chain = Chain(input_amount.asset.chain)
-        client = self.wallet.get_client(chain)
-        if not client:
-            raise SwapException(f'{input_amount.asset.chain} client not found')
-
-        if chain.is_evm:
-            # todo: implement EVM chain swap
-            raise NotImplementedError('EVM chain swap not supported yet')
-        else:
-            return await client.transfer(input_amount, quote.details.inbound_address, memo=quote.memo,
-                                         fee_option=fee_option)
 
     def _dest_chain(self, dest_asset: Asset) -> Chain:
         return Chain.THORChain if self.is_thorchain_asset(dest_asset) else Chain(dest_asset.chain)
