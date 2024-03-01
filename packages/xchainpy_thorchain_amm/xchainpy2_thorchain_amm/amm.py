@@ -126,6 +126,18 @@ class THORChainAMM:
                                       affiliate_address: str = '',
                                       affiliate_bps: int = 0,
                                       check_balance=True):
+        """
+        Add liquidity to a pool on the Rune side.
+        Attention: you must also add liquidity to the paired asset side (add_liquidity_asset_side)
+         to complete the liquidity addition! If you don't, your funds will be stuck in the pool.
+        :param amount: Amount of Rune to add
+        :param pool: Pool name to add liquidity to
+        :param paired_address: Address of the paired asset
+        :param affiliate_address: Affiliate address to collect affiliate fee (optional)
+        :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
+        :param check_balance: Check the balance before sending the transaction (optional, default: True)
+        :return: TX hash submitted to the network
+        """
         if amount.asset != AssetRUNE:
             raise AMMException(f'Invalid asset: {amount.asset}; must be Rune')
 
@@ -147,6 +159,18 @@ class THORChainAMM:
                                        affiliate_address: str = '',
                                        affiliate_bps: int = 0,
                                        check_balance=True):
+        """
+        Add liquidity to a pool on the asset side.
+        Attention: you must also add liquidity to the Rune side (add_liquidity_rune_side); if you don't,
+            your funds will be stuck in the pool.
+        :param amount: Amount of the asset to add
+        :param paired_rune_address: Address of the paired Rune
+        :param affiliate_address: Affiliate address to collect affiliate fee (optional)
+        :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
+        :param check_balance: Check the balance before sending the transaction (optional, default: True)
+        :return: TX hash submitted to the network
+        """
+
         self._validate_bps(affiliate_bps, 'affiliate_bps')
         self._validate_crypto_amount(amount)
 
@@ -165,6 +189,15 @@ class THORChainAMM:
                                       affiliate_address: str = '',
                                       affiliate_bps: int = 0,
                                       check_balance=True):
+        """
+        Add liquidity to a pool on the Rune side only.
+        :param amount: Amount of Rune to add
+        :param pool: Pool name to add liquidity to
+        :param affiliate_address: Affiliate address to collect affiliate fee (optional)
+        :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
+        :param check_balance: Check the balance before sending the transaction (optional, default: True)
+        :return: String TX hash submitted to the network
+        """
         if amount.asset != AssetRUNE:
             raise AMMException(f'Invalid asset: {amount.asset}; must be Rune')
 
@@ -177,24 +210,50 @@ class THORChainAMM:
                                        affiliate_address: str = '',
                                        affiliate_bps: int = 0,
                                        check_balance=True):
-        raise await self.add_liquidity_asset_side(amount, '', affiliate_address, affiliate_bps, check_balance)
+        """
+        Add liquidity to a pool on the asset side only.
+        :param amount: Amount of the asset to add
+        :param affiliate_address: Affiliate address to collect affiliate fee (optional)
+        :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
+        :param check_balance: Check the balance before sending the transaction (optional, default: True)
+        :return: String TX hash submitted to the network
+        """
+        raise await self.add_liquidity_asset_side(amount, '',
+                                                  affiliate_address, affiliate_bps, check_balance)
 
     async def add_liquidity_symmetric(self,
                                       asset_amount: CryptoAmount,
                                       rune_amount: CryptoAmount,
-                                      paired_address: str,
                                       affiliate_address: str = '',
                                       affiliate_bps: int = 0,
                                       check_balance=True) -> (str, str):
+        """
+        Add liquidity to a pool on both sides (Rune and asset) at the same time.
+
+        :param asset_amount: Amount of the asset to add
+        :param rune_amount: Amount of Rune to add
+        :param affiliate_address: Affiliate address to collect affiliate fee (optional)
+        :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
+        :param check_balance: Check the balance before sending the transaction (optional, default: True)
+        :return: Tuple of TX hashes submitted to the network
+        """
+        asset_chain = Chain(asset_amount.asset.chain)
+        asset_client = self.wallet.get_client(asset_chain)
+        if not asset_client:
+            raise AMMException(f'Client for {asset_chain} not found')
+        
+        asset_address = asset_client.get_address()
+        rune_address = self._get_thorchain_client().get_address()
+
         stage1 = await self.add_liquidity_rune_side(rune_amount, '',
-                                                    paired_address,
+                                                    asset_address,
                                                     affiliate_address, affiliate_bps,
                                                     check_balance)
         if not stage1:
             raise AMMException('Rune side liquidity addition failed.')
 
         stage2 = await self.add_liquidity_asset_side(asset_amount,
-                                                     paired_address,
+                                                     rune_address,
                                                      affiliate_address, affiliate_bps,
                                                      check_balance)
         return stage1, stage2
