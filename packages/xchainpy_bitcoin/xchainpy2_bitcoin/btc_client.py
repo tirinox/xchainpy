@@ -117,7 +117,7 @@ class BitcoinClient(XChainClient):
         )
 
     def get_address(self) -> str:
-        return self.get_public_key().address(encoding='bech32')
+        return self.get_public_key().address(encoding='bech32', prefix=self._prefix)
 
     def get_public_key(self) -> Key:
         return self.get_private_key().public()
@@ -168,9 +168,11 @@ class BitcoinClient(XChainClient):
         self._decimal = BTC_DECIMAL
 
         if provider_names is None:
-            provider_names = DEFAULT_PROVIDER_NAMES
+            self._provider_names = DEFAULT_PROVIDER_NAMES
         elif isinstance(provider_names, str):
-            provider_names = [provider_names]
+            self._provider_names = [provider_names]
+        else:
+            self._provider_names = provider_names
 
         if network in (NetworkType.MAINNET, NetworkType.STAGENET):
             self._service_network = 'bitcoin'
@@ -182,15 +184,18 @@ class BitcoinClient(XChainClient):
             self._service_network = 'testnet'
             self._gas_asset = AssetTestBTC
 
-        self.service = Service(
+        self.service = self._make_service()
+
+    def _make_service(self):
+        return Service(
             network=self._service_network,
-            providers=provider_names,
+            providers=self._provider_names,
             min_providers=2,  # to prevent invalid cache operation when it is <=1
         )
 
     def validate_address(self, address: str) -> bool:
         try:
-            deserialize_address(address)
+            deserialize_address(address, network=self._service_network)
             return True
         except (EncodingError, TypeError):
             return False

@@ -1,5 +1,5 @@
 from xchainpy2_client import ExplorerProvider
-from xchainpy2_utils import NetworkType
+from xchainpy2_utils import NetworkType, Asset
 
 LTC_DECIMAL = 8
 
@@ -37,3 +37,5 @@ DEFAULT_LTC_EXPLORER = LTC_BLOCKCHAIR_EXPLORER
 MAX_MEMO_LENGTH = 80
 
 DEFAULT_PROVIDER_NAMES = ['blockcypher', 'blockcypher']
+
+AssetTestLTC = Asset('LTC', 'TLTC', LTC_DECIMAL)
