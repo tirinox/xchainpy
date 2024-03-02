@@ -102,20 +102,7 @@ class THORChainAMM:
 
         memo = THORMemo.donate(pool).build()
 
-        if self.is_thorchain_asset(amount.asset):
-            inbound_address = ''
-        else:
-            inbound_details = await self.query.cache.get_inbound_details()
-            if not inbound_details:
-                raise AMMException('Could not get inbound details')
-            inbound_chain_details = inbound_details.get(amount.asset.chain)
-            if not inbound_chain_details:
-                raise AMMException(f'No inbound details for {amount.asset.chain}')
-            if inbound_chain_details.halted_lp:
-                raise AMMException(f'LP actions are halted on {amount.asset.chain} chain')
-
-            inbound_address = inbound_chain_details.address
-
+        inbound_address = await self._get_inbound_address(amount.asset)
         return await self.general_deposit(amount, inbound_address, memo)
 
     async def add_liquidity_rune_side(self, amount: CryptoAmount,
@@ -286,31 +273,38 @@ class THORChainAMM:
         """
         Open a loan or add assets to an existing loan.
         Payload is the collateral to open the loan with. Must be L1 supported by THORChain.
+        You deposit the collateral and receive the debt in the target asset (At least Min_out USD)
+
         :param amount: Payload, collateral to open the loan with.
-        :param target_asset: Target debt asset identifier.	Can be shortened.
+        :param target_asset: Target debt asset identifier. Can be shortened.
         :param destination_address: The destination address to send the debt to. Can use THORName.
-        :param min_out: Similar to LIM, Min debt amount, else a refund.	Optional, 1e8 format.
+        :param min_out: Minimum debt amount, else a refund. Optional, 1e8 format.
         :param affiliate: The affiliate address. The affiliate is added to the pool as an LP. Optional.
         Must be THORName or THOR Address.
         :param affiliate_bps: The affiliate fee. Fee is allocated to the affiliate.	Optional.
         Limited from 0 to 1000 Basis Points.
         :return: str TX hash submitted to the network
         """
-        raise NotImplementedError('Borrow not implemented yet')
+        memo = THORMemo.loan_open(target_asset, destination_address, min_out, affiliate, affiliate_bps).build()
+        return await self.general_deposit(amount, '', memo)
 
     async def repay_loan(self,
                          amount: CryptoAmount,
+                         collateral_asset: Union[str, Asset],
                          destination_address: str,
                          min_out: int = 0):
         """
-        Repay a loan (or part of it) with assets.
+        Repay the debt and receive the collateral back.
+
         :param amount: Amount and asset to repay. Target collateral asset identifier. Can be shortened.
-        :param destination_address: The destination address to send the collateral to. Can use THORName.
-        :param min_out: Similar to LIM, Min collateral to receive else a refund. Optional, 1e8 format,
+        :param collateral_asset: The target collateral asset identifier. Can be shortened.
+        :param destination_address: The destination address to send the collateral to. Owner of the loan.
+        :param min_out: Min collateral to receive else a refund. Optional, 1e8 format.
         loan needs to be fully repaid to close.
         :return: str TX hash submitted to the network
         """
-        raise NotImplementedError('Repay not implemented yet')
+        memo = THORMemo.loan_close(collateral_asset, destination_address, min_out).build()
+        return await self.general_deposit(amount, '', memo)
 
     async def add_savers(self, input_amount: CryptoAmount):
         """
@@ -364,15 +358,7 @@ class THORChainAMM:
 
         # determine the inbound address if not provided
         if not to_address:
-            inbound_details = await self.query.cache.get_inbound_details()
-            if not inbound_details:
-                raise AMMException('Could not get inbound details')
-            inbound_chain_details = inbound_details.get(chain.value)
-            if not inbound_chain_details:
-                raise AMMException(f'No inbound details for {chain}')
-            if inbound_chain_details.halted_chain:
-                raise AMMException(f'Actions are halted on {chain} chain')
-            to_address = inbound_chain_details.address
+            to_address = await self._get_inbound_address(input_amount.asset)
 
         if not input_amount.asset.chain or not input_amount.asset.symbol:
             raise AMMException(f'Invalid asset: {input_amount.asset}')
@@ -679,3 +665,18 @@ class THORChainAMM:
             raise AMMException(f'Synthetic assets are not allowed: {amount.asset}')
 
         return True
+
+    async def _get_inbound_address(self, asset: Asset) -> str:
+        if self.is_thorchain_asset(asset):
+            return ''
+        else:
+            inbound_details = await self.query.cache.get_inbound_details()
+            if not inbound_details:
+                raise AMMException('Could not get inbound details')
+            inbound_chain_details = inbound_details.get(asset.chain)
+            if not inbound_chain_details:
+                raise AMMException(f'No inbound details for {asset.chain}')
+            if inbound_chain_details.halted_lp:
+                raise AMMException(f'LP actions are halted on {asset.chain} chain')
+
+            return inbound_chain_details.address
