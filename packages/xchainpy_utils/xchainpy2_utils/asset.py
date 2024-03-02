@@ -44,6 +44,12 @@ class Asset(NamedTuple):
 
     @classmethod
     def from_string(cls, s) -> Optional['Asset']:
+        if isinstance(s, Asset):
+            return s
+
+        if not isinstance(s, str):
+            raise ValueError(f'Asset string must be a string, not {type(s)}')
+
         is_synth = SYNTH_DELIMITER in s
         data = s.split(get_delimiter(is_synth))
         n = len(data)
@@ -64,6 +70,8 @@ class Asset(NamedTuple):
     @classmethod
     def automatic(cls, x) -> Optional['Asset']:
         if isinstance(x, str):
+            if (x_low := x.lower()) in SHORT_CODES:
+                return SHORT_CODES[x_low]
             return cls.from_string(x).upper()
         elif isinstance(x, Asset):
             return x.upper()
@@ -164,3 +172,23 @@ def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
 def is_gas_asset(asset: Asset) -> bool:
     # todo: should we check for synth?
     return get_chain_gas_asset(Chain(asset.chain)) == asset
+
+
+SHORT_CODES = {
+    'a': AssetAVAX,
+    'b': AssetBTC,
+    'c': AssetBCH,
+    'd': AssetDOGE,
+    'e': AssetETH,
+    'g': AssetATOM,
+    'l': AssetLTC,
+    'n': AssetBNB,
+    's': AssetBSC,
+    'r': AssetRUNE,
+}
+
+INVERTED_SHORT_CODES = {v: k for k, v in SHORT_CODES.items()}
+
+
+def get_short_code(asset: Asset) -> str:
+    return INVERTED_SHORT_CODES.get(asset, '')

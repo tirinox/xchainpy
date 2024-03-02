@@ -99,3 +99,32 @@ def test_equality():
     fox = 'etH.UsDt-0XDAC17F958D2EE523a2206206994597C13D831Ec8'  # 8 != 7
     d = Asset.from_string(fox)
     assert a != d
+
+
+@pytest.mark.parametrize('source, expected', [
+    ('b', AssetBTC),
+    ('c', AssetBCH),
+    ('d', AssetDOGE),
+    ('a', AssetAVAX),
+    ('e', AssetETH),
+    ('f', AssetBNB),
+    ('g', AssetLTC),
+    ('h', AssetRUNE),
+    ('i', AssetATOM),
+    ('j', AssetCACAO),
+    ('B', AssetBTC),
+    ('C', AssetBCH),
+    ('D', AssetDOGE),
+    ('R', AssetRUNE),
+    ('BTC.BTC', AssetBTC),
+    ('THOR.RUNE', AssetRUNE),
+    ('ETH/ETH', AssetETH.as_synth),
+    (AssetBTC, AssetBTC),
+    (AssetRUNE, AssetRUNE),
+    (AssetETH, AssetETH),
+    (AssetBNB, AssetBNB),
+    (AssetBCH, AssetBCH),
+    (AssetLTC, AssetLTC),
+])
+def test_automatic_creating(source, expected):
+    assert Asset.from_string(source) == expected
