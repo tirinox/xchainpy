@@ -117,7 +117,7 @@ class BitcoinClient(XChainClient):
         )
 
     def get_address(self) -> str:
-        return self.get_public_key().address(encoding='bech32', prefix=self._prefix)
+        return self.get_public_key().address(encoding='bech32')
 
     def get_public_key(self) -> Key:
         return self.get_private_key().public()
@@ -160,31 +160,29 @@ class BitcoinClient(XChainClient):
             wallet_index
         )
 
-        self._gas_asset = AssetBTC
-
         self.explorers = explorer_providers
 
         self._prefix = get_btc_address_prefix(network)
         self._decimal = BTC_DECIMAL
 
-        if provider_names is None:
+        if not provider_names:
             self._provider_names = DEFAULT_PROVIDER_NAMES
         elif isinstance(provider_names, str):
             self._provider_names = [provider_names]
         else:
             self._provider_names = provider_names
 
-        if network in (NetworkType.MAINNET, NetworkType.STAGENET):
-            self._service_network = 'bitcoin'
-            self._gas_asset = AssetBTC
-        elif network == NetworkType.DEVNET:
-            self._service_network = 'bitcoinlib_test'
-            self._gas_asset = AssetBTC
-        else:
-            self._service_network = 'testnet'
-            self._gas_asset = AssetTestBTC
-
+        self._service_network, self._gas_asset = self._detect_network_and_gas_asset(network)
         self.service = self._make_service()
+
+    @staticmethod
+    def _detect_network_and_gas_asset(network: NetworkType) -> (str, Asset):
+        if network in (NetworkType.MAINNET, NetworkType.STAGENET):
+            return 'bitcoin', AssetBTC
+        elif network == NetworkType.DEVNET:
+            return 'bitcoinlib_test', AssetBTC
+        else:
+            return 'testnet', AssetTestBTC
 
     def _make_service(self):
         return Service(
