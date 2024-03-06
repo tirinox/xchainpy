@@ -1,10 +1,10 @@
 from typing import Optional, Union
 
 from . import get_ltc_address_prefix
-from .const import ROOT_DERIVATION_PATHS, AssetTestLTC, LTC_DECIMAL
-from xchainpy2_bitcoin import BitcoinClient, BLOCKSTREAM_EXPLORERS
+from .const import ROOT_DERIVATION_PATHS, AssetTestLTC, LTC_DECIMAL, DEFAULT_PROVIDER_NAMES
+from xchainpy2_bitcoin import BitcoinClient
 from xchainpy2_client import FeeBounds, RootDerivationPaths
-from xchainpy2_utils import NetworkType, AssetLTC
+from xchainpy2_utils import NetworkType, AssetLTC, Asset
 
 
 class LitecoinClient(BitcoinClient):
@@ -14,7 +14,7 @@ class LitecoinClient(BitcoinClient):
                  private_key: Union[str, bytes, callable, None] = None,
                  fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = ROOT_DERIVATION_PATHS,
-                 explorer_providers=BLOCKSTREAM_EXPLORERS,
+                 explorer_providers=DEFAULT_PROVIDER_NAMES,
                  wallet_index=0,
                  # provider: Optional[UtxoOnlineDataProvider] = None,
                  provider_names=None):
@@ -24,14 +24,11 @@ class LitecoinClient(BitcoinClient):
         self._prefix = get_ltc_address_prefix(network)
         self._decimal = LTC_DECIMAL
 
+    @staticmethod
+    def _detect_network_and_gas_asset(network: NetworkType) -> (str, Asset):
         if network in (NetworkType.MAINNET, NetworkType.STAGENET):
-            self._service_network = 'bitcoin'
-            self._gas_asset = AssetLTC
+            return 'litecoin', AssetLTC
         elif network == NetworkType.DEVNET:
-            self._service_network = 'bitcoinlib_test'
-            self._gas_asset = AssetLTC
+            return 'litecoin_testnet', AssetTestLTC
         else:
-            self._service_network = 'testnet'
-            self._gas_asset = AssetTestLTC
-
-        self.service = self._make_service()
+            return 'litecoin_testnet', AssetTestLTC

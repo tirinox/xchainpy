@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xchainpy2_litecoin"
-version = "0.0.3"
+version = "0.0.5"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
@@ -32,7 +32,7 @@ dependencies = [
     "xchainpy2_utils",
     "xchainpy2_crypto",
     "xchainpy2_client",
-    "xchainpy2_client",
+    "xchainpy2_bitcoin",
     "bitcoinlib",
 ]
 [project.optional-dependencies]

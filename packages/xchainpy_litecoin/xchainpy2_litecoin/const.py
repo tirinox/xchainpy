@@ -36,6 +36,6 @@ DEFAULT_LTC_EXPLORER = LTC_BLOCKCHAIR_EXPLORER
 
 MAX_MEMO_LENGTH = 80
 
-DEFAULT_PROVIDER_NAMES = ['blockcypher', 'blockcypher']
+DEFAULT_PROVIDER_NAMES = ['blockcypher', 'blockchair', 'bitaps']
 
-AssetTestLTC = Asset('LTC', 'TLTC', LTC_DECIMAL)
+AssetTestLTC = Asset.from_string('LTC.TLTC')

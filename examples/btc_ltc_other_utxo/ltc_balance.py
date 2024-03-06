@@ -9,7 +9,7 @@ async def main():
     # Create a new client
     phrase = get_phrase()
 
-    provider_names = []
+    provider_names = ['bitaps']
 
     ltc = LitecoinClient(phrase=phrase, network=NetworkType.TESTNET, provider_names=provider_names)
     ltc2 = LitecoinClient(phrase=phrase, network=NetworkType.TESTNET, wallet_index=1, provider_names=provider_names)
