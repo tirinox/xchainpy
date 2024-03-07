@@ -3,17 +3,17 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "xchainpy2_client"
-version = "0.0.8"
+name = "xchainpy2_litecoin"
+version = "0.0.7"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
-description = "XChainPy2 Base Clients"
+description = "XChainPy2 Litecoin Chain Client"
 readme = "README.md"
 requires-python = ">=3.7"
-keywords = ["Crypto", "THORChain", "Blockchain", "XChain"]
+keywords = ["Crypto", "LTC", "Litecoin", "Blockchain", "XChain"]
 license = { text = "MIT" }
-urls = {source = "https://github.com/tirinox/xchainpy"}
+urls = { source = "https://github.com/tirinox/xchainpy" }
 classifiers = [
     'Development Status :: 3 - Alpha',
     # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
@@ -29,14 +29,14 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
 ]
 dependencies = [
-    "bip-utils>=2.7.0,<3.0.0",
-    "pycryptodome>=3.17,<4.0",
-    "xchainpy2_crypto",
     "xchainpy2_utils",
+    "xchainpy2_crypto",
+    "xchainpy2_client",
+    "xchainpy2_bitcoin",
+    "bitcoinlib",
 ]
-
 [project.optional-dependencies]
 test = ["pytest"]
 
 [tool.setuptools]
-packages = ["xchainpy2_client"]
+packages = ["xchainpy2_litecoin"]

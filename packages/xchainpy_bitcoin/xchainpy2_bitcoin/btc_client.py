@@ -11,7 +11,7 @@ from bitcoinlib.transactions import Transaction
 from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, TxType, TokenTransfer, FeeType, \
     FeeOption, UTXO, Witness
 from xchainpy2_client import RootDerivationPaths, FeeBounds
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC, Amount
 from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS, MAX_MEMO_LENGTH, \
     DEFAULT_PROVIDER_NAMES, AssetTestBTC
 from .tx_prepare import UTXOPrepare, try_get_memo_from_output
@@ -46,11 +46,22 @@ class BitcoinClient(XChainClient):
         return self._convert_lib_tx_to_our_tx(result)
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None, is_sync: bool = True, min_confirmations=1, **kwargs) -> str:
+                       fee_rate: Optional[int] = None, fee_option: Optional[FeeOption] = None,
+                       min_confirmations=1, **kwargs) -> str:
+        """
+        Transfer UTXO gas asset (BTC eg) to recipient
+        :param what: amount to transfer
+        :param recipient: recipient address
+        :param memo: optional memo
+        :param fee_rate: fee rate in satoshi per kilobyte
+        :param fee_option: fee option (average, fast, fastest) if fee_rate is not provided
+        :param min_confirmations: minimum confirmations
+        :return: transaction id (txid)
+        """
         if what.asset != self._gas_asset:
             raise UTXOException(f'Asset {what.asset} is not supported')
 
-        if (memo_len := len(memo)) > MAX_MEMO_LENGTH:
+        if memo and (memo_len := len(memo)) > MAX_MEMO_LENGTH:
             raise UTXOException(f'Memo is too long ({memo_len} of {MAX_MEMO_LENGTH} max)')
 
         if not self.validate_address(recipient):
@@ -60,14 +71,30 @@ class BitcoinClient(XChainClient):
 
         utxos = await self.get_utxos(sender)
 
+        if not fee_rate:
+            fees = await self.get_fees()
+            if not fees or not fees.fees:
+                raise UTXOException('Failed to get fees')
+            fee_rate = fees.fees.get(FeeOption.AVERAGE)
+            if not fee_rate:
+                raise UTXOException('Failed to get average fee rate')
+
+        if not fee_rate:
+            raise UTXOException('Failed to get fee rate')
+
+        if isinstance(fee_rate, Amount):
+            fee_rate = fee_rate.as_base.internal_amount
+
+        self.fee_bound.check_fee_bounds(fee_rate)
+
         utxo_prepare = UTXOPrepare(utxos, self._service_network,
-                                   fee_per_byte=fee_rate,
+                                   fee_per_byte=fee_rate / 1000,
                                    min_confirmations=min_confirmations)
 
         tx = utxo_prepare.build(sender, recipient, what.amount, memo)
 
         tx.estimate_size()
-        tx.fee_per_kb = fee_rate * 1000
+        tx.fee_per_kb = fee_rate
         tx.calc_weight_units()
         tx.calculate_fee()
 
@@ -89,23 +116,27 @@ class BitcoinClient(XChainClient):
 
         result = await self.broadcast_tx(tx_hex)
 
-        txid = tx.txid
-        self._save_last_response(txid, result)
+        self._save_last_response(tx.txid, result)
 
-        return result
+        return tx.txid
 
     async def broadcast_tx(self, tx_hex: str) -> str:
         results = await self._call_service(self.service.sendrawtransaction, tx_hex)
-        tx_id = results.get('txid')
+        tx_id = results.get('txid') if isinstance(results, dict) else results
         self._save_last_response(tx_id, results)
         return tx_id
 
     async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> Fees:
-        average, fast, fastest = await asyncio.gather(
-            self._call_service(self.service.estimatefee, average_blocks),
-            self._call_service(self.service.estimatefee, fast_blocks),
-            self._call_service(self.service.estimatefee, fastest_blocks),
-        )
+        average = await self._call_service(self.service.estimatefee, average_blocks)
+        fast = await self._call_service(self.service.estimatefee, fast_blocks)
+        fastest = await self._call_service(self.service.estimatefee, fastest_blocks)
+
+        # this approach causes SQL errors in bitcoinlib
+        # average, fast, fastest = await asyncio.gather(
+        #     self._call_service(self.service.estimatefee, average_blocks),
+        #     self._call_service(self.service.estimatefee, fast_blocks),
+        #     self._call_service(self.service.estimatefee, fastest_blocks),
+        # )
 
         return Fees(
             type=FeeType.PER_BYTE,
@@ -146,7 +177,7 @@ class BitcoinClient(XChainClient):
         :param network: Network type
         :param phrase: your secret phrase
         :param private_key: or your private key
-        :param fee_bound: fee bounds
+        :param fee_bound: fee bounds (no bounds by default)
         :param root_derivation_paths: HD wallet derivation paths
         :param wallet_index: int index of wallet
         # :param provider: UTXO online data provider (see xchainpy/xchainpy-utxo-providers)
@@ -160,37 +191,40 @@ class BitcoinClient(XChainClient):
             wallet_index
         )
 
-        self._gas_asset = AssetBTC
-
         self.explorers = explorer_providers
 
         self._prefix = get_btc_address_prefix(network)
         self._decimal = BTC_DECIMAL
 
-        if provider_names is None:
-            provider_names = DEFAULT_PROVIDER_NAMES
+        if not provider_names:
+            self._provider_names = DEFAULT_PROVIDER_NAMES
         elif isinstance(provider_names, str):
-            provider_names = [provider_names]
-
-        if network in (NetworkType.MAINNET, NetworkType.STAGENET):
-            self._service_network = 'bitcoin'
-            self._gas_asset = AssetBTC
-        elif network == NetworkType.DEVNET:
-            self._service_network = 'bitcoinlib_test'
-            self._gas_asset = AssetBTC
+            self._provider_names = [provider_names]
         else:
-            self._service_network = 'testnet'
-            self._gas_asset = AssetTestBTC
+            self._provider_names = provider_names
 
-        self.service = Service(
+        self._service_network, self._gas_asset = self._detect_network_and_gas_asset(network)
+        self.service = self._make_service()
+
+    @staticmethod
+    def _detect_network_and_gas_asset(network: NetworkType) -> (str, Asset):
+        if network in (NetworkType.MAINNET, NetworkType.STAGENET):
+            return 'bitcoin', AssetBTC
+        elif network == NetworkType.DEVNET:
+            return 'bitcoinlib_test', AssetBTC
+        else:
+            return 'testnet', AssetTestBTC
+
+    def _make_service(self):
+        return Service(
             network=self._service_network,
-            providers=provider_names,
+            providers=self._provider_names,
             min_providers=2,  # to prevent invalid cache operation when it is <=1
         )
 
     def validate_address(self, address: str) -> bool:
         try:
-            deserialize_address(address)
+            deserialize_address(address, network=self._service_network)
             return True
         except (EncodingError, TypeError):
             return False

@@ -71,8 +71,3 @@ async def calc_fees_async(fee_rates: FeeRates, calc_fee: Callable, *args) -> Fee
         fees=fees,
         type=FeeType.PER_BYTE
     )
-
-
-def check_fee_bounds(fee_bounds: FeeBounds, fee_rate: FeeRate) -> None:
-    if fee_rate < fee_bounds.lower or fee_rate > fee_bounds.upper:
-        raise ValueError(f"Fee outside of predetermined bounds: {str(fee_rate)}")
