@@ -84,7 +84,9 @@ class FeeType(Enum):
 
 
 Fee = Amount
-FeeRate = float
+FeeRate = float  # satoshi per kilobyte in Bitcoin and other UTXO chains
+
+INF_FEE = Fee(1_000_000_000_000_000_000)
 
 
 class Fees(NamedTuple):
@@ -98,12 +100,16 @@ class FeesWithRates(NamedTuple):
 
 
 class FeeBounds(NamedTuple):
-    lower: Fee
-    upper: Fee
+    lower: FeeRate
+    upper: FeeRate
 
     def check_fee_bounds(self, fee_rate: FeeRate):
         if fee_rate < self.lower or fee_rate > self.upper:
-            raise Exception(f"Fee outside of predetermined bounds: {fee_rate}")
+            raise ValueError(f"Fee outside of predetermined bounds: {fee_rate}")
+
+    @classmethod
+    def infinite(cls):
+        return FeeBounds(lower=Fee(0), upper=INF_FEE)
 
 
 RootDerivationPaths = Dict[NetworkType, str]

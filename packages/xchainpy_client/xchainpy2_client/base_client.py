@@ -5,11 +5,9 @@ from typing import Optional, List, Union
 
 from xchainpy2_client.explorer import ExplorerProvider
 from xchainpy2_client.models import XcTx, Fees, TxPage, \
-    FeeBounds, Fee, RootDerivationPaths, AssetInfo, FeeOption
+    FeeBounds, RootDerivationPaths, AssetInfo, FeeOption
 from xchainpy2_crypto import validate_mnemonic, derive_private_key
 from xchainpy2_utils import CryptoAmount, Chain, NetworkType, Asset, Amount
-
-INF_FEE = Fee(1_000_000_000_000_000_000)
 
 
 class KeyException(Exception):
@@ -22,7 +20,7 @@ class XChainClient(abc.ABC):
                  network: Optional[NetworkType] = None,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: FeeBounds = FeeBounds(lower=Fee(0), upper=INF_FEE),
+                 fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  wallet_index=0,
                  ):
@@ -41,7 +39,7 @@ class XChainClient(abc.ABC):
         self.wallet_index = wallet_index
         self.chain = chain
 
-        self.fee_bound = fee_bound
+        self.fee_bound = fee_bound or FeeBounds.infinite()
         self.root_derivation_paths = root_derivation_paths
 
         self.network = network
