@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
 from . import get_ltc_address_prefix
-from .const import ROOT_DERIVATION_PATHS, AssetTestLTC, LTC_DECIMAL, DEFAULT_PROVIDER_NAMES
+from .const import ROOT_DERIVATION_PATHS, AssetTestLTC, LTC_DECIMAL, DEFAULT_PROVIDER_NAMES, DEFAULT_LTC_EXPLORER
 from xchainpy2_bitcoin import BitcoinClient
 from xchainpy2_client import FeeBounds, RootDerivationPaths
 from xchainpy2_utils import NetworkType, AssetLTC, Asset
@@ -14,10 +14,10 @@ class LitecoinClient(BitcoinClient):
                  private_key: Union[str, bytes, callable, None] = None,
                  fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = ROOT_DERIVATION_PATHS,
-                 explorer_providers=DEFAULT_PROVIDER_NAMES,
+                 explorer_providers=DEFAULT_LTC_EXPLORER,
                  wallet_index=0,
                  # provider: Optional[UtxoOnlineDataProvider] = None,
-                 provider_names=None):
+                 provider_names=DEFAULT_PROVIDER_NAMES):
         super().__init__(network, phrase, private_key, fee_bound, root_derivation_paths, explorer_providers,
                          wallet_index, provider_names)
 
