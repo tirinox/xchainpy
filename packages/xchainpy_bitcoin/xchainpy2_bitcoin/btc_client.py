@@ -177,7 +177,7 @@ class BitcoinClient(XChainClient):
         :param network: Network type
         :param phrase: your secret phrase
         :param private_key: or your private key
-        :param fee_bound: fee bounds
+        :param fee_bound: fee bounds (no bounds by default)
         :param root_derivation_paths: HD wallet derivation paths
         :param wallet_index: int index of wallet
         # :param provider: UTXO online data provider (see xchainpy/xchainpy-utxo-providers)

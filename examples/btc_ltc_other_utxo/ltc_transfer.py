@@ -10,6 +10,7 @@ async def main():
     phrase = get_phrase()
 
     provider_names = ['cryptoid', 'blockcypher', 'blockchair']
+    # provider_names = []
 
     ltc = LitecoinClient(phrase=phrase, network=NetworkType.MAINNET, provider_names=provider_names)
     ltc2 = LitecoinClient(phrase=phrase, network=NetworkType.MAINNET, wallet_index=1, provider_names=provider_names)
