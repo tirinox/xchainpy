@@ -6,6 +6,7 @@ from bitcoinlib.config.config import MAX_TRANSACTIONS
 from bitcoinlib.encoding import EncodingError
 from bitcoinlib.keys import Key, deserialize_address
 from bitcoinlib.services.services import Service
+from bitcoinlib.services.bitcoind import BitcoindClient
 from bitcoinlib.transactions import Transaction
 
 from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, TxType, TokenTransfer, FeeType, \
@@ -166,22 +167,24 @@ class BitcoinClient(XChainClient):
                  root_derivation_paths: Optional[RootDerivationPaths] = ROOT_DERIVATION_PATHS,
                  explorer_providers=BLOCKSTREAM_EXPLORERS,
                  wallet_index=0,
-                 # provider: Optional[UtxoOnlineDataProvider] = None,
-                 provider_names=None):
+                 provider_names=None,
+                 daemon_url=None,
+                 ):
         """
         BitcoinClient constructor
         Uses bitcoinlib under the hood
+
         :param provider_names: a list of Blockchain info provider names of bitcoinlib.
         See https://github.com/1200wd/bitcoinlib/blob/master/bitcoinlib/data/providers.json
         :type provider_names: list[str]
-        :param network: Network type
+        :param network: Network type (default is MAINNET)
         :param phrase: your secret phrase
         :param private_key: or your private key
         :param fee_bound: fee bounds (no bounds by default)
         :param root_derivation_paths: HD wallet derivation paths
         :param wallet_index: int index of wallet
-        # :param provider: UTXO online data provider (see xchainpy/xchainpy-utxo-providers)
         :param explorer_providers: explorer providers dictionary
+        :param daemon_url: url of the bitcoin deamon. If it is provided, it will be used instead of provider_names
         """
         super().__init__(
             Chain.Bitcoin,
@@ -195,16 +198,19 @@ class BitcoinClient(XChainClient):
 
         self._prefix = get_btc_address_prefix(network)
         self._decimal = BTC_DECIMAL
-
-        if not provider_names:
-            self._provider_names = DEFAULT_PROVIDER_NAMES
-        elif isinstance(provider_names, str):
-            self._provider_names = [provider_names]
-        else:
-            self._provider_names = provider_names
-
         self._service_network, self._gas_asset = self._detect_network_and_gas_asset(network)
-        self.service = self._make_service()
+
+        if daemon_url:
+            self.service = self._make_daemon_service(daemon_url)
+        else:
+            if not provider_names:
+                self._provider_names = DEFAULT_PROVIDER_NAMES
+            elif isinstance(provider_names, str):
+                self._provider_names = [provider_names]
+            else:
+                self._provider_names = provider_names
+
+            self.service = self._make_service()
 
     @staticmethod
     def _detect_network_and_gas_asset(network: NetworkType) -> (str, Asset):
@@ -221,6 +227,10 @@ class BitcoinClient(XChainClient):
             providers=self._provider_names,
             min_providers=2,  # to prevent invalid cache operation when it is <=1
         )
+
+    @staticmethod
+    def _make_daemon_service(url):
+        return BitcoindClient(base_url=url)
 
     def validate_address(self, address: str) -> bool:
         try:
