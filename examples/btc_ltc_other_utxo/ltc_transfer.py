@@ -5,15 +5,20 @@ from xchainpy2_litecoin import LitecoinClient
 from xchainpy2_utils import NetworkType
 
 
+def create_ltc_client(phrase: str, network: NetworkType = NetworkType.MAINNET, wallet_index: int = 0):
+    return LitecoinClient(phrase=phrase, network=network, wallet_index=wallet_index,
+                          daemon_url='https://litecoin.ninerealms.com')
+
+
 async def main():
     # Create a new client
     phrase = get_phrase()
 
-    provider_names = ['cryptoid', 'blockcypher', 'blockchair']
-    # provider_names = []
+    # provider_names = ['cryptoid', 'blockcypher', 'blockchair']
+    provider_names = []
 
-    ltc = LitecoinClient(phrase=phrase, network=NetworkType.MAINNET, provider_names=provider_names)
-    ltc2 = LitecoinClient(phrase=phrase, network=NetworkType.MAINNET, wallet_index=1, provider_names=provider_names)
+    ltc = create_ltc_client(phrase)
+    ltc2 = create_ltc_client(phrase, wallet_index=1)
 
     # Get the balance of the LTC wallet
     balance1 = await ltc.get_balance()
