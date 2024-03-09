@@ -1,4 +1,4 @@
-from xchainpy2_client import ExplorerProvider
+from xchainpy2_client import ExplorerProvider, FeeBounds
 from xchainpy2_utils import Asset
 from xchainpy2_utils.consts import NetworkType
 
@@ -20,8 +20,8 @@ ROOT_DERIVATION_PATHS = {
 
 MIN_TX_FEE = 1000
 
-LOWER_FEE_BOUND = 1
-UPPER_FEE_BOUND = 1_000
+BTC_DEFAULT_FEE_BOUNDS = FeeBounds(1, 1_000)
+
 BTC_SYMBOL = '₿'
 BTC_SATOSHI_SYMBOL = '⚡'
 

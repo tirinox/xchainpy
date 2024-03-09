@@ -5,8 +5,8 @@ from typing import Optional, Union, List
 from bitcoinlib.config.config import MAX_TRANSACTIONS
 from bitcoinlib.encoding import EncodingError
 from bitcoinlib.keys import Key, deserialize_address
-from bitcoinlib.services.services import Service
 from bitcoinlib.services.bitcoind import BitcoindClient
+from bitcoinlib.services.services import Service
 from bitcoinlib.transactions import Transaction
 
 from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, TxType, TokenTransfer, FeeType, \
@@ -14,7 +14,7 @@ from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, TxType, TokenTran
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC, Amount
 from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS, MAX_MEMO_LENGTH, \
-    DEFAULT_PROVIDER_NAMES, AssetTestBTC
+    DEFAULT_PROVIDER_NAMES, AssetTestBTC, BTC_DEFAULT_FEE_BOUNDS
 from .tx_prepare import UTXOPrepare, try_get_memo_from_output
 from .utils import get_btc_address_prefix, UTXOException
 
@@ -163,12 +163,13 @@ class BitcoinClient(XChainClient):
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = None,
+                 fee_bound: Optional[FeeBounds] = BTC_DEFAULT_FEE_BOUNDS,
                  root_derivation_paths: Optional[RootDerivationPaths] = ROOT_DERIVATION_PATHS,
                  explorer_providers=BLOCKSTREAM_EXPLORERS,
                  wallet_index=0,
                  provider_names=None,
                  daemon_url=None,
+                 _chain=Chain.Bitcoin
                  ):
         """
         BitcoinClient constructor
@@ -187,7 +188,7 @@ class BitcoinClient(XChainClient):
         :param daemon_url: url of the bitcoin deamon. If it is provided, it will be used instead of provider_names
         """
         super().__init__(
-            Chain.Bitcoin,
+            _chain,
             network, phrase,
             private_key, fee_bound,
             root_derivation_paths,
