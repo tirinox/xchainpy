@@ -1,4 +1,4 @@
-from xchainpy2_client import ExplorerProvider
+from xchainpy2_client import ExplorerProvider, FeeBounds
 from xchainpy2_utils import NetworkType, Asset
 
 LTC_DECIMAL = 8
@@ -11,8 +11,8 @@ ROOT_DERIVATION_PATHS = {
 }
 
 MIN_TX_FEE = 1000
-LOWER_FEE_BOUND = 0.5
-UPPER_FEE_BOUND = 500
+
+LTC_DEFAULT_FEE_BOUNDS = FeeBounds(0.5, 500)
 
 LTC_BLOCKCHAIR_EXPLORER = ExplorerProvider(
     'https://blockchair.com/litecoin/',
