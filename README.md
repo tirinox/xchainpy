@@ -149,12 +149,12 @@ Mandatory items.
 - [x] UTXO providers (Haskoin, Sochain, Blockcypher)
 - [ ] Tests for the Query Package
 - [ ] Examples for Query Package
-- [ ] Mayachain client
-- [ ] Bitcoin client
+- [x] Mayachain client
+- [x] Bitcoin client
 - [ ] Ethereum client
-- [ ] Other UTXO clients
+- [x] Other UTXO clients
 - [ ] Other EVM clients
-- [ ] Loans
+- [x] Loans
 
 The list goes on.
 
