@@ -22,6 +22,8 @@ async def main():
     providers = ltc.get_available_provider_names()
     print(f"Available providers: {providers}")
 
+    ltc.recreate_service_with_providers(providers)
+
     # Get the balance of the LTC wallet
     show_balance = True
     if show_balance:

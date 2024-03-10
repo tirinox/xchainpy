@@ -344,7 +344,7 @@ class BitcoinClient(XChainClient):
         return filtered_providers
 
     def recreate_service_with_providers(self, provider_names):
-        self._provider_names = provider_names
+        self._provider_names = list(provider_names)
         self.service = self._make_service()
 
     @staticmethod
