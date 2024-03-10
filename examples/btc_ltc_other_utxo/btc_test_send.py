@@ -18,6 +18,9 @@ async def send_btc():
     btc = BitcoinClient(phrase=phrase, network=NetworkType.TESTNET, provider_names=provider_names)
     btc2 = BitcoinClient(phrase=phrase, network=NetworkType.TESTNET, wallet_index=1, provider_names=provider_names)
 
+    available_providers = btc.get_available_provider_names()
+    print(f"Available providers: {available_providers}")
+
     source_address = btc.get_address()
     dest_address = btc2.get_address()
 

@@ -1,8 +1,10 @@
 import asyncio
+import json
 from datetime import datetime
+from pathlib import Path
 from typing import Optional, Union, List
 
-from bitcoinlib.config.config import MAX_TRANSACTIONS
+from bitcoinlib.config.config import MAX_TRANSACTIONS, BCL_DATA_DIR
 from bitcoinlib.encoding import EncodingError
 from bitcoinlib.keys import Key, deserialize_address
 from bitcoinlib.services.bitcoind import BitcoindClient
@@ -322,3 +324,34 @@ class BitcoinClient(XChainClient):
             method,
             *args
         )
+
+    def get_available_provider_names(self, network_name=None):
+        """
+        Get available provider names for the network
+        :param network_name: network name like bitcoin, dogecoin, etc. (default is the current client's network)
+        :return: set of provider names
+        """
+        providers = self.get_available_providers_g(network_name or self._service_network)
+        return {v['provider'] for v in providers.values()}
+
+    @classmethod
+    def get_available_providers_g(cls, network_name=None):
+        providers = cls._load_providers()
+        filtered_providers = {
+            k: v for k, v in providers.items()
+            if not network_name or v.get('network') == network_name
+        }
+        return filtered_providers
+
+    def recreate_service_with_providers(self, provider_names):
+        self._provider_names = provider_names
+        self.service = self._make_service()
+
+    @staticmethod
+    def _load_providers():
+        fn = Path(BCL_DATA_DIR, 'providers.json')
+        try:
+            with open(fn, 'r') as f:
+                return json.loads(f.read())
+        except json.decoder.JSONDecodeError as e:  # pragma: no cover
+            raise Exception(f'Failed to load providers from {fn}: {e}') from e
