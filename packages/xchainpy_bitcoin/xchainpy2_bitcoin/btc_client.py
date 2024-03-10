@@ -52,7 +52,8 @@ class BitcoinClient(XChainClient):
                        fee_rate: Optional[int] = None, fee_option: Optional[FeeOption] = None,
                        min_confirmations=1, **kwargs) -> str:
         """
-        Transfer UTXO gas asset (BTC eg) to recipient
+        Transfer UTXO gas asset (BTC eg) to recipient.
+        Memo is optional and encoded in OP_RETURN output.
         :param what: amount to transfer
         :param recipient: recipient address
         :param memo: optional memo
@@ -151,12 +152,22 @@ class BitcoinClient(XChainClient):
         )
 
     def get_address(self) -> str:
+        """
+        Get the address of the wallet
+        Bech32 encoding is used to get the address from the public key
+        :return: address
+        """
         return self.get_public_key().address(encoding='bech32')
 
     def get_public_key(self) -> Key:
         return self.get_private_key().public()
 
     def get_private_key(self) -> Key:
+        """
+        Get private key object
+        Key class is from bitcoinlib.
+        :return: private key object
+        """
         pk = super().get_private_key()
         lib_pk = Key(pk, network=self._service_network, is_private=True)
         return lib_pk
@@ -246,6 +257,14 @@ class BitcoinClient(XChainClient):
             return False
 
     async def get_utxos(self, address='', limit=MAX_TRANSACTIONS, full=False) -> List[UTXO]:
+        """
+        Get UTXOs of the wallet
+        UTxO is an unspent transaction output
+        :param address: address (default is the address of the wallet)
+        :param limit: maximum number of UTXOs to return
+        :param full: if True, returns full transaction data
+        :return: list of UTXOs
+        """
         address = address or self.get_address()
         results = await self._call_service(self.service.getutxos, address, '', limit)
 
@@ -328,7 +347,7 @@ class BitcoinClient(XChainClient):
     def get_available_provider_names(self, network_name=None):
         """
         Get available provider names for the network
-        :param network_name: network name like bitcoin, dogecoin, etc. (default is the current client's network)
+        :param network_name: network name like "bitcoin", "dogecoin", etc. (default is the current client's network)
         :return: set of provider names
         """
         providers = self.get_available_providers_g(network_name or self._service_network)
@@ -344,6 +363,10 @@ class BitcoinClient(XChainClient):
         return filtered_providers
 
     def recreate_service_with_providers(self, provider_names):
+        """
+        Recreate the service with the specified provider names
+        :param provider_names: a list of provider names
+        """
         self._provider_names = list(provider_names)
         self.service = self._make_service()
 
