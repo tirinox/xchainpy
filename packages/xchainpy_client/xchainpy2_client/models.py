@@ -100,10 +100,18 @@ class FeesWithRates(NamedTuple):
 
 
 class FeeBounds(NamedTuple):
-    lower: FeeRate
-    upper: FeeRate
+    lower: FeeRate  # satoshi per byte
+    upper: FeeRate  # satoshi per byte
 
-    def check_fee_bounds(self, fee_rate: FeeRate):
+    def check_fee_bounds(self, fee_rate: FeeRate, per_kb: bool = False):
+        """
+        Check if the given fee rate is within the bounds
+        :param fee_rate: fee rate to check, in satoshi per byte
+        :param per_kb: if True, the fee rate is in satoshi per kilobyte. Otherwise, it is in satoshi per byte
+        """
+        if per_kb:
+            fee_rate /= 1000
+
         if fee_rate < self.lower or fee_rate > self.upper:
             raise ValueError(f"Fee outside of predetermined bounds: {fee_rate}")
 

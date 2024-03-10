@@ -13,7 +13,7 @@ ROOT_DERIVATION_PATHS = {
 
 MIN_TX_FEE = 1000
 
-DOGE_DEFAULT_FEE_BOUNDS = FeeBounds(10, 20_000_000)
+DOGE_DEFAULT_FEE_BOUNDS = FeeBounds(10, 20_000_000)  # in 1 sat/byte
 
 DOGE_BLOCKCHAIR_EXPLORER = ExplorerProvider(
     'https://blockchair.com/dogecoin/',
