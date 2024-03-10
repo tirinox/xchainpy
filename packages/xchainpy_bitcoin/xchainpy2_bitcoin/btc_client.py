@@ -86,7 +86,7 @@ class BitcoinClient(XChainClient):
         if isinstance(fee_rate, Amount):
             fee_rate = fee_rate.as_base.internal_amount
 
-        self.fee_bound.check_fee_bounds(fee_rate)
+        self.fee_bound.check_fee_bounds(fee_rate, per_kb=True)
 
         utxo_prepare = UTXOPrepare(utxos, self._service_network,
                                    fee_per_byte=fee_rate / 1000,
@@ -169,7 +169,8 @@ class BitcoinClient(XChainClient):
                  wallet_index=0,
                  provider_names=None,
                  daemon_url=None,
-                 _chain=Chain.Bitcoin
+                 _chain=Chain.Bitcoin,
+                 service_kwargs=None,
                  ):
         """
         BitcoinClient constructor
@@ -194,6 +195,7 @@ class BitcoinClient(XChainClient):
             root_derivation_paths,
             wallet_index
         )
+        self._service_kwargs = service_kwargs or {}
 
         self.explorers = explorer_providers
 
@@ -227,6 +229,7 @@ class BitcoinClient(XChainClient):
             network=self._service_network,
             providers=self._provider_names,
             min_providers=2,  # to prevent invalid cache operation when it is <=1
+            **self._service_kwargs,
         )
 
     @staticmethod
