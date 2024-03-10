@@ -56,3 +56,11 @@ class DogecoinClient(BitcoinClient):
     @staticmethod
     def _make_daemon_service(url):
         return DogecoindClient(base_url=url)
+
+    def get_address(self) -> str:
+        """
+        Get the DOGE address
+        Uses standard P2PKH address format (starting with 'D' for mainnet, 'n' for testnet)
+        :return: The DOGE address
+        """
+        return self.get_public_key().address(script_type='p2pkh')
