@@ -985,3 +985,12 @@ class THORChainQuery:
             details=thor_name_details,
             last_block_number=current_thorchain_height
         )
+
+    async def get_recommended_fee_rate(self, chain: Chain) -> int:
+        """
+        Get the recommended fee for a given chain from THORChain
+        :param chain: Chain - the chain to get the fee for
+        :return: int - the recommended fee rate
+        """
+        fee_number = await self.cache.get_fee_rates(chain)
+        return fee_number
