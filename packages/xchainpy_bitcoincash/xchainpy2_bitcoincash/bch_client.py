@@ -7,10 +7,10 @@ from bitcash.cashaddress import Address
 from bitcash.exceptions import InvalidAddress
 from bitcash.network import NetworkAPI
 
-from xchainpy2_client import FeeBounds, RootDerivationPaths, XChainClient, Fees, XcTx, TxPage
+from xchainpy2_client import FeeBounds, RootDerivationPaths, XChainClient, Fees, XcTx, TxPage, UTXO
 from xchainpy2_utils import NetworkType, Asset, AssetBCH, Chain, CryptoAmount
 from .const import ROOT_DERIVATION_PATHS, BCH_DECIMAL, DEFAULT_PROVIDER_NAMES, DEFAULT_BCH_EXPLORERS, \
-    BCH_DEFAULT_FEE_BOUNDS, AssetTestBCH
+    BCH_DEFAULT_FEE_BOUNDS, AssetTestBCH, DEFAULT_BCH_FEES
 
 
 class BitcoinCashClient(XChainClient):
@@ -78,23 +78,89 @@ class BitcoinCashClient(XChainClient):
         result = await self._call_service(self.api.get_balance, address or self.get_address())
         return [self.gas_base_amount(result)]
 
-    async def get_transactions(self, address: str, offset: int = 0, limit: int = 0,
+    async def get_transactions(self, address: str = '', offset: int = 0, limit: int = 0,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None) -> TxPage:
-        pass
+        """
+        Get transactions of the wallet
+        :param address: The address (default is the address of the wallet)
+        :param offset: The offset (ignored)
+        :param limit: The limit (ignored)
+        :param start_time: The start time (ignored)
+        :param end_time: The end time (ignored)
+        :param asset: The asset (ignored)
+        :return: The transaction page
+        """
+        if not address:
+            address = self.get_address()
+        data = await self._call_service(self.api.get_transactions, address, self._underlying_network)
+        # todo: parse data to TxPage
+        return data
 
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
-        pass
+        data = await self._call_service(self.api.get_transaction, tx_id, self._underlying_network)
+        # todo: parse data to XcTx
+        return data
+
+    @property
+    def _underlying_network(self):
+        return 'testnet' if self.network == NetworkType.TESTNET else 'mainnet'
 
     async def get_fees(self) -> Fees:
-        pass
+        """
+        Get default fees
+        No API call is performed.
+        :return: The fee
+        """
+        return DEFAULT_BCH_FEES
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, **kwargs) -> str:
-        pass
+        """
+        Transfer the asset to the recipient address
+        :param what: The amount to transfer
+        :param recipient: The recipient address
+        :param memo: The memo (optional)
+        :param fee_rate: The fee rate (optional, but recommended)
+        :param kwargs: The additional parameters
+        :return: The transaction hash
+        """
+        if not fee_rate:
+            fee_rates = await self.get_fees()
+            fee_rate = fee_rates.fast
+
+        return await self._call_service(self._transfer_sync, what, recipient, memo, fee_rate, kwargs)
+
+    def _transfer_sync(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
+                       fee_rate: Optional[int] = None, kwargs=None) -> str:
+        kwargs = kwargs or {}
+        return self.get_private_key_bitcash().send(
+            [(recipient, what.amount.internal_amount, 'satoshi')],
+            fee=fee_rate,
+            message=memo or None,
+            **kwargs
+        )
+
+    async def get_utxos(self, address='') -> List[UTXO]:
+        """
+        Get UTXOs of the wallet
+        UTxO is an unspent transaction output
+        :param address: address (default is the address of the wallet)
+        :return: list of UTXOs
+        """
+        address = address or self.get_address()
+        raw_data = await self._call_service(self.api.get_unspent, address, self._underlying_network)
+        # todo: parse raw_data to UTXO
+        return raw_data
 
     async def broadcast_tx(self, tx_hex: str) -> str:
-        pass
+        """
+        Broadcast pre-signed transaction to the network
+        :param tx_hex: The transaction hex string
+        :return: The transaction hash
+        """
+        # todo: this method does not return the tx hash!
+        raise await self._call_service(self.api.broadcast_tx, tx_hex, self._underlying_network)
 
     @staticmethod
     async def _call_service(method, *args):
@@ -103,6 +169,3 @@ class BitcoinCashClient(XChainClient):
             method,
             *args
         )
-
-
-
