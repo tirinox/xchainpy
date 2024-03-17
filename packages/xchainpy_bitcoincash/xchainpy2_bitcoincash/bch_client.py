@@ -7,8 +7,9 @@ from bitcash.cashaddress import Address
 from bitcash.exceptions import InvalidAddress
 from bitcash.network import NetworkAPI
 
-from xchainpy2_client import FeeBounds, RootDerivationPaths, XChainClient, Fees, XcTx, TxPage, UTXO
-from xchainpy2_utils import NetworkType, Asset, AssetBCH, Chain, CryptoAmount
+from xchainpy2_client import FeeBounds, RootDerivationPaths, XChainClient, Fees, XcTx, TxPage, UTXO, TxType, \
+    TokenTransfer
+from xchainpy2_utils import NetworkType, Asset, AssetBCH, Chain, CryptoAmount, Amount
 from .const import ROOT_DERIVATION_PATHS, BCH_DECIMAL, DEFAULT_PROVIDER_NAMES, DEFAULT_BCH_EXPLORERS, \
     BCH_DEFAULT_FEE_BOUNDS, AssetTestBCH, DEFAULT_BCH_FEES
 
@@ -50,7 +51,7 @@ class BitcoinCashClient(XChainClient):
         self._prefix = "bitcoincash:"
         self._decimal = BCH_DECIMAL
         self.explorers = explorer_providers
-        self.gas_assets = AssetBCH if network != NetworkType.TESTNET else AssetTestBCH
+        self._gas_asset = AssetBCH if network != NetworkType.TESTNET else AssetTestBCH
 
         if not provider_names:
             provider_names = DEFAULT_PROVIDER_NAMES
@@ -100,7 +101,47 @@ class BitcoinCashClient(XChainClient):
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
         data = await self._call_service(self.api.get_transaction, tx_id, self._underlying_network)
         # todo: parse data to XcTx
-        return data
+        transfers = []
+        for input in data.inputs:
+            transfers.append(TokenTransfer(
+                input.address,
+                to_address='',
+                amount=Amount.automatic(input.amount),
+                asset=self.gas_asset,
+                tx_hash=data.txid,
+                outbound=False,
+            ))
+
+        for output in data.outputs:
+            if output.amount:
+                transfers.append(TokenTransfer(
+                    output.address,
+                    to_address='',
+                    amount=Amount.automatic(output.amount),
+                    asset=self.gas_asset,
+                    tx_hash=data.txid,
+                    outbound=True,
+                ))
+
+        # detect memo
+        memo = ''
+        for output in data.outputs:
+            if output.op_return:
+                # convert hex to string
+                memo = bytes.fromhex(output.op_return).decode('utf-8')
+                break
+
+        return XcTx(
+            transfers=transfers,
+            asset=self.gas_asset,
+            type=TxType.TRANSFER,
+            hash=data.txid,
+            date=None,
+            height=data.block or 0,
+            is_success=True,
+            original=data,
+            memo=memo,
+        )
 
     @property
     def _underlying_network(self):
