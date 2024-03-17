@@ -39,6 +39,7 @@ tc_env:
 	python3 -m pip install --editable packages/xchainpy_bitcoin
 	python3 -m pip install --editable packages/xchainpy_litecoin
 	python3 -m pip install --editable packages/xchainpy_dogecoin
+	python3 -m pip install --editable packages/xchainpy_bitcoincash
 	python3 -m pip install --editable packages/xchainpy_binance
 
 
