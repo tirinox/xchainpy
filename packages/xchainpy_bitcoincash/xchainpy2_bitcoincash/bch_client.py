@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 from datetime import datetime
 from typing import Optional, Union, List
 
@@ -23,7 +24,8 @@ class BitcoinCashClient(XChainClient):
                  root_derivation_paths: Optional[RootDerivationPaths] = ROOT_DERIVATION_PATHS,
                  explorer_providers=DEFAULT_BCH_EXPLORERS,
                  wallet_index=0,
-                 provider_names=DEFAULT_PROVIDER_NAMES):
+                 provider_names=DEFAULT_PROVIDER_NAMES,
+                 concurrency=5):
         """
         BitcoinCashClient interface
         Constructor to create a new Do.
@@ -36,6 +38,7 @@ class BitcoinCashClient(XChainClient):
         :param explorer_providers: The explorer providers
         :param wallet_index: The wallet index (default is 0)
         :param provider_names: The provider names
+        :param concurrency: The concurrency for batch-processing transactions
         """
 
         super().__init__(
@@ -57,6 +60,8 @@ class BitcoinCashClient(XChainClient):
             provider_names = DEFAULT_PROVIDER_NAMES
         self.provider_names = provider_names
         self.api = NetworkAPI()
+        self._concurrency = concurrency
+        self._semaphore = asyncio.Semaphore(concurrency)
 
     def validate_address(self, address: str) -> bool:
         try:
@@ -79,7 +84,7 @@ class BitcoinCashClient(XChainClient):
         result = await self._call_service(self.api.get_balance, address or self.get_address())
         return [self.gas_base_amount(result)]
 
-    async def get_transactions(self, address: str = '', offset: int = 0, limit: int = 0,
+    async def get_transactions(self, address: str = '', offset: int = 0, limit: int = 10,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None) -> TxPage:
         """
@@ -95,8 +100,13 @@ class BitcoinCashClient(XChainClient):
         if not address:
             address = self.get_address()
         data = await self._call_service(self.api.get_transactions, address, self._underlying_network)
-        # todo: parse data to TxPage
-        return data
+        hashes = data[offset:limit]
+
+        transactions = await asyncio.gather(*[self.get_transaction_data(tx_id) for tx_id in hashes])
+        return TxPage(
+            total=len(data),
+            txs=list(transactions),
+        )
 
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
         data = await self._call_service(self.api.get_transaction, tx_id, self._underlying_network)
@@ -200,13 +210,17 @@ class BitcoinCashClient(XChainClient):
         :param tx_hex: The transaction hex string
         :return: The transaction hash
         """
-        # todo: this method does not return the tx hash!
-        raise await self._call_service(self.api.broadcast_tx, tx_hex, self._underlying_network)
+        await self._call_service(self.api.broadcast_tx, tx_hex, self._underlying_network)
 
-    @staticmethod
-    async def _call_service(method, *args):
-        return await asyncio.get_event_loop().run_in_executor(
-            None,
-            method,
-            *args
-        )
+        # todo: the method above does not return the tx hash!
+        hash_object = hashlib.sha256(bytes.fromhex(tx_hex))
+        tx_hash = hash_object.hexdigest()
+        return tx_hash
+
+    async def _call_service(self, method, *args):
+        async with self._semaphore:
+            return await asyncio.get_event_loop().run_in_executor(
+                None,
+                method,
+                *args
+            )

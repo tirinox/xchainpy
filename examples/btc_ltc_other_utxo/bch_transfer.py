@@ -16,8 +16,11 @@ async def main():
     # balance = await bch_client.get_balance('bitcoincash:qpcjl9qak89t5fexnspfpvzqs6tcaytzcqeex48k8t')
     # print(balance)
 
-    tx_contents = await bch_client1.get_transaction_data('A914E88F070440754D7967607D4D1447F6229117B715308749DE3A912373E831')
-    print(tx_contents)
+    # tx_contents = await bch_client1.get_transaction_data('A914E88F070440754D7967607D4D1447F6229117B715308749DE3A912373E831')
+    # print(tx_contents)
+    #
+    transactions = await bch_client1.get_transactions('bitcoincash:qq2m0assgsqq3ek7currz4grzka9hxcdpu3q43wezh')
+    print(transactions)
 
     # query = THORChainQuery()
     # fee = await query.get_recommended_fee_rate(Chain.BitcoinCash)
