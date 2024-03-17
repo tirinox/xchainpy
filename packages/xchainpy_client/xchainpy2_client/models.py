@@ -93,6 +93,18 @@ class Fees(NamedTuple):
     type: FeeType
     fees: Dict[FeeOption, Fee]
 
+    @property
+    def average(self):
+        return self.fees[FeeOption.AVERAGE]
+
+    @property
+    def fast(self):
+        return self.fees[FeeOption.FAST]
+
+    @property
+    def fastest(self):
+        return self.fees[FeeOption.FASTEST]
+
 
 class FeesWithRates(NamedTuple):
     fees: Fees
