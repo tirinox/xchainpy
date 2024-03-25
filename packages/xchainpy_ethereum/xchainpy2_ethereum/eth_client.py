@@ -2,8 +2,11 @@ import logging
 from datetime import datetime
 from typing import Optional, List, Union
 
+import web3
+
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees, XcTx, TxPage
 from xchainpy2_ethereum import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMAL, DEFAULT_ETH_EXPLORER_PROVIDERS
+from xchainpy2_ethereum.utils import is_valid_eth_address
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset
 
 logger = logging.getLogger(__name__)
@@ -48,25 +51,15 @@ class EthereumClient(XChainClient):
         :param address: Address string
         :return: True if valid, False otherwise.
         """
-
-        if not address:
-            return False
-
-        raise NotImplementedError("Ethereum address validation is not implemented yet")
+        return is_valid_eth_address(address)
 
     def get_address(self) -> str:
         """
         Get the address for the given wallet index.
         :return: string address
         """
-        raise NotImplementedError("Ethereum address derivation is not implemented yet")
-
-    def get_private_key(self) -> str:
-        """
-        Get the private key for the given wallet index.
-        :return:
-        """
-        raise NotImplementedError("Ethereum address derivation is not implemented yet")
+        account = self.get_account()
+        return account.address
 
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         """
@@ -77,7 +70,16 @@ class EthereumClient(XChainClient):
         raise NotImplementedError("Ethereum balance fetching is not implemented yet")
 
     def get_public_key(self):
-        pass
+        """
+        Get the public key for the current wallet.
+        """
+        return self.get_account().public_key
+
+    def get_account(self):
+        """
+        Get the account object (web3) for the current wallet.
+        """
+        return web3.Account.from_key(self.get_private_key())
 
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 0,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,

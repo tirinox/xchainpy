@@ -26,3 +26,9 @@ ETH_ROOT_DERIVATION_PATHS = {
     NetworkType.TESTNET: "m/44'/60'/0'/0/",
     NetworkType.STAGENET: "m/44'/60'/0'/0/",
 }
+
+ETH_CHAIN_ID = {
+    NetworkType.MAINNET: 1,
+    NetworkType.TESTNET: 11155111,  # sepolia
+    NetworkType.STAGENET: 1,
+}
