@@ -1,12 +1,15 @@
 import logging
 from datetime import datetime
+from functools import reduce
 from typing import Optional, List, Union
 
-import web3
+from eth_account import Account
+from web3 import EthereumTesterProvider, Web3
+from web3.providers import BaseProvider
 
-from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees, XcTx, TxPage
+from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees, XcTx, TxPage, FeeRate
 from xchainpy2_ethereum import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMAL, DEFAULT_ETH_EXPLORER_PROVIDERS
-from xchainpy2_ethereum.utils import is_valid_eth_address
+from xchainpy2_ethereum.utils import is_valid_eth_address, format_fee_history, estimate_fees
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset
 
 logger = logging.getLogger(__name__)
@@ -22,6 +25,7 @@ class EthereumClient(XChainClient):
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  explorer_providers=DEFAULT_ETH_EXPLORER_PROVIDERS.copy(),
                  wallet_index=0,
+                 provider: Optional[BaseProvider] = None
                  ):
         """
         Initialize Ethereum
@@ -32,6 +36,7 @@ class EthereumClient(XChainClient):
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param explorer_providers: Dictionary of explorer providers for each network type.
         :param wallet_index: int (default 0)
+        :param provider: EVM RPC provider
         """
         root_derivation_paths = root_derivation_paths.copy() \
             if root_derivation_paths else ETH_ROOT_DERIVATION_PATHS.copy()
@@ -43,7 +48,22 @@ class EthereumClient(XChainClient):
         self._decimal = ETH_DECIMAL
 
         self.tx_responses = {}
-        self.web3 = None
+
+        self._remake_provider(provider)
+
+    @property
+    def provider(self):
+        return self.web3.provider
+
+    @provider.setter
+    def provider(self, provider: BaseProvider):
+        self._remake_provider(provider)
+
+    def _remake_provider(self, provider: BaseProvider):
+        if not provider:
+            provider = EthereumTesterProvider()
+            logger.warning("You are using EthereumTesterProvider. Please use your own provider to hide this warning!")
+        self.web3 = Web3(provider)
 
     def validate_address(self, address: str) -> bool:
         """
@@ -79,7 +99,7 @@ class EthereumClient(XChainClient):
         """
         Get the account object (web3) for the current wallet.
         """
-        return web3.Account.from_key(self.get_private_key())
+        return Account.from_key(self.get_private_key())
 
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 0,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
@@ -90,7 +110,20 @@ class EthereumClient(XChainClient):
         pass
 
     async def get_fees(self) -> Fees:
-        pass
+        """
+        Get Ethereum fees
+        Fees are estimated based on the last 20 blocks.
+        FeeRate is in Gwei
+        """
+        return await self._call_service(estimate_fees, self.web3)
+
+    async def get_last_fee(self) -> FeeRate:
+        """
+        Get the last Ethereum fee
+        FeeRate is in Gwei
+        """
+        fee = await self._call_service(self.web3.eth._gas_price)
+        return Web3.from_wei(fee, 'gwei')
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, **kwargs) -> str:
