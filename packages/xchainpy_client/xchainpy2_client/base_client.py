@@ -1,4 +1,5 @@
 import abc
+import asyncio
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List, Union
@@ -283,6 +284,14 @@ class XChainClient(abc.ABC):
 
     def clear_last_responses(self):
         self.last_response_dict = {}
+
+    @staticmethod
+    async def _call_service(method, *args):
+        return await asyncio.get_event_loop().run_in_executor(
+            None,
+            method,
+            *args
+        )
 
 
 class NoClient(XChainClient, abc.ABC):

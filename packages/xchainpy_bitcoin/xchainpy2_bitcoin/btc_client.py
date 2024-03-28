@@ -336,14 +336,6 @@ class BitcoinClient(XChainClient):
             original=tx,
         )
 
-    @staticmethod
-    async def _call_service(method, *args):
-        return await asyncio.get_event_loop().run_in_executor(
-            None,
-            method,
-            *args
-        )
-
     def get_available_provider_names(self, network_name=None):
         """
         Get available provider names for the network
