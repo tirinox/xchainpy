@@ -9,6 +9,8 @@ from xchainpy2_client import Fees, FeeType, FeeOption
 
 SELF_DIR = os.path.dirname(os.path.abspath(__file__))
 
+MAX_APPROVAL = 2 ** 256 - 1
+
 
 def get_erc20_abi():
     with open(f'{SELF_DIR}/abi/erc20.json', 'r') as f:

@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from pprint import pprint
 from typing import Optional, List, Union
 
 from eth_account import Account
@@ -9,7 +8,7 @@ from web3.exceptions import TransactionNotFound
 from web3.providers import BaseProvider
 
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees, XcTx, TxPage, FeeRate, TxType, \
-    TokenTransfer
+    TokenTransfer, FeeOption
 from xchainpy2_ethereum import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMAL, DEFAULT_ETH_EXPLORER_PROVIDERS
 from xchainpy2_ethereum.utils import is_valid_eth_address, estimate_fees, get_erc20_abi
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset, Amount
@@ -97,9 +96,14 @@ class EthereumClient(XChainClient):
         ]
 
     def get_erc20_as_contract(self, contract_address: str):
+        """
+        Get the ERC20 contract object for a given contract address.
+        :param contract_address: Contract address
+        :return: Contract object
+        """
         return self.web3.eth.contract(address=contract_address, abi=get_erc20_abi())
 
-    async def get_erc20_token_balance(self,  contract_address: str, address: str ='') -> CryptoAmount:
+    async def get_erc20_token_balance(self, contract_address: str, address: str = '') -> CryptoAmount:
         """
         Get the balance of a given address.
         """
@@ -113,24 +117,28 @@ class EthereumClient(XChainClient):
     async def get_erc20_token_info(self, contract) -> CryptoAmount:
         """
         Returns zero balance and token symbol for a given contract address.
+        The balance is zero because we are only interested in the token symbol and decimals.
+        :param contract: Contract object
         """
         decimals = await self._call_service(contract.functions.decimals().call)
         token_symbol = await self._call_service(contract.functions.symbol().call)
         return CryptoAmount(Amount.zero(decimals), Asset(self.chain.value, token_symbol, contract.address))
 
-    async def get_approved_erc20_token(self, contract_address: str, spender: str = '') -> CryptoAmount:
+    async def get_approved_erc20_token(self, contract_address: str, spender: str, address: str = '') -> CryptoAmount:
         """
-        Get the approved amount of a given address.
-        :param contract_address: Contract address
+        Get the allowance of a given address.
+        :param contract_address: ERC20 Contract address
         :param spender: Spender address
+        :param address: By default, it will return the allowance of the current wallet. (optional)
         :return: CryptoAmount
         """
-        if not spender:
-            spender = self.get_address()
+        if not address:
+            address = self.get_address()
 
         contract = self.get_erc20_as_contract(contract_address)
         token_info = await self.get_erc20_token_info(contract)
-        allowance = await self._call_service(contract.functions.allowance(self.get_address(), spender).call)
+        allowance = await self._call_service(contract.functions.allowance(address, spender).call)
+
         return CryptoAmount(Amount(allowance, token_info.amount.decimals), token_info.asset)
 
     def get_public_key(self):
@@ -208,7 +216,54 @@ class EthereumClient(XChainClient):
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, **kwargs) -> str:
-        pass
+        """
+        Transfer Ethereum or ERC20 token.
+
+
+        :param what: Amount to transfer
+        :param recipient: Recipient address or contract address to call
+        :param memo: Memo (optional)
+        :param fee_rate: Fee rate in Gwei (optional)
+        :return: Transaction hash
+        """
+        if what.asset == self.gas_asset:
+            # transfer ETH
+            return await self.transfer_eth(what, recipient, memo, fee_rate)
+        else:
+            # transfer ERC20 token
+            return await self.transfer_erc20_token(what, recipient, memo, fee_rate)
+
+    async def approve_erc20_token(self, spender: str, amount: CryptoAmount,
+                                  fee_option: Optional[FeeOption] = FeeOption.FAST,
+                                  fee_rate: FeeRate = 0) -> str:
+        """
+        Approve ERC20 token for a spender
+        :param spender: Spender address
+        :param amount: Amount to approve
+        :param fee_option: Fee option. Default is `FeeOption.FAST` (only used if fee_rate is not set)
+        :param fee_rate: Fee rate in Gwei. If fee rate is set, fee_option will be ignored.
+        :return: Transaction hash
+        """
+        if not fee_rate:
+            fees = await self.get_fees()
+            fee_rate = fees.fees[fee_option]
+
+        contract_address = self.web3.to_checksum_address(amount.asset.contract)
+        contract = self.get_erc20_as_contract(contract_address)
+        raw_amount = amount.amount.internal_amount
+
+        # estimate gas needed
+        gas = await self._call_service(contract.functions.approve(spender, raw_amount).estimateGas)
+
+        tx = contract.functions.approve(spender, raw_amount).buildTransaction({
+            'nonce': await self.get_nonce(),
+            'gas': gas,
+            'gasPrice': self.web3.to_wei(fee_rate, 'gwei'),
+        })
+        # sign
+        signed_tx = self.web3.eth.account.sign_transaction(tx, self.get_private_key())
+        tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
+        return tx_hash
 
     async def broadcast_tx(self, tx_hex: str) -> str:
         return await self._call_service(self.web3.eth.send_raw_transaction, tx_hex)
