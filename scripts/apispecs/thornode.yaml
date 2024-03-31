@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Thornode API
-  version: 1.127.0
+  version: 1.130.1
   contact:
     email: devs@thorchain.org
   description: Thornode REST API.
@@ -566,6 +566,73 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SwapperCloutResponse'
+  /thorchain/trade/unit/{asset}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/asset'
+    get:
+      description: Returns the total units and depth of a trade asset
+      operationId: trade_unit
+      tags:
+      - TradeUnit
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeUnitResponse'
+  /thorchain/trade/units:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns the total units and depth for each trade asset
+      operationId: trade_units
+      tags:
+      - TradeUnits
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: &id017
+                  $ref: '#/components/schemas/TradeUnitResponse'
+  /thorchain/trade/account/{address}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/address'
+    get:
+      description: Returns the units and depth of a trade account
+      operationId: trade_account
+      tags:
+      - TradeAccount
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeAccountResponse'
+  /thorchain/trade/accounts/{asset}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/asset'
+    get:
+      description: Returns all trade accounts for an asset
+      operationId: trade_accounts
+      tags:
+      - TradeAccounts
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: &id018
+                  $ref: '#/components/schemas/TradeAccountResponse'
   /thorchain/queue:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -854,6 +921,12 @@ paths:
     - name: destination
       in: query
       description: the destination address, required to generate memo
+      schema:
+        type: string
+        example: '0x1c7b17362c84287bd1184447e6dfeaf920c31bbe'
+    - name: refund_address
+      in: query
+      description: the refund address, refunds will be sent here if the swap fails
       schema:
         type: string
         example: '0x1c7b17362c84287bd1184447e6dfeaf920c31bbe'
@@ -2869,6 +2942,55 @@ components:
           type: integer
           format: int64
           description: last block height that clout was reclaimed
+    TradeUnitResponse:
+      type: object
+      required:
+      - asset
+      - units
+      - depth
+      properties:
+        asset:
+          type: string
+          example: BTC~BTC
+          description: trade account asset with "~" separator
+        units:
+          type: string
+          description: total units of trade asset
+        depth:
+          type: string
+          description: total depth of trade asset
+    TradeUnitsResponse:
+      type: array
+      items: *id017
+    TradeAccountResponse:
+      type: object
+      required:
+      - asset
+      - units
+      - owner
+      properties:
+        asset:
+          type: string
+          example: BTC~BTC
+          description: trade account asset with "~" separator
+        units:
+          type: string
+          description: units of trade asset belonging to this owner
+        owner:
+          type: string
+          description: thor address of trade account owner
+        last_add_height:
+          type: integer
+          format: int64
+          description: last thorchain height trade assets were added to trade account
+        last_withdraw_height:
+          type: integer
+          format: int64
+          description: last thorchain height trade assets were withdrawn from trade
+            account
+    TradeAccountsResponse:
+      type: array
+      items: *id018
     MimirResponse:
       type: object
       additionalProperties:
@@ -3089,64 +3211,64 @@ components:
             $ref: '#/components/schemas/BlockTx'
     baseQuoteResponse:
       properties:
-        inbound_address: &id017
+        inbound_address: &id019
           type: string
           description: the inbound address for the transaction on the source chain
           example: bc1qjk3xzu5slu7mtmc8jc9yed3zqvkhkttm700g9a
-        inbound_confirmation_blocks: &id018
+        inbound_confirmation_blocks: &id020
           type: integer
           format: int64
           description: the approximate number of source chain blocks required before
             processing
-        inbound_confirmation_seconds: &id019
+        inbound_confirmation_seconds: &id021
           type: integer
           format: int64
           description: the approximate seconds for block confirmations required before
             processing
-        outbound_delay_blocks: &id020
+        outbound_delay_blocks: &id022
           type: integer
           format: int64
           description: the number of thorchain blocks the outbound will be delayed
-        outbound_delay_seconds: &id021
+        outbound_delay_seconds: &id023
           type: integer
           format: int64
           description: the approximate seconds for the outbound delay before it will
             be sent
-        fees: &id022
+        fees: &id024
           $ref: '#/components/schemas/QuoteFees'
-        slippage_bps: &id023
+        slippage_bps: &id025
           type: integer
           format: int64
           description: Deprecated - migrate to fees object.
-        streaming_slippage_bps: &id024
+        streaming_slippage_bps: &id026
           type: integer
           format: int64
           description: Deprecated - migrate to fees object.
-        router: &id025
+        router: &id027
           type: string
           description: the EVM chain router contract address
           example: '0x3624525075b88B24ecc29CE226b0CEc1fFcB6976'
-        expiry: &id026
+        expiry: &id028
           type: integer
           format: int64
           description: expiration timestamp in unix seconds
           example: 1671660285
-        warning: &id027
+        warning: &id029
           type: string
           description: static warning message
           example: Do not cache this response. Do not send funds after the expiry.
-        notes: &id028
+        notes: &id030
           type: string
           description: chain specific quote notes
           example: Transfer the inbound_address the asset with the memo. Do not use
             multi-in, multi-out transactions.
-        dust_threshold: &id029
+        dust_threshold: &id031
           type: string
           example: '10000'
           description: Defines the minimum transaction size for the chain in base
             units (sats, wei, uatom). Transactions with asset amounts lower than the
             dust_threshold are ignored.
-        recommended_min_amount_in: &id030
+        recommended_min_amount_in: &id032
           type: string
           description: The recommended minimum inbound amount for this transaction
             type & inbound asset. Sending less than this amount could result in failed
@@ -3166,20 +3288,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id017
-        inbound_confirmation_blocks: *id018
-        inbound_confirmation_seconds: *id019
-        outbound_delay_blocks: *id020
-        outbound_delay_seconds: *id021
-        fees: *id022
-        slippage_bps: *id023
-        streaming_slippage_bps: *id024
-        router: *id025
-        expiry: *id026
-        warning: *id027
-        notes: *id028
-        dust_threshold: *id029
-        recommended_min_amount_in: *id030
+        inbound_address: *id019
+        inbound_confirmation_blocks: *id020
+        inbound_confirmation_seconds: *id021
+        outbound_delay_blocks: *id022
+        outbound_delay_seconds: *id023
+        fees: *id024
+        slippage_bps: *id025
+        streaming_slippage_bps: *id026
+        router: *id027
+        expiry: *id028
+        warning: *id029
+        notes: *id030
+        dust_threshold: *id031
+        recommended_min_amount_in: *id032
         memo:
           type: string
           description: generated memo for the swap
@@ -3229,20 +3351,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id017
-        inbound_confirmation_blocks: *id018
-        inbound_confirmation_seconds: *id019
-        outbound_delay_blocks: *id020
-        outbound_delay_seconds: *id021
-        fees: *id022
-        slippage_bps: *id023
-        streaming_slippage_bps: *id024
-        router: *id025
-        expiry: *id026
-        warning: *id027
-        notes: *id028
-        dust_threshold: *id029
-        recommended_min_amount_in: *id030
+        inbound_address: *id019
+        inbound_confirmation_blocks: *id020
+        inbound_confirmation_seconds: *id021
+        outbound_delay_blocks: *id022
+        outbound_delay_seconds: *id023
+        fees: *id024
+        slippage_bps: *id025
+        streaming_slippage_bps: *id026
+        router: *id027
+        expiry: *id028
+        warning: *id029
+        notes: *id030
+        dust_threshold: *id031
+        recommended_min_amount_in: *id032
         memo:
           type: string
           description: generated memo for the deposit
@@ -3272,20 +3394,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id017
-        inbound_confirmation_blocks: *id018
-        inbound_confirmation_seconds: *id019
-        outbound_delay_blocks: *id020
-        outbound_delay_seconds: *id021
-        fees: *id022
-        slippage_bps: *id023
-        streaming_slippage_bps: *id024
-        router: *id025
-        expiry: *id026
-        warning: *id027
-        notes: *id028
-        dust_threshold: *id029
-        recommended_min_amount_in: *id030
+        inbound_address: *id019
+        inbound_confirmation_blocks: *id020
+        inbound_confirmation_seconds: *id021
+        outbound_delay_blocks: *id022
+        outbound_delay_seconds: *id023
+        fees: *id024
+        slippage_bps: *id025
+        streaming_slippage_bps: *id026
+        router: *id027
+        expiry: *id028
+        warning: *id029
+        notes: *id030
+        dust_threshold: *id031
+        recommended_min_amount_in: *id032
         memo:
           type: string
           description: generated memo for the withdraw, the client can use this OR
@@ -3318,20 +3440,20 @@ components:
       - streaming_swap_seconds
       - total_open_loan_seconds
       properties:
-        inbound_address: *id017
-        inbound_confirmation_blocks: *id018
-        inbound_confirmation_seconds: *id019
-        outbound_delay_blocks: *id020
-        outbound_delay_seconds: *id021
-        fees: *id022
-        slippage_bps: *id023
-        streaming_slippage_bps: *id024
-        router: *id025
-        expiry: *id026
-        warning: *id027
-        notes: *id028
-        dust_threshold: *id029
-        recommended_min_amount_in: *id030
+        inbound_address: *id019
+        inbound_confirmation_blocks: *id020
+        inbound_confirmation_seconds: *id021
+        outbound_delay_blocks: *id022
+        outbound_delay_seconds: *id023
+        fees: *id024
+        slippage_bps: *id025
+        streaming_slippage_bps: *id026
+        router: *id027
+        expiry: *id028
+        warning: *id029
+        notes: *id030
+        dust_threshold: *id031
+        recommended_min_amount_in: *id032
         memo:
           type: string
           description: generated memo for the loan open
@@ -3390,20 +3512,20 @@ components:
       - streaming_swap_seconds
       - total_repay_seconds
       properties:
-        inbound_address: *id017
-        inbound_confirmation_blocks: *id018
-        inbound_confirmation_seconds: *id019
-        outbound_delay_blocks: *id020
-        outbound_delay_seconds: *id021
-        fees: *id022
-        slippage_bps: *id023
-        streaming_slippage_bps: *id024
-        router: *id025
-        expiry: *id026
-        warning: *id027
-        notes: *id028
-        dust_threshold: *id029
-        recommended_min_amount_in: *id030
+        inbound_address: *id019
+        inbound_confirmation_blocks: *id020
+        inbound_confirmation_seconds: *id021
+        outbound_delay_blocks: *id022
+        outbound_delay_seconds: *id023
+        fees: *id024
+        slippage_bps: *id025
+        streaming_slippage_bps: *id026
+        router: *id027
+        expiry: *id028
+        warning: *id029
+        notes: *id030
+        dust_threshold: *id031
+        recommended_min_amount_in: *id032
         memo:
           type: string
           description: generated memo for the loan close

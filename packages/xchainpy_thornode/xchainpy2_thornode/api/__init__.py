@@ -20,5 +20,9 @@ from xchainpy2_thornode.api.savers_api import SaversApi
 from xchainpy2_thornode.api.streaming_swap_api import StreamingSwapApi
 from xchainpy2_thornode.api.tss_api import TSSApi
 from xchainpy2_thornode.api.thornames_api import ThornamesApi
+from xchainpy2_thornode.api.trade_account_api import TradeAccountApi
+from xchainpy2_thornode.api.trade_accounts_api import TradeAccountsApi
+from xchainpy2_thornode.api.trade_unit_api import TradeUnitApi
+from xchainpy2_thornode.api.trade_units_api import TradeUnitsApi
 from xchainpy2_thornode.api.transactions_api import TransactionsApi
 from xchainpy2_thornode.api.vaults_api import VaultsApi

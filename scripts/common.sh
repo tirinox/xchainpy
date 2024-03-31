@@ -8,7 +8,7 @@ function check_output_dir() {
   read -p "Do you want to clear ${OUTPUT_DIR}? (y/n) " yn
   case $yn in
   [yY])
-    rm -rf ${OUTPUT_DIR}
+    rm -rf "${OUTPUT_DIR}"
     return
     ;;
   [nN])
@@ -57,7 +57,10 @@ function download_swagger_codegen() {
 }
 
 function add_license() {
-  cp "../LICENSE" "${OUTPUT_DIR}/LICENSE"
+  # echo pwd
+  echo `pwd`
+  echo "Copying LICENSE to ${OUTPUT_DIR}"
+  cp "../LICENSE" "${OUTPUT_DIR}"
 }
 
 function fix_swagger_spec() {
@@ -75,7 +78,19 @@ function fix_swagger_spec() {
   esac
 }
 
+function check_java_runtime() {
+  # Check if Java is installed and enabled
+  if ! java -version &> /dev/null; then
+    echo "Java is not installed or enabled. Aborting script."
+    echo "For macOS, you can install Java using 'brew install java'"
+    exit 1
+  fi
+}
+
 function run_codegen() {
+  # Check Java
+  check_java_runtime
+
   # Download swagger codegen jar if it is missing
   download_swagger_codegen
 
