@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from functools import reduce
 
@@ -6,14 +7,16 @@ import web3
 
 from xchainpy2_client import Fees, FeeType, FeeOption
 
+SELF_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 def get_erc20_abi():
-    with open('abi/erc20.json', 'r') as f:
+    with open(f'{SELF_DIR}/abi/erc20.json', 'r') as f:
         return json.load(f)
 
 
 def get_router_abi():
-    with open('abi/router.json', 'r') as f:
+    with open(f'{SELF_DIR}/abi/router.json', 'r') as f:
         return json.load(f)
 
 

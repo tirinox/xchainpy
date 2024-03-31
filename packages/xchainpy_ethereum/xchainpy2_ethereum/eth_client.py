@@ -11,8 +11,8 @@ from web3.providers import BaseProvider
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees, XcTx, TxPage, FeeRate, TxType, \
     TokenTransfer
 from xchainpy2_ethereum import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMAL, DEFAULT_ETH_EXPLORER_PROVIDERS
-from xchainpy2_ethereum.utils import is_valid_eth_address, estimate_fees
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset
+from xchainpy2_ethereum.utils import is_valid_eth_address, estimate_fees, get_erc20_abi
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset, Amount
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +95,43 @@ class EthereumClient(XChainClient):
         return [
             self.gas_amount(int(eth_balance))
         ]
+
+    def get_erc20_as_contract(self, contract_address: str):
+        return self.web3.eth.contract(address=contract_address, abi=get_erc20_abi())
+
+    async def get_erc20_token_balance(self,  contract_address: str, address: str ='') -> CryptoAmount:
+        """
+        Get the balance of a given address.
+        """
+        address = address or self.get_address()
+        contract = self.get_erc20_as_contract(contract_address)
+        balance = await self._call_service(contract.functions.balanceOf(address).call)
+
+        token_info = await self.get_erc20_token_info(contract)
+        return CryptoAmount(Amount(balance, token_info.amount.decimals), token_info.asset)
+
+    async def get_erc20_token_info(self, contract) -> CryptoAmount:
+        """
+        Returns zero balance and token symbol for a given contract address.
+        """
+        decimals = await self._call_service(contract.functions.decimals().call)
+        token_symbol = await self._call_service(contract.functions.symbol().call)
+        return CryptoAmount(Amount.zero(decimals), Asset(self.chain.value, token_symbol, contract.address))
+
+    async def get_approved_erc20_token(self, contract_address: str, spender: str = '') -> CryptoAmount:
+        """
+        Get the approved amount of a given address.
+        :param contract_address: Contract address
+        :param spender: Spender address
+        :return: CryptoAmount
+        """
+        if not spender:
+            spender = self.get_address()
+
+        contract = self.get_erc20_as_contract(contract_address)
+        token_info = await self.get_erc20_token_info(contract)
+        allowance = await self._call_service(contract.functions.allowance(self.get_address(), spender).call)
+        return CryptoAmount(Amount(allowance, token_info.amount.decimals), token_info.asset)
 
     def get_public_key(self):
         """
