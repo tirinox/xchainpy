@@ -1,15 +1,17 @@
 import logging
 from datetime import datetime
-from functools import reduce
+from pprint import pprint
 from typing import Optional, List, Union
 
 from eth_account import Account
 from web3 import EthereumTesterProvider, Web3
+from web3.exceptions import TransactionNotFound
 from web3.providers import BaseProvider
 
-from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees, XcTx, TxPage, FeeRate
+from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees, XcTx, TxPage, FeeRate, TxType, \
+    TokenTransfer
 from xchainpy2_ethereum import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMAL, DEFAULT_ETH_EXPLORER_PROVIDERS
-from xchainpy2_ethereum.utils import is_valid_eth_address, format_fee_history, estimate_fees
+from xchainpy2_ethereum.utils import is_valid_eth_address, estimate_fees
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset
 
 logger = logging.getLogger(__name__)
@@ -87,7 +89,12 @@ class EthereumClient(XChainClient):
         :param address: By default, it will return the balance of the current wallet. (optional)
         :return:
         """
-        raise NotImplementedError("Ethereum balance fetching is not implemented yet")
+        address = address or self.get_address()
+        eth_balance = await self._call_service(self.web3.eth.get_balance, address)
+
+        return [
+            self.gas_amount(int(eth_balance))
+        ]
 
     def get_public_key(self):
         """
@@ -104,10 +111,47 @@ class EthereumClient(XChainClient):
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 0,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None) -> TxPage:
-        pass
+        raise NotImplementedError("Ethereum transaction fetching is not implemented yet")
 
-    async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
-        pass
+    async def get_transaction_data(self, tx_id: str, with_timestamp=False) -> Optional[XcTx]:
+        try:
+            receipt = await self._call_service(self.web3.eth.get_transaction_receipt, tx_id)
+            tx_data = await self._call_service(self.web3.eth.get_transaction, tx_id)
+        except TransactionNotFound:
+            return None
+
+        timestamp = 0
+        if with_timestamp and receipt:
+            block = await self._call_service(self.web3.eth.get_block, receipt['blockNumber'])
+            timestamp = block['timestamp']
+
+        return self._convert_tx_data(receipt, tx_data, timestamp) if receipt else None
+
+    def _convert_tx_data(self, receipt, tx_data, timestamp) -> XcTx:
+        # todo: decode input data to token transfers
+        value = tx_data['value']
+        destination = tx_data['to']
+        tx_hash = tx_data['hash'].hex()
+        transfers = [
+            TokenTransfer(
+                asset=AssetETH,
+                from_address=tx_data['from'],
+                to_address=destination,
+                amount=self.gas_amount(int(value)).amount,
+                tx_hash=tx_hash,
+            )
+        ]
+        return XcTx(
+            asset=AssetETH,
+            transfers=transfers,
+            height=tx_data['blockNumber'],
+            is_success=receipt['status'] == 1,
+            original=tx_data,
+            hash=tx_hash,
+            date=timestamp,
+            memo='',
+            type=TxType.TRANSFER,
+        )
 
     async def get_fees(self) -> Fees:
         """
@@ -130,4 +174,16 @@ class EthereumClient(XChainClient):
         pass
 
     async def broadcast_tx(self, tx_hex: str) -> str:
-        pass
+        return await self._call_service(self.web3.eth.send_raw_transaction, tx_hex)
+
+    async def get_nonce(self, address: str = '') -> int:
+        if not address:
+            address = self.get_address()
+        return await self._call_service(self.web3.eth.get_transaction_count, address)
+
+    def get_explorer_tx_url(self, tx_id: str) -> str:
+        if not tx_id.startswith('0x'):
+            tx_id = '0x' + tx_id
+        return super().get_explorer_tx_url(tx_id)
+
+    get_explorer_tx_url.__doc__ = XChainClient.get_explorer_tx_url.__doc__
