@@ -7,16 +7,18 @@ Name | Type | Description | Notes
 **add_liquidity_count** | **str** | Int64, same as history/liquidity_changes:addLiquidityCount | 
 **add_liquidity_volume** | **str** | Int64(e8), same as history/liquidity_changes:addLiquidityVolume | 
 **add_rune_liquidity_volume** | **str** | Int64(e8), same as history/liquidity_changes:addRuneLiquidityVolume | 
-**annual_percentage_rate** | **str** | Float, Also called APR. Annual return estimated linearly (not compounded) from a period of typically the last 30 or 100 days (configurable by the period parameter, default is 30). E.g. 0.1 means 10% yearly return. Due to Impermanent Loss and Synths this might be negative, but given Impermanent Loss Protection for 100+ day members, frontends might show MAX(APR, 0).  | 
+**annual_percentage_rate** | **str** | deprecated now it&#x27;s only showing zero util being deleted. | 
 **asset** | **str** |  | 
 **asset_depth** | **str** | Int64(e8), the amount of Asset in the pool | 
 **asset_price** | **str** | Float, price of asset in rune. I.e. rune amount / asset amount | 
 **asset_price_usd** | **str** | Float, the price of asset in USD (based on the deepest USD pool). | 
 **average_slip** | **str** | Float64 (Basis points, 0-10000, where 10000&#x3D;100%), same as history/swaps:averageSlip  | 
-**impermanent_loss_protection_paid** | **str** | Int64(e8), part of the withdrawRuneVolume which was payed because of impermanent loss protection.  | 
+**earnings** | **str** | Int64(e8), The earning that has been recorded from the pool asset&#x27;s Liquidity Fees and Rewards in RUNE. The earnings shown are from the period parameter default being 14 days  (configurable by the period parameter).  | 
+**earnings_annual_as_percent_of_depth** | **str** | Float, The estimation of earnings during the time interval expanded through a year  compared to the current pool depth. E.g. 0.1 means the pool based on this interval earnings can earn 10% of its pool during a year.  | 
 **liquidity_units** | **str** | Int64, Liquidity Units in the pool | 
-**pool_apy** | **str** | Float, MAX(AnnualPercentageRate, 0)  | 
+**pool_apy** | **str** | deprecated now it&#x27;s only showing zero util being deleted. | 
 **rune_depth** | **str** | Int64(e8), the amount of Rune in the pool | 
+**savers_apr** | **str** | Float, Annual Return estimated linearly (not compounded) for savers from a period of typically the last 30 or 100 days (configurable by the period parameter, default is 14). E.g. 0.1 means 10% yearly return. If the savers period has not yet been reached, It will show zero instead.  | 
 **status** | **str** | The state of the pool, e.g. Available, Staged | 
 **swap_count** | **str** | Int64, same as history/swaps:totalCount | 
 **swap_volume** | **str** | Int64(e8), same as history/swaps:totalVolume | 

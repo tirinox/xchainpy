@@ -10,6 +10,7 @@ Dependencies:
 import argparse
 import asyncio
 import json
+import logging
 import urllib.parse
 from pprint import pprint
 
@@ -131,9 +132,12 @@ def fix_maya_liquidity_providers(spec):
 
 def fix_thor_tx_details_nullable(spec):
     # nullable: true
-    place = drill(spec, ['components', 'schemas', 'TxDetailsResponse', 'properties'])
-    place['actions']['nullable'] = True
-    place['out_txs']['nullable'] = True
+    try:
+        place = drill(spec, ['components', 'schemas', 'TxDetailsResponse', 'properties'])
+        place['actions']['nullable'] = True
+        place['out_txs']['nullable'] = True
+    except Exception:
+        logging.exception('Failed to fix TxDetailsResponse')
     return spec
 
 

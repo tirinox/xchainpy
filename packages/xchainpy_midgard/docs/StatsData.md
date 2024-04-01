@@ -6,7 +6,6 @@ Name | Type | Description | Notes
 **add_liquidity_count** | **str** | Int64, number of deposits since beginning. | 
 **add_liquidity_volume** | **str** | Int64(e8), total of deposits since beginning.  | 
 **daily_active_users** | **str** | Deprecated, it&#x27;s always 0. | 
-**impermanent_loss_protection_paid** | **str** | Int64(e8), impermanent loss protection paid out.  | 
 **monthly_active_users** | **str** | Deprecated, it&#x27;s always 0. | 
 **rune_depth** | **str** | Int64(e8), current total Rune in the pools. | 
 **rune_price_usd** | **str** | Float, the price of Rune based on the deepest USD pool. | 

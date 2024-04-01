@@ -752,7 +752,7 @@ from pprint import pprint
 # create an instance of the API class
 api_instance = xchainpy2_midgard.DefaultApi()
 asset = 'asset_example' # str | pool name
-period = 'period_example' # str | Specifies the base interval from which APY is extrapolated. Default is 30d.  (optional)
+period = 'period_example' # str | Specifies the base interval from which APY is extrapolated. Default is 14d.  (optional)
 
 try:
     # Details of a Pool
@@ -767,7 +767,7 @@ except ApiException as e:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **asset** | **str**| pool name | 
- **period** | **str**| Specifies the base interval from which APY is extrapolated. Default is 30d.  | [optional] 
+ **period** | **str**| Specifies the base interval from which APY is extrapolated. Default is 14d.  | [optional] 
 
 ### Return type
 
@@ -802,7 +802,7 @@ from pprint import pprint
 # create an instance of the API class
 api_instance = xchainpy2_midgard.DefaultApi()
 asset = 'asset_example' # str | pool name
-period = 'period_example' # str | Restricts aggregation type fields to the last period only. Default is 30d.  (optional)
+period = 'period_example' # str | Restricts aggregation type fields to the last period only. Default is 14d.  (optional)
 
 try:
     # Pool Statistics
@@ -817,7 +817,7 @@ except ApiException as e:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **asset** | **str**| pool name | 
- **period** | **str**| Restricts aggregation type fields to the last period only. Default is 30d.  | [optional] 
+ **period** | **str**| Restricts aggregation type fields to the last period only. Default is 14d.  | [optional] 
 
 ### Return type
 

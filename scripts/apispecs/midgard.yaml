@@ -147,7 +147,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/StatsData'
-      description: object containing global MAYAChain data
+      description: object containing global THORChain data
     SwapHistoryResponse:
       content:
         application/json:
@@ -642,12 +642,6 @@ components:
           description: Int64(e8), Share of earnings sent to nodes during the time
             interval
           type: string
-        cacaoPriceUSD:
-          description: 'Float, the price of Cacao based on the deepest USD pool at
-            the end of the interval.
-
-            '
-          type: string
         earnings:
           description: 'Int64(e8), System income generated during the time interval.
             It is the sum of
@@ -675,7 +669,7 @@ components:
             $ref: '#/components/schemas/EarningsHistoryItemPool'
           type: array
         runePriceUSD:
-          description: 'Float, the price of Cacao based on the deepest USD pool at
+          description: 'Float, the price of Rune based on the deepest USD pool at
             the end of the interval.
 
             '
@@ -692,7 +686,6 @@ components:
       - bondingEarnings
       - liquidityEarnings
       - avgNodeCount
-      - cacaoPriceUSD
       - runePriceUSD
       - pools
       type: object
@@ -841,22 +834,8 @@ components:
 
             '
           type: string
-        cacaoPriceUSD:
-          description: 'Float, the price of Cacao based on the deepest USD pool at
-            the end of the interval.
-
-            '
-          type: string
         endTime:
           description: Int64, The end time of bucket in unix timestamp
-          type: string
-        impermanentLossProtectionPaid:
-          description: 'Int64(e8), part of the withdrawRuneVolume which was payed
-            because of impermanent loss
-
-            protection.
-
-            '
           type: string
         net:
           description: 'Int64(e8), net liquidity changes (withdrawals - deposits)
@@ -906,11 +885,9 @@ components:
       - addLiquidityCount
       - withdrawAssetVolume
       - withdrawRuneVolume
-      - impermanentLossProtectionPaid
       - withdrawVolume
       - withdrawCount
       - net
-      - cacaoPriceUSD
       - runePriceUSD
       type: object
     MemberDetails:
@@ -946,11 +923,6 @@ components:
         assetWithdrawn:
           description: Int64(e8), total asset withdrawn from the pool by member
           type: string
-        cacaoDeposit:
-          description: "Int64(e8), total Cacao that is currently deposited to the\
-            \ pool by member.\nThis field is same as the `rune_deposit_value` field\
-            \ in thornode. Mainly can be used \nfor tracking, mainly Growth Percentage\n"
-          type: string
         dateFirstAdded:
           description: Int64, Unix timestamp for the first time member deposited into
             the pool
@@ -971,6 +943,11 @@ components:
         runeAddress:
           description: Rune address used by the member
           type: string
+        runeDeposit:
+          description: "Int64(e8), total Rune that is currently deposited to the pool\
+            \ by member.\nThis field is same as the `rune_deposit_value` field in\
+            \ thornode. Mainly can be used \nfor tracking, mainly Growth Percentage\n"
+          type: string
         runePending:
           description: 'Int64(e8), Rune sent but not added yet, it will be added when
             the asset pair arrives
@@ -985,7 +962,7 @@ components:
       - runeAddress
       - assetAddress
       - liquidityUnits
-      - cacaoDeposit
+      - runeDeposit
       - assetDeposit
       - runeAdded
       - assetAdded
@@ -997,7 +974,7 @@ components:
       - dateLastAdded
       type: object
     Members:
-      items: &id004
+      items: &id003
         description: Member address
         example: tbnb1fj2lqj8dvr5pumfchc7ntlfqd2v6zdxqwjewf5
         type: string
@@ -1137,23 +1114,17 @@ components:
       - ed25519
       type: object
     Nodes:
-      items: &id005
+      items: &id004
         $ref: '#/components/schemas/Node'
       type: array
     PoolDetail:
       properties:
         annualPercentageRate:
-          description: 'Float, Also called APR. Annual return estimated linearly (not
-            compounded) from
+          description: 'Float, Annual Percentage Yield of earning to depth (earning/depth)
+            estimated from a period
 
-            a period of typically the last 30 or 100 days (configurable by the period
-            parameter,
-
-            default is 30). E.g. 0.1 means 10% yearly return.
-
-            Due to Impermanent Loss and Synths this might be negative, but given Impermanent
-
-            Loss Protection for 100+ day members, frontends might show MAX(APR, 0).
+            (configurable by the period parameter, default is 14) E.g. 0.1 means 10%
+            yearly return.
 
             '
           type: string
@@ -1169,15 +1140,42 @@ components:
           description: Float, the price of asset in USD (based on the deepest USD
             pool).
           type: string
+        earnings:
+          description: "Int64(e8), The earning that has been recorded from the pool\
+            \ asset's Liquidity Fees\nand Rewards in RUNE. The earnings shown are\
+            \ from the period parameter default being 14 days \n(configurable by the\
+            \ period parameter).\n"
+          type: string
+        earningsAnnualAsPercentOfDepth:
+          description: "Float, The estimation of earnings during the time interval\
+            \ expanded through a year \ncompared to the current pool depth.\nE.g.\
+            \ 0.1 means the pool based on this interval earnings can earn 10% of its\
+            \ pool during a year.\n"
+          type: string
         liquidityUnits:
           description: Int64, Liquidity Units in the pool.
+          type: string
+        lpLuvi:
+          description: 'Float, Annual yield estimated (compounding) from a period
+            (default being 14d)
+
+            configurable by the period parameter. Calculated from Liquidity Unit Value
+            Index (LUVI).
+
+            Due to Impermanent Loss and Synths Leverage this might be negative.
+
+            '
           type: string
         nativeDecimal:
           description: Int64, The native decimal number of the pool asset. (If the
             value is "-1", it means midgard doesn't know the pool native decimal)
           type: string
         poolAPY:
-          description: 'Float, MAX(AnnualPercentageRate, 0)
+          description: 'Float, Annual Percentage Yield of earning to depth (earning/depth)
+            estimated from a period
+
+            (configurable by the period parameter, default is 14) E.g. 0.1 means 10%
+            yearly return.
 
             '
           type: string
@@ -1191,7 +1189,7 @@ components:
             a period of typically the last 30 or 100 days (configurable by the period
             parameter,
 
-            default is 30). E.g. 0.1 means 10% yearly return.
+            default is 14). E.g. 0.1 means 10% yearly return.
 
             If the savers period has not yet been reached, It will show zero instead.
 
@@ -1238,6 +1236,8 @@ components:
       - assetPriceUSD
       - annualPercentageRate
       - poolAPY
+      - earnings
+      - earningsAnnualAsPercentOfDepth
       - status
       - liquidityUnits
       - synthUnits
@@ -1249,9 +1249,10 @@ components:
       - saversAPR
       - totalCollateral
       - totalDebtTor
+      - lpLuvi
       type: object
     PoolDetails:
-      items: &id006
+      items: &id005
         $ref: '#/components/schemas/PoolDetail'
       type: array
     PoolStatsDetail:
@@ -1269,19 +1270,7 @@ components:
           description: Int64(e8), same as history/liquidity_changes:addRuneLiquidityVolume
           type: string
         annualPercentageRate:
-          description: 'Float, Also called APR. Annual return estimated linearly (not
-            compounded) from
-
-            a period of typically the last 30 or 100 days (configurable by the period
-            parameter,
-
-            default is 30). E.g. 0.1 means 10% yearly return.
-
-            Due to Impermanent Loss and Synths this might be negative, but given Impermanent
-
-            Loss Protection for 100+ day members, frontends might show MAX(APR, 0).
-
-            '
+          description: deprecated now it's only showing zero util being deleted.
           type: string
         asset:
           type: string
@@ -1301,24 +1290,39 @@ components:
 
             '
           type: string
-        impermanentLossProtectionPaid:
-          description: 'Int64(e8), part of the withdrawRuneVolume which was payed
-            because of impermanent loss
-
-            protection.
-
-            '
+        earnings:
+          description: "Int64(e8), The earning that has been recorded from the pool\
+            \ asset's Liquidity Fees\nand Rewards in RUNE. The earnings shown are\
+            \ from the period parameter default being 14 days \n(configurable by the\
+            \ period parameter).\n"
+          type: string
+        earningsAnnualAsPercentOfDepth:
+          description: "Float, The estimation of earnings during the time interval\
+            \ expanded through a year \ncompared to the current pool depth.\nE.g.\
+            \ 0.1 means the pool based on this interval earnings can earn 10% of its\
+            \ pool during a year.\n"
           type: string
         liquidityUnits:
           description: Int64, Liquidity Units in the pool
           type: string
         poolAPY:
-          description: 'Float, MAX(AnnualPercentageRate, 0)
-
-            '
+          description: deprecated now it's only showing zero util being deleted.
           type: string
         runeDepth:
           description: Int64(e8), the amount of Rune in the pool
+          type: string
+        saversAPR:
+          description: 'Float, Annual Return estimated linearly (not compounded) for
+            savers from
+
+            a period of typically the last 30 or 100 days (configurable by the period
+            parameter,
+
+            default is 14). E.g. 0.1 means 10% yearly return.
+
+            If the savers period has not yet been reached, It will show zero instead.
+
+            '
           type: string
         status:
           description: The state of the pool, e.g. Available, Staged
@@ -1415,15 +1419,17 @@ components:
       - toAssetFees
       - toRuneFees
       - totalFees
-      - annualPercentageRate
       - poolAPY
+      - annualPercentageRate
+      - earnings
+      - earningsAnnualAsPercentOfDepth
+      - saversAPR
       - addAssetLiquidityVolume
       - addRuneLiquidityVolume
       - addLiquidityVolume
       - addLiquidityCount
       - withdrawAssetVolume
       - withdrawRuneVolume
-      - impermanentLossProtectionPaid
       - withdrawVolume
       - withdrawCount
       - uniqueMemberCount
@@ -1452,7 +1458,7 @@ components:
       - affiliateAddress
       type: object
     ReverseTHORNames:
-      items: &id003
+      items: &id006
         description: THORName name
         example: myname
         type: string
@@ -1617,16 +1623,8 @@ components:
 
             '
           type: string
-        cacaoPriceUSD:
-          description: Float, the price of Cacao based on the deepest USD pool.
-          type: string
         dailyActiveUsers:
           description: Deprecated, it's always 0.
-          type: string
-        impermanentLossProtectionPaid:
-          description: 'Int64(e8), impermanent loss protection paid out.
-
-            '
           type: string
         monthlyActiveUsers:
           description: Deprecated, it's always 0.
@@ -1682,7 +1680,6 @@ components:
       required:
       - runeDepth
       - switchedRune
-      - cacaoPriceUSD
       - runePriceUSD
       - swapVolume
       - swapCount24h
@@ -1697,7 +1694,6 @@ components:
       - uniqueSwapperCount
       - addLiquidityVolume
       - withdrawVolume
-      - impermanentLossProtectionPaid
       - addLiquidityCount
       - withdrawCount
       type: object
@@ -1777,12 +1773,6 @@ components:
 
             '
           type: string
-        cacaoPriceUSD:
-          description: 'Float, the price of Cacao based on the deepest USD pool at
-            the end of the interval.
-
-            '
-          type: string
         endTime:
           description: Int64, The end time of bucket in unix timestamp
           type: string
@@ -1818,6 +1808,10 @@ components:
           description: Int64(e8), volume of swaps from rune to synthetic asset denoted
             in rune
           type: string
+        synthMintVolumeUSD:
+          description: Int64(e2), volume of swaps from rune to synthetic asset denoted
+            in USD price of the rune in each swap
+          type: string
         synthRedeemAverageSlip:
           description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
             slip for swaps
@@ -1841,6 +1835,10 @@ components:
           description: Int64(e8), volume of swaps from synthetic asset to rune denoted
             in rune
           type: string
+        synthRedeemVolumeUSD:
+          description: Int64(e2), volume of swaps from synthetic asset to rune denoted
+            in USD price of the rune in each swap
+          type: string
         toAssetAverageSlip:
           description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
             slip for swaps
@@ -1860,6 +1858,10 @@ components:
           type: string
         toAssetVolume:
           description: Int64(e8), volume of swaps from rune to asset denoted in rune
+          type: string
+        toAssetVolumeUSD:
+          description: Int64(e2), volume of swaps from rune to asset denoted in USD
+            price of the rune in each swap
           type: string
         toRuneAverageSlip:
           description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
@@ -1881,6 +1883,10 @@ components:
         toRuneVolume:
           description: Int64(e8), volume of swaps from asset to rune denoted in rune
           type: string
+        toRuneVolumeUSD:
+          description: Int64(e2), volume of swaps from asset to rune denoted in USD
+            price of the rune in each swap
+          type: string
         totalCount:
           description: Int64, toAssetCount + toRuneCount + synthMintCount + synthRedeemCount
           type: string
@@ -1892,6 +1898,14 @@ components:
 
             toAssetVolume + toRuneVolume + synthMintVolume + synthRedeemVolume (denoted
             in rune)
+
+            '
+          type: string
+        totalVolumeUSD:
+          description: 'Int64(e2),
+
+            toAssetVolume + toRuneVolume + synthMintVolume + synthRedeemVolume (denoted
+            in USD price of the rune in each swap)
 
             '
           type: string
@@ -1908,6 +1922,11 @@ components:
       - synthMintVolume
       - synthRedeemVolume
       - totalVolume
+      - toAssetVolumeUSD
+      - toRuneVolumeUSD
+      - synthMintVolumeUSD
+      - synthRedeemVolumeUSD
+      - totalVolumeUSD
       - toAssetFees
       - toRuneFees
       - synthMintFees
@@ -1918,7 +1937,6 @@ components:
       - synthMintAverageSlip
       - synthRedeemAverageSlip
       - averageSlip
-      - cacaoPriceUSD
       - runePriceUSD
       type: object
     SwapMetadata:
@@ -2008,12 +2026,6 @@ components:
       type: array
     TVLHistoryItem:
       properties:
-        cacaoPriceUSD:
-          description: 'Float, the price of Cacao based on the deepest USD pool at
-            the end of the interval.
-
-            '
-          type: string
         endTime:
           description: Int64, The end time of bucket in unix timestamp
           type: string
@@ -2062,7 +2074,6 @@ components:
       - startTime
       - endTime
       - totalValuePooled
-      - cacaoPriceUSD
       - runePriceUSD
       - poolsDepth
       type: object
@@ -2140,10 +2151,10 @@ info:
     \ the Bifr\xF6st and prepares information about the network to be readily available\
     \ for public users. The API parses transaction event data from THORChain and stores\
     \ them in a time-series database to make time-dependent queries easy. Midgard\
-    \ does not hold critical information. To interact with MAYAChain protocol, users\
-    \ should query MAYANode directly."
+    \ does not hold critical information. To interact with THORChain protocol, users\
+    \ should query THORNode directly."
   title: Midgard Public API
-  version: 2.10.0
+  version: 2.20.1
 openapi: 3.0.0
 paths:
   /v2/actions:
@@ -2853,71 +2864,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/KnownPools'
       summary: Known Pools List
-  /v2/mayaname/lookup/{name}:
-    get:
-      description: Returns an array of chains and their addresses associated with
-        the given THORName
-      operationId: GetTHORNameDetail
-      parameters:
-      - description: a THORName
-        example: thorchain
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/THORNameDetails'
-      summary: THORName Details
-  /v2/mayaname/owner/{address}:
-    get:
-      description: 'Returns an array of THORNames owned by the address. The address
-        is not necessarily an
-
-        associated address for those mayanames.
-
-        '
-      operationId: GetTHORNamesOwnerByAddress
-      parameters:
-      - description: Address which owns a THORName.
-        example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
-        in: path
-        name: address
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items: *id003
-                type: array
-      summary: THORName owner
-  /v2/mayaname/rlookup/{address}:
-    get:
-      description: Returns an array of THORNames associated with the given address
-      operationId: GetTHORNamesByAddress
-      parameters:
-      - description: Address to match THORNames against.
-        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m
-        in: path
-        name: address
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items: *id003
-                type: array
-      summary: Gives a list of THORNames by reverse lookup
   /v2/member/{address}:
     get:
       description: 'Returns an array of statistics for all the liquidity providers
@@ -2979,7 +2925,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id004
+                items: *id003
                 type: array
       summary: Members List
   /v2/network:
@@ -3002,7 +2948,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id005
+                items: *id004
                 type: array
       summary: Nodes List
   /v2/pool/{asset}:
@@ -3019,7 +2965,7 @@ paths:
           type: string
       - description: 'Specifies the base interval from which APY is extrapolated.
 
-          Default is 30d.
+          Default is 14d.
 
           '
         example: 100d
@@ -3064,7 +3010,7 @@ paths:
           type: string
       - description: 'Restricts aggregation type fields to the last period only.
 
-          Default is 30d.
+          Default is 14d.
 
           '
         example: 24h
@@ -3131,7 +3077,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id006
+                items: *id005
                 type: array
       summary: Pools List
   /v2/saver/{address}:
@@ -3184,4 +3130,69 @@ paths:
       summary: Swagger File
       tags:
       - Specification
+  /v2/thorname/lookup/{name}:
+    get:
+      description: Returns an array of chains and their addresses associated with
+        the given THORName
+      operationId: GetTHORNameDetail
+      parameters:
+      - description: a THORName
+        example: thorchain
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/THORNameDetails'
+      summary: THORName Details
+  /v2/thorname/owner/{address}:
+    get:
+      description: 'Returns an array of THORNames owned by the address. The address
+        is not necessarily an
+
+        associated address for those thornames.
+
+        '
+      operationId: GetTHORNamesOwnerByAddress
+      parameters:
+      - description: Address which owns a THORName.
+        example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id006
+                type: array
+      summary: THORName owner
+  /v2/thorname/rlookup/{address}:
+    get:
+      description: Returns an array of THORNames associated with the given address
+      operationId: GetTHORNamesByAddress
+      parameters:
+      - description: Address to match THORNames against.
+        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id006
+                type: array
+      summary: Gives a list of THORNames by reverse lookup
 x-readme-file: README.md
