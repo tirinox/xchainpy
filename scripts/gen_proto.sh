@@ -9,8 +9,8 @@ set -e
 
 source common.sh
 
-LAST_THOR_VERSION="release-1.124.0"
-LAST_MAYA_VERSION="v1.107.1"
+LAST_THOR_VERSION="release-1.130.1"
+LAST_MAYA_VERSION="v1.108.1"
 COSMOS_SDK_VERSION="v0.45.1"
 
 THOR_GIT="https://gitlab.com/thorchain/thornode.git"

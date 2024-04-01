@@ -9,13 +9,13 @@ Dependencies:
 
 import argparse
 import asyncio
-import json
 import logging
 import urllib.parse
 from pprint import pprint
 
 import yaml
-from aiohttp import ClientSession
+
+from common import load_spec
 
 
 def parse_args():
@@ -141,15 +141,6 @@ def fix_thor_tx_details_nullable(spec):
     return spec
 
 
-async def fetch(url):
-    async with ClientSession() as session:
-        user_agent = {
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36 OPR/72.0.3815.465 (Edition Yx GX)',
-        }
-        async with session.get(url, headers=user_agent) as response:
-            return await response.text()
-
-
 def add_readme(spec):
     spec['x-readme-file'] = 'README.md'
     return spec
@@ -157,12 +148,8 @@ def add_readme(spec):
 
 async def main():
     args = parse_args()
-    input_data = await fetch(args.input)
-    try:
-        spec = json.loads(input_data)
-    except json.decoder.JSONDecodeError as e:
-        print('Input is not a valid JSON, perhaps it is YAML?')
-        spec = yaml.load(input_data, Loader=yaml.FullLoader)
+    spec = await load_spec(args.input)
+
     print('Loaded spec:')
     pprint(spec, depth=2)
 

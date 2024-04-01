@@ -94,6 +94,9 @@ function run_codegen() {
   # Download swagger codegen jar if it is missing
   download_swagger_codegen
 
+  # Set package VERSION var
+  set_version
+
   # Ask to fix swagger spec
   fix_swagger_spec
 
@@ -123,4 +126,9 @@ function ask_dev_virtual_env() {
 
 function touch_inits() {
   find "$1/" -type d -exec touch {}/__init__.py \;
+}
+
+function set_version() {
+  VERSION=$(python get_ver_from_spec.py $SWAGGER_FILE)
+  echo "Version: ${VERSION}"
 }

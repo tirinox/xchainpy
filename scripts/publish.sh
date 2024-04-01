@@ -20,7 +20,7 @@ function clean_dist() {
 }
 
 function publish() {
-  clean_dist $1
+  clean_dist $1 || true
   build $1
 
   echo "---------------"
