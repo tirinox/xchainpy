@@ -218,6 +218,18 @@ class XChainClient(abc.ABC):
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         pass
 
+    async def get_gas_balance(self, address: str = '') -> CryptoAmount:
+        """
+        Get the balance of the gas asset for the given address
+        :param address: address (optional)
+        :return: CryptoAmount of the gas asset
+        """
+        balances = await self.get_balance(address)
+        gas_balance = next((b for b in balances if b.asset == self._gas_asset), None)
+        if not gas_balance:
+            return self.zero_gas_amount
+        return gas_balance
+
     async def has_balance(self, amount: CryptoAmount):
         """
         Check if the wallet has enough balance to send the given amount
