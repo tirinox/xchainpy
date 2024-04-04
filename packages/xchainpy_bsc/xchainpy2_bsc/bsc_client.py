@@ -2,8 +2,10 @@ from typing import Optional, Union
 
 from web3.providers import BaseProvider
 
+from xchainpy2_bsc.const import FREE_BSC_PROVIDERS
 from xchainpy2_client import FeeBounds, RootDerivationPaths
 from xchainpy2_ethereum import EthereumClient, DEFAULT_ETH_EXPLORER_PROVIDERS
+from xchainpy2_ethereum.utils import select_random_free_provider
 from xchainpy2_utils import NetworkType, Chain
 
 
@@ -20,3 +22,6 @@ class BinanceSmartChainClient(EthereumClient):
         super().__init__(network, phrase, private_key, fee_bound, root_derivation_paths, explorer_providers,
                          wallet_index, provider)
         self.chain = Chain.BinanceSmartChain
+
+    def _get_default_provider(self):
+        return select_random_free_provider(self.network, FREE_BSC_PROVIDERS)
