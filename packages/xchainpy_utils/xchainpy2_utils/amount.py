@@ -57,22 +57,18 @@ class Amount(NamedTuple):
     def __mul__(self, other) -> 'Amount':
         if isinstance(other, (int, float, Decimal)):
             return Amount(int(self.internal_amount * other), self.decimals, self.denom)
-        elif isinstance(other, Amount):
-            if self.denom != Denomination.BASE:
-                raise ValueError(f'Cannot multiply {self.denom.name} with {other.denom.name}')
-            return Amount(self.internal_amount * other.internal_amount, self.decimals, self.denom)
         else:
             raise TypeError(f'Cannot multiply {self} with {type(other)}')
 
     def __truediv__(self, other) -> 'Amount':
         if isinstance(other, (int, float, Decimal)):
+            return Amount(int(self.internal_amount / other), self.decimals, self.denom)
+        else:
+            raise TypeError(f'Cannot divide {self} with {type(other)}')
+
+    def __div__(self, other) -> 'Amount':
+        if isinstance(other, (int, float, Decimal)):
             return Amount(int(self.internal_amount // other), self.decimals, self.denom)
-        elif isinstance(other, Decimal):
-            return Amount(int(self.internal_amount // other), self.decimals, self.denom)
-        elif isinstance(other, Amount):
-            if self.denom != Denomination.BASE:
-                raise ValueError(f'Cannot divide {self.denom.name} with {other.denom.name}')
-            return Amount(self.internal_amount // other.internal_amount, self.decimals, self.denom)
         else:
             raise TypeError(f'Cannot divide {self} with {type(other)}')
 
@@ -227,11 +223,24 @@ class CryptoAmount(NamedTuple):
 
     def __mul__(self, other) -> 'CryptoAmount':
         self.check(other)
-        return CryptoAmount(self.amount * other.amount, self.asset)
+        multiplier = self._get_multiplier(other)
+        return CryptoAmount(self.amount * multiplier, self.asset)
 
     def __truediv__(self, other) -> 'CryptoAmount':
         self.check(other)
-        return CryptoAmount(self.amount / other.amount, self.asset)
+        multiplier = self._get_multiplier(other)
+        return CryptoAmount(self.amount / multiplier, self.asset)
+
+    def __div__(self, other) -> 'CryptoAmount':
+        self.check(other)
+        multiplier = self._get_multiplier(other)
+        return CryptoAmount(self.amount // multiplier, self.asset)
+
+    def _get_multiplier(self, other):
+        if isinstance(other, (int, float, Decimal)):
+            return other
+        else:
+            raise TypeError(f'Cannot multiply or divide {self} with {type(other)}')
 
     def __eq__(self, other):
         self.check(other)
