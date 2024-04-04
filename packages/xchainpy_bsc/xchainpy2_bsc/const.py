@@ -1,3 +1,5 @@
+import logging
+
 from xchainpy2_client import ExplorerProvider, FeeBounds
 from xchainpy2_utils import NetworkType
 
@@ -28,3 +30,20 @@ BSC_CHAIN_ID = {
 BSC_BNB_DECIMALS = 18
 
 BSC_FEE_BOUNDS = FeeBounds(2_000_000_000, 1_000_000_000_000)
+
+FREE_BSC_PROVIDERS = {
+    # https://chainlist.org/chain/56
+    NetworkType.MAINNET: [
+        "https://1rpc.io/bnb",
+        "https://binance.llamarpc.com",
+        "https://bsc-mainnet.public.blastapi.io",
+    ],
+    # https://chainlist.org/chain/97
+    NetworkType.TESTNET: [
+        "https://bsc-testnet-rpc.publicnode.com",
+        "https://public.stackup.sh/api/v1/node/bsc-testnet",
+        "https://bsc-testnet.public.blastapi.io",
+    ],
+}
+
+FREE_BSC_PROVIDERS[NetworkType.STAGENET] = FREE_BSC_PROVIDERS[NetworkType.MAINNET]

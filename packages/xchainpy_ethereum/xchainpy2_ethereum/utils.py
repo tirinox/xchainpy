@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 from functools import reduce
@@ -6,6 +7,7 @@ from functools import reduce
 import web3
 
 from xchainpy2_client import Fees, FeeType, FeeOption
+from xchainpy2_utils import NetworkType
 
 SELF_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -95,3 +97,17 @@ def estimate_fees(w3: web3.Web3, percentiles=(20, 50, 80), block_count=20):
             FeeOption.AVERAGE: lo + base_fee
         }
     )
+
+
+def select_random_free_provider(network: NetworkType, source):
+    import random
+    provider_url = random.choice(source[network])
+    logging.warning(f"Auto selected free RPC provider: {provider_url}. "
+                    f"Please consider using your own provider for better performance and security.")
+
+    if provider_url.startswith("ws"):
+        provider = web3.providers.WebsocketProvider(provider_url)
+    else:
+        provider = web3.providers.HTTPProvider(provider_url)
+
+    return provider
