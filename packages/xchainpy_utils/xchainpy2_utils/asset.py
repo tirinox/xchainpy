@@ -50,6 +50,8 @@ class Asset(NamedTuple):
         if not isinstance(s, str):
             raise ValueError(f'Asset string must be a string, not {type(s)}')
 
+        s = s.strip()
+
         is_synth = SYNTH_DELIMITER in s
         data = s.split(get_delimiter(is_synth))
         n = len(data)
