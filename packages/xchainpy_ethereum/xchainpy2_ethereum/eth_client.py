@@ -3,21 +3,23 @@ from datetime import datetime
 from typing import Optional, List, Union
 
 from eth_account import Account
-from web3 import EthereumTesterProvider, Web3
+from web3 import Web3
 from web3.exceptions import TransactionNotFound
 from web3.providers import BaseProvider
+from web3.types import TxParams
 
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees, XcTx, TxPage, FeeRate, TxType, \
     TokenTransfer, FeeOption
-from xchainpy2_ethereum import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMAL, DEFAULT_ETH_EXPLORER_PROVIDERS
-from xchainpy2_ethereum.utils import is_valid_eth_address, estimate_fees, get_erc20_abi
+from xchainpy2_ethereum.const import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMAL, DEFAULT_ETH_EXPLORER_PROVIDERS, \
+    FREE_ETH_PROVIDERS
+from xchainpy2_ethereum.gas import GasOptions
+from xchainpy2_ethereum.utils import is_valid_eth_address, estimate_fees, get_erc20_abi, select_random_free_provider
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset, Amount
 
 logger = logging.getLogger(__name__)
 
 
 class EthereumClient(XChainClient):
-
     def __init__(self,
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
@@ -62,9 +64,12 @@ class EthereumClient(XChainClient):
 
     def _remake_provider(self, provider: BaseProvider):
         if not provider:
-            provider = EthereumTesterProvider()
-            logger.warning("You are using EthereumTesterProvider. Please use your own provider to hide this warning!")
+            provider = self._get_default_provider()
+        # todo: support multiple providers and round robin algorithm
         self.web3 = Web3(provider)
+
+    def _get_default_provider(self):
+        return select_random_free_provider(self.network, FREE_ETH_PROVIDERS)
 
     def validate_address(self, address: str) -> bool:
         """
@@ -215,23 +220,57 @@ class EthereumClient(XChainClient):
         return Web3.from_wei(fee, 'gwei')
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None, **kwargs) -> str:
+                       gas: Optional[GasOptions] = None, **kwargs) -> str:
         """
-        Transfer Ethereum or ERC20 token.
-
+        Transfer Ethereum or ERC20 token. Do not use it for swap. Use AMM's `deposit` method instead.
 
         :param what: Amount to transfer
         :param recipient: Recipient address or contract address to call
         :param memo: Memo (optional)
-        :param fee_rate: Fee rate in Gwei (optional)
+        :param gas: Gas options. Default is `GasOptions.automatic(FeeOption.FAST)`
+
         :return: Transaction hash
         """
-        if what.asset == self.gas_asset:
+        if not gas:
+            gas = GasOptions.automatic(FeeOption.FAST)
+
+        if what.asset.upper() == self.gas_asset.upper():
             # transfer ETH
-            return await self.transfer_eth(what, recipient, memo, fee_rate)
+            return await self._transfer_eth(what, recipient, gas, memo)
         else:
             # transfer ERC20 token
-            return await self.transfer_erc20_token(what, recipient, memo, fee_rate)
+            return await self._transfer_erc20_token(what, recipient, gas, memo)
+
+    async def _transfer_eth(self, what: CryptoAmount, recipient: str, gas: GasOptions,
+                            memo: Optional[str] = None) -> str:
+        # send eth
+        tx_params = {
+            'to': recipient,
+            'value': self.web3.to_wei(what.amount.internal_amount, 'ether'),
+            'nonce': await self.get_nonce(),
+            'gas': gas.gas_limit,
+            'gasPrice': self.web3.to_wei(gas.gas_price, 'gwei'),
+            'maxFeePerGas': gas.max_fee_per_gas,
+            'maxPriorityFeePerGas': gas.max_priority_fee_per_gas,
+        }
+        if memo:
+            tx_params['data'] = memo.encode('utf-8')
+
+        tx = TxParams(**tx_params)
+        signed_tx = self.get_account().sign_transaction(tx, self.get_private_key())
+        tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
+        return tx_hash
+
+    async def _transfer_erc20_token(self, what: CryptoAmount, recipient: str, gas: GasOptions,
+                                    memo: Optional[str] = None) -> str:
+        if not what.asset.contract:
+            raise ValueError("Contract address is required for ERC20 token transfer")
+
+        raise NotImplementedError("ERC20 token transfer is not implemented yet")
+
+    async def wait_for_transaction(self, tx_id: str, timeout: int = 120) -> XcTx:
+        results = await self._call_service(self.web3.eth.wait_for_transaction_receipt, tx_id, timeout)
+        return self._convert_tx_data(results, tx_id, results['timestamp'])
 
     async def approve_erc20_token(self, spender: str, amount: CryptoAmount,
                                   fee_option: Optional[FeeOption] = FeeOption.FAST,
