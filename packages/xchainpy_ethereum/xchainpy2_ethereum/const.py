@@ -4,7 +4,7 @@ from xchainpy2_client import ExplorerProvider
 from xchainpy2_ethereum.gas import GasLimits
 from xchainpy2_utils import NetworkType
 
-ETH_DECIMAL = 18
+ETH_DECIMALS = 18
 
 MAIN_NET_ETHERSCAN_PROVIDER = ExplorerProvider(
     'https://etherscan.io',

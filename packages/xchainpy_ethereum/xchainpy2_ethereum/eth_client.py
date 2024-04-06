@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional, List, Union
 
 from eth_account import Account
+from hexbytes import HexBytes
 from web3 import Web3
 from web3.exceptions import TransactionNotFound
 from web3.providers import BaseProvider
@@ -10,8 +11,8 @@ from web3.types import TxParams
 
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees, XcTx, TxPage, FeeRate, TxType, \
     TokenTransfer, FeeOption
-from xchainpy2_ethereum.const import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMAL, DEFAULT_ETH_EXPLORER_PROVIDERS, \
-    FREE_ETH_PROVIDERS
+from xchainpy2_ethereum.const import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMALS, DEFAULT_ETH_EXPLORER_PROVIDERS, \
+    FREE_ETH_PROVIDERS, GAS_LIMITS, ETH_CHAIN_ID
 from xchainpy2_ethereum.gas import GasOptions
 from xchainpy2_ethereum.utils import is_valid_eth_address, estimate_fees, get_erc20_abi, select_random_free_provider
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset, Amount
@@ -48,11 +49,17 @@ class EthereumClient(XChainClient):
 
         self.explorers = explorer_providers
         self._gas_asset = AssetETH
-        self._decimal = ETH_DECIMAL
+        self._decimal = ETH_DECIMALS
 
         self.tx_responses = {}
+        self.gas_limits = GAS_LIMITS
+        self._chain_ids = ETH_CHAIN_ID
 
         self._remake_provider(provider)
+
+    @property
+    def get_chain_id(self):
+        return self._chain_ids[self.network]
 
     @property
     def provider(self):
@@ -152,7 +159,7 @@ class EthereumClient(XChainClient):
         """
         return self.get_account().public_key
 
-    def get_account(self):
+    def get_account(self) -> Account:
         """
         Get the account object (web3) for the current wallet.
         """
@@ -241,23 +248,37 @@ class EthereumClient(XChainClient):
             # transfer ERC20 token
             return await self._transfer_erc20_token(what, recipient, gas, memo)
 
+    def _prepare_tx_params(self, to: str, value: int, nonce: int, gas: GasOptions, data: Optional[str] = None):
+        params = {
+            'to': to,
+            'value': value,
+            'nonce': nonce,
+            'from': self.get_address(),
+            'gas': gas.gas_limit,
+            'chainId': self.get_chain_id,
+        }
+        if data:
+            params['data'] = data.encode('utf-8')
+
+        if gas.max_fee_per_gas and gas.max_priority_fee_per_gas:
+            params['maxFeePerGas'] = gas.max_fee_per_gas
+            params['maxPriorityFeePerGas'] = gas.max_priority_fee_per_gas
+        elif gas.gas_price:
+            params['gasPrice'] = gas.gas_price
+
+        return params
+
+    def _get_gas_limit(self):
+        return self.gas_limits[self.network]
+
     async def _transfer_eth(self, what: CryptoAmount, recipient: str, gas: GasOptions,
                             memo: Optional[str] = None) -> str:
-        # send eth
-        tx_params = {
-            'to': recipient,
-            'value': self.web3.to_wei(what.amount.internal_amount, 'ether'),
-            'nonce': await self.get_nonce(),
-            'gas': gas.gas_limit,
-            'gasPrice': self.web3.to_wei(gas.gas_price, 'gwei'),
-            'maxFeePerGas': gas.max_fee_per_gas,
-            'maxPriorityFeePerGas': gas.max_priority_fee_per_gas,
-        }
-        if memo:
-            tx_params['data'] = memo.encode('utf-8')
-
+        nonce = await self.get_nonce()
+        gas = gas.updates_gas_limit(self._get_gas_limit().transfer_gas_asset_gas_limit)
+        tx_params = self._prepare_tx_params(recipient, what.amount.internal_amount, nonce, gas, memo)
         tx = TxParams(**tx_params)
-        signed_tx = self.get_account().sign_transaction(tx, self.get_private_key())
+        acc = self.get_account()
+        signed_tx = acc.sign_transaction(tx)
         tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
         return tx_hash
 
@@ -265,6 +286,8 @@ class EthereumClient(XChainClient):
                                     memo: Optional[str] = None) -> str:
         if not what.asset.contract:
             raise ValueError("Contract address is required for ERC20 token transfer")
+
+        gas = gas.updates_gas_limit(self._get_gas_limit().transfer_token_gas_limit)
 
         raise NotImplementedError("ERC20 token transfer is not implemented yet")
 
@@ -283,6 +306,9 @@ class EthereumClient(XChainClient):
         :param fee_rate: Fee rate in Gwei. If fee rate is set, fee_option will be ignored.
         :return: Transaction hash
         """
+
+        # todo: use GasOptions
+
         if not fee_rate:
             fees = await self.get_fees()
             fee_rate = fees.fees[fee_option]
@@ -292,7 +318,8 @@ class EthereumClient(XChainClient):
         raw_amount = amount.amount.internal_amount
 
         # estimate gas needed
-        gas = await self._call_service(contract.functions.approve(spender, raw_amount).estimateGas)
+        # gas = await self._call_service(contract.functions.approve(spender, raw_amount).estimateGas)
+        gas = self._get_gas_limit().approve_gas_limit
 
         tx = contract.functions.approve(spender, raw_amount).buildTransaction({
             'nonce': await self.get_nonce(),
@@ -300,7 +327,7 @@ class EthereumClient(XChainClient):
             'gasPrice': self.web3.to_wei(fee_rate, 'gwei'),
         })
         # sign
-        signed_tx = self.web3.eth.account.sign_transaction(tx, self.get_private_key())
+        signed_tx = self.get_account().sign_transaction(tx)
         tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
         return tx_hash
 
@@ -313,6 +340,8 @@ class EthereumClient(XChainClient):
         return await self._call_service(self.web3.eth.get_transaction_count, address)
 
     def get_explorer_tx_url(self, tx_id: str) -> str:
+        if isinstance(tx_id, HexBytes):
+            tx_id = tx_id.hex()
         if not tx_id.startswith('0x'):
             tx_id = '0x' + tx_id
         return super().get_explorer_tx_url(tx_id)
