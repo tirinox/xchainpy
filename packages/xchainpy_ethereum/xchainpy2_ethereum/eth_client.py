@@ -248,33 +248,48 @@ class EthereumClient(XChainClient):
             # transfer ERC20 token
             return await self._transfer_erc20_token(what, recipient, gas, memo)
 
+    @staticmethod
+    def _fill_gas_params(params: dict, gas: GasOptions):
+        params['gas'] = gas.gas_limit
+        if gas.max_fee_per_gas and gas.max_priority_fee_per_gas:
+            params['maxFeePerGas'] = gas.max_fee_per_gas
+            params['maxPriorityFeePerGas'] = gas.max_priority_fee_per_gas
+        elif gas.gas_price:
+            params['gasPrice'] = gas.gas_price
+        return params
+
     def _prepare_tx_params(self, to: str, value: int, nonce: int, gas: GasOptions, data: Optional[str] = None):
         params = {
             'to': to,
             'value': value,
             'nonce': nonce,
             'from': self.get_address(),
-            'gas': gas.gas_limit,
             'chainId': self.get_chain_id,
         }
         if data:
             params['data'] = data.encode('utf-8')
 
-        if gas.max_fee_per_gas and gas.max_priority_fee_per_gas:
-            params['maxFeePerGas'] = gas.max_fee_per_gas
-            params['maxPriorityFeePerGas'] = gas.max_priority_fee_per_gas
-        elif gas.gas_price:
-            params['gasPrice'] = gas.gas_price
-
+        params = self._fill_gas_params(params, gas)
         return params
 
     def _get_gas_limit(self):
         return self.gas_limits[self.network]
 
+    async def _deduct_gas(self, fee_option: FeeOption, gas_limit=23000) -> GasOptions:
+        fees = await self.get_fees()
+        max_fee = fees.fees[fee_option]
+        # noinspection PyTypeChecker
+        max_priority_fee = fees.fees['max']
+        return GasOptions.eip1559_in_gwei(max_fee, max_priority_fee, gas_limit)
+
     async def _transfer_eth(self, what: CryptoAmount, recipient: str, gas: GasOptions,
                             memo: Optional[str] = None) -> str:
         nonce = await self.get_nonce()
+
         gas = gas.updates_gas_limit(self._get_gas_limit().transfer_gas_asset_gas_limit)
+        if gas.is_automatic:
+            gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
+
         tx_params = self._prepare_tx_params(recipient, what.amount.internal_amount, nonce, gas, memo)
         tx = TxParams(**tx_params)
         acc = self.get_account()
@@ -288,6 +303,8 @@ class EthereumClient(XChainClient):
             raise ValueError("Contract address is required for ERC20 token transfer")
 
         gas = gas.updates_gas_limit(self._get_gas_limit().transfer_token_gas_limit)
+        if gas.is_automatic:
+            gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
 
         raise NotImplementedError("ERC20 token transfer is not implemented yet")
 
@@ -296,36 +313,27 @@ class EthereumClient(XChainClient):
         return self._convert_tx_data(results, tx_id, results['timestamp'])
 
     async def approve_erc20_token(self, spender: str, amount: CryptoAmount,
-                                  fee_option: Optional[FeeOption] = FeeOption.FAST,
-                                  fee_rate: FeeRate = 0) -> str:
+                                  gas: GasOptions) -> str:
         """
         Approve ERC20 token for a spender
         :param spender: Spender address
         :param amount: Amount to approve
-        :param fee_option: Fee option. Default is `FeeOption.FAST` (only used if fee_rate is not set)
-        :param fee_rate: Fee rate in Gwei. If fee rate is set, fee_option will be ignored.
+        :param gas: Gas options. Default is `GasOptions.automatic(FeeOption.FAST)`
         :return: Transaction hash
         """
-
-        # todo: use GasOptions
-
-        if not fee_rate:
-            fees = await self.get_fees()
-            fee_rate = fees.fees[fee_option]
-
         contract_address = self.web3.to_checksum_address(amount.asset.contract)
         contract = self.get_erc20_as_contract(contract_address)
         raw_amount = amount.amount.internal_amount
 
-        # estimate gas needed
-        # gas = await self._call_service(contract.functions.approve(spender, raw_amount).estimateGas)
-        gas = self._get_gas_limit().approve_gas_limit
-
-        tx = contract.functions.approve(spender, raw_amount).buildTransaction({
+        tx_params = {
             'nonce': await self.get_nonce(),
-            'gas': gas,
-            'gasPrice': self.web3.to_wei(fee_rate, 'gwei'),
-        })
+        }
+
+        # fill gas params
+        gas = gas.updates_gas_limit(self._get_gas_limit().approve_gas_limit)
+        tx_params = self._fill_gas_params(tx_params, gas)
+
+        tx = contract.functions.approve(spender, raw_amount).buildTransaction(tx_params)
         # sign
         signed_tx = self.get_account().sign_transaction(tx)
         tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())

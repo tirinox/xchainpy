@@ -19,20 +19,24 @@ class GasOptions(NamedTuple):
         return cls(gas_price=gas_price, gas_limit=gas_limit)
 
     @classmethod
-    def legacy_in_gwei(cls, gas_price: int, gas_limit: int):
-        return cls(gas_price=gas_price * 10 ** 9, gas_limit=gas_limit)
+    def legacy_in_gwei(cls, gas_price: float, gas_limit: int):
+        return cls(gas_price=int(gas_price * 10 ** 9), gas_limit=gas_limit)
 
     @classmethod
     def eip1559(cls, max_fee_per_gas: int, max_priority_fee_per_gas: int, gas_limit: int):
-        return cls(max_fee_per_gas=max_fee_per_gas,
-                   max_priority_fee_per_gas=max_priority_fee_per_gas,
-                   gas_limit=gas_limit)
+        return cls(
+            max_fee_per_gas=max_fee_per_gas,
+            max_priority_fee_per_gas=max_priority_fee_per_gas,
+            gas_limit=gas_limit
+        )
 
     @classmethod
-    def eip1559_in_gwei(cls, max_fee_per_gas: int, max_priority_fee_per_gas: int, gas_limit: int):
-        return cls(max_fee_per_gas=max_fee_per_gas * 10 ** 9,
-                   max_priority_fee_per_gas=max_priority_fee_per_gas * 10 ** 9,
-                   gas_limit=gas_limit)
+    def eip1559_in_gwei(cls, max_fee_per_gas: float, max_priority_fee_per_gas: float, gas_limit: int):
+        return cls(
+            max_fee_per_gas=int(max_fee_per_gas * 10 ** 9),
+            max_priority_fee_per_gas=int(max_priority_fee_per_gas * 10 ** 9),
+            gas_limit=gas_limit
+        )
 
     def validate(self):
         assert self.fee_option or self.gas_price or (self.max_fee_per_gas and self.max_priority_fee_per_gas), \
@@ -40,6 +44,10 @@ class GasOptions(NamedTuple):
 
     def updates_gas_limit(self, gas_limit: int):
         return GasOptions._replace(self, gas_limit=gas_limit)
+
+    @property
+    def is_automatic(self):
+        return self.fee_option is not None
 
 
 class GasLimits(NamedTuple):

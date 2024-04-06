@@ -42,7 +42,12 @@ def format_fee_history(result, include_pending):
     block_num = result.oldestBlock
     index = 0
     blocks = []
-    pending_base_fee = result.baseFeePerGas.pop()
+
+    try:
+        pending_base_fee = result.baseFeePerGas.pop()
+    except AttributeError:
+        pending_base_fee = 0
+
     while block_num < result.oldestBlock + len(result.reward):
         blocks.append(
             {
