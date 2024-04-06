@@ -2,6 +2,7 @@ import asyncio
 
 from examples.common import get_phrase
 from xchainpy2_bsc import BinanceSmartChainClient
+from xchainpy2_ethereum import GasOptions
 from xchainpy2_utils import NetworkType
 
 
@@ -22,8 +23,10 @@ async def main():
         bsc1, bsc2 = bsc2, bsc1
         balance1, balance2 = balance2, balance1
 
-    amount = balance1 * 0.7
-    tx_hash = await bsc1.transfer(amount, bsc2.get_address())
+    amount = balance1 * 0.1
+    # gas = GasOptions.legacy(gas_price=50, gas_limit=210000)
+    gas = GasOptions.eip1559_in_gwei(max_fee_per_gas=50, max_priority_fee_per_gas=50, gas_limit=210000)
+    tx_hash = await bsc1.transfer(amount, bsc2.get_address(), gas=gas)
     print(f"Transfer tx hash {bsc1.get_explorer_tx_url(tx_hash)}")
 
 
