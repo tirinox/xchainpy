@@ -34,8 +34,8 @@ BSC_FEE_BOUNDS = FeeBounds(2_000_000_000, 1_000_000_000_000)
 FREE_BSC_PROVIDERS = {
     # https://chainlist.org/chain/56
     NetworkType.MAINNET: [
-        #"https://1rpc.io/bnb",
-        #"https://binance.llamarpc.com",
+        "https://1rpc.io/bnb",
+        "https://binance.llamarpc.com",
         "https://bsc.rpc.blxrbdn.com",
         "https://bsc-mainnet.public.blastapi.io",
     ],
@@ -48,3 +48,6 @@ FREE_BSC_PROVIDERS = {
 }
 
 FREE_BSC_PROVIDERS[NetworkType.STAGENET] = FREE_BSC_PROVIDERS[NetworkType.MAINNET]
+
+BSC_NORMAL_FEE = 1  # gwei
+BSC_SURE_FEE = 30  # gwei

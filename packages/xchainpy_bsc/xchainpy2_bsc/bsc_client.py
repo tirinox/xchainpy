@@ -2,9 +2,10 @@ from typing import Optional, Union
 
 from web3.providers import BaseProvider
 
-from xchainpy2_bsc.const import FREE_BSC_PROVIDERS, BSC_CHAIN_ID, DEFAULT_BSC_EXPLORER_PROVIDERS
-from xchainpy2_client import FeeBounds, RootDerivationPaths
-from xchainpy2_ethereum import EthereumClient
+from xchainpy2_bsc.const import FREE_BSC_PROVIDERS, BSC_CHAIN_ID, DEFAULT_BSC_EXPLORER_PROVIDERS, BSC_SURE_FEE, \
+    BSC_NORMAL_FEE
+from xchainpy2_client import FeeBounds, RootDerivationPaths, FeeOption
+from xchainpy2_ethereum import EthereumClient, GasOptions
 from xchainpy2_ethereum.utils import select_random_free_provider
 from xchainpy2_utils import NetworkType, Chain, AssetBSC, BSC_DECIMALS
 
@@ -28,3 +29,9 @@ class BinanceSmartChainClient(EthereumClient):
 
     def _get_default_provider(self):
         return select_random_free_provider(self.network, FREE_BSC_PROVIDERS)
+
+    async def _deduct_gas(self, fee_option: FeeOption, gas_limit=23000) -> GasOptions:
+        if fee_option == FeeOption.FASTEST:
+            return GasOptions.eip1559_in_gwei(BSC_SURE_FEE, 1, gas_limit)
+        else:
+            return GasOptions.eip1559_in_gwei(BSC_NORMAL_FEE, 1, gas_limit)
