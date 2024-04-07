@@ -147,7 +147,7 @@ class Amount(NamedTuple):
         :return: Amount
         """
         if self.denom == other.denom:
-            return other
+            return self
         return self.as_base if other.denom == Denomination.BASE else self.as_asset
 
     @classmethod
