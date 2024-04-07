@@ -5,6 +5,7 @@ from typing import Optional, List, Union
 from eth_account import Account
 from hexbytes import HexBytes
 from web3 import Web3
+from web3.contract import Contract
 from web3.exceptions import TransactionNotFound
 from web3.providers import BaseProvider
 from web3.types import TxParams
@@ -84,6 +85,8 @@ class EthereumClient(XChainClient):
         :param address: Address string
         :return: True if valid, False otherwise.
         """
+        if address.upper() == address:
+            address = self.web3.to_checksum_address(address)
         return is_valid_eth_address(address)
 
     def get_address(self) -> str:
@@ -113,6 +116,11 @@ class EthereumClient(XChainClient):
         :param contract_address: Contract address
         :return: Contract object
         """
+        contract_address = self.web3.to_checksum_address(contract_address)
+
+        if not self.validate_address(contract_address):
+            raise ValueError("Invalid contract address")
+
         return self.web3.eth.contract(address=contract_address, abi=get_erc20_abi())
 
     async def get_erc20_token_balance(self, contract_address: str, address: str = '') -> CryptoAmount:
@@ -132,6 +140,9 @@ class EthereumClient(XChainClient):
         The balance is zero because we are only interested in the token symbol and decimals.
         :param contract: Contract object
         """
+        if not isinstance(contract, Contract):
+            contract = self.get_erc20_as_contract(contract)
+
         decimals = await self._call_service(contract.functions.decimals().call)
         token_symbol = await self._call_service(contract.functions.symbol().call)
         return CryptoAmount(Amount.zero(decimals), Asset(self.chain.value, token_symbol, contract.address))
@@ -260,7 +271,6 @@ class EthereumClient(XChainClient):
 
     def _prepare_tx_params(self, to: str, value: int, nonce: int, gas: GasOptions, data: Optional[str] = None):
         params = {
-            'to': to,
             'value': value,
             'nonce': nonce,
             'from': self.get_address(),
@@ -268,6 +278,8 @@ class EthereumClient(XChainClient):
         }
         if data:
             params['data'] = data.encode('utf-8')
+        if to:
+            params['to'] = to
 
         params = self._fill_gas_params(params, gas)
         return params
@@ -302,11 +314,24 @@ class EthereumClient(XChainClient):
         if not what.asset.contract:
             raise ValueError("Contract address is required for ERC20 token transfer")
 
+        if memo:
+            raise ValueError("Memo is not supported for ERC20 token transfer")
+
         gas = gas.updates_gas_limit(self._get_gas_limit().transfer_token_gas_limit)
         if gas.is_automatic:
             gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
 
-        raise NotImplementedError("ERC20 token transfer is not implemented yet")
+        contract_address = self.web3.to_checksum_address(what.asset.contract)
+        contract = self.get_erc20_as_contract(contract_address)
+
+        nonce = await self.get_nonce()
+
+        tx_params = self._prepare_tx_params('', 0, nonce, gas)
+
+        tx = contract.functions.transfer(recipient, what.amount.internal_amount).build_transaction(tx_params)
+        signed_tx = self.get_account().sign_transaction(tx)
+        tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
+        return tx_hash
 
     async def wait_for_transaction(self, tx_id: str, timeout: int = 120) -> XcTx:
         results = await self._call_service(self.web3.eth.wait_for_transaction_receipt, tx_id, timeout)
@@ -325,19 +350,30 @@ class EthereumClient(XChainClient):
         contract = self.get_erc20_as_contract(contract_address)
         raw_amount = amount.amount.internal_amount
 
+        # todo: be smart and check address
+        spender = self.web3.to_checksum_address(spender)
+
         tx_params = {
             'nonce': await self.get_nonce(),
         }
 
         # fill gas params
         gas = gas.updates_gas_limit(self._get_gas_limit().approve_gas_limit)
+        if gas.is_automatic:
+            gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
+
         tx_params = self._fill_gas_params(tx_params, gas)
 
-        tx = contract.functions.approve(spender, raw_amount).buildTransaction(tx_params)
+        tx = contract.functions.approve(spender, raw_amount).build_transaction(tx_params)
         # sign
         signed_tx = self.get_account().sign_transaction(tx)
         tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
         return tx_hash
+
+    def erc20_asset_from_contract(self, contract: Union[Contract, str], symbol: str):
+        if isinstance(contract, Contract):
+            contract = contract.address
+        return Asset(self.chain.value, symbol.upper(), contract)
 
     async def broadcast_tx(self, tx_hex: str) -> str:
         return await self._call_service(self.web3.eth.send_raw_transaction, tx_hex)
