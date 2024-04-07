@@ -28,28 +28,52 @@ async def main():
         balance1, balance2 = balance2, balance1
 
     gas = GasOptions.automatic(FeeOption.FAST)
+
     # gas = GasOptions.legacy(gas_price=50, gas_limit=210000)
     # gas = GasOptions.eip1559_in_gwei(max_fee_per_gas=1, max_priority_fee_per_gas=1, gas_limit=210000)
 
     async def transfer_some_bnb():
+        input("Press Enter to send TX...")
         amount = balance1 * 0.1
         tx_hash = await bsc1.transfer(amount, bsc2.get_address(), gas=gas, memo="barfoo")
         print(f"Transfer tx hash {bsc1.get_explorer_tx_url(tx_hash)}")
 
+        await bsc1.wait_for_transaction(tx_hash)
+        print("Transaction mined")
+
     async def approve_some_bnb():
         usdt = await bsc1.get_erc20_token_info(BSC_USDT_CONTRACT)
+
+        print("Before approve")
+        allowance = await bsc1.get_erc20_allowance(usdt.asset.contract, BSC_PANCAKE_ROUTER)
+        print(f"Allowance of {bsc1.get_address()} for spender {BSC_USDT_CONTRACT} is {allowance}")
+        input("Press Enter to send TX...")
+
         tx = await bsc1.approve_erc20_token(BSC_PANCAKE_ROUTER, usdt.change_amount(0.1), gas)
         print(f"Approve tx hash {bsc1.get_explorer_tx_url(tx)}")
+
+        print("Waiting for transaction to be mined...")
+        await bsc1.wait_for_transaction(tx)
+
+        print("After approve")
+        allowance = await bsc1.get_erc20_allowance(usdt.asset.contract, BSC_PANCAKE_ROUTER)
+        print(f"Allowance of {bsc1.get_address()} for spender {BSC_USDT_CONTRACT} is {allowance}")
 
     async def transfer_some_usdt():
         usdt_balance = await bsc1.get_erc20_token_balance(BSC_USDT_CONTRACT)
         print(usdt_balance)
 
+        input("Press Enter to send TX...")
         amount = usdt_balance * 0.1
         tx_hash = await bsc1.transfer(amount, bsc2.get_address(), gas=gas)
         print(f"Transfer tx hash {bsc1.get_explorer_tx_url(tx_hash)}")
 
-    await transfer_some_usdt()
+        await bsc1.wait_for_transaction(tx_hash)
+        print("Transaction mined")
+
+    # await transfer_some_usdt()
+    await approve_some_bnb()
+    # await transfer_some_bnb()
 
 
 if __name__ == "__main__":

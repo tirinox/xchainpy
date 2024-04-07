@@ -27,7 +27,7 @@ async def main():
     balance_erc20 = await cli.get_erc20_token_balance(USDT_CONTRACT, EXAMPLE_ADDRESS)
     print(balance_erc20)
 
-    approved = await cli.get_approved_erc20_token(USDT_CONTRACT, EXAMPLE_SPENDER, EXAMPLE_ADDRESS)
+    approved = await cli.get_erc20_allowance(USDT_CONTRACT, EXAMPLE_SPENDER, EXAMPLE_ADDRESS)
     print(f'Address {EXAMPLE_ADDRESS} approved {approved} to spend USDT for {EXAMPLE_SPENDER}')
 
 
