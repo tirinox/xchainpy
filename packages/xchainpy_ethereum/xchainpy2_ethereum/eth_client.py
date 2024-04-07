@@ -147,7 +147,7 @@ class EthereumClient(XChainClient):
         token_symbol = await self._call_service(contract.functions.symbol().call)
         return CryptoAmount(Amount.zero(decimals), Asset(self.chain.value, token_symbol, contract.address))
 
-    async def get_approved_erc20_token(self, contract_address: str, spender: str, address: str = '') -> CryptoAmount:
+    async def get_erc20_allowance(self, contract_address: str, spender: str, address: str = '') -> CryptoAmount:
         """
         Get the allowance of a given address.
         :param contract_address: ERC20 Contract address
@@ -157,6 +157,10 @@ class EthereumClient(XChainClient):
         """
         if not address:
             address = self.get_address()
+
+        # todo! This is a bug. The contract address should be checksummed
+        spender = self.web3.to_checksum_address(spender)
+        contract_address = self.web3.to_checksum_address(contract_address)
 
         contract = self.get_erc20_as_contract(contract_address)
         token_info = await self.get_erc20_token_info(contract)
@@ -190,8 +194,7 @@ class EthereumClient(XChainClient):
 
         timestamp = 0
         if with_timestamp and receipt:
-            block = await self._call_service(self.web3.eth.get_block, receipt['blockNumber'])
-            timestamp = block['timestamp']
+            timestamp = await self.get_block_timestamp(receipt['blockNumber'])
 
         return self._convert_tx_data(receipt, tx_data, timestamp) if receipt else None
 
@@ -328,14 +331,29 @@ class EthereumClient(XChainClient):
 
         tx_params = self._prepare_tx_params('', 0, nonce, gas)
 
-        tx = contract.functions.transfer(recipient, what.amount.internal_amount).build_transaction(tx_params)
+        call = contract.functions.transfer(recipient, what.amount.internal_amount)
+
+        tx = call.build_transaction(tx_params)
+
         signed_tx = self.get_account().sign_transaction(tx)
         tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
         return tx_hash
 
-    async def wait_for_transaction(self, tx_id: str, timeout: int = 120) -> XcTx:
-        results = await self._call_service(self.web3.eth.wait_for_transaction_receipt, tx_id, timeout)
-        return self._convert_tx_data(results, tx_id, results['timestamp'])
+    async def get_block_timestamp(self, block_number: int) -> int:
+        block = await self._call_service(self.web3.eth.get_block, block_number)
+        timestamp = block['timestamp']
+        return timestamp
+
+    async def wait_for_transaction(self, tx_id: str, timeout: int = 120, with_timestamp=False) -> Optional[XcTx]:
+        receipt = await self._call_service(self.web3.eth.wait_for_transaction_receipt, tx_id, timeout)
+
+        timestamp = 0
+        if with_timestamp and receipt:
+            timestamp = await self.get_block_timestamp(receipt['blockNumber'])
+
+        tx_data = await self._call_service(self.web3.eth.get_transaction, tx_id)
+
+        return self._convert_tx_data(receipt, tx_data, timestamp)
 
     async def approve_erc20_token(self, spender: str, amount: CryptoAmount,
                                   gas: GasOptions) -> str:
@@ -350,21 +368,18 @@ class EthereumClient(XChainClient):
         contract = self.get_erc20_as_contract(contract_address)
         raw_amount = amount.amount.internal_amount
 
-        # todo: be smart and check address
         spender = self.web3.to_checksum_address(spender)
 
-        tx_params = {
-            'nonce': await self.get_nonce(),
-        }
+        nonce = await self.get_nonce()
 
         # fill gas params
         gas = gas.updates_gas_limit(self._get_gas_limit().approve_gas_limit)
         if gas.is_automatic:
             gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
 
-        tx_params = self._fill_gas_params(tx_params, gas)
-
+        tx_params = self._prepare_tx_params('', 0, nonce, gas)
         tx = contract.functions.approve(spender, raw_amount).build_transaction(tx_params)
+
         # sign
         signed_tx = self.get_account().sign_transaction(tx)
         tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
