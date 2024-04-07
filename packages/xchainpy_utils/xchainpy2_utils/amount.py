@@ -104,6 +104,9 @@ class Amount(NamedTuple):
         return cls(base_amount, decimals, Denomination.BASE)
 
     def changed_decimals(self, new_decimals, context=DC) -> 'Amount':
+        """
+        Change the decimals of the amount
+        """
         if new_decimals == self.decimals:
             return self
 
@@ -120,6 +123,9 @@ class Amount(NamedTuple):
 
     @classmethod
     def automatic(cls, x, decimals=DEFAULT_ASSET_DECIMAL, context=DC):
+        """
+        Convert any type to an Amount instance
+        """
         if isinstance(x, Amount):
             # return x if x.decimals == decimals else cls(x.internal_amount, decimals, x.denom)
             return x
@@ -133,12 +139,29 @@ class Amount(NamedTuple):
         else:
             raise ValueError(f'Cannot convert {x} to Amount')
 
+    def same_denom(self, other: 'Amount') -> 'Amount':
+        """
+        Return a new Amount instance (of self) with the same denomination as the other one.
+        The "other" argument only provides the denomination, not the value! The value is unchanged compared to self
+        :param other: Amount to take denomination from
+        :return: Amount
+        """
+        if self.denom == other.denom:
+            return other
+        return self.as_base if other.denom == Denomination.BASE else self.as_asset
+
     @classmethod
     def to_base(cls, a: 'Amount'):
+        """
+        Convert an amount to base denomination
+        """
         return cls.from_base(a.internal_amount, a.decimals)
 
     @classmethod
     def to_asset(cls, a: 'Amount'):
+        """
+        Convert an amount to asset denomination
+        """
         return cls(a.internal_amount, a.decimals)
 
     @property
@@ -268,6 +291,16 @@ class CryptoAmount(NamedTuple):
     def __repr__(self):
         return f'CryptoAmount({self!s})'
 
+    def change_amount(self, new_amount: Union[int, float, Decimal]) -> 'CryptoAmount':
+        """
+        Change the amount only of this CryptoAmount. The asset remains the same.
+        Non-destructive. Returns a new instance.
+        :param new_amount: New amount
+        :return: CryptoAmount
+        """
+        a = Amount.automatic(new_amount, decimals=self.amount.decimals)
+        return CryptoAmount(a.same_denom(self.amount), self.asset)
+
     def check(self, a: 'CryptoAmount'):
         if isinstance(a, CryptoAmount):
             if a.asset != self.asset:
@@ -295,6 +328,10 @@ class CryptoAmount(NamedTuple):
 
     @classmethod
     def pick(cls, balances: List['CryptoAmount'], asset: Asset):
+        """
+        Pick an amount from the list of balances. Search by asset.
+        If not found, return zero.
+        """
         for b in balances:
             if b.asset == asset:
                 return b.as_asset

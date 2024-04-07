@@ -61,3 +61,9 @@ def test_bad_multiply(right):
     amt = CryptoAmount(Amount(9999, 8), AssetRUNE)
     with pytest.raises(TypeError):
         amt * right
+
+
+def test_change_amount():
+    amt = CryptoAmount(Amount(100, 8), AssetRUNE)
+    assert amt.change_amount(200) == CryptoAmount(Amount(200, 8), AssetRUNE)
+    assert amt.change_amount(0) == CryptoAmount(Amount(0, 8), AssetRUNE)
