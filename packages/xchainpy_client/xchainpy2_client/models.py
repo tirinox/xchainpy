@@ -74,6 +74,9 @@ class FeeOption(Enum):
     FAST = 'fast'
     FASTEST = 'fastest'
 
+    _ETH_MAX_FEE = 'max'
+    _ETH_BASE_FEE = 'base'
+
 
 FeeRates = Dict[FeeOption, float]
 
