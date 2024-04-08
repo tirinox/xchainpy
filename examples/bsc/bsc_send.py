@@ -6,8 +6,9 @@ from xchainpy2_client import FeeOption
 from xchainpy2_ethereum import GasOptions
 from xchainpy2_utils import NetworkType, CryptoAmount
 
-BSC_USDT_CONTRACT = '0x55d398326f99059ff775485246999027b3197955'
-BSC_PANCAKE_ROUTER = '0x13f4ea83d0bd40e75c8222255bc855a974568dd4'
+# all upper address will bypass the checksum validation
+BSC_USDT_CONTRACT = '0x55d398326f99059ff775485246999027b3197955'.upper()
+BSC_PANCAKE_ROUTER = '0x13f4ea83d0bd40e75c8222255bc855a974568dd4'.upper()
 
 
 async def main():
@@ -35,6 +36,7 @@ async def main():
     async def transfer_some_bnb():
         input("Press Enter to send TX...")
         amount = balance1 * 0.1
+        print(f"Transferring {amount} to {bsc2.get_address()}")
         tx_hash = await bsc1.transfer(amount, bsc2.get_address(), gas=gas, memo="barfoo")
         print(f"Transfer tx hash {bsc1.get_explorer_tx_url(tx_hash)}")
 
@@ -72,8 +74,8 @@ async def main():
         print("Transaction mined")
 
     # await transfer_some_usdt()
-    await approve_some_bnb()
-    # await transfer_some_bnb()
+    # await approve_some_bnb()
+    await transfer_some_bnb()
 
 
 if __name__ == "__main__":

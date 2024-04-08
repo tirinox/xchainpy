@@ -15,7 +15,8 @@ from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees,
 from xchainpy2_ethereum.const import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMALS, DEFAULT_ETH_EXPLORER_PROVIDERS, \
     FREE_ETH_PROVIDERS, GAS_LIMITS, ETH_CHAIN_ID
 from xchainpy2_ethereum.gas import GasOptions
-from xchainpy2_ethereum.utils import is_valid_eth_address, estimate_fees, get_erc20_abi, select_random_free_provider
+from xchainpy2_ethereum.utils import is_valid_eth_address, estimate_fees, get_erc20_abi, select_random_free_provider, \
+    wei_to_gwei
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset, Amount
 
 logger = logging.getLogger(__name__)
@@ -81,12 +82,10 @@ class EthereumClient(XChainClient):
 
     def validate_address(self, address: str) -> bool:
         """
-        Validates a Ethereum address.
+        Validates an Ethereum address.
         :param address: Address string
         :return: True if valid, False otherwise.
         """
-        if address.upper() == address:
-            address = self.web3.to_checksum_address(address)
         return is_valid_eth_address(address)
 
     def get_address(self) -> str:
@@ -116,11 +115,8 @@ class EthereumClient(XChainClient):
         :param contract_address: Contract address
         :return: Contract object
         """
-        contract_address = self.web3.to_checksum_address(contract_address)
-
-        if not self.validate_address(contract_address):
-            raise ValueError("Invalid contract address")
-
+        contract_address = self.validated_checksum_address(contract_address)
+        # noinspection PyTypeChecker
         return self.web3.eth.contract(address=contract_address, abi=get_erc20_abi())
 
     async def get_erc20_token_balance(self, contract_address: str, address: str = '') -> CryptoAmount:
@@ -237,17 +233,18 @@ class EthereumClient(XChainClient):
         Get the last Ethereum fee
         FeeRate is in Gwei
         """
+        # noinspection PyProtectedMember
         fee = await self._call_service(self.web3.eth._gas_price)
         return Web3.from_wei(fee, 'gwei')
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        gas: Optional[GasOptions] = None, **kwargs) -> str:
         """
-        Transfer Ethereum or ERC20 token. Do not use it for swap. Use AMM's `deposit` method instead.
-
+        Transfer Ethereum or ERC20 token. Do not use it for swap or something like this.
+        Use AMM's `deposit` method instead.
         :param what: Amount to transfer
         :param recipient: Recipient address or contract address to call
-        :param memo: Memo (optional)
+        :param memo: Memo (optional, not supported for ERC20 token transfer)
         :param gas: Gas options. Default is `GasOptions.automatic(FeeOption.FAST)`
 
         :return: Transaction hash
@@ -290,11 +287,19 @@ class EthereumClient(XChainClient):
     def _get_gas_limit(self):
         return self.gas_limits[self.network]
 
+    # noinspection PyTypeChecker
     async def _deduct_gas(self, fee_option: FeeOption, gas_limit=23000) -> GasOptions:
         fees = await self.get_fees()
         max_fee = fees.fees[fee_option]
-        # noinspection PyTypeChecker
-        max_priority_fee = fees.fees['max']
+        if isinstance(max_fee, Amount):
+            max_fee = max_fee.internal_amount
+
+        # noinspection PyProtectedMember
+        max_priority_fee = fees.fees[FeeOption._ETH_MAX_FEE]
+        if isinstance(max_priority_fee, Amount):
+            max_priority_fee = max_priority_fee.internal_amount
+        max_priority_fee = wei_to_gwei(max_priority_fee)
+
         return GasOptions.eip1559_in_gwei(max_fee, max_priority_fee, gas_limit)
 
     async def _transfer_eth(self, what: CryptoAmount, recipient: str, gas: GasOptions,
@@ -324,7 +329,7 @@ class EthereumClient(XChainClient):
         if gas.is_automatic:
             gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
 
-        contract_address = self.web3.to_checksum_address(what.asset.contract)
+        contract_address = self.validated_checksum_address(what.asset.contract)
         contract = self.get_erc20_as_contract(contract_address)
 
         nonce = await self.get_nonce()
@@ -341,10 +346,15 @@ class EthereumClient(XChainClient):
 
     async def get_block_timestamp(self, block_number: int) -> int:
         block = await self._call_service(self.web3.eth.get_block, block_number)
+        if not block:
+            raise ValueError(f"Block {block_number} not found")
         timestamp = block['timestamp']
         return timestamp
 
     async def wait_for_transaction(self, tx_id: str, timeout: int = 120, with_timestamp=False) -> Optional[XcTx]:
+        if not tx_id:
+            raise ValueError("Transaction ID is required")
+
         receipt = await self._call_service(self.web3.eth.wait_for_transaction_receipt, tx_id, timeout)
 
         timestamp = 0
@@ -364,11 +374,10 @@ class EthereumClient(XChainClient):
         :param gas: Gas options. Default is `GasOptions.automatic(FeeOption.FAST)`
         :return: Transaction hash
         """
-        contract_address = self.web3.to_checksum_address(amount.asset.contract)
+        spender = self.validated_checksum_address(spender)
+        contract_address = self.validated_checksum_address(amount.asset.contract)
         contract = self.get_erc20_as_contract(contract_address)
         raw_amount = amount.amount.internal_amount
-
-        spender = self.web3.to_checksum_address(spender)
 
         nonce = await self.get_nonce()
 
@@ -384,6 +393,19 @@ class EthereumClient(XChainClient):
         signed_tx = self.get_account().sign_transaction(tx)
         tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
         return tx_hash
+
+    async def revoke_erc20_token_allowance(self, spender: str, token: Union[str, Asset], gas: GasOptions) -> str:
+        """
+        Revoke ERC20 token allowance for a spender
+        :param spender: Spender address
+        :param token: Token symbol or Asset object
+        :param gas: Gas options. Default is `GasOptions.automatic(FeeOption.FAST)`
+        """
+        if isinstance(token, str):
+            asset = self.erc20_asset_from_contract(token, "dummy")
+        else:
+            asset = token
+        return await self.approve_erc20_token(spender, CryptoAmount.zero(asset), gas)
 
     def erc20_asset_from_contract(self, contract: Union[Contract, str], symbol: str):
         if isinstance(contract, Contract):
@@ -406,3 +428,12 @@ class EthereumClient(XChainClient):
         return super().get_explorer_tx_url(tx_id)
 
     get_explorer_tx_url.__doc__ = XChainClient.get_explorer_tx_url.__doc__
+
+    def validated_checksum_address(self, address: str) -> str:
+        if not address:
+            raise ValueError("Address is required")
+        if address.isupper():  # if it is in uppercase, that means it probably came from THORChain or other similar AMM
+            address = self.web3.to_checksum_address(address)
+        if not self.validate_address(address):
+            raise ValueError(f'Invalid address: {address}')
+        return address

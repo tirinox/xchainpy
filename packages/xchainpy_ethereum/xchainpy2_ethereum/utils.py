@@ -79,14 +79,17 @@ def wei_to_gwei(wei):
     return web3.Web3.from_wei(wei, 'gwei')
 
 
+# noinspection PyProtectedMember
 def estimate_fees(w3: web3.Web3, percentiles=(20, 50, 80), block_count=20):
     fee_history = w3.eth.fee_history(block_count, 'pending', list(percentiles))
+    # noinspection PyTypeChecker
     blocks = format_fee_history(fee_history, False)
 
     hi = list(map(lambda b: b['priorityFeePerGas'][2], blocks))
     mi = list(map(lambda b: b['priorityFeePerGas'][1], blocks))
     lo = list(map(lambda b: b['priorityFeePerGas'][0], blocks))
 
+    # noinspection PyUnresolvedReferences
     base_fee = w3.eth.get_block('pending').baseFeePerGas
     max_priority_fee = w3.eth.max_priority_fee + base_fee
 
@@ -95,8 +98,8 @@ def estimate_fees(w3: web3.Web3, percentiles=(20, 50, 80), block_count=20):
     return Fees(
         FeeType.PER_BYTE,
         fees={
-            'max': wei_to_gwei(max_priority_fee),
-            'base': wei_to_gwei(base_fee),
+            FeeOption._ETH_MAX_FEE: max_priority_fee,
+            FeeOption._ETH_BASE_FEE: base_fee,
             FeeOption.FASTEST: hi + base_fee,
             FeeOption.FAST: mi + base_fee,
             FeeOption.AVERAGE: lo + base_fee
