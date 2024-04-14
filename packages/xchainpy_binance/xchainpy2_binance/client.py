@@ -68,7 +68,7 @@ class BinanceChainClient(XChainClient):
         simple_txs = [self.parse_tx_data_simplified(tx, address) for tx in raw['tx']]
 
         if detailed:
-            full_txs = await asyncio.gather(*[self.get_transaction_data(tx.hash) for tx in simple_txs])
+            full_txs = await asyncio.gather(*[self.get_transaction_data(tx.hash, address) for tx in simple_txs])
 
             # noinspection PyProtectedMember
             # fill the dates in full_tx from simple_tx, because full_tx is lacking it
@@ -84,10 +84,14 @@ class BinanceChainClient(XChainClient):
             txs=full_txs,
         )
 
-    async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
+    async def get_transaction_data(self, tx_id: str, address='') -> Optional[XcTx]:
         async with self._semaphore:
             raw = await self._cli.get_transaction(tx_id)
-            return self.parse_tx_data(raw, self.get_address())
+            try:
+                address = address or self.get_address()
+            except AttributeError:
+                address = ''
+            return self.parse_tx_data(raw, my_address=address)
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, is_sync: bool = True, **kwargs) -> str:
