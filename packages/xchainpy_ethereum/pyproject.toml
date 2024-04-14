@@ -33,6 +33,7 @@ dependencies = [
     "xchainpy2_crypto",
     "xchainpy2_client",
     "web3>=6.0.0,<7.0.0",
+    "aioetherscan>=0.8.12",
 ]
 [project.optional-dependencies]
 test = ["pytest"]
