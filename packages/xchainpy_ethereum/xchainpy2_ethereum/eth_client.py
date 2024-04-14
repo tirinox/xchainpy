@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 from typing import Optional, List, Union
 
@@ -14,6 +15,8 @@ from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees,
     TokenTransfer, FeeOption
 from xchainpy2_ethereum.const import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMALS, DEFAULT_ETH_EXPLORER_PROVIDERS, \
     FREE_ETH_PROVIDERS, GAS_LIMITS, ETH_CHAIN_ID
+from xchainpy2_ethereum.extra.base import EVMDataProvider
+from xchainpy2_ethereum.extra.etherscan import EtherscanDataProvider
 from xchainpy2_ethereum.gas import GasOptions
 from xchainpy2_ethereum.utils import is_valid_eth_address, estimate_fees, get_erc20_abi, select_random_free_provider, \
     wei_to_gwei
@@ -31,7 +34,9 @@ class EthereumClient(XChainClient):
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  explorer_providers=DEFAULT_ETH_EXPLORER_PROVIDERS.copy(),
                  wallet_index=0,
-                 provider: Optional[BaseProvider] = None
+                 provider: Optional[BaseProvider] = None,
+                 extra_data_provider: Optional[EVMDataProvider] = None,
+                 **kwargs
                  ):
         """
         Initialize Ethereum
@@ -42,7 +47,8 @@ class EthereumClient(XChainClient):
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param explorer_providers: Dictionary of explorer providers for each network type.
         :param wallet_index: int (default 0)
-        :param provider: EVM RPC provider
+        :param provider: EVM Web3 RPC provider. Default is `None` (will use a random free provider)
+        :param extra_data_provider: EVMDataProvider object for fetching extra data from the blockchain
         """
         root_derivation_paths = root_derivation_paths.copy() \
             if root_derivation_paths else ETH_ROOT_DERIVATION_PATHS.copy()
@@ -58,6 +64,9 @@ class EthereumClient(XChainClient):
         self._chain_ids = ETH_CHAIN_ID
 
         self._remake_provider(provider)
+        self._ex_provider = extra_data_provider or EtherscanDataProvider(
+            self.chain, self.network, os.environ.get('ETHERSCAN_API_KEY', '')
+        )
 
     @property
     def get_chain_id(self):
@@ -96,18 +105,24 @@ class EthereumClient(XChainClient):
         account = self.get_account()
         return account.address
 
-    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+    async def get_balance(self, address: str = '', with_erc20=False) -> List[CryptoAmount]:
         """
         Get the balance of a given address.
         :param address: By default, it will return the balance of the current wallet. (optional)
+        :param with_erc20: If True, it will return the balance of all ERC20 tokens as well. (optional)
         :return:
         """
         address = address or self.get_address()
         eth_balance = await self._call_service(self.web3.eth.get_balance, address)
-
-        return [
+        balances = [
             self.gas_amount(int(eth_balance))
         ]
+
+        if with_erc20:
+            erc20_balances = await self._ex_provider.get_erc20_token_balances(address)
+            balances.extend(erc20_balances)
+
+        return balances
 
     def get_erc20_as_contract(self, contract_address: str):
         """
@@ -179,7 +194,9 @@ class EthereumClient(XChainClient):
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 0,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None) -> TxPage:
-        raise NotImplementedError("Ethereum transaction fetching is not implemented yet")
+
+        txs = await self._ex_provider.get_address_transactions(address)
+        return TxPage(len(txs), txs)
 
     async def get_transaction_data(self, tx_id: str, with_timestamp=False) -> Optional[XcTx]:
         try:

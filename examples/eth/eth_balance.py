@@ -22,6 +22,7 @@ async def main():
     cli = EthereumClient(provider=provider)
 
     balances = await cli.get_balance(EXAMPLE_ADDRESS)
+    # balances = await cli.get_balance(EXAMPLE_ADDRESS, with_erc20=True)  # requires PRO API key
     print(balances)
 
     balance_erc20 = await cli.get_erc20_token_balance(USDT_CONTRACT, EXAMPLE_ADDRESS)
