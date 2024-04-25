@@ -13,3 +13,8 @@ def get_phrase():
     if not phrase:
         raise ValueError("PHRASE env var is empty! Usage: PHRASE='your phrase here' python3 YOUR_SCRIPT.py")
     return phrase
+
+
+def get_thornode_url():
+    thornode = os.environ.get('THORNODE')
+    return thornode
