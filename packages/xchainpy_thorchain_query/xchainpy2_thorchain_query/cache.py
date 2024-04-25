@@ -3,7 +3,7 @@ import logging
 import time
 from decimal import Decimal
 from itertools import chain as chain_seq
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Union
 
 from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMaya, NetworkApi as NetworkApiMaya, \
     TransactionsApi as TransactionsApiMaya, LiquidityProvidersApi as LiquidityProvidersApiMaya, \
@@ -20,7 +20,7 @@ from .const import Mimir, TEN_MINUTES, SAME_ASSET_EXCHANGE_RATE, USD_ASSETS
 from .env import URLs
 from .midgard import MidgardAPIClient
 from .models import PoolCache, InboundDetailCache, NetworkValuesCache, LiquidityPool, InboundDetail, SwapOutput, \
-    InboundDetails, NameCache, LastBlockCache
+    InboundDetails, NameCache, LastBlockCache, QueryError
 from .patch_clients import request_api_with_backup_hosts
 from .swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
     get_double_swap_slip
@@ -49,10 +49,15 @@ class THORChainCache:
             midgard_client = MidgardAPIClient()
             midgard_client.configuration.host = (
                 URLs.Midgard.MAINNET if network == NetworkType.MAINNET else URLs.Midgard.STAGENET)
+        else:
+            assert midgard_client.configuration.host
+
         if not thornode_client:
             thornode_client = THORNodeAPIClient()
             thornode_client.configuration.host = (
                 URLs.THORNode.MAINNET if network == NetworkType.MAINNET else URLs.THORNode.STAGENET)
+        else:
+            assert thornode_client.configuration.host
 
         self._midgard_client = midgard_client
         self._thornode_client = thornode_client
@@ -123,7 +128,7 @@ class THORChainCache:
 
     async def get_pool_for_asset(self, asset: Asset) -> LiquidityPool:
         if self.is_native_asset(asset):
-            raise Exception('Native Rune does not have a pool')
+            raise ValueError('Native Rune does not have a pool')
         pool = self._pool_cache.pools.get(str(asset))
         if not pool:
             raise LookupError(f'Pool for {asset} not found')
@@ -135,7 +140,7 @@ class THORChainCache:
             await self.refresh_pool_cache()
         if self._pool_cache.pools:
             return self._pool_cache.pools
-        raise LookupError('Could not refresh pools')
+        raise QueryError('Could not refresh pools')
 
     async def refresh_pool_cache(self):
         thornode_pools, midgard_pools = await asyncio.gather(
@@ -144,7 +149,7 @@ class THORChainCache:
         )
 
         if not thornode_pools or not midgard_pools:
-            raise LookupError('Could not refresh pools')
+            raise QueryError('Could not refresh pools')
 
         thornode_pools_map = {str(p.asset): p for p in thornode_pools}
         midgard_pools_map = {str(p.asset): p for p in midgard_pools}
@@ -184,7 +189,7 @@ class THORChainCache:
                     not inbound.outbound_fee or
                     not inbound.outbound_tx_size
             ):
-                raise LookupError('Missing required inbound info')
+                raise QueryError('Missing required inbound info')
 
             halted = bool(
                 inbound.halted or
@@ -272,7 +277,7 @@ class THORChainCache:
             await self.refresh_network_values()
 
         if not self._network_cache.network_values:
-            raise LookupError('Could not refresh network values')
+            raise QueryError('Could not refresh network values')
 
         return self._network_cache.network_values
 
@@ -347,11 +352,14 @@ class THORChainCache:
         amt = Amount.from_base(int(base_amount_out), out_decimals)
         return CryptoAmount(amt, out_asset)
 
-    async def get_router_address_for_chain(self, chain: Chain) -> Address:
+    async def get_details_for_chain(self, chain: Union[str, Chain]) -> InboundDetail:
+        if isinstance(chain, Chain):
+            chain = chain.value
+
         inbound = await self.get_inbound_details()
-        if not inbound[chain.value].router:
-            raise Exception('router address is not defined')
-        return inbound[chain.value].router
+        if not inbound[chain]:
+            raise QueryError('router address is not defined')
+        return inbound[chain]
 
     async def get_inbound_details(self, forced=False) -> InboundDetails:
         """
@@ -366,7 +374,7 @@ class THORChainCache:
         if self._inbound_cache:
             return self._inbound_cache.inbound_details
         else:
-            raise Exception('Could not refresh inbound cache')
+            raise QueryError('Could not refresh inbound cache')
 
     async def get_deepest_usd_pool(self) -> LiquidityPool:
         deepest_rune_depth = 0
@@ -377,7 +385,7 @@ class THORChainCache:
                 deepest_rune_depth = usd_pool.rune_balance.amount
                 deepest_pool = usd_pool
         if not deepest_pool:
-            raise Exception('no USD Pool found')
+            raise QueryError('no USD Pool found')
         return deepest_pool
 
     @property
@@ -401,7 +409,7 @@ class THORChainCache:
         if t - self._last_block_cache.last_refreshed > THOR_BLOCK_TIME_SEC:
             last_block_obj = await self.network_api.lastblock()
             if not last_block_obj:
-                raise ValueError("No last block")
+                raise QueryError("No last block")
             self._last_block_cache.last_refreshed = t
             self._last_block_cache.last_blocks = last_block_obj
             return last_block_obj
@@ -427,7 +435,7 @@ class THORChainCache:
         """
         inbound = await self.get_inbound_details()
         if not inbound:
-            raise Exception('Could not get inbound details')
+            raise QueryError('Could not get inbound details')
 
         for chain_details in inbound.values():
             if chain_details.chain == chain.value:
