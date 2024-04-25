@@ -5,9 +5,10 @@ from typing import Union, Optional
 from xchainpy2_client import FeeOption
 from xchainpy2_thorchain import THORChainClient, THORMemo
 from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode
-from xchainpy2_utils import CryptoAmount, Asset, Chain, is_gas_asset, AssetRUNE
-from .consts import THOR_BASIS_POINT_MAX
+from xchainpy2_utils import CryptoAmount, Asset, Chain, AssetRUNE
+from .consts import THOR_BASIS_POINT_MAX, DEFAULT_TOLERANCE_BPS
 from .models import AMMException, SwapException, THORNameException
+from .utils import is_erc20_asset
 from .wallet import Wallet
 
 
@@ -26,7 +27,7 @@ class THORChainAMM:
                       input_amount: CryptoAmount,
                       destination_asset: Union[Asset, str],
                       destination_address: str = '',
-                      tolerance_bps=0,
+                      tolerance_bps=DEFAULT_TOLERANCE_BPS,
                       affiliate_bps=0,
                       affiliate_address: str = '',
                       streaming_interval=0,
@@ -38,8 +39,8 @@ class THORChainAMM:
         :param input_amount: input amount and asset to swap
         :param destination_asset: output asset to swap to
         :param destination_address: destination address to send swapped asset to
-        :param tolerance_bps: price tolerance in basis points (0-10000)
-        :param affiliate_bps: affiliate fee in basis points (0-10000)
+        :param tolerance_bps: price tolerance in basis points (0-10000), default is 500 which is 0.5%
+        :param affiliate_bps: affiliate fee in basis points (0-10000), default 0
         :param affiliate_address: affiliate address to collect affiliate fee
         :param streaming_interval: streaming interval in THORChain blocks (6 sec), 0 to disable streaming
         :param streaming_quantity: sub swap quantity, 0 for automatic
@@ -578,7 +579,7 @@ class THORChainAMM:
 
     @staticmethod
     def is_erc20_asset(asset: Asset) -> bool:
-        return Chain(asset.chain).is_evm and not is_gas_asset(asset)
+        return is_erc20_asset(asset)
 
     @staticmethod
     def is_thorchain_asset(asset: Asset) -> bool:
