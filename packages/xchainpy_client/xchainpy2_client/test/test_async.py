@@ -40,7 +40,7 @@ class MyClient(XChainClient):
         pass
 
     async def some_method(self, arg):
-        return await self._call_service(self._some_methods_sync, arg)
+        return await self.call_service(self._some_methods_sync, arg)
 
     def _some_methods_sync(self, x):
         sleep(0.1)
