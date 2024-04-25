@@ -113,7 +113,7 @@ class EthereumClient(XChainClient):
         :return:
         """
         address = address or self.get_address()
-        eth_balance = await self._call_service(self.web3.eth.get_balance, address)
+        eth_balance = await self.call_service(self.web3.eth.get_balance, address)
         balances = [
             self.gas_amount(int(eth_balance))
         ]
@@ -140,7 +140,7 @@ class EthereumClient(XChainClient):
         """
         address = address or self.get_address()
         contract = self.get_erc20_as_contract(contract_address)
-        balance = await self._call_service(contract.functions.balanceOf(address).call)
+        balance = await self.call_service(contract.functions.balanceOf(address).call)
 
         token_info = await self.get_erc20_token_info(contract)
         return CryptoAmount(Amount(balance, token_info.amount.decimals), token_info.asset)
@@ -154,14 +154,15 @@ class EthereumClient(XChainClient):
         if not isinstance(contract, Contract):
             contract = self.get_erc20_as_contract(contract)
 
-        decimals = await self._call_service(contract.functions.decimals().call)
-        token_symbol = await self._call_service(contract.functions.symbol().call)
+        decimals = await self.call_service(contract.functions.decimals().call)
+        token_symbol = await self.call_service(contract.functions.symbol().call)
         return CryptoAmount(Amount.zero(decimals), Asset(self.chain.value, token_symbol, contract.address))
 
-    async def get_erc20_allowance(self, contract_address: str, spender: str, address: str = '') -> CryptoAmount:
+    async def get_erc20_allowance(self, contract_address: Union[Asset, str],
+                                  spender: str, address: str = '') -> CryptoAmount:
         """
         Get the allowance of a given address.
-        :param contract_address: ERC20 Contract address
+        :param contract_address: ERC20 Contract address. Can be an Asset object or a string.
         :param spender: Spender address
         :param address: By default, it will return the allowance of the current wallet. (optional)
         :return: CryptoAmount
@@ -169,13 +170,15 @@ class EthereumClient(XChainClient):
         if not address:
             address = self.get_address()
 
-        # todo! This is a bug. The contract address should be checksummed
-        spender = self.web3.to_checksum_address(spender)
-        contract_address = self.web3.to_checksum_address(contract_address)
-
+        if isinstance(contract_address, Asset):
+            contract_address = contract_address.contract
+        contract_address = self.validated_checksum_address(contract_address)
         contract = self.get_erc20_as_contract(contract_address)
+
+        spender = self.validated_checksum_address(spender)
+
         token_info = await self.get_erc20_token_info(contract)
-        allowance = await self._call_service(contract.functions.allowance(address, spender).call)
+        allowance = await self.call_service(contract.functions.allowance(address, spender).call)
 
         return CryptoAmount(Amount(allowance, token_info.amount.decimals), token_info.asset)
 
@@ -200,8 +203,8 @@ class EthereumClient(XChainClient):
 
     async def get_transaction_data(self, tx_id: str, with_timestamp=False) -> Optional[XcTx]:
         try:
-            receipt = await self._call_service(self.web3.eth.get_transaction_receipt, tx_id)
-            tx_data = await self._call_service(self.web3.eth.get_transaction, tx_id)
+            receipt = await self.call_service(self.web3.eth.get_transaction_receipt, tx_id)
+            tx_data = await self.call_service(self.web3.eth.get_transaction, tx_id)
         except TransactionNotFound:
             return None
 
@@ -243,7 +246,7 @@ class EthereumClient(XChainClient):
         Fees are estimated based on the last 20 blocks.
         FeeRate is in Gwei
         """
-        return await self._call_service(estimate_fees, self.web3)
+        return await self.call_service(estimate_fees, self.web3)
 
     async def get_last_fee(self) -> FeeRate:
         """
@@ -251,7 +254,7 @@ class EthereumClient(XChainClient):
         FeeRate is in Gwei
         """
         # noinspection PyProtectedMember
-        fee = await self._call_service(self.web3.eth._gas_price)
+        fee = await self.call_service(self.web3.eth._gas_price)
         return Web3.from_wei(fee, 'gwei')
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
@@ -349,22 +352,30 @@ class EthereumClient(XChainClient):
         contract_address = self.validated_checksum_address(what.asset.contract)
         contract = self.get_erc20_as_contract(contract_address)
 
-        nonce = await self.get_nonce()
-
-        tx_params = self._prepare_tx_params('', 0, nonce, gas)
-
         call = contract.functions.transfer(recipient, what.amount.internal_amount)
+        return await self.make_contract_call(call, 0, gas)
 
-        tx = call.build_transaction(tx_params)
+    async def make_contract_call(self, method_pointer, value, gas: GasOptions, nonce=-1) -> str:
+        """
+        Make a contract call
+        """
+        gas = gas.updates_gas_limit(self._get_gas_limit().transfer_token_gas_limit)
+        if gas.is_automatic:
+            gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
 
+        if nonce < 0:
+            nonce = await self.get_nonce()
+
+        tx_params = self._prepare_tx_params('', value, nonce, gas)
+        tx = method_pointer.build_transaction(tx_params)
         signed_tx = self.get_account().sign_transaction(tx)
         tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
         return tx_hash
 
     async def get_block_timestamp(self, block_number: int) -> int:
-        block = await self._call_service(self.web3.eth.get_block, block_number)
+        block = await self.call_service(self.web3.eth.get_block, block_number)
         if not block:
-            raise ValueError(f"Block {block_number} not found")
+            raise LookupError(f"Block {block_number} not found")
         timestamp = block['timestamp']
         return timestamp
 
@@ -372,13 +383,13 @@ class EthereumClient(XChainClient):
         if not tx_id:
             raise ValueError("Transaction ID is required")
 
-        receipt = await self._call_service(self.web3.eth.wait_for_transaction_receipt, tx_id, timeout)
+        receipt = await self.call_service(self.web3.eth.wait_for_transaction_receipt, tx_id, timeout)
 
         timestamp = 0
         if with_timestamp and receipt:
             timestamp = await self.get_block_timestamp(receipt['blockNumber'])
 
-        tx_data = await self._call_service(self.web3.eth.get_transaction, tx_id)
+        tx_data = await self.call_service(self.web3.eth.get_transaction, tx_id)
 
         return self._convert_tx_data(receipt, tx_data, timestamp)
 
@@ -396,20 +407,9 @@ class EthereumClient(XChainClient):
         contract = self.get_erc20_as_contract(contract_address)
         raw_amount = amount.amount.internal_amount
 
-        nonce = await self.get_nonce()
+        call = contract.functions.approve(spender, raw_amount)
 
-        # fill gas params
-        gas = gas.updates_gas_limit(self._get_gas_limit().approve_gas_limit)
-        if gas.is_automatic:
-            gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
-
-        tx_params = self._prepare_tx_params('', 0, nonce, gas)
-        tx = contract.functions.approve(spender, raw_amount).build_transaction(tx_params)
-
-        # sign
-        signed_tx = self.get_account().sign_transaction(tx)
-        tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
-        return tx_hash
+        return await self.make_contract_call(call, 0, gas)
 
     async def revoke_erc20_token_allowance(self, spender: str, token: Union[str, Asset], gas: GasOptions) -> str:
         """
@@ -430,12 +430,12 @@ class EthereumClient(XChainClient):
         return Asset(self.chain.value, symbol.upper(), contract)
 
     async def broadcast_tx(self, tx_hex: str) -> str:
-        return await self._call_service(self.web3.eth.send_raw_transaction, tx_hex)
+        return await self.call_service(self.web3.eth.send_raw_transaction, tx_hex)
 
     async def get_nonce(self, address: str = '') -> int:
         if not address:
             address = self.get_address()
-        return await self._call_service(self.web3.eth.get_transaction_count, address)
+        return await self.call_service(self.web3.eth.get_transaction_count, address)
 
     def get_explorer_tx_url(self, tx_id: str) -> str:
         if isinstance(tx_id, HexBytes):

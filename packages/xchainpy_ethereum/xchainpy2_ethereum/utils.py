@@ -119,3 +119,7 @@ def select_random_free_provider(network: NetworkType, source):
         provider = web3.providers.HTTPProvider(provider_url)
 
     return provider
+
+
+class EVMCallError(Exception):
+    pass
