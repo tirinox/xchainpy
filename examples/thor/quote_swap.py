@@ -3,16 +3,14 @@ import asyncio
 from examples.common import sep
 from xchainpy2_bitcoin import BTC_DECIMAL
 from xchainpy2_thorchain_query import THORChainQuery
-from xchainpy2_utils import Amount, AssetRUNE, AssetBTC, AssetETH
+from xchainpy2_utils import Amount, AssetRUNE, AssetBTC, AssetETH, CryptoAmount
 
 
 async def main():
     query = THORChainQuery()
 
     q_swap = await query.quote_swap(
-        'thor1z9xhmhtxn5gxd4ugfuxk7hg9hp03tw3qtqs3f3',
-        Amount.from_asset(10000.0),
-        AssetRUNE,
+        CryptoAmount(Amount.from_asset(10000.0), AssetRUNE),
         '1KGMxAw3rxKvR4ECioUBtYFbgZRVFrDX2n',
         'BTC.BTC',
         1000,
@@ -25,9 +23,7 @@ async def main():
     sep()  # ------------------------------------
 
     btc_swap = await query.quote_swap(
-        '1KGMxAw3rxKvR4ECioUBtYFbgZRVFrDX2n',
-        Amount.from_asset(1.0, BTC_DECIMAL),
-        AssetBTC,
+        CryptoAmount(Amount.from_asset(1.0, BTC_DECIMAL), AssetBTC),
         destination_address='0xae2fc483527b8ef99eb5d9b44875f005ba1fae13',
         destination_asset=AssetETH,
         tolerance_bps=500,
