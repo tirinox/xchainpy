@@ -86,7 +86,6 @@ class THORChainQuery:
                          streaming_quantity=0,
                          height=0,
                          ) -> SwapEstimate:
-        # todo: use same arguments as in do_swap
         """
         Quote a swap transaction. This is a read-only method and does not send any transactions.
         :param input_amount: CryptoAmount - amount to swap
