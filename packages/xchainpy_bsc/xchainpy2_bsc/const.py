@@ -1,5 +1,3 @@
-import logging
-
 from xchainpy2_client import ExplorerProvider, FeeBounds
 from xchainpy2_utils import NetworkType
 
@@ -17,14 +15,14 @@ BSC_TESTNET_EXPLORER = ExplorerProvider(
 
 DEFAULT_BSC_EXPLORER_PROVIDERS = {
     NetworkType.MAINNET: BSC_MAINNET_EXPLORER,
-    NetworkType.TESTNET: BSC_TESTNET_EXPLORER,
     NetworkType.STAGENET: BSC_MAINNET_EXPLORER,
+    NetworkType.TESTNET: BSC_TESTNET_EXPLORER,
 }
 
 BSC_CHAIN_ID = {
     NetworkType.MAINNET: 56,
-    NetworkType.TESTNET: 97,
     NetworkType.STAGENET: 56,
+    NetworkType.TESTNET: 97,
 }
 
 BSC_BNB_DECIMALS = 18
