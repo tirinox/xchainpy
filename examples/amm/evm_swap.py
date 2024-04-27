@@ -21,6 +21,7 @@ async def main():
     query = THORChainQuery()
     amm = THORChainAMM(wallet, query)
 
+    # noinspection PyTypeChecker
     bsc1: BinanceSmartChainClient = wallet.get_client(Chain.BinanceSmartChain)
     print("BSC1 address: ", bsc1.get_address())
 
@@ -31,14 +32,9 @@ async def main():
     # gas = GasOptions.legacy(gas_price=50, gas_limit=210000)
     # gas = GasOptions.eip1559_in_gwei(max_fee_per_gas=1, max_priority_fee_per_gas=1, gas_limit=210000)
 
-    async def swap_bnb_to_usdt():
-        print("I will swap little BNB to USDT.")
+    async def swap_bnb_to_avax():
+        print("I will swap little BNB to AVAX.")
         input("Press Enter to send TX...")
-        tx_hash = await amm.do_swap(
-            CryptoAmount.automatic(0.05, 'BSC.BNB', BSC_DECIMALS),
-            Asset.automatic('AVAX.AVAX').upper(),
-            destination_address=bsc1.get_address(),
-        )
 
         # r = await amm.query.quote_swap(
         #     input_amount=CryptoAmount.automatic(0.05, 'BSC.BNB', BSC_DECIMALS),
@@ -49,6 +45,13 @@ async def main():
         # )
         # print(r)
         # return
+
+        tx_hash = await amm.do_swap(
+            CryptoAmount.automatic(0.033, 'BSC.BNB', BSC_DECIMALS),
+            Asset.automatic('AVAX.AVAX').upper(),
+            destination_address=bsc1.get_address(),
+            tolerance_bps=1000,
+        )
 
         print(f"Swap tx hash {bsc1.get_explorer_tx_url(tx_hash)}")
 
@@ -62,7 +65,7 @@ async def main():
             status: TxDetails
             print(f'Status: {status.status}; stage: {status.stage}')
 
-    await swap_bnb_to_usdt()
+    await swap_bnb_to_avax()
 
     await asyncio.sleep(1)
     await amm.close()

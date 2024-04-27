@@ -3,11 +3,13 @@ from contextlib import suppress
 from typing import Union, Optional
 
 from xchainpy2_client import FeeOption
+from xchainpy2_ethereum import EthereumClient, GasOptions
 from xchainpy2_thorchain import THORChainClient, THORMemo
 from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode
 from xchainpy2_utils import CryptoAmount, Asset, Chain, AssetRUNE
-from .consts import THOR_BASIS_POINT_MAX, DEFAULT_TOLERANCE_BPS, THOR_SWAP_TRACKER_URL
-from .models import AMMException, SwapException, THORNameException
+from .consts import THOR_BASIS_POINT_MAX, DEFAULT_TOLERANCE_BPS, THOR_SWAP_TRACKER_URL, DEFAULT_EXPIRY
+from .evm_helper import EVMHelper
+from .models import AMMException, THORNameException
 from .utils import is_erc20_asset
 from .wallet import Wallet
 
@@ -23,6 +25,7 @@ class THORChainAMM:
         self.check_balance = check_balance
         self.fee_option = fee_option
         self.swap_tracker_url = THOR_SWAP_TRACKER_URL
+        self.evm_expiration_sec = DEFAULT_EXPIRY
 
     def get_track_url(self, tx_id) -> str:
         """
@@ -30,6 +33,12 @@ class THORChainAMM:
         :param tx_id: Transaction ID
         :return: str URL to track the transaction
         """
+        if not tx_id:
+            raise ValueError('Invalid transaction ID')
+
+        if tx_id.lower().startswith('0x'):
+            tx_id = tx_id[2:]
+
         return self.swap_tracker_url.format(
             tx_id=tx_id,
             network=self.query.cache.network.value,
@@ -64,7 +73,7 @@ class THORChainAMM:
             dest_chain = self._dest_chain(Asset.automatic(destination_asset))
             dest_client = self.wallet.get_client(dest_chain)
             if not dest_client:
-                raise SwapException('No destination address')
+                raise AMMException('No destination address')
             destination_address = dest_client.get_address()
 
         validation_error = await self._validate_swap(input_amount, destination_asset, destination_address,
@@ -72,7 +81,7 @@ class THORChainAMM:
                                                      affiliate_address)
 
         if validation_error:
-            raise SwapException(f'Invalid swap: {validation_error}')
+            raise AMMException(f'Invalid swap: {validation_error}')
 
         estimate = await self.query.quote_swap(
             input_amount,
@@ -86,7 +95,7 @@ class THORChainAMM:
         )
 
         if not estimate.can_swap:
-            raise SwapException(f'Swap is not possible: {estimate.errors}', estimate.errors)
+            raise AMMException(f'Swap is not possible: {estimate.errors}', estimate.errors)
 
         return await self.general_deposit(input_amount, estimate.details.inbound_address, estimate.memo)
 
@@ -386,8 +395,10 @@ class THORChainAMM:
             # invoke a THORChain's MsgDeposit call
             return await client.deposit(input_amount, memo, check_balance=self.check_balance)
         elif chain.is_evm:
-            # ToDo: EVM chain case
-            raise NotImplementedError('EVM chain add savers not supported yet')
+            if self.dry_run:
+                return (f'Dry-run: EVM deposit {input_amount} to {to_address!r} with memo {memo!r};'
+                        f'expiration: {self.evm_expiration_sec}')
+            return await self._deposit_evm(input_amount, memo)
         else:
             if chain.is_utxo:
                 fees = await client.get_fees()
@@ -404,6 +415,16 @@ class THORChainAMM:
             return await client.transfer(input_amount, to_address,
                                          memo=memo, fee_rate=fee_rate,
                                          check_balance=self.check_balance)
+
+    async def _deposit_evm(self, input_amount: CryptoAmount, memo: str):
+        # todo: prevent submitting a tx before router is approved
+
+        # noinspection PyTypeChecker
+        client: EthereumClient = self.wallet.get_client(input_amount.asset)
+        helper = EVMHelper(client, self.query.cache)
+        gas = GasOptions.automatic(self.fee_option)  # todo: allow fine tuning
+        tx_hash = await helper.deposit(input_amount, memo, gas, self.evm_expiration_sec)
+        return tx_hash
 
     async def register_name(self,
                             thorname: str,

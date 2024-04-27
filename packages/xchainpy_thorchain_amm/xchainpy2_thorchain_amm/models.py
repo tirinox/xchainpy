@@ -40,9 +40,5 @@ class AMMException(Exception):
         self.errors = errors
 
 
-class SwapException(AMMException):
-    ...
-
-
 class THORNameException(AMMException):
     ...
