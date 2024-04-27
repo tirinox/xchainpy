@@ -33,6 +33,6 @@ class AvalancheChainClient(EthereumClient):
     async def _deduct_gas(self, fee_option: FeeOption, gas_limit=23000) -> GasOptions:
         # todo: make sure
         if fee_option == FeeOption.FASTEST:
-            return GasOptions.eip1559_in_gwei(AVAX_SURE_FEE, 1, gas_limit)
+            return GasOptions.legacy(AVAX_SURE_FEE, gas_limit)
         else:
-            return GasOptions.eip1559_in_gwei(AVAX_NORMAL_FEE, 1, gas_limit)
+            return GasOptions.legacy(AVAX_NORMAL_FEE, gas_limit)
