@@ -36,3 +36,9 @@ try:
     from xchainpy2_bsc import BinanceSmartChainClient
 except ImportError:
     BinanceSmartChainClient = NoClient
+
+
+try:
+    from xchainpy2_avalanche import AvalancheClient
+except:
+    AvalancheClient = NoClient
