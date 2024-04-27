@@ -27,7 +27,11 @@ test:
 		packages/xchainpy_thorchain_query \
 		packages/xchainpy_utils \
 		packages/xchainpy_bitcoin \
-		packages/xchainpy_mayachain
+		packages/xchainpy_mayachain \
+		packages/xchainpy_litecoin \
+		packages/xchainpy_bsc \
+		packages/xchainpy_dogecoin \
+		packages/xchainpy_avalanche
 
 
 tc_env:
@@ -42,6 +46,8 @@ tc_env:
 	python3 -m pip install --editable packages/xchainpy_bitcoincash
 	python3 -m pip install --editable packages/xchainpy_binance
 	python3 -m pip install --editable packages/xchainpy_ethereum
+	python3 -m pip install --editable packages/xchainpy_bsc
+	python3 -m pip install --editable packages/xchainpy_avalanche
 
 
 build:
