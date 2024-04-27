@@ -19,6 +19,7 @@ BUSD_POOL = Pool(
     derived_depth_bps='',
     loan_collateral='',
     loan_cr='',
+    loan_collateral_remaining=1,
 )
 
 def test_pool_ownership():

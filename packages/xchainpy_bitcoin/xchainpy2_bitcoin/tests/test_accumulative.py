@@ -1,11 +1,12 @@
 # load the test data
 import json
+import os.path
 
 import pytest
 
 from xchainpy2_bitcoin.accumulative import accumulative, AccumulativeResult
 
-with open('accumulative_test_data.json') as f:
+with open(os.path.join(os.path.dirname(__file__), 'accumulative_test_data.json')) as f:
     FIXTURES = json.load(f)
 
 

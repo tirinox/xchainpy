@@ -5,8 +5,8 @@ from aioresponses import aioresponses
 
 from xchainpy2_client import FeeType, FeeOption
 from xchainpy2_thorchain import THORChainClient
-from xchainpy2_thorchain_query import URLs
 from xchainpy2_utils import RUNE_DECIMAL, Amount
+
 
 
 def load_json(file_name):
@@ -21,7 +21,7 @@ async def test_fees_thornode():
     with aioresponses() as m:
         client = THORChainClient()
 
-        m.get(f'{URLs.THORNode.MAINNET}/thorchain/network', payload=load_json('network'))
+        m.get(f'https://thornode.ninerealms.com/thorchain/network', payload=load_json('network'))
 
         fees = await client.get_fees()
         assert fees.type == FeeType.FLAT_FEE

@@ -1,7 +1,7 @@
 import pytest
 import requests_mock
 
-from common import *
+from .common import *
 from xchainpy2_thorchain_query import THORChainCache
 
 
