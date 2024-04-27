@@ -5,12 +5,12 @@ from web3.providers import BaseProvider
 from xchainpy2_client import FeeBounds, RootDerivationPaths, FeeOption
 from xchainpy2_ethereum import EthereumClient, GasOptions
 from xchainpy2_ethereum.utils import select_random_free_provider
-from xchainpy2_utils import NetworkType, Chain, AssetBSC
+from xchainpy2_utils import NetworkType, Chain, AssetAVAX
 from .const import DEFAULT_AVAX_EXPLORER_PROVIDERS, AVAX_DECIMALS, AVAX_CHAIN_ID, FREE_AVAX_PROVIDERS, AVAX_SURE_FEE, \
     AVAX_NORMAL_FEE
 
 
-class AValanceChainClient(EthereumClient):
+class AvalancheChainClient(EthereumClient):
     def __init__(self,
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
@@ -23,7 +23,7 @@ class AValanceChainClient(EthereumClient):
         super().__init__(network, phrase, private_key, fee_bound, root_derivation_paths, explorer_providers,
                          wallet_index, provider)
         self.chain = Chain.BinanceSmartChain
-        self._gas_asset = AssetBSC
+        self._gas_asset = AssetAVAX
         self._decimal = AVAX_DECIMALS
         self._chain_ids = AVAX_CHAIN_ID
 
