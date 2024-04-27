@@ -6,35 +6,12 @@ from typing import Optional, Set
 from xchainpy2_client import NoClient, XChainClient
 from xchainpy2_thorchain_query.models import InboundDetail
 
-try:
-    from xchainpy2_binance import BinanceChainClient
-except ImportError:
-    BinanceChainClient = NoClient
-
-try:
-    from xchainpy2_bitcoin import BitcoinClient
-except ImportError:
-    BitcoinClient = NoClient
-
-try:
-    from xchainpy2_cosmos import CosmosGaiaClient
-except ImportError:
-    CosmosGaiaClient = NoClient
-
-try:
-    from xchainpy2_mayachain import MayaChainClient
-except ImportError:
-    MayaChainClient = NoClient
-
-try:
-    from xchainpy2_thorchain import THORChainClient
-except ImportError:
-    THORChainClient = NoClient
-
 from xchainpy2_thorchain_query import THORChainQuery
 from xchainpy2_utils import Chain, EVM_CHAINS
 from .models import AllBalances, ChainBalances, ALL
 from .evm_helper import EVMHelper
+from .detect_clients import THORChainClient, CosmosGaiaClient, BinanceSmartChainClient, BinanceChainClient, \
+    MayaChainClient, BitcoinClient, EthereumClient
 
 
 class Wallet:
@@ -44,18 +21,23 @@ class Wallet:
         Chain.Binance: BinanceChainClient,
         Chain.Maya: MayaChainClient,
         Chain.Bitcoin: BitcoinClient,
+        Chain.Ethereum: EthereumClient,
+        Chain.BinanceSmartChain: BinanceSmartChainClient,
         # to be continued
     }
 
     def __init__(self, phrase: str,
                  query_api: Optional[THORChainQuery] = None,
                  enabled_chains: Set[Chain] = ALL,
-                 concurrency: int = 5):
+                 concurrency: int = 5,
+                 default_chain: Chain = Chain.THORChain):
+        self.default_chain = default_chain
+
         self._semaphore = asyncio.Semaphore(concurrency)
 
         self.query_api = query_api or THORChainQuery()
 
-        self._enabled_chains = enabled_chains
+        self._enabled_chains = enabled_chains or set(self.CLIENT_CLASSES.keys())
 
         self.network = self.cache.network
 
@@ -108,10 +90,19 @@ class Wallet:
         return result
 
     async def get_inbound_for_chain(self, chain: Chain) -> Optional[InboundDetail]:
+        """
+        Get inbound details for the given chain from the THORChain.
+        The result is cached.
+        :param chain: Chain
+        :return: InboundDetail or None if not found
+        """
         details = await self.cache.get_inbound_details()
         return details.get(str(chain))
 
     async def close(self):
+        """
+        Close all clients
+        """
         for client in self.clients.values():
             if hasattr(client, 'close'):
                 with suppress(Exception):
@@ -119,5 +110,9 @@ class Wallet:
             client.purge_client()
 
     def explorer_url_tx(self, tx_id: str):
-        thorchain: THORChainClient = self.clients.get(Chain.THORChain)
-        return thorchain.get_explorer_tx_url(tx_id)
+        cli = self.clients.get(self.default_chain)
+        return cli.get_explorer_tx_url(tx_id)
+
+    def explorer_url_address(self, address: str):
+        cli: THORChainClient = self.clients.get(self.default_chain)
+        return cli.get_explorer_address_url(address)

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xchainpy2_ethereum"
+version = "0.0.6"
+authors = [
+    { name = "Tirinox", email = "developer@tirinox.ru" },
+]
+description = "XChainPy2 Ethereum Chain Client"
+readme = "README.md"
+requires-python = ">=3.7"
+keywords = ["Crypto", "Ethereum", "Eth", "ERC20", "Blockchain", "XChain"]
+license = { text = "MIT" }
+urls = { source = "https://github.com/tirinox/xchainpy" }
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
+    'Intended Audience :: Developers', # Define that your audience are developers
+    'Topic :: Software Development :: Build Tools',
+    'License :: OSI Approved :: MIT License',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+]
+dependencies = [
+    "xchainpy2_utils",
+    "xchainpy2_crypto",
+    "xchainpy2_client",
+    "web3>=6.0.0,<7.0.0",
+    "aioetherscan>=0.8.12",
+]
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.setuptools]
+packages = ["xchainpy2_ethereum"]

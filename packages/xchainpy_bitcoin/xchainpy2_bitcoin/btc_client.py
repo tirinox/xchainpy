@@ -24,7 +24,7 @@ from .utils import get_btc_address_prefix, UTXOException
 class BitcoinClient(XChainClient):
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         address = address or self.get_address()
-        result = await self._call_service(self.service.getbalance, address)
+        result = await self.call_service(self.service.getbalance, address)
         return [self.gas_base_amount(result)]
 
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 10,
@@ -36,7 +36,7 @@ class BitcoinClient(XChainClient):
         if start_time or end_time:
             raise UTXOException(f'start_time and end_time parameters are not supported')
 
-        results = await self._call_service(self.service.gettransactions, address, after_tx_id, limit + offset)
+        results = await self.call_service(self.service.gettransactions, address, after_tx_id, limit + offset)
         results = results[offset:]
 
         return TxPage(
@@ -45,7 +45,7 @@ class BitcoinClient(XChainClient):
         )
 
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
-        result = await self._call_service(self.service.gettransaction, tx_id)
+        result = await self.call_service(self.service.gettransaction, tx_id)
         return self._convert_lib_tx_to_our_tx(result)
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
@@ -125,15 +125,15 @@ class BitcoinClient(XChainClient):
         return tx.txid
 
     async def broadcast_tx(self, tx_hex: str) -> str:
-        results = await self._call_service(self.service.sendrawtransaction, tx_hex)
+        results = await self.call_service(self.service.sendrawtransaction, tx_hex)
         tx_id = results.get('txid') if isinstance(results, dict) else results
         self._save_last_response(tx_id, results)
         return tx_id
 
     async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> Fees:
-        average = await self._call_service(self.service.estimatefee, average_blocks)
-        fast = await self._call_service(self.service.estimatefee, fast_blocks)
-        fastest = await self._call_service(self.service.estimatefee, fastest_blocks)
+        average = await self.call_service(self.service.estimatefee, average_blocks)
+        fast = await self.call_service(self.service.estimatefee, fast_blocks)
+        fastest = await self.call_service(self.service.estimatefee, fastest_blocks)
 
         # this approach causes SQL errors in bitcoinlib
         # average, fast, fastest = await asyncio.gather(
@@ -266,11 +266,11 @@ class BitcoinClient(XChainClient):
         :return: list of UTXOs
         """
         address = address or self.get_address()
-        results = await self._call_service(self.service.getutxos, address, '', limit)
+        results = await self.call_service(self.service.getutxos, address, '', limit)
 
         if full:
             transactions = await asyncio.gather(
-                *[self._call_service(self.service.gettransaction, utxo['txid']) for utxo in results]
+                *[self.call_service(self.service.gettransaction, utxo['txid']) for utxo in results]
             )
             transactions = {t.txid: t for t in transactions}
         else:
@@ -334,14 +334,6 @@ class BitcoinClient(XChainClient):
             memo=memo,
             is_success=(tx.status == 'confirmed'),
             original=tx,
-        )
-
-    @staticmethod
-    async def _call_service(method, *args):
-        return await asyncio.get_event_loop().run_in_executor(
-            None,
-            method,
-            *args
         )
 
     def get_available_provider_names(self, network_name=None):

@@ -11,7 +11,7 @@ from xchainpy2_thornode import Pool, LiquidityProviderSummary, Saver, QuoteFees,
 from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
 
 
-class QueryError(Exception):
+class QueryError(LookupError):
     pass
 
 

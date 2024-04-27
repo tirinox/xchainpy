@@ -4,8 +4,7 @@ from enum import Enum
 from .amount import CryptoAmount, Amount, DEFAULT_ASSET_DECIMAL
 from .asset import *
 from .decimals import *
-
-PACKAGE_VERSION = '0.0.11'  # fixme: is there a way to get this automatically?
+from .versions import PACKAGE_VERSION
 
 RAIDO_GLYPH = 'ᚱ'
 DOLLAR_SIGN = '$'

@@ -160,3 +160,19 @@ def test_bool():
 
     assert Amount(0).is_zero
     assert not Amount.automatic(25.3).is_zero
+
+
+def test_same_denom():
+    b1 = Amount(100, 6, Denomination.BASE)
+    a1 = Amount(100, 6, Denomination.ASSET)
+    assert a1 != b1  # different denominations
+    assert b1.as_asset == a1
+    assert a1.as_base == b1
+
+    assert a1.same_denom(b1) == b1
+    assert b1.same_denom(a1) == a1
+
+    a2 = Amount(444, 6, Denomination.ASSET)
+    b2 = Amount(333, 6, Denomination.BASE)
+    assert a1.same_denom(b2) == a1.as_base
+    assert b1.same_denom(a2) == b1.as_asset

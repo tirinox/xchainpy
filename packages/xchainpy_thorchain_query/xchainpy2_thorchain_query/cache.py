@@ -3,7 +3,7 @@ import logging
 import time
 from decimal import Decimal
 from itertools import chain as chain_seq
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Union
 
 from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMaya, NetworkApi as NetworkApiMaya, \
     TransactionsApi as TransactionsApiMaya, LiquidityProvidersApi as LiquidityProvidersApiMaya, \
@@ -49,10 +49,15 @@ class THORChainCache:
             midgard_client = MidgardAPIClient()
             midgard_client.configuration.host = (
                 URLs.Midgard.MAINNET if network == NetworkType.MAINNET else URLs.Midgard.STAGENET)
+        else:
+            assert midgard_client.configuration.host
+
         if not thornode_client:
             thornode_client = THORNodeAPIClient()
             thornode_client.configuration.host = (
                 URLs.THORNode.MAINNET if network == NetworkType.MAINNET else URLs.THORNode.STAGENET)
+        else:
+            assert thornode_client.configuration.host
 
         self._midgard_client = midgard_client
         self._thornode_client = thornode_client
@@ -94,7 +99,7 @@ class THORChainCache:
             self.chain = Chain.Maya
             self.native_decimals = CACAO_DECIMAL
         else:
-            raise QueryError('Invalid native asset. Must be RUNE or CACAO')
+            raise ValueError('Invalid native asset. Must be RUNE or CACAO')
 
         self._last_block_cache = LastBlockCache([], 0)
 
@@ -123,10 +128,10 @@ class THORChainCache:
 
     async def get_pool_for_asset(self, asset: Asset) -> LiquidityPool:
         if self.is_native_asset(asset):
-            raise QueryError('Native Rune does not have a pool')
+            raise ValueError('Native Rune does not have a pool')
         pool = self._pool_cache.pools.get(str(asset))
         if not pool:
-            raise QueryError(f'Pool for {asset} not found')
+            raise LookupError(f'Pool for {asset} not found')
         return pool
 
     async def get_pools(self, forced=False) -> Dict[str, LiquidityPool]:
@@ -347,11 +352,14 @@ class THORChainCache:
         amt = Amount.from_base(int(base_amount_out), out_decimals)
         return CryptoAmount(amt, out_asset)
 
-    async def get_router_address_for_chain(self, chain: Chain) -> Address:
+    async def get_details_for_chain(self, chain: Union[str, Chain]) -> InboundDetail:
+        if isinstance(chain, Chain):
+            chain = chain.value
+
         inbound = await self.get_inbound_details()
-        if not inbound[chain.value].router:
+        if not inbound[chain]:
             raise QueryError('router address is not defined')
-        return inbound[chain.value].router
+        return inbound[chain]
 
     async def get_inbound_details(self, forced=False) -> InboundDetails:
         """
@@ -421,7 +429,7 @@ class THORChainCache:
 
     async def get_fee_rates(self, chain: Chain) -> int:
         """
-        Returns the recommended fee rate for a given chain from THORChain network
+        Returns the fee rate for a given chain
         :param chain: Chain
         :return: estimated fee amount
         """
@@ -430,14 +438,12 @@ class THORChainCache:
             raise QueryError('Could not get inbound details')
 
         for chain_details in inbound.values():
-            if chain_details.chain == chain:
-                return int(chain_details.gas_rate)
-
-        raise QueryError(f'Could not find fee rate for {chain}')
+            if chain_details.chain == chain.value:
+                return int(chain_details.outbound_fee)
 
     async def get_names_by_address(self, address: str) -> Set[str]:
         if not address:
-            raise QueryError('address is required')
+            raise ValueError('address is required')
 
         last_block = await self.get_native_block_height()
         self._name_cache.invalidate(last_block)
@@ -465,7 +471,7 @@ class THORChainCache:
 
     async def get_name_details(self, name: str) -> Optional[THORNameDetails]:
         if not name:
-            raise QueryError('name is required')
+            raise ValueError('name is required')
         name = name.lower()
 
         last_block = await self.get_native_block_height()

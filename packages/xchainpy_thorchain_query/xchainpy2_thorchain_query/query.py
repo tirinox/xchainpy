@@ -76,8 +76,7 @@ class THORChainQuery:
     # ------ old stuff ----
 
     async def quote_swap(self,
-                         amount: Amount,
-                         from_asset: Union[Asset, str],
+                         input_amount: CryptoAmount,
                          destination_address: str,
                          destination_asset: Union[Asset, str],
                          tolerance_bps: int = 0,
@@ -89,28 +88,27 @@ class THORChainQuery:
                          ) -> SwapEstimate:
         """
         Quote a swap transaction. This is a read-only method and does not send any transactions.
-        :param amount:
-        :param from_asset:
-        :param destination_address:
-        :param destination_asset:
-        :param tolerance_bps:
-        :param affiliate_bps:
-        :param affiliate_address:
-        :param streaming_interval:
-        :param streaming_quantity:
-        :param height:
+        :param input_amount: CryptoAmount - amount to swap
+        :param destination_address: Destination address to receive the swapped asset
+        :param destination_asset: Destination asset to swap to
+        :param tolerance_bps: Basis points of slippage tolerance (0..10000)
+        :param affiliate_bps: Affiliate basis points (0..10000)
+        :param affiliate_address: Affiliate address
+        :param streaming_interval: Streaming swap interval in blocks
+        :param streaming_quantity: Streaming swap quantity
+        :param height: Height to query (optional), 0 for latest
         :return:
         """
         errors = []
-        from_asset = str(from_asset) if isinstance(from_asset, Asset) else from_asset
+        from_asset = str(input_amount.asset) if isinstance(input_amount.asset, Asset) else input_amount.asset
         destination_asset = str(destination_asset) if isinstance(destination_asset, Asset) else destination_asset
-        input_amount = get_base_amount_with_diff_decimals(amount, DEFAULT_ASSET_DECIMAL)
-        input_amount = int(input_amount)
+        input_amount_int = get_base_amount_with_diff_decimals(input_amount.amount, DEFAULT_ASSET_DECIMAL)
+        input_amount_int = int(input_amount_int)
 
         try:
             swap_quote: QuoteSwapResponse
             swap_quote = await self.cache.quote_api.quoteswap(
-                height=height, from_asset=from_asset, to_asset=destination_asset, amount=input_amount,
+                height=height, from_asset=from_asset, to_asset=destination_asset, amount=input_amount_int,
                 destination=destination_address,
                 tolerance_bps=tolerance_bps,
                 affiliate_bps=affiliate_bps, affiliate=affiliate_address,
@@ -142,8 +140,9 @@ class THORChainQuery:
                 details=response,
             )
 
-        if int(swap_quote.recommended_min_amount_in) and int(input_amount) < int(swap_quote.recommended_min_amount_in):
-            errors.append(f'Input amount {amount.amount} is less than recommended min amount in '
+        if (int(swap_quote.recommended_min_amount_in) and
+                int(input_amount_int) < int(swap_quote.recommended_min_amount_in)):
+            errors.append(f'Input amount {input_amount.amount} is less than recommended min amount in '
                           f'{swap_quote.recommended_min_amount_in}')
 
         fee_asset = Asset.from_string_exc(swap_quote.fees.asset)

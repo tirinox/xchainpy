@@ -4,7 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xchainpy2_client"
+<<<<<<< HEAD
 version = "0.0.10"
+=======
+version = "0.0.13"
+>>>>>>> evm
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]

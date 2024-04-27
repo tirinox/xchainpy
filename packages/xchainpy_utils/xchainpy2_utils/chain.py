@@ -16,6 +16,7 @@ class Chain(Enum):
     BinanceSmartChain = "BSC"
     Dash = "DASH"
     Kujira = "KUJI"
+    Arbitrum = "ARB"
 
     UNKNOWN = 'Unknown'
 

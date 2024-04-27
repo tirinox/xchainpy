@@ -177,7 +177,7 @@ def calc_network_fee(asset: Asset, inbound: InboundDetail,
         gas_rate_in_gwei = Decimal(inbound.gas_rate)
         gas_rate_in_wei = Amount.from_base(gas_rate_in_gwei * Decimal(10 ** 9), decimals)
         if asset == gas_asset:
-            return CryptoAmount(Amount.from_base(gas_rate_in_wei * 21000), gas_asset)
+            return CryptoAmount(Amount.from_base(gas_rate_in_wei * 23000), gas_asset)
         else:
             return CryptoAmount(Amount.from_base(gas_rate_in_wei * 70000), gas_asset)
     elif asset.chain == Chain.Cosmos.value:

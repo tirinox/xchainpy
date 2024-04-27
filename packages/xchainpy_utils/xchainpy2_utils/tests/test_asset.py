@@ -102,20 +102,16 @@ def test_equality():
 
 
 @pytest.mark.parametrize('source, expected', [
+    ('r', AssetRUNE),
     ('b', AssetBTC),
-    ('c', AssetBCH),
-    ('d', AssetDOGE),
-    ('a', AssetAVAX),
     ('e', AssetETH),
-    ('f', AssetBNB),
-    ('g', AssetLTC),
-    ('h', AssetRUNE),
-    ('i', AssetATOM),
-    ('j', AssetCACAO),
-    ('B', AssetBTC),
-    ('C', AssetBCH),
-    ('D', AssetDOGE),
-    ('R', AssetRUNE),
+    ('n', AssetBNB),
+    ('g', AssetATOM),
+    ('d', AssetDOGE),
+    ('l', AssetLTC),
+    ('c', AssetBCH),
+    ('a', AssetAVAX),
+    ('s', AssetBSC),
     ('BTC.BTC', AssetBTC),
     ('THOR.RUNE', AssetRUNE),
     ('ETH/ETH', AssetETH.as_synth),
@@ -127,4 +123,4 @@ def test_equality():
     (AssetLTC, AssetLTC),
 ])
 def test_automatic_creating(source, expected):
-    assert Asset.from_string(source) == expected
+    assert Asset.automatic(source) == expected

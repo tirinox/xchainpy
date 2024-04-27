@@ -13,6 +13,7 @@ from __future__ import absolute_import
 import datetime
 import json
 import mimetypes
+from contextlib import suppress
 from multiprocessing.pool import ThreadPool
 import os
 import re
@@ -75,8 +76,9 @@ class ApiClient(object):
         self.user_agent = 'Swagger-Codegen/1.108.1/python'
 
     def __del__(self):
-        self.pool.close()
-        self.pool.join()
+        with suppress(OSError):
+            self.pool.close()
+            self.pool.join()
 
     @property
     def user_agent(self):
