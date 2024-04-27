@@ -31,7 +31,7 @@ classifiers = [
 dependencies = [
     'aiohttp',
     'aiohttp-retry>=2.3.0',
-    'xchainpy2_util',
+    'xchainpy2_utils',
     'xchainpy2_crypto',
     'xchainpy2_midgard',
     ## Up to you
