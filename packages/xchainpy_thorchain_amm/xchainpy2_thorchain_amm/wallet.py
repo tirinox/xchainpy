@@ -29,7 +29,10 @@ class Wallet:
     def __init__(self, phrase: str,
                  query_api: Optional[THORChainQuery] = None,
                  enabled_chains: Set[Chain] = ALL,
-                 concurrency: int = 5):
+                 concurrency: int = 5,
+                 default_chain: Chain = Chain.THORChain):
+        self.default_chain = default_chain
+
         self._semaphore = asyncio.Semaphore(concurrency)
 
         self.query_api = query_api or THORChainQuery()
@@ -107,5 +110,9 @@ class Wallet:
             client.purge_client()
 
     def explorer_url_tx(self, tx_id: str):
-        tc: THORChainClient = self.clients.get(Chain.THORChain)
-        return tc.get_explorer_tx_url(tx_id)
+        cli = self.clients.get(self.default_chain)
+        return cli.get_explorer_tx_url(tx_id)
+
+    def explorer_url_address(self, address: str):
+        cli: THORChainClient = self.clients.get(self.default_chain)
+        return cli.get_explorer_address_url(address)
