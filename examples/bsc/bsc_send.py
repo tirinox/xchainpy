@@ -35,7 +35,7 @@ async def main():
 
     async def transfer_some_bnb():
         input("Press Enter to send TX...")
-        amount = balance1 * 0.1
+        amount = balance1 * 0.01
         print(f"Transferring {amount} to {bsc2.get_address()}")
         tx_hash = await bsc1.transfer(amount, bsc2.get_address(), gas=gas, memo="barfoo")
         print(f"Transfer tx hash {bsc1.get_explorer_tx_url(tx_hash)}")
