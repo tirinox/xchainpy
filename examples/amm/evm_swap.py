@@ -33,11 +33,23 @@ async def main():
 
     async def swap_bnb_to_usdt():
         print("I will swap little BNB to USDT.")
-    #    input("Press Enter to send TX...")
+        input("Press Enter to send TX...")
         tx_hash = await amm.do_swap(
             CryptoAmount.automatic(0.05, 'BSC.BNB', BSC_DECIMALS),
-            Asset.automatic('BSC.USDT-0x55d398326f99059ff775485246999027b3197955').upper(),
+            Asset.automatic('AVAX.AVAX').upper(),
+            destination_address=bsc1.get_address(),
         )
+
+        # r = await amm.query.quote_swap(
+        #     input_amount=CryptoAmount.automatic(0.05, 'BSC.BNB', BSC_DECIMALS),
+        #     # destination_asset=Asset.automatic('BSC.USDT-0x55d398326f99059ff775485246999027b3197955').upper(),
+        #     destination_asset=Asset.automatic('AVAX.AVAX').upper(),
+        #     destination_address=bsc1.get_address(),
+        #     tolerance_bps=500,
+        # )
+        # print(r)
+        # return
+
         print(f"Swap tx hash {bsc1.get_explorer_tx_url(tx_hash)}")
 
         print("Waiting for transaction to be mined...")
