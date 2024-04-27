@@ -1,17 +1,17 @@
 import asyncio
 import datetime
 from contextlib import suppress
-from typing import Optional, Set
+from typing import Optional, Set, Union
 
 from xchainpy2_client import NoClient, XChainClient
 from xchainpy2_thorchain_query.models import InboundDetail
 
 from xchainpy2_thorchain_query import THORChainQuery
-from xchainpy2_utils import Chain, EVM_CHAINS
+from xchainpy2_utils import Chain, EVM_CHAINS, Asset
 from .models import AllBalances, ChainBalances, ALL
 from .evm_helper import EVMHelper
 from .detect_clients import THORChainClient, CosmosGaiaClient, BinanceSmartChainClient, BinanceChainClient, \
-    MayaChainClient, BitcoinClient, EthereumClient
+    MayaChainClient, BitcoinClient, EthereumClient, AvalancheChainClient
 
 
 class Wallet:
@@ -23,6 +23,7 @@ class Wallet:
         Chain.Bitcoin: BitcoinClient,
         Chain.Ethereum: EthereumClient,
         Chain.BinanceSmartChain: BinanceSmartChainClient,
+        Chain.Avalanche: AvalancheChainClient,
         # to be continued
     }
 
@@ -51,7 +52,9 @@ class Wallet:
     def cache(self):
         return self.query_api.cache
 
-    def get_client(self, chain: Chain) -> Optional[XChainClient]:
+    def get_client(self, chain: Union[Chain, Asset]) -> Optional[XChainClient]:
+        if isinstance(chain, Asset):
+            chain = Chain(chain.chain)
         return self.clients.get(chain)
 
     def is_chain_enabled(self, chain: Chain):
