@@ -6,7 +6,7 @@ from xchainpy2_client import FeeOption
 from xchainpy2_thorchain import THORChainClient, THORMemo
 from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode
 from xchainpy2_utils import CryptoAmount, Asset, Chain, AssetRUNE
-from .consts import THOR_BASIS_POINT_MAX, DEFAULT_TOLERANCE_BPS
+from .consts import THOR_BASIS_POINT_MAX, DEFAULT_TOLERANCE_BPS, THOR_SWAP_TRACKER_URL
 from .models import AMMException, SwapException, THORNameException
 from .utils import is_erc20_asset
 from .wallet import Wallet
@@ -22,6 +22,18 @@ class THORChainAMM:
         self.dry_run = dry_run
         self.check_balance = check_balance
         self.fee_option = fee_option
+        self.swap_tracker_url = THOR_SWAP_TRACKER_URL
+
+    def get_track_url(self, tx_id) -> str:
+        """
+        Get the URL to track the swap transaction
+        :param tx_id: Transaction ID
+        :return: str URL to track the transaction
+        """
+        return self.swap_tracker_url.format(
+            tx_id=tx_id,
+            network=self.query.cache.network.value,
+        )
 
     async def do_swap(self,
                       input_amount: CryptoAmount,
@@ -32,6 +44,8 @@ class THORChainAMM:
                       affiliate_address: str = '',
                       streaming_interval=0,
                       streaming_quantity=0) -> str:
+        # todo: add an ability to override swap limit
+        # todo: add gas options for EVM chains
         """
         Do a swap using the THORChain protocol AMM;
         In case of EVM ERC20-like tokens, it will approve the token and then do the swap.
@@ -61,8 +75,7 @@ class THORChainAMM:
             raise SwapException(f'Invalid swap: {validation_error}')
 
         estimate = await self.query.quote_swap(
-            input_amount.amount,
-            input_amount.asset,
+            input_amount,
             destination_address,
             destination_asset,
             tolerance_bps,
