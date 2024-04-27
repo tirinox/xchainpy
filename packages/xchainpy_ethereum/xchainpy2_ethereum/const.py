@@ -59,3 +59,5 @@ GAS_LIMITS = {
     NetworkType.TESTNET: GasLimits.default(),
     NetworkType.STAGENET: GasLimits.default(),
 }
+
+EVM_NULL_ADDRESS = '0x0000000000000000000000000000000000000000'

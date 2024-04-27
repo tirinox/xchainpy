@@ -54,6 +54,7 @@ class GasLimits(NamedTuple):
     approve_gas_limit: int
     transfer_gas_asset_gas_limit: int
     transfer_token_gas_limit: int
+    deposit_gas_limit: int
     gas_price: int
 
     @classmethod
@@ -62,5 +63,6 @@ class GasLimits(NamedTuple):
             200000,
             23000,
             100000,
+            160000,
             30 * 10 ** 9,
         )

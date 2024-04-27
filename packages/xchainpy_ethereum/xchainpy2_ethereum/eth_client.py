@@ -353,13 +353,15 @@ class EthereumClient(XChainClient):
         contract = self.get_erc20_as_contract(contract_address)
 
         call = contract.functions.transfer(recipient, what.amount.internal_amount)
-        return await self.make_contract_call(call, 0, gas)
+        gas_limit = self._get_gas_limit().transfer_token_gas_limit
+        return await self.make_contract_call(call, 0, gas, gas_limit)
 
-    async def make_contract_call(self, method_pointer, value, gas: GasOptions, nonce=-1) -> str:
+    async def make_contract_call(self, method_pointer, value, gas: GasOptions, nonce=-1, gas_limit=-1) -> str:
         """
         Make a contract call
         """
-        gas = gas.updates_gas_limit(self._get_gas_limit().transfer_token_gas_limit)
+        gas_limit_transfer = self._get_gas_limit().transfer_token_gas_limit
+        gas = gas.updates_gas_limit(gas_limit if gas_limit > 0 else gas_limit_transfer)
         if gas.is_automatic:
             gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
 
@@ -409,7 +411,8 @@ class EthereumClient(XChainClient):
 
         call = contract.functions.approve(spender, raw_amount)
 
-        return await self.make_contract_call(call, 0, gas)
+        gas_limit = self._get_gas_limit().approve_gas_limit
+        return await self.make_contract_call(call, 0, gas, gas_limit)
 
     async def revoke_erc20_token_allowance(self, spender: str, token: Union[str, Asset], gas: GasOptions) -> str:
         """
