@@ -6,7 +6,7 @@ from xchainpy2_client import FeeOption
 from xchainpy2_ethereum import EthereumClient, GasOptions
 from xchainpy2_thorchain import THORChainClient, THORMemo
 from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode
-from xchainpy2_utils import CryptoAmount, Asset, Chain, AssetRUNE
+from xchainpy2_utils import CryptoAmount, Asset, Chain, AssetRUNE, remove_0x_prefix
 from .consts import THOR_BASIS_POINT_MAX, DEFAULT_TOLERANCE_BPS, THOR_SWAP_TRACKER_URL, DEFAULT_EXPIRY
 from .evm_helper import EVMHelper
 from .models import AMMException, THORNameException
@@ -36,8 +36,7 @@ class THORChainAMM:
         if not tx_id:
             raise ValueError('Invalid transaction ID')
 
-        if tx_id.lower().startswith('0x'):
-            tx_id = tx_id[2:]
+        tx_id = remove_0x_prefix(tx_id)
 
         return self.swap_tracker_url.format(
             tx_id=tx_id,
@@ -52,9 +51,9 @@ class THORChainAMM:
                       affiliate_bps=0,
                       affiliate_address: str = '',
                       streaming_interval=0,
-                      streaming_quantity=0) -> str:
+                      streaming_quantity=0,
+                      gas_options: Optional[GasOptions] = None) -> str:
         # todo: add an ability to override swap limit
-        # todo: add gas options for EVM chains
         """
         Do a swap using the THORChain protocol AMM;
         In case of EVM ERC20-like tokens, it will approve the token and then do the swap.
@@ -67,6 +66,7 @@ class THORChainAMM:
         :param affiliate_address: affiliate address to collect affiliate fee
         :param streaming_interval: streaming interval in THORChain blocks (6 sec), 0 to disable streaming
         :param streaming_quantity: sub swap quantity, 0 for automatic
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: hash of the inbound transaction (used to track transaction status)
         """
         if not destination_address:
@@ -97,14 +97,16 @@ class THORChainAMM:
         if not estimate.can_swap:
             raise AMMException(f'Swap is not possible: {estimate.errors}', estimate.errors)
 
-        return await self.general_deposit(input_amount, estimate.details.inbound_address, estimate.memo)
+        return await self.general_deposit(input_amount, estimate.details.inbound_address, estimate.memo, gas_options)
 
-    async def donate(self, amount: CryptoAmount, pool: Union[Asset, str] = ''):
+    async def donate(self, amount: CryptoAmount, pool: Union[Asset, str] = '',
+                     gas_options: Optional[GasOptions] = None) -> str:
         """
         Donate to a pool
         :param amount: CryptoAmount to donate
         :param pool: Pool name to donate to; can be empty if you donate non-Rune assets
-        :return:
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
+        :return: TX hash submitted to the network
         """
         self._validate_crypto_amount(amount)
 
@@ -126,13 +128,14 @@ class THORChainAMM:
         memo = THORMemo.donate(pool).build()
 
         inbound_address = await self._get_inbound_address(amount.asset)
-        return await self.general_deposit(amount, inbound_address, memo)
+        return await self.general_deposit(amount, inbound_address, memo, gas_options)
 
     async def add_liquidity_rune_side(self, amount: CryptoAmount,
                                       pool: Union[Asset, str],
                                       paired_address: str,
                                       affiliate_address: str = '',
-                                      affiliate_bps: int = 0):
+                                      affiliate_bps: int = 0,
+                                      gas_options: Optional[GasOptions] = None) -> str:
         """
         Add liquidity to a pool on the Rune side.
         Attention: you must also add liquidity to the paired asset side (add_liquidity_asset_side)
@@ -142,6 +145,7 @@ class THORChainAMM:
         :param paired_address: Address of the paired asset
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
         :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: TX hash submitted to the network
         """
         if amount.asset != AssetRUNE:
@@ -156,13 +160,14 @@ class THORChainAMM:
         pool_name = Asset.automatic(pool).upper()
         memo = THORMemo.add_liquidity(pool_name, paired_address).build()
 
-        return await self.general_deposit(amount, '', memo)
+        return await self.general_deposit(amount, '', memo, gas_options)
 
     async def add_liquidity_asset_side(self,
                                        amount: CryptoAmount,
                                        paired_rune_address: str,
                                        affiliate_address: str = '',
-                                       affiliate_bps: int = 0):
+                                       affiliate_bps: int = 0,
+                                       gas_options: Optional[GasOptions] = None) -> str:
         """
         Add liquidity to a pool on the asset side.
         Attention: you must also add liquidity to the Rune side (add_liquidity_rune_side); if you don't,
@@ -171,6 +176,7 @@ class THORChainAMM:
         :param paired_rune_address: Address of the paired Rune
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
         :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: TX hash submitted to the network
         """
 
@@ -184,46 +190,51 @@ class THORChainAMM:
         pool_name = str(amount.asset)
 
         memo = THORMemo.add_liquidity(pool_name, paired_rune_address).build()
-        return await self.general_deposit(amount, '', memo)
+        return await self.general_deposit(amount, '', memo, gas_options)
 
     async def add_liquidity_rune_only(self,
                                       amount: CryptoAmount,
                                       pool: Union[Asset, str],
                                       affiliate_address: str = '',
-                                      affiliate_bps: int = 0):
+                                      affiliate_bps: int = 0,
+                                      gas_options: Optional[GasOptions] = None) -> str:
         """
         Add liquidity to a pool on the Rune side only.
         :param amount: Amount of Rune to add
         :param pool: Pool name to add liquidity to
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
         :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: String TX hash submitted to the network
         """
         if amount.asset != AssetRUNE:
             raise AMMException(f'Invalid asset: {amount.asset}; must be Rune')
 
         return await self.add_liquidity_rune_side(amount, pool, '',
-                                                  affiliate_address, affiliate_bps)
+                                                  affiliate_address, affiliate_bps, gas_options)
 
     async def add_liquidity_asset_only(self,
                                        amount: CryptoAmount,
                                        affiliate_address: str = '',
-                                       affiliate_bps: int = 0):
+                                       affiliate_bps: int = 0,
+                                       gas_options: Optional[GasOptions] = None) -> str:
         """
         Add liquidity to a pool on the asset side only.
         :param amount: Amount of the asset to add
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
         :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: String TX hash submitted to the network
         """
         raise await self.add_liquidity_asset_side(amount, '',
-                                                  affiliate_address, affiliate_bps)
+                                                  affiliate_address, affiliate_bps, gas_options)
 
     async def add_liquidity_symmetric(self,
                                       asset_amount: CryptoAmount,
                                       rune_amount: CryptoAmount,
                                       affiliate_address: str = '',
-                                      affiliate_bps: int = 0) -> (str, str):
+                                      affiliate_bps: int = 0,
+                                      gas_options: Optional[GasOptions] = None) -> (str, str):
         """
         Add liquidity to a pool on both sides (Rune and asset) at the same time.
 
@@ -231,6 +242,7 @@ class THORChainAMM:
         :param rune_amount: Amount of Rune to add
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
         :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: Tuple of TX hashes submitted to the network
         """
         asset_chain = Chain(asset_amount.asset.chain)
@@ -243,23 +255,25 @@ class THORChainAMM:
 
         stage1 = await self.add_liquidity_rune_side(rune_amount, '',
                                                     asset_address,
-                                                    affiliate_address, affiliate_bps)
+                                                    affiliate_address, affiliate_bps, gas_options)
         if not stage1:
             raise AMMException('Rune side liquidity addition failed.')
 
         stage2 = await self.add_liquidity_asset_side(asset_amount,
                                                      rune_address,
-                                                     affiliate_address, affiliate_bps)
+                                                     affiliate_address, affiliate_bps, gas_options)
         return stage1, stage2
 
     async def withdraw_liquidity(self,
                                  asset: Union[Asset, str],
-                                 mode: WithdrawMode, withdraw_bps: int = THOR_BASIS_POINT_MAX):
+                                 mode: WithdrawMode, withdraw_bps: int = THOR_BASIS_POINT_MAX,
+                                 gas_options: Optional[GasOptions] = None) -> str:
         """
         Withdraw liquidity from a pool
         :param asset: The pool name to withdraw liquidity from
         :param mode: Withdraw mode (RuneOnly, AssetOnly, Symmetric)
         :param withdraw_bps: Percentage of the pool to withdraw (0-10000)
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: TX hash submitted to the network
         """
         asset = Asset.automatic(asset)
@@ -284,7 +298,8 @@ class THORChainAMM:
         if not estimate.can_withdraw:
             raise AMMException(f'Cannot withdraw liquidity: {estimate.errors}', estimate.errors)
 
-        return await self.general_deposit(estimate.deposit_amount, estimate.inbound_address, estimate.memo)
+        return await self.general_deposit(estimate.deposit_amount, estimate.inbound_address, estimate.memo,
+                                          gas_options)
 
     async def open_loan(self,
                         amount: CryptoAmount,
@@ -292,7 +307,8 @@ class THORChainAMM:
                         destination_address: str,
                         min_out: int = 0,
                         affiliate: str = '',
-                        affiliate_bps: int = 0):
+                        affiliate_bps: int = 0,
+                        gas_options: Optional[GasOptions] = None) -> str:
         """
         Open a loan or add assets to an existing loan.
         Payload is the collateral to open the loan with. Must be L1 supported by THORChain.
@@ -306,16 +322,18 @@ class THORChainAMM:
         Must be THORName or THOR Address.
         :param affiliate_bps: The affiliate fee. Fee is allocated to the affiliate.	Optional.
         Limited from 0 to 1000 Basis Points.
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: str TX hash submitted to the network
         """
         memo = THORMemo.loan_open(target_asset, destination_address, min_out, affiliate, affiliate_bps).build()
-        return await self.general_deposit(amount, '', memo)
+        return await self.general_deposit(amount, '', memo, gas_options)
 
     async def repay_loan(self,
                          amount: CryptoAmount,
                          collateral_asset: Union[str, Asset],
                          destination_address: str,
-                         min_out: int = 0):
+                         min_out: int = 0,
+                         gas_options: Optional[GasOptions] = None) -> str:
         """
         Repay the debt and receive the collateral back.
 
@@ -324,33 +342,37 @@ class THORChainAMM:
         :param destination_address: The destination address to send the collateral to. Owner of the loan.
         :param min_out: Min collateral to receive else a refund. Optional, 1e8 format.
         loan needs to be fully repaid to close.
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: str TX hash submitted to the network
         """
         memo = THORMemo.loan_close(collateral_asset, destination_address, min_out).build()
-        return await self.general_deposit(amount, '', memo)
+        return await self.general_deposit(amount, '', memo, gas_options)
 
-    async def add_savers(self, input_amount: CryptoAmount):
+    async def add_savers(self, input_amount: CryptoAmount, gas_options: Optional[GasOptions] = None) -> str:
         """
         Adds assets to a savers value
         :param input_amount: CryptoAmount to add to the savers value
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: str TX hash submitted to the network
         """
         estimate = await self.query.estimate_add_saver(input_amount)
         if not estimate.can_add_saver:
             raise AMMException(f'Cannot add savers: {estimate.errors}', estimate.errors)
 
-        return await self.general_deposit(input_amount, estimate.to_address, estimate.memo)
+        return await self.general_deposit(input_amount, estimate.to_address, estimate.memo, gas_options)
 
     async def withdraw_savers(self,
                               asset: Union[Asset, str],
                               address: str,
-                              withdraw_bps: int):
+                              withdraw_bps: int,
+                              gas_options: Optional[GasOptions] = None) -> str:
         """
         Withdraw assets from a savers value
         :param asset: Asset to withdraw from the savers value
         :param address: Address to withdraw to
         :param withdraw_bps: Percentage of the savers value to withdraw (0-10000)
-        :return:
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
+        :return: str TX hash submitted to the network
         """
         asset = Asset.automatic(asset)
 
@@ -358,12 +380,13 @@ class THORChainAMM:
         if not estimate.can_withdraw:
             raise AMMException(f'Cannot withdraw savers: {estimate.errors}', estimate.errors)
 
-        return await self.general_deposit(estimate.dust_amount, estimate.to_address, estimate.memo)
+        return await self.general_deposit(estimate.dust_amount, estimate.to_address, estimate.memo, gas_options)
 
     async def general_deposit(self,
                               input_amount: CryptoAmount,
                               to_address: str,
-                              memo: str):
+                              memo: str,
+                              gas_options: Optional[GasOptions] = None) -> str:
         """
         General deposit function to deposit assets to a specific inbound address with a memo.
         In case of Rune, it will invoke a MsgDeposit in the THORChain.
@@ -371,7 +394,8 @@ class THORChainAMM:
         :param input_amount: Input amount and asset to deposit
         :param to_address: Inbound address to deposit to
         :param memo: Memo to include with the deposit to identify your intent
-        :return:
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
+        :return: str TX hash submitted to the network
         """
         chain = Chain(input_amount.asset.chain)
 
@@ -395,10 +419,7 @@ class THORChainAMM:
             # invoke a THORChain's MsgDeposit call
             return await client.deposit(input_amount, memo, check_balance=self.check_balance)
         elif chain.is_evm:
-            if self.dry_run:
-                return (f'Dry-run: EVM deposit {input_amount} to {to_address!r} with memo {memo!r};'
-                        f'expiration: {self.evm_expiration_sec}')
-            return await self._deposit_evm(input_amount, memo)
+            return await self._deposit_evm(input_amount, memo, gas_options)
         else:
             if chain.is_utxo:
                 fees = await client.get_fees()
@@ -416,14 +437,17 @@ class THORChainAMM:
                                          memo=memo, fee_rate=fee_rate,
                                          check_balance=self.check_balance)
 
-    async def _deposit_evm(self, input_amount: CryptoAmount, memo: str):
+    async def _deposit_evm(self, input_amount: CryptoAmount, memo: str, gas_options: Optional[GasOptions] = None):
+        if self.dry_run:
+            return f'Dry-run: EVM deposit {input_amount} with memo {memo!r}; expiration: {self.evm_expiration_sec}'
+
         # todo: prevent submitting a tx before router is approved
 
         # noinspection PyTypeChecker
         client: EthereumClient = self.wallet.get_client(input_amount.asset)
         helper = EVMHelper(client, self.query.cache)
-        gas = GasOptions.automatic(self.fee_option)  # todo: allow fine tuning
-        tx_hash = await helper.deposit(input_amount, memo, gas, self.evm_expiration_sec)
+        gas_options = gas_options or GasOptions.automatic(self.fee_option)
+        tx_hash = await helper.deposit(input_amount, memo, gas_options, self.evm_expiration_sec)
         return tx_hash
 
     async def register_name(self,
