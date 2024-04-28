@@ -3,6 +3,7 @@ import logging
 import os
 import re
 from functools import reduce
+from operator import attrgetter, itemgetter
 
 import web3
 
@@ -37,40 +38,6 @@ def is_valid_eth_address(address):
 
     return True
 
-
-def format_fee_history(result, include_pending):
-    block_num = result.oldestBlock
-    index = 0
-    blocks = []
-
-    try:
-        pending_base_fee = result.baseFeePerGas.pop()
-    except AttributeError:
-        pending_base_fee = 0
-
-    while block_num < result.oldestBlock + len(result.reward):
-        blocks.append(
-            {
-                'number': block_num,
-                'baseFeePerGas': result.baseFeePerGas[index],
-                'gasUsedRatio': result.gasUsedRatio[index],
-                'priorityFeePerGas': result.reward[index]
-            }
-        )
-        block_num += 1
-        index += 1
-        if include_pending:
-            blocks.append(
-                {
-                    'number': 'pending',
-                    'baseFeePerGas': pending_base_fee,
-                    'gasUsedRatio': None,
-                    'priorityFeePerGas': []
-                }
-            )
-    return blocks
-
-
 def mean_fee(items):
     return wei_to_gwei(round(reduce(lambda a, v: a + v, items) / len(items)))
 
@@ -82,12 +49,11 @@ def wei_to_gwei(wei):
 # noinspection PyProtectedMember
 def estimate_fees(w3: web3.Web3, percentiles=(20, 50, 80), block_count=20):
     fee_history = w3.eth.fee_history(block_count, 'pending', list(percentiles))
-    # noinspection PyTypeChecker
-    blocks = format_fee_history(fee_history, False)
+    reward_history = fee_history['reward']
 
-    hi = list(map(lambda b: b['priorityFeePerGas'][2], blocks))
-    mi = list(map(lambda b: b['priorityFeePerGas'][1], blocks))
-    lo = list(map(lambda b: b['priorityFeePerGas'][0], blocks))
+    lo, mi, hi = [
+        list(map(itemgetter(i), reward_history)) for i in range(3)
+    ]
 
     # noinspection PyUnresolvedReferences
     base_fee = w3.eth.get_block('pending').baseFeePerGas

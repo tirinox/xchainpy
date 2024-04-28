@@ -42,7 +42,6 @@ FREE_ETH_PROVIDERS = {
         "https://eth.llamarpc.com",
         "https://cloudflare-eth.com/",
         "https://rpc.flashbots.net/",
-        "https://eth-mainnet.nodereal.io/v1/1659dfb40aa24bbb8153a677b98064d7",
     ],
     NetworkType.TESTNET: [
         "https://rpc2.sepolia.org",

@@ -67,6 +67,8 @@ class EthereumClient(XChainClient):
         self._ex_provider = extra_data_provider or EtherscanDataProvider(
             self.chain, self.network, os.environ.get('ETHERSCAN_API_KEY', '')
         )
+        self.fee_estimation_percentiles = (20, 50, 80)
+        self.fee_estimation_block_history = 20
 
     @property
     def get_chain_id(self):
@@ -246,7 +248,10 @@ class EthereumClient(XChainClient):
         Fees are estimated based on the last 20 blocks.
         FeeRate is in Gwei
         """
-        return await self.call_service(estimate_fees, self.web3)
+        return await self.call_service(
+            estimate_fees,
+            self.web3,
+            self.fee_estimation_percentiles, self.fee_estimation_block_history)
 
     async def get_last_fee(self) -> FeeRate:
         """
