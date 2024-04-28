@@ -11,7 +11,7 @@ from xchainpy2_utils import Chain, EVM_CHAINS, Asset
 from .models import AllBalances, ChainBalances, ALL
 from .evm_helper import EVMHelper
 from .detect_clients import THORChainClient, CosmosGaiaClient, BinanceSmartChainClient, BinanceChainClient, \
-    MayaChainClient, BitcoinClient, EthereumClient, AvalancheChainClient
+    MayaChainClient, BitcoinClient, EthereumClient, AvalancheClient
 
 
 class Wallet:
@@ -23,7 +23,7 @@ class Wallet:
         Chain.Bitcoin: BitcoinClient,
         Chain.Ethereum: EthereumClient,
         Chain.BinanceSmartChain: BinanceSmartChainClient,
-        Chain.Avalanche: AvalancheChainClient,
+        Chain.Avalanche: AvalancheClient,
         # to be continued
     }
 
