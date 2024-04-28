@@ -32,9 +32,8 @@ BSC_FEE_BOUNDS = FeeBounds(2_000_000_000, 1_000_000_000_000)
 FREE_BSC_PROVIDERS = {
     # https://chainlist.org/chain/56
     NetworkType.MAINNET: [
+        "https://bsc-dataseed.bnbchain.org",
         "https://1rpc.io/bnb",
-        "https://binance.llamarpc.com",
-        "https://bsc.rpc.blxrbdn.com",
         "https://bsc-mainnet.public.blastapi.io",
     ],
     # https://chainlist.org/chain/97
