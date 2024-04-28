@@ -5,7 +5,7 @@ from typing import NamedTuple, Optional
 from xchainpy2_midgard.rest import ApiException
 from xchainpy2_thorchain import ActionType, THORMemo
 from xchainpy2_thornode import TxStatusResponse, TxSignersResponse
-from xchainpy2_utils import DEFAULT_CHAIN_ATTRS
+from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, remove_0x_prefix
 from .cache import THORChainCache
 
 DEFAULT_POLL_INTERVAL = 5  # sec
@@ -178,10 +178,10 @@ class TransactionTracker:
 
 
 class TransactionTrackerAsyncGenerator:
-    def __init__(self, tracker: TransactionTracker, interval, txid, stage=True, status=True):
+    def __init__(self, tracker: TransactionTracker, interval, tx_hash, stage=True, status=True):
         self.tracker = tracker
         self.interval = interval
-        self.txid = txid
+        self.tx_hash = remove_0x_prefix(tx_hash)
         self.stage = stage
         self.status = status
         if not self.stage and not self.status:
@@ -199,8 +199,7 @@ class TransactionTrackerAsyncGenerator:
             raise StopAsyncIteration
 
         while True:
-            details = await self.tracker.check_tx_progress(self.txid)
-            print(details)  # todo
+            details = await self.tracker.check_tx_progress(self.tx_hash)
 
             something_changed = False
             if self.stage and details.stage != self._previous_stage:
