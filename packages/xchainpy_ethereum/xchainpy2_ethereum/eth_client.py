@@ -354,11 +354,17 @@ class EthereumClient(XChainClient):
 
         call = contract.functions.transfer(recipient, what.amount.internal_amount)
         gas_limit = self._get_gas_limit().transfer_token_gas_limit
-        return await self.make_contract_call(call, 0, gas, gas_limit)
+        return await self.make_contract_call(call, 0, gas, gas_limit=gas_limit)
 
-    async def make_contract_call(self, method_pointer, value, gas: GasOptions, nonce=-1, gas_limit=-1) -> str:
+    async def make_contract_call(self, method_pointer, value, gas: GasOptions, gas_limit=-1, nonce=-1) -> str:
         """
         Make a contract call
+        :param method_pointer: Contract method pointer
+        :param value: Value to send
+        :param gas: Gas options
+        :param gas_limit: Gas limit
+        :param nonce: Nonce (optional) if not provided, it will fetch the nonce from the blockchain
+        :return: Transaction hash
         """
         gas_limit_transfer = self._get_gas_limit().transfer_token_gas_limit
         gas = gas.updates_gas_limit(gas_limit if gas_limit > 0 else gas_limit_transfer)
@@ -366,7 +372,7 @@ class EthereumClient(XChainClient):
             gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
 
         if nonce < 0:
-            nonce = await self.get_nonce()
+            nonce = await self.get_nonce()  # todo: bsc nonce is mistakenly high
 
         tx_params = self._prepare_tx_params('', value, nonce, gas)
         tx = method_pointer.build_transaction(tx_params)
@@ -382,6 +388,14 @@ class EthereumClient(XChainClient):
         return timestamp
 
     async def wait_for_transaction(self, tx_id: str, timeout: int = 120, with_timestamp=False) -> Optional[XcTx]:
+        """
+        Wait for a transaction to be mined.
+        If the transaction is not mined within the timeout, it will raise a TimeExhausted exception.
+        :param tx_id: Transaction ID
+        :param timeout: Timeout in seconds. Default is 120 seconds
+        :param with_timestamp: If True, it will return the timestamp of the block
+        :return: Transaction object XcTx
+        """
         if not tx_id:
             raise ValueError("Transaction ID is required")
 
@@ -412,7 +426,7 @@ class EthereumClient(XChainClient):
         call = contract.functions.approve(spender, raw_amount)
 
         gas_limit = self._get_gas_limit().approve_gas_limit
-        return await self.make_contract_call(call, 0, gas, gas_limit)
+        return await self.make_contract_call(call, 0, gas, gas_limit=gas_limit)
 
     async def revoke_erc20_token_allowance(self, spender: str, token: Union[str, Asset], gas: GasOptions) -> str:
         """
@@ -438,7 +452,7 @@ class EthereumClient(XChainClient):
     async def get_nonce(self, address: str = '') -> int:
         if not address:
             address = self.get_address()
-        return await self.call_service(self.web3.eth.get_transaction_count, address)
+        return await self.call_service(self.web3.eth.get_transaction_count, address, 'pending')
 
     def get_explorer_tx_url(self, tx_id: str) -> str:
         if isinstance(tx_id, HexBytes):
