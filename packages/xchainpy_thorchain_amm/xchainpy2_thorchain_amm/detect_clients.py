@@ -39,6 +39,6 @@ except ImportError:
 
 
 try:
-    from xchainpy2_avalanche import AvalancheChainClient
+    from xchainpy2_avalanche import AvalancheClient
 except:
     AvalancheChainClient = NoClient
