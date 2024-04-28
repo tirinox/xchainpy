@@ -1,7 +1,7 @@
 import asyncio
 
 from examples.common import get_phrase
-from xchainpy2_avalanche import AvalancheChainClient
+from xchainpy2_avalanche import AvalancheClient
 from xchainpy2_client import FeeOption
 from xchainpy2_ethereum import GasOptions
 from xchainpy2_utils import NetworkType
@@ -9,8 +9,8 @@ from xchainpy2_utils import NetworkType
 
 async def main():
     phrase = get_phrase()
-    avax1 = AvalancheChainClient(phrase=phrase, network=NetworkType.MAINNET, wallet_index=0)
-    avax2 = AvalancheChainClient(phrase=phrase, network=NetworkType.MAINNET, wallet_index=1)
+    avax1 = AvalancheClient(phrase=phrase, network=NetworkType.MAINNET, wallet_index=0)
+    avax2 = AvalancheClient(phrase=phrase, network=NetworkType.MAINNET, wallet_index=1)
 
     print("Avax 1 address: ", avax1.get_address())
     print("Avax 2 address: ", avax2.get_address())

@@ -10,7 +10,7 @@ from .const import DEFAULT_AVAX_EXPLORER_PROVIDERS, AVAX_DECIMALS, AVAX_CHAIN_ID
     AVAX_NORMAL_FEE
 
 
-class AvalancheChainClient(EthereumClient):
+class AvalancheClient(EthereumClient):
     def __init__(self,
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
