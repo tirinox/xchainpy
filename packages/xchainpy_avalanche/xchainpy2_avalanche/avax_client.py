@@ -22,7 +22,7 @@ class AvalancheClient(EthereumClient):
                  provider: Optional[BaseProvider] = None):
         super().__init__(network, phrase, private_key, fee_bound, root_derivation_paths, explorer_providers,
                          wallet_index, provider)
-        self.chain = Chain.BinanceSmartChain
+        self.chain = Chain.Avalanche
         self._gas_asset = AssetAVAX
         self._decimal = AVAX_DECIMALS
         self._chain_ids = AVAX_CHAIN_ID
