@@ -1,7 +1,8 @@
 import abc
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
-from typing import Optional, List, NamedTuple, Dict
+from typing import Optional, List, NamedTuple, Dict, Union
 
 from xchainpy2_utils import Asset, Amount, NetworkType, CryptoAmount, DEFAULT_ASSET_DECIMAL
 
@@ -74,7 +75,7 @@ class FeeOption(Enum):
     FAST = 'fast'
     FASTEST = 'fastest'
 
-    _ETH_MAX_FEE = 'max'
+    _ETH_PRIORITY_FEE = 'max'
     _ETH_BASE_FEE = 'base'
 
 
@@ -86,15 +87,15 @@ class FeeType(Enum):
     PER_BYTE = 'byte'
 
 
-Fee = Amount
+Fee = Union[Amount, int, float, Decimal]
 FeeRate = float  # satoshi per kilobyte in Bitcoin and other UTXO chains
 
-INF_FEE = Fee(1_000_000_000_000_000_000)
+INF_FEE = 1_000_000_000_000_000_000
 
 
 class Fees(NamedTuple):
     type: FeeType
-    fees: Dict[FeeOption, Fee]
+    fees: Dict[FeeOption, Fee]  # for EVM chains, the fee is in gwei
 
     @property
     def average(self):
@@ -132,7 +133,7 @@ class FeeBounds(NamedTuple):
 
     @classmethod
     def infinite(cls):
-        return FeeBounds(lower=Fee(0), upper=INF_FEE)
+        return FeeBounds(lower=0, upper=INF_FEE)
 
 
 RootDerivationPaths = Dict[NetworkType, str]
