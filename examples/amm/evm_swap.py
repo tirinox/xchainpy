@@ -5,7 +5,7 @@ from xchainpy2_avalanche import AVAX_DECIMALS
 from xchainpy2_bsc import BinanceSmartChainClient
 from xchainpy2_client import FeeOption
 from xchainpy2_ethereum import GasOptions
-from xchainpy2_thorchain_amm import THORChainAMM, Wallet
+from xchainpy2_thorchain_amm import THORChainAMM, Wallet, AMMException, NO_SWAP_LIMIT
 from xchainpy2_thorchain_query import THORChainQuery, TxDetails
 from xchainpy2_utils import CryptoAmount, Chain, Asset, BSC_DECIMALS
 
@@ -62,19 +62,23 @@ async def main():
         # print(r)
         # return
 
-        tx_hash = await amm.do_swap(
-            input_amount=from_amount,
-            destination_asset=to_asset,
-            destination_address=my_address,
-            tolerance_bps=1000,
-            gas_options=gas,
-        )
+        try:
+            tx_hash = await amm.do_swap(
+                input_amount=from_amount,
+                destination_asset=to_asset,
+                destination_address=my_address,
+                tolerance_bps=NO_SWAP_LIMIT,
+                gas_options=gas,
+            )
+        except AMMException as e:
+            print(f"Error: {e}")
+            return
 
         if from_avax_to_bnb:
-            tx_hash = avax.get_explorer_tx_url(tx_hash)
+            tx_hash_url = avax.get_explorer_tx_url(tx_hash)
         else:
-            tx_hash = bsc.get_explorer_tx_url(tx_hash)
-        print(f"Swap tx hash {tx_hash}")
+            tx_hash_url = bsc.get_explorer_tx_url(tx_hash)
+        print(f"Swap tx hash {tx_hash_url}")
 
         print("Waiting for transaction to be mined...")
 
