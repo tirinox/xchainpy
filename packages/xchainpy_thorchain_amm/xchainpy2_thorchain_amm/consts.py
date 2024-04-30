@@ -11,3 +11,6 @@ DEFAULT_EXPIRY = 15 * 60  # 15 minute
 DEFAULT_TOLERANCE_BPS = 500  # 0.5%
 
 THOR_SWAP_TRACKER_URL = 'https://track.ninerealms.com/?{tx_id}&network={network}'
+
+# This will disregard the swap limit. Use with caution.
+NO_SWAP_LIMIT = THOR_BASIS_POINT_MAX
