@@ -5,7 +5,7 @@ from typing import Optional, List, Union
 
 from eth_account import Account
 from hexbytes import HexBytes
-from web3 import Web3
+from web3 import Web3, middleware
 from web3.contract import Contract
 from web3.exceptions import TransactionNotFound
 from web3.providers import BaseProvider
@@ -13,14 +13,13 @@ from web3.types import TxParams
 
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees, XcTx, TxPage, FeeRate, TxType, \
     TokenTransfer, FeeOption
-from xchainpy2_ethereum.const import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMALS, DEFAULT_ETH_EXPLORER_PROVIDERS, \
-    FREE_ETH_PROVIDERS, GAS_LIMITS, ETH_CHAIN_ID
-from xchainpy2_ethereum.extra.base import EVMDataProvider
-from xchainpy2_ethereum.extra.etherscan import EtherscanDataProvider
-from xchainpy2_ethereum.gas import GasOptions
-from xchainpy2_ethereum.utils import is_valid_eth_address, estimate_fees, get_erc20_abi, select_random_free_provider, \
-    wei_to_gwei
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset, Amount
+from .const import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMALS, DEFAULT_ETH_EXPLORER_PROVIDERS, \
+    FREE_ETH_PROVIDERS, GAS_LIMITS, ETH_CHAIN_ID
+from .extra.base import EVMDataProvider
+from .extra.etherscan import EtherscanDataProvider
+from .gas import GasOptions, GasEstimator
+from .utils import is_valid_eth_address, get_erc20_abi, select_random_free_provider
 
 logger = logging.getLogger(__name__)
 
@@ -244,14 +243,12 @@ class EthereumClient(XChainClient):
 
     async def get_fees(self) -> Fees:
         """
-        Get Ethereum fees
+        Get EVM gas rates for the current network.
         Fees are estimated based on the last 20 blocks.
-        FeeRate is in Gwei
+        All FeeRate are in Gwei!
         """
-        return await self.call_service(
-            estimate_fees,
-            self.web3,
-            self.fee_estimation_percentiles, self.fee_estimation_block_history)
+        estimator = GasEstimator(self.web3, self.fee_estimation_percentiles, self.fee_estimation_block_history)
+        return await estimator.estimate()
 
     async def get_last_fee(self) -> FeeRate:
         """
@@ -286,9 +283,12 @@ class EthereumClient(XChainClient):
 
     @staticmethod
     def _fill_gas_params(params: dict, gas: GasOptions):
+        # Gas limit for the transaction
         params['gas'] = gas.gas_limit
         if gas.max_fee_per_gas and gas.max_priority_fee_per_gas:
+            # Maximum amount you’re willing to pay
             params['maxFeePerGas'] = gas.max_fee_per_gas
+            # Priority fee to include the transaction in the block (if the block is full)
             params['maxPriorityFeePerGas'] = gas.max_priority_fee_per_gas
         elif gas.gas_price:
             params['gasPrice'] = gas.gas_price
@@ -314,16 +314,20 @@ class EthereumClient(XChainClient):
 
     # noinspection PyTypeChecker
     async def _deduct_gas(self, fee_option: FeeOption, gas_limit=23000) -> GasOptions:
+        """
+        Deduct gas amount from hi-level fee options
+        """
         fees = await self.get_fees()
+
+        # Select the fee option
         max_fee = fees.fees[fee_option]
         if isinstance(max_fee, Amount):
-            max_fee = max_fee.internal_amount
+            max_fee = float(max_fee)
 
         # noinspection PyProtectedMember
-        max_priority_fee = fees.fees[FeeOption._ETH_MAX_FEE]
+        max_priority_fee = fees.fees[FeeOption._ETH_PRIORITY_FEE]
         if isinstance(max_priority_fee, Amount):
-            max_priority_fee = max_priority_fee.internal_amount
-        max_priority_fee = wei_to_gwei(max_priority_fee)
+            max_priority_fee = float(max_priority_fee)
 
         return GasOptions.eip1559_in_gwei(max_fee, max_priority_fee, gas_limit)
 
@@ -476,3 +480,9 @@ class EthereumClient(XChainClient):
         if not self.validate_address(address):
             raise ValueError(f'Invalid address: {address}')
         return address
+
+    def enable_web3_caching(self):
+        w3 = self.web3
+        w3.middleware_onion.add(middleware.time_based_cache_middleware)
+        w3.middleware_onion.add(middleware.latest_block_based_cache_middleware)
+        w3.middleware_onion.add(middleware.simple_cache_middleware)
