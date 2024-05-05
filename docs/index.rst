@@ -9,11 +9,14 @@ Welcome to XChainPy2's documentation!
 **XChainPy2** is a collection of Python libraries for interacting with various blockchains. It is a freestyle port of XChainJS library,
 which was written in JavaScript. The goal of XChainPy2 is to provide a simple, consistent interface for interacting with different blockchains, making it easy to build cross-chain applications.
 
+The library is designed to be modular, so you can use only the parts you need.
+It contains the following modules:
+
+:mod:`xchainpy2_utils` - A collection of utility functions for working with blockchains.
+
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Contents:
 
    install.rst
-
-.. automodule:: xchainpy2_utils.amount
-    :members:
+   pk_utils.rst

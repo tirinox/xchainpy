@@ -1,5 +1,5 @@
 # Development requirements
-aiohttp~=3.8.4
+aiohttp~=3.9.2
 pytest~=7.4.0
 pydantic>=2.4.2
 PyYAML~=6.0.0
@@ -8,5 +8,3 @@ build
 twine
 aioresponses==0.7.6
 requests-mock==1.11.0
-sphinx~=7.3.0
-sphinx_rtd_theme
