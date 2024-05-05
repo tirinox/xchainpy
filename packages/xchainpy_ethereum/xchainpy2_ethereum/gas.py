@@ -111,9 +111,10 @@ class GasEstimator:
         block = await self.call_service(self.web3.eth.get_block, 'pending')
         return block.baseFeePerGas
 
-    async def max_priority_fee(self):
+    async def max_priority_fee_safe_low(self):
         """
         Get the priority fee needed to be included in a block.
+        You can consider this value as "safe-low" priority fee
         This value is returned by the RPC node
         """
         return await self.call_service(lambda: self.web3.eth.max_priority_fee)
@@ -124,10 +125,10 @@ class GasEstimator:
 
     async def estimate(self):
         # RPC calls
-        fee_history, base_fee, max_priority_fee = await asyncio.gather(
+        fee_history, base_fee, max_priority_fee_safe_low = await asyncio.gather(
             self.fee_history(),
             self.base_fee(),
-            self.max_priority_fee()
+            self.max_priority_fee_safe_low()
         )
 
         reward_history = fee_history['reward']
@@ -140,7 +141,7 @@ class GasEstimator:
 
         base_fee = base_fee * self.base_fee_multiplier
         base_fee_with_margin = wei_to_gwei(base_fee)
-        max_priority_fee = wei_to_gwei(max_priority_fee)
+        max_priority_fee = wei_to_gwei(max_priority_fee_safe_low)
 
         return Fees(
             FeeType.PER_BYTE,
