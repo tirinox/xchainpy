@@ -27,11 +27,13 @@ test:
 		packages/xchainpy_thorchain_query \
 		packages/xchainpy_utils \
 		packages/xchainpy_bitcoin \
-		packages/xchainpy_mayachain \
-		packages/xchainpy_litecoin \
-		packages/xchainpy_bsc \
+		packages/xchainpy_bitcoincash \
 		packages/xchainpy_dogecoin \
-		packages/xchainpy_avalanche
+		packages/xchainpy_litecoin \
+		packages/xchainpy_mayachain \
+		packages/xchainpy_bsc \
+		packages/xchainpy_avalanche \
+		packages/xchainpy_arbitrum
 
 
 tc_env:
@@ -48,6 +50,7 @@ tc_env:
 	python3 -m pip install --editable packages/xchainpy_ethereum
 	python3 -m pip install --editable packages/xchainpy_bsc
 	python3 -m pip install --editable packages/xchainpy_avalanche
+	python3 -m pip install --editable packages/xchainpy_arbitrum
 
 
 build:
