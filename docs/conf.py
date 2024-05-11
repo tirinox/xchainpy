@@ -18,6 +18,7 @@ release = '0.0.1'
 
 extensions = [
     'sphinx_rtd_theme',
+    'sphinx_copybutton',
     'sphinx.ext.autodoc'
 ]
 
@@ -58,7 +59,14 @@ packages = [
 
     "xchainpy_thorchain_query",
     "xchainpy_thorchain_amm",
+
+    # obsolete and other
+    "xchainpy_binance",
+    "xchainpy_utxo_providers",
 ]
 
 for pack in packages:
-    sys.path.insert(0, os.path.abspath(f'../packages/{pack}'))
+    p = os.path.abspath(f'../packages/{pack}')
+    if not os.path.exists(p):
+        raise FileNotFoundError(f"Package {pack} not found at {p}")
+    sys.path.insert(0, p)

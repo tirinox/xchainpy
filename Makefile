@@ -61,3 +61,6 @@ publish_test:
 
 publish:
 	cd scripts && ./publish.sh publish
+
+doc:
+	cd docs && make html && open _build/html/index.html
