@@ -1,5 +1,5 @@
-xchainpy2_crypto
-================
+XChainPy2 Crypto utils package
+==============================
 
 This package provides a set of tools for working with cryptographic keys and key stores.
 
