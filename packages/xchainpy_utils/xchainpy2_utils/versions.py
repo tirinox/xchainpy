@@ -7,6 +7,11 @@ else:
 
 
 def get_version(package_name: str) -> str:
+    """
+    Get the version of the specified package.
+    :param package_name: The name of the package.
+    :return: The version of the package.
+    """
     return metadata.version(package_name)
 
 

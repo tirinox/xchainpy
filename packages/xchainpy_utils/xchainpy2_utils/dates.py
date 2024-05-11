@@ -1,7 +1,12 @@
 from datetime import datetime, timezone
 
 
-def parse_iso_date(date_str: str):
+def parse_iso_date(date_str: str) -> datetime:
+    """
+    Parse an ISO date string to a datetime object.
+    :param date_str: The ISO date string to parse.
+    :return: A datetime object.
+    """
     try:
         return datetime.fromisoformat(date_str)
     except ValueError:

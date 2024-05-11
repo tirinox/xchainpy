@@ -21,6 +21,13 @@ CUSTOM_DECIMALS = {
 
 
 def guess_decimals(a: Union[Asset, str]):
+    """
+    Guess the number of decimals for an asset.
+    Don't blindly trust this function, it may return wrong values for exotic assets.
+    You are encouraged to specify the number of decimals explicitly.
+    :param a: Asset or asset string
+    :return: Number of decimals
+    """
     if isinstance(a, str):
         a = Asset.from_string(a)
 

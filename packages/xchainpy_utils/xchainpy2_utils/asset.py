@@ -308,4 +308,9 @@ class CommonAssets:
 
 
 def get_short_code(asset: Asset) -> str:
+    """
+    Get the short code for the specified asset.
+    :param asset: The asset to get the short code for
+    :return: The short code for the asset
+    """
     return CommonAssets.INVERTED_SHORT_CODES.get(asset, '')

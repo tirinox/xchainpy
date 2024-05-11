@@ -47,17 +47,16 @@ def test_amount_auto():
     assert int(a) == 1234000000
 
 
-
 def test_amount_base():
     b = Amount.from_base(8050)
-    a = Amount.to_asset(b)
+    a = b.as_asset
     assert a.internal_amount == 8050
     assert a.decimals == 8
     assert a.denom == Denomination.ASSET
     assert int(a) == 8050
     assert a.amount == 0.0000805
 
-    c = Amount.to_base(a)
+    c = a.as_base
     assert c.internal_amount == 8050
     assert c.decimals == 8
     assert c.denom == Denomination.BASE
