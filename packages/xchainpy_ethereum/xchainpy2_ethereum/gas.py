@@ -20,6 +20,18 @@ class GasOptions(NamedTuple):
         return cls(fee_option=fee_option)
 
     @classmethod
+    def average(cls):
+        return cls.automatic(FeeOption.AVERAGE)
+
+    @classmethod
+    def fast(cls):
+        return cls.automatic(FeeOption.FAST)
+
+    @classmethod
+    def fastest(cls):
+        return cls.automatic(FeeOption.FASTEST)
+
+    @classmethod
     def legacy(cls, gas_price: int, gas_limit: int):
         return cls(gas_price=gas_price, gas_limit=gas_limit)
 
