@@ -1,2 +1,2 @@
-XChainPy2 Avalanche client package
-==================================
+XChainPy2 Avalanche client
+==========================

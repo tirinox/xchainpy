@@ -1,2 +1,2 @@
-XChainPy2 Binance Beacon chain client package
-=============================================
+XChainPy2 Binance Beacon chain client
+=====================================

@@ -1,2 +1,2 @@
-XChainPy2 THORChain AMM package
-===============================
+XChainPy2 THORChain AMM
+=======================

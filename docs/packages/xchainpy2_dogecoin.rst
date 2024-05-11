@@ -1,2 +1,2 @@
-XChainPy2 Dogecoin client package
-=================================
+XChainPy2 Dogecoin client
+=========================

@@ -1,2 +1,2 @@
-XChainPy2 THORChain query package
-=================================
+XChainPy2 THORChain query
+=========================

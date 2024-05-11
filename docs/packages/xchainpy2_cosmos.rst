@@ -1,2 +1,2 @@
-XChainPy2 Cosmos client package
-===============================
+XChainPy2 Cosmos client
+=======================

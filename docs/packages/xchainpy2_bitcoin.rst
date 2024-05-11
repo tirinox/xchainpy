@@ -1,2 +1,2 @@
-XChainPy2 Bitcoin client package
-================================
+XChainPy2 Bitcoin client
+========================

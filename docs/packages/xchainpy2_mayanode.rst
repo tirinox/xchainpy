@@ -1,5 +1,5 @@
-XChainPy2 Mayanode API connector package
-========================================
+XChainPy2 Mayanode API connector
+================================
 
 .. note::
 

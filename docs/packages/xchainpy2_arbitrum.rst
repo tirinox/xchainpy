@@ -1,2 +1,2 @@
-XChainPy2 Arbitrum client package
-=================================
+XChainPy2 Arbitrum client
+=========================

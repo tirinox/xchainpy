@@ -1,2 +1,2 @@
-XChainPy2 THORChain client package
-==================================
+XChainPy2 THORChain client
+==========================

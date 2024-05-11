@@ -1,2 +1,2 @@
-XChainPy2 Ethereum client package
-=================================
+XChainPy2 Ethereum client
+=========================

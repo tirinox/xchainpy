@@ -1,2 +1,2 @@
-XChainPy2 Binance Smart Chain client package
-============================================
+XChainPy2 Binance Smart Chain client
+====================================

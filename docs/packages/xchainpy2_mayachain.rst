@@ -1,2 +1,2 @@
-XChainPy2 MayaChain client package
-==================================
+XChainPy2 MayaChain client
+==========================

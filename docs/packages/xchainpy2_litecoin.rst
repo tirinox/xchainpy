@@ -1,2 +1,2 @@
-XChainPy2 Litecoin client package
-=================================
+XChainPy2 Litecoin client
+=========================
