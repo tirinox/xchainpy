@@ -5,8 +5,8 @@ The XChainPy2 library is available on `PyPi <https://pypi.org/user/tirinox/>`_. 
 Depending on your goals, you can install different sets of packages.
 Some packages entail other packages as dependencies.
 
-Scenario 1
-----------
+Scenario 1: chain clients
+--------------------------
 
 In case you need some blockchain clients without performing cross-chain DeFi activities,
 then just pick and install the needed blockchain clients from the list below.
@@ -32,8 +32,8 @@ Each of the following packages is self-sufficient for simple fund transfers.
     python -m pip install xchainpy2_thorchain
     python -m pip install xchainpy2_mayachain
 
-Scenario 2
-----------
+Scenario 2: AMM and DeFi
+------------------------
 
 In order to interact with the THORChain protocol.
 
@@ -50,8 +50,8 @@ Second, install the THORChain protocol client and THORChain AMM interface packag
    **xchainpy2_thorchain_amm** package is dependent on **xchainpy2_thorchain**, **xchainpy2_thornode**, **xchainpy2_midgard**, **xchainpy2_thorchain_query** packages. So you don't need to install them separately. They will be installed automatically when you install the **xchainpy2_thorchain_amm** package.
 
 
-Scenario 3
-----------
+Scenario 3: analysis and monitoring
+-----------------------------------
 
 You will fit this scenario if your task is to analyze THORChain operation, data collection or monitoring, without committing transactions.
 
