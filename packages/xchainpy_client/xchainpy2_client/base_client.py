@@ -6,7 +6,7 @@ from typing import Optional, List, Union
 
 from xchainpy2_client.explorer import ExplorerProvider
 from xchainpy2_client.models import XcTx, Fees, TxPage, \
-    FeeBounds, RootDerivationPaths, AssetInfo, FeeOption
+    FeeBounds, RootDerivationPaths, FeeOption
 from xchainpy2_crypto import validate_mnemonic, derive_private_key
 from xchainpy2_utils import CryptoAmount, Chain, NetworkType, Asset, Amount
 
@@ -274,14 +274,20 @@ class XChainClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def broadcast_tx(self, tx_hex: str) -> str:
+    async def wait_for_transaction(self, tx_id: str):
+        """
+        Wait for the transaction to be mined.
+        """
         pass
 
-    def get_gas_asset(self):
-        return AssetInfo(
-            self._gas_asset,
-            self._decimal
-        )
+    @abc.abstractmethod
+    async def broadcast_tx(self, tx_hex: str) -> str:
+        """
+        Broadcast the transaction to the network.
+        :param tx_hex: The transaction content in hex format.
+        :return: The transaction identifier (or hash).
+        """
+        pass
 
     @property
     def gas_asset(self):

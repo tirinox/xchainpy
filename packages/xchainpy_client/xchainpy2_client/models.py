@@ -12,11 +12,6 @@ class TxType(Enum):
     UNKNOWN = 'unknown'
 
 
-class AssetInfo(NamedTuple):
-    asset: Asset
-    decimals: int = DEFAULT_ASSET_DECIMAL
-
-
 class TokenTransfer(NamedTuple):
     from_address: str
     to_address: str
