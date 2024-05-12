@@ -1,5 +1,5 @@
-XChainPy2 Utils
-===============
+XChainPy2 Utils, Amount, Asset
+==============================
 
 Chains
 ------
@@ -33,10 +33,23 @@ Amounts
 -------
 
 The class **Amount** is a data class that represents an amount in the XChainPy2 ecosystem.
+**CryptoAmount** represents an amount of a cryptocurrency. Basically, it is a combination of an asset and a value.
 
 .. note::
 
     For classes **Amount** and **CryptoAmount**, there are available math operations like addition, subtraction, multiplication, and division.
+
+
+.. literalinclude:: ./examples/crypto_amount_arithmetics.py
+    :language: python
+    :linenos:
+
+
+
+.. warning::
+
+    You can not add CryptoAmount with different assets.
+
 
 .. automodule:: xchainpy2_utils.amount
     :members:
