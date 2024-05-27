@@ -458,3 +458,6 @@ class MayaChainClient(CosmosGaiaClient):
         amount = Amount.automatic(amount, MRC20_DECIMALS)
         memo = MRC20Memo.buy(ticker, amount, tx_hash)
         return await self._mrc20_submit_tx(memo, recipient=seller_address)
+
+    async def wait_for_transaction(self, tx_id: str):
+        raise NotImplemented

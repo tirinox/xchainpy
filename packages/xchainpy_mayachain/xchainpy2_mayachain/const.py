@@ -94,6 +94,13 @@ DEFAULT_CLIENT_URLS = {
     NetworkType.TESTNET: NodeURL('deprecated', 'deprecated'),
 }
 
+MAYA_LIQUIFY_NODE_URL = NodeURL(
+    "https://api-maya.liquify.com/",
+    "https://rpc-maya.liquify.com/"
+)
+
+MAYA_LIQUIFY_MIDGARD_URL = "https://midgard-maya.liquify.com"
+
 FALLBACK_CLIENT_URLS = {
     NetworkType.MAINNET: [],
     NetworkType.STAGENET: [],

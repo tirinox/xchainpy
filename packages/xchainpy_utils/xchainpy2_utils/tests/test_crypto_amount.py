@@ -67,3 +67,17 @@ def test_change_amount():
     amt = CryptoAmount(Amount(100, 8), AssetRUNE)
     assert amt.change_amount(200) == CryptoAmount(Amount(200, 8), AssetRUNE)
     assert amt.change_amount(0) == CryptoAmount(Amount(0, 8), AssetRUNE)
+
+
+def test_arithmetic():
+    amt = CryptoAmount(Amount(100, 8), AssetRUNE)
+    assert amt + amt == CryptoAmount(Amount(200, 8), AssetRUNE)
+    assert amt - amt == CryptoAmount.zero(AssetRUNE)
+
+    assert amt * 3 == CryptoAmount(Amount(300, 8), AssetRUNE)
+    assert amt / 2 == CryptoAmount(Amount(50, 8), AssetRUNE)
+
+    bmt = CryptoAmount(Amount(100, 8), Asset.from_string('BNB.BNB'))
+
+    with pytest.raises(ValueError):
+        amt + bmt

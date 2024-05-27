@@ -273,12 +273,11 @@ class XChainClient(abc.ABC):
                        fee_rate: Optional[int] = None, **kwargs) -> str:
         pass
 
-    @abc.abstractmethod
     async def wait_for_transaction(self, tx_id: str):
         """
         Wait for the transaction to be mined.
         """
-        pass
+        raise NotImplemented
 
     @abc.abstractmethod
     async def broadcast_tx(self, tx_hex: str) -> str:
