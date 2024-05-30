@@ -1,2 +1,12 @@
 sphinx_rtd_theme
 sphinx-copybutton
+../packages/xchainpy_crypto
+../packages/xchainpy_client
+../packages/xchainpy_util
+../packages/xchainpy_bitcoin
+../packages/xchainpy_ethereum
+../packages/xchainpy_binance
+../packages/xchainpy_litecoin
+../packages/xchainpy_thorchain
+../packages/xchainpy_mayachain
+
