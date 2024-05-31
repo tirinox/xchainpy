@@ -1,24 +1,36 @@
 from xchainpy2_client import ExplorerProvider, FeeBounds
 from xchainpy2_utils import NetworkType, Asset
 
+"""
+    Explorer providers for the Arbitrum network.
+"""
 ARB_MAINNET_EXPLORER = ExplorerProvider(
     'https://arbiscan.io/',
     'https://arbiscan.io/address/{address}',
     'https://arbiscan.io/tx/{tx_id}',
 )
 
+"""
+    Explorer providers for the Arbitrum testnet.
+"""
 ARB_TESTNET_EXPLORER = ExplorerProvider(
     'https://sepolia.arbiscan.io/',
     'https://sepolia.arbiscan.io/address/{address}',
     'https://sepolia.arbiscan.io/tx/{tx_id}',
 )
 
+"""
+    Default explorer providers for the Arbitrum network.
+"""
 DEFAULT_ARB_EXPLORER_PROVIDERS = {
     NetworkType.MAINNET: ARB_MAINNET_EXPLORER,
     NetworkType.STAGENET: ARB_MAINNET_EXPLORER,
     NetworkType.TESTNET: ARB_TESTNET_EXPLORER,
 }
 
+"""
+    Arbitrum chain IDs.
+"""
 ARB_CHAIN_ID = {
     # Arbitrum one
     NetworkType.MAINNET: 42161,
@@ -26,8 +38,14 @@ ARB_CHAIN_ID = {
     NetworkType.TESTNET: 421614,  # Arbitrum Sepolia testnet
 }
 
+"""
+    Arbitrum ETH decimals.
+"""
 ARB_DECIMALS = 18
 
+"""
+    Default Arbitrum fee bounds, protection against incorrectly set gas
+"""
 ARB_FEE_BOUNDS = FeeBounds(2_000_000_000, 1_000_000_000_000)
 
 FREE_ARB_PROVIDERS = {
@@ -45,7 +63,17 @@ FREE_ARB_PROVIDERS = {
 
 FREE_ARB_PROVIDERS[NetworkType.STAGENET] = FREE_ARB_PROVIDERS[NetworkType.MAINNET]
 
-ARB_NORMAL_FEE = 30  # nARB
-ARB_SURE_FEE = 50  # nARB
+"""
+    Default Arbitrum gas prices in gwei.
+"""
+ARB_NORMAL_FEE = 30
 
+"""
+    Default Arbitrum gas prices in gwei for sure transactions.
+"""
+ARB_SURE_FEE = 50
+
+"""
+    This is ETH asset on Arbitrum network. It is the gas asset.
+"""
 AssetAETH = Asset.from_string("ARB.ETH")

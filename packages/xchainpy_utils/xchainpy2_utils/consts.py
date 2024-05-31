@@ -118,9 +118,19 @@ DEFAULT_CHAIN_ATTRS = {
 
 Address = str
 
+"""
+    MAX_BASIS_POINTS is the maximum number of basis points.
+"""
 MAX_BASIS_POINTS = 10_0000
 
+"""
+    DAY is the number of seconds in a day.
+"""
 DAY = 24 * 60 * 60
+
+"""
+    YEAR is the number of seconds in a year.
+"""
 YEAR = 365 * DAY
 
 
@@ -155,7 +165,9 @@ class NetworkType(Enum):
     DEVNET = 'devnet'
 
 
-"""Nine Reamls Client Header"""
+"""
+    Nine Reamls Client Header
+"""
 NINE_REALMS_CLIENT_HEADER = 'x-client-id'
 
 """
