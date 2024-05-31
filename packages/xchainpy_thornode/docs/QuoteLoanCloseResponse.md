@@ -17,6 +17,8 @@ Name | Type | Description | Notes
 **notes** | **str** | chain specific quote notes | 
 **dust_threshold** | **str** | Defines the minimum transaction size for the chain in base units (sats, wei, uatom). Transactions with asset amounts lower than the dust_threshold are ignored. | [optional] 
 **recommended_min_amount_in** | **str** | The recommended minimum inbound amount for this transaction type &amp; inbound asset. Sending less than this amount could result in failed refunds. | [optional] 
+**recommended_gas_rate** | **str** | the recommended gas rate to use for the inbound to ensure timely confirmation | [optional] 
+**gas_rate_units** | **str** | the units of the recommended gas rate | [optional] 
 **memo** | **str** | generated memo for the loan close | 
 **expected_amount_out** | **str** | the amount of collateral asset the user can expect to receive after fees in 1e8 decimals | 
 **expected_amount_in** | **str** | The quantity of the repayment asset to be sent by the user, calculated as the desired percentage of the loan&#x27;s value, expressed in units of 1e8 | 

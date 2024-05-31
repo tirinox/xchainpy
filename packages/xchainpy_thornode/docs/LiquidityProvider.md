@@ -14,11 +14,11 @@ Name | Type | Description | Notes
 **pending_tx_id** | **str** |  | [optional] 
 **rune_deposit_value** | **str** |  | 
 **asset_deposit_value** | **str** |  | 
-**rune_redeem_value** | **str** |  | 
-**asset_redeem_value** | **str** |  | 
-**luvi_deposit_value** | **str** |  | 
-**luvi_redeem_value** | **str** |  | 
-**luvi_growth_pct** | **str** |  | 
+**rune_redeem_value** | **str** |  | [optional] 
+**asset_redeem_value** | **str** |  | [optional] 
+**luvi_deposit_value** | **str** |  | [optional] 
+**luvi_redeem_value** | **str** |  | [optional] 
+**luvi_growth_pct** | **str** |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

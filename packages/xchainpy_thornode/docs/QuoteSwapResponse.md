@@ -17,6 +17,8 @@ Name | Type | Description | Notes
 **notes** | **str** | chain specific quote notes | 
 **dust_threshold** | **str** | Defines the minimum transaction size for the chain in base units (sats, wei, uatom). Transactions with asset amounts lower than the dust_threshold are ignored. | [optional] 
 **recommended_min_amount_in** | **str** | The recommended minimum inbound amount for this transaction type &amp; inbound asset. Sending less than this amount could result in failed refunds. | [optional] 
+**recommended_gas_rate** | **str** | the recommended gas rate to use for the inbound to ensure timely confirmation | [optional] 
+**gas_rate_units** | **str** | the units of the recommended gas rate | [optional] 
 **memo** | **str** | generated memo for the swap | [optional] 
 **expected_amount_out** | **str** | the amount of the target asset the user can expect to receive after fees | 
 **expected_amount_out_streaming** | **str** | Deprecated - expected_amount_out is streaming amount if interval provided. | 

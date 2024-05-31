@@ -10,6 +10,8 @@ Method | HTTP request | Description
 [**lastblock**](NetworkApi.md#lastblock) | **GET** /thorchain/lastblock | 
 [**lastblock_chain**](NetworkApi.md#lastblock_chain) | **GET** /thorchain/lastblock/{chain} | 
 [**network**](NetworkApi.md#network) | **GET** /thorchain/network | 
+[**outbound_fee_asset**](NetworkApi.md#outbound_fee_asset) | **GET** /thorchain/outbound_fee/{asset} | 
+[**outbound_fees**](NetworkApi.md#outbound_fees) | **GET** /thorchain/outbound_fees | 
 [**ragnarok**](NetworkApi.md#ragnarok) | **GET** /thorchain/ragnarok | 
 [**version**](NetworkApi.md#version) | **GET** /thorchain/version | 
 
@@ -287,6 +289,102 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**NetworkResponse**](NetworkResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **outbound_fee_asset**
+> list[OutboundFee] outbound_fee_asset(asset, height=height)
+
+
+
+Returns the outbound fee information for the provided asset.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_thornode.NetworkApi()
+asset = 'asset_example' # str | 
+height = 789 # int | optional block height, defaults to current tip (optional)
+
+try:
+    api_response = api_instance.outbound_fee_asset(asset, height=height)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling NetworkApi->outbound_fee_asset: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **asset** | **str**|  | 
+ **height** | **int**| optional block height, defaults to current tip | [optional] 
+
+### Return type
+
+[**list[OutboundFee]**](OutboundFee.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **outbound_fees**
+> list[OutboundFee] outbound_fees(height=height)
+
+
+
+Returns the last block information for all chains.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_thornode.NetworkApi()
+height = 789 # int | optional block height, defaults to current tip (optional)
+
+try:
+    api_response = api_instance.outbound_fees(height=height)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling NetworkApi->outbound_fees: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **height** | **int**| optional block height, defaults to current tip | [optional] 
+
+### Return type
+
+[**list[OutboundFee]**](OutboundFee.md)
 
 ### Authorization
 

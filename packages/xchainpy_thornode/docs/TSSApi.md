@@ -4,10 +4,60 @@ All URIs are relative to */*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**keygen_pubkey**](TSSApi.md#keygen_pubkey) | **GET** /thorchain/keygen/{height}/{pubkey} | 
 [**keysign**](TSSApi.md#keysign) | **GET** /thorchain/keysign/{height} | 
 [**keysign_pubkey**](TSSApi.md#keysign_pubkey) | **GET** /thorchain/keysign/{height}/{pubkey} | 
 [**metrics**](TSSApi.md#metrics) | **GET** /thorchain/metrics | 
 [**metrics_keygen**](TSSApi.md#metrics_keygen) | **GET** /thorchain/metric/keygen/{pubkey} | 
+
+# **keygen_pubkey**
+> KeygenResponse keygen_pubkey(height, pubkey)
+
+
+
+Returns keygen information for the provided height and pubkey - the pubkey being of one of the members of a keygen block for that height
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_thornode.TSSApi()
+height = 789 # int | 
+pubkey = 'pubkey_example' # str | 
+
+try:
+    api_response = api_instance.keygen_pubkey(height, pubkey)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling TSSApi->keygen_pubkey: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **height** | **int**|  | 
+ **pubkey** | **str**|  | 
+
+### Return type
+
+[**KeygenResponse**](KeygenResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **keysign**
 > KeysignResponse keysign(height)

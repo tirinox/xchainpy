@@ -4,7 +4,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **tx** | [**Tx**](Tx.md) |  | [optional] 
-**planned_out_txs** | [**list[TxStatusResponsePlannedOutTxs]**](TxStatusResponsePlannedOutTxs.md) |  | [optional] 
+**planned_out_txs** | [**list[PlannedOutTx]**](PlannedOutTx.md) |  | [optional] 
 **out_txs** | [**list[Tx]**](Tx.md) |  | [optional] 
 **stages** | [**TxStagesResponse**](TxStagesResponse.md) |  | 
 
