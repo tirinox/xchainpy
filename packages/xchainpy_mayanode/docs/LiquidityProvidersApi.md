@@ -59,7 +59,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **liquidity_providers**
-> LiquidityProvider liquidity_providers(asset, height=height)
+> list[LiquidityProviderSummary] liquidity_providers(asset, height=height)
 
 
 
@@ -94,7 +94,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**LiquidityProvider**](LiquidityProvider.md)
+[**list[LiquidityProviderSummary]**](LiquidityProviderSummary.md)
 
 ### Authorization
 
