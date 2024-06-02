@@ -35,6 +35,7 @@ def is_valid_eth_address(address):
 
     return True
 
+
 def select_random_free_provider(network: NetworkType, source):
     import random
     provider_url = random.choice(source[network])

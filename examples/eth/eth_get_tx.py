@@ -17,10 +17,12 @@ async def main():
 
     cli = EthereumClient(provider=provider)
 
-    tx_data = await cli.get_transaction_data('0x63f452705edac36dcbce4b37c29654be1f170fe53fe477c558c20ca90a6b274a')
-    # tx_data = await cli.get_transaction_data('0xbb743b931be4b6a8ba557162a4a0cd555b7fbef709871bc9bf2d38d62514b906')  # pending
-    print(f'Tx data: {tx_data}')
+    # many ERC20 transfers
+    # tx_data = await cli.get_transaction_data('0xf26d7a27a133f19c4abba00e8a92da346d33f79fb83c622d6fdd1bb141a2e012')
 
+    tx_data = await cli.get_transaction_data('0x63f452705edac36dcbce4b37c29654be1f170fe53fe477c558c20ca90a6b274a')
+
+    print(f'Tx data: {tx_data}')
 
 
 if __name__ == "__main__":

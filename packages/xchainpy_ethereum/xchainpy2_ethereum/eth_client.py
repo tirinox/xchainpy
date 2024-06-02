@@ -16,6 +16,7 @@ from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees,
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset, Amount
 from .const import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMALS, DEFAULT_ETH_EXPLORER_PROVIDERS, \
     FREE_ETH_PROVIDERS, GAS_LIMITS, ETH_CHAIN_ID
+from .decode_logs import Web3LogDecoder
 from .extra.base import EVMDataProvider
 from .extra.etherscan import EtherscanDataProvider
 from .gas import GasOptions, GasEstimator
@@ -86,6 +87,7 @@ class EthereumClient(XChainClient):
             provider = self._get_default_provider()
         # todo: support multiple providers and round robin algorithm
         self.web3 = Web3(provider)
+        self._log_decoder = Web3LogDecoder(self.web3, self.gas_asset)
 
     def _get_default_provider(self):
         return select_random_free_provider(self.network, FREE_ETH_PROVIDERS)
@@ -220,18 +222,21 @@ class EthereumClient(XChainClient):
         value = tx_data['value']
         destination = tx_data['to']
         tx_hash = tx_data['hash'].hex()
-        transfers = [
-            TokenTransfer(
+
+        token_transfers = self._log_decoder.decode_events(receipt)
+
+        if int(value) > 0:
+            token_transfers.append(TokenTransfer(
                 asset=AssetETH,
                 from_address=tx_data['from'],
                 to_address=destination,
                 amount=self.gas_amount(int(value)).amount,
                 tx_hash=tx_hash,
-            )
-        ]
+            ))
+
         return XcTx(
             asset=AssetETH,
-            transfers=transfers,
+            transfers=token_transfers,
             height=tx_data['blockNumber'],
             is_success=receipt['status'] == 1,
             original=tx_data,
