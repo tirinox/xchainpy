@@ -204,6 +204,8 @@ class XChainClient(abc.ABC):
         :param address: address
         :return: The explorer url for the given address based on the network.
         """
+        if not address:
+            address = self.get_address()
         return self.explorers[self.network].get_address_url(address)
 
     def get_explorer_tx_url(self, tx_id: str) -> str:
@@ -212,6 +214,8 @@ class XChainClient(abc.ABC):
         :param tx_id: The transaction id
         :return: str The explorer url for the given transaction id based on the network.
         """
+        if not tx_id:
+            raise ValueError('tx_id is required')
         return self.explorers[self.network].get_tx_url(tx_id)
 
     @abc.abstractmethod
