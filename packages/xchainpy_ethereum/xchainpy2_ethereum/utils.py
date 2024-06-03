@@ -52,3 +52,22 @@ def select_random_free_provider(network: NetworkType, source):
 
 class EVMCallError(Exception):
     pass
+
+
+def validated_checksum_address(web3, address: str) -> str:
+    """
+    This function validates and returns a checksum address.
+    In case the address is in uppercase, that means it probably came from THORChain or other similar AMM.
+    it converts it to checksum address.
+    Otherwise, it validates the address and returns it.
+    :param web3:
+    :param address:
+    :return:
+    """
+    if not address:
+        raise ValueError("Address is required")
+    if address.isupper():  # if it is in uppercase, that means it probably came from THORChain or other similar AMM
+        address = web3.to_checksum_address(address)
+    if not is_valid_eth_address(address):
+        raise ValueError(f'Invalid address: {address}')
+    return address
