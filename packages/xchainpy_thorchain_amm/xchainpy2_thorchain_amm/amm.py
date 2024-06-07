@@ -30,6 +30,7 @@ class THORChainAMM:
     def get_track_url(self, tx_id) -> str:
         """
         Get the URL to track the swap transaction
+
         :param tx_id: Transaction ID
         :return: str URL to track the transaction
         """
@@ -102,7 +103,8 @@ class THORChainAMM:
     async def donate(self, amount: CryptoAmount, pool: Union[Asset, str] = '',
                      gas_options: Optional[GasOptions] = None) -> str:
         """
-        Donate to a pool
+        Donate some crypto to the pool
+
         :param amount: CryptoAmount to donate
         :param pool: Pool name to donate to; can be empty if you donate non-Rune assets
         :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
@@ -140,6 +142,7 @@ class THORChainAMM:
         Add liquidity to a pool on the Rune side.
         Attention: you must also add liquidity to the paired asset side (add_liquidity_asset_side)
          to complete the liquidity addition! If you don't, your funds will be stuck in the pool.
+
         :param amount: Amount of Rune to add
         :param pool: Pool name to add liquidity to
         :param paired_address: Address of the paired asset
@@ -171,7 +174,8 @@ class THORChainAMM:
         """
         Add liquidity to a pool on the asset side.
         Attention: you must also add liquidity to the Rune side (add_liquidity_rune_side); if you don't,
-            your funds will be stuck in the pool.
+        your funds will be stuck in the pool.
+
         :param amount: Amount of the asset to add
         :param paired_rune_address: Address of the paired Rune
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
@@ -200,6 +204,7 @@ class THORChainAMM:
                                       gas_options: Optional[GasOptions] = None) -> str:
         """
         Add liquidity to a pool on the Rune side only.
+
         :param amount: Amount of Rune to add
         :param pool: Pool name to add liquidity to
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
@@ -220,6 +225,7 @@ class THORChainAMM:
                                        gas_options: Optional[GasOptions] = None) -> str:
         """
         Add liquidity to a pool on the asset side only.
+
         :param amount: Amount of the asset to add
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
         :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
@@ -270,6 +276,7 @@ class THORChainAMM:
                                  gas_options: Optional[GasOptions] = None) -> str:
         """
         Withdraw liquidity from a pool
+
         :param asset: The pool name to withdraw liquidity from
         :param mode: Withdraw mode (RuneOnly, AssetOnly, Symmetric)
         :param withdraw_bps: Percentage of the pool to withdraw (0-10000)
@@ -340,8 +347,7 @@ class THORChainAMM:
         :param amount: Amount and asset to repay. Target collateral asset identifier. Can be shortened.
         :param collateral_asset: The target collateral asset identifier. Can be shortened.
         :param destination_address: The destination address to send the collateral to. Owner of the loan.
-        :param min_out: Min collateral to receive else a refund. Optional, 1e8 format.
-        loan needs to be fully repaid to close.
+        :param min_out: Min collateral to receive else a refund. Optional, 1e8 format. Loan needs to be fully repaid to close.
         :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: str TX hash submitted to the network
         """
@@ -350,7 +356,8 @@ class THORChainAMM:
 
     async def add_savers(self, input_amount: CryptoAmount, gas_options: Optional[GasOptions] = None) -> str:
         """
-        Adds assets to a savers value
+        Adds assets to a savers value.
+
         :param input_amount: CryptoAmount to add to the savers value
         :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: str TX hash submitted to the network
@@ -367,7 +374,8 @@ class THORChainAMM:
                               withdraw_bps: int,
                               gas_options: Optional[GasOptions] = None) -> str:
         """
-        Withdraw assets from a savers value
+        Withdraw assets from a savers value.
+
         :param asset: Asset to withdraw from the savers value
         :param address: Address to withdraw to
         :param withdraw_bps: Percentage of the savers value to withdraw (0-10000)
@@ -391,6 +399,7 @@ class THORChainAMM:
         General deposit function to deposit assets to a specific inbound address with a memo.
         In case of Rune, it will invoke a MsgDeposit in the THORChain.
         In case of other assets, it will invoke a transfer to the inbound address with the memo.
+
         :param input_amount: Input amount and asset to deposit
         :param to_address: Inbound address to deposit to
         :param memo: Memo to include with the deposit to identify your intent
@@ -458,6 +467,7 @@ class THORChainAMM:
         """
         Register a THORName with a default expiry of one year. By default,
          chain and chainAddress is getting from wallet instance and is BTC.
+
         :param thorname: The THORName to register
         :param chain: The chain associated with the THORName (optional)
         :param chain_address: The address associated with the THORName (optional)
@@ -483,7 +493,8 @@ class THORChainAMM:
                                        chain: Chain, chain_address: str,
                                        owner: str = '') -> str:
         """
-        Set the preferred asset for a THORName
+        Set the preferred asset for a THORName.
+
         :param thorname: The THORName to set the preferred asset for
         :param preferred_asset: Asset to set as preferred
         :param chain: Chain to set the preferred asset for
@@ -510,7 +521,8 @@ class THORChainAMM:
                                        thorname: str, chain: Chain, chain_address: str,
                                        owner: str = '') -> str:
         """
-        Add or update an alias for a THORName on a specific chain
+        Add or update an alias for a THORName on a specific chain.
+
         :param thorname: THORName to add or update an alias for
         :param chain: The chain to add or update an alias for
         :param chain_address: The address to add or update an alias for
@@ -531,7 +543,8 @@ class THORChainAMM:
     async def renew_name(self,
                          thorname: str, days: float, thor_address: str = '') -> str:
         """
-        Renew a THORName
+        Renew a THORName.
+
         :param thorname: The THORName to renew
         :param days: Expiry date for the THORName
         :param thor_address: The THOR address associated with the THORName, if different from the sender
@@ -553,7 +566,8 @@ class THORChainAMM:
 
     async def unregister_name(self, thorname: str, chain: Optional[Chain] = None, chain_address: str = ''):
         """
-        Unregister a THORName
+        Unregister a THORName.
+
         :param chain: The chain associated with the THORName (optional)
         :param chain_address: The address associated with the THORName (optional)
         :param thorname: The THORName to unregister
@@ -579,7 +593,8 @@ class THORChainAMM:
                                     preferred_asset: Optional[Asset] = None,
                                     expiry_block: Optional[int] = None):
         """
-        General THORName call to register, update, or unregister a THORName
+        General THORName call to register, update, or unregister a THORName.
+
         :param payment: How much to pay for the THORName (normally 10 Rune one time and 1 Rune per year)
         :param thorname: The THORName to register
         :param chain: The chain associated with the THORName (optional)
@@ -608,6 +623,12 @@ class THORChainAMM:
 
     @staticmethod
     def validate_thorname(name: str):
+        """
+        Validate a THORName. It must be between 1-30 hexadecimal characters and -_+ special characters.
+
+        :param name: THORName to validate
+        :return: bool True if the THORName is valid
+        """
         # The THORName's string. Must be Between 1-30 hexadecimal characters and -_+ special characters.;
         if not name:
             return False
@@ -623,9 +644,19 @@ class THORChainAMM:
         return True
 
     def tracker(self):
+        """
+        Get a transaction tracker to track the status of a swap transaction
+
+        :return: TransactionTracker
+        """
         return TransactionTracker(self.query.cache)
 
     async def close(self):
+        """
+        Close the wallet and connections.
+
+        :return: None
+        """
         with suppress(Exception):
             await self.wallet.close()
         with suppress(Exception):
@@ -637,10 +668,21 @@ class THORChainAMM:
 
     @staticmethod
     def is_erc20_asset(asset: Asset) -> bool:
+        """
+        Check if the asset is an ERC20-like token. Basically, it calls is_erc20_asset from xchainpy2_utils.
+
+        :param asset:
+        :return:
+        """
         return is_erc20_asset(asset)
 
     @staticmethod
     def is_thorchain_asset(asset: Asset) -> bool:
+        """
+        Check if the asset is a THORChain asset. Namely, it's either native Rune or a synthetic asset.
+        :param asset: Asset to check
+        :return: bool True if the asset is a THORChain asset
+        """
         return asset.chain == Chain.THORChain.value or asset.synth
 
     def _get_thorchain_client(self) -> THORChainClient:
