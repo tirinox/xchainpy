@@ -47,18 +47,18 @@ async def main():
         usdt = await bsc1.get_erc20_token_info(BSC_USDT_CONTRACT)
 
         print("Before approve")
-        allowance = await bsc1.get_erc20_allowance(usdt.asset.contract, BSC_PANCAKE_ROUTER)
+        allowance = await bsc1.get_erc20_allowance(usdt.as_asset.contract, BSC_PANCAKE_ROUTER)
         print(f"Allowance of {bsc1.get_address()} for spender {BSC_USDT_CONTRACT} is {allowance}")
         input("Press Enter to send TX...")
 
-        tx = await bsc1.approve_erc20_token(BSC_PANCAKE_ROUTER, usdt.change_amount(0.1), gas)
+        tx = await bsc1.approve_erc20_token(BSC_PANCAKE_ROUTER, usdt.amount_of(0.1), gas)
         print(f"Approve tx hash {bsc1.get_explorer_tx_url(tx)}")
 
         print("Waiting for transaction to be mined...")
         await bsc1.wait_for_transaction(tx)
 
         print("After approve")
-        allowance = await bsc1.get_erc20_allowance(usdt.asset.contract, BSC_PANCAKE_ROUTER)
+        allowance = await bsc1.get_erc20_allowance(usdt.as_asset.contract, BSC_PANCAKE_ROUTER)
         print(f"Allowance of {bsc1.get_address()} for spender {BSC_USDT_CONTRACT} is {allowance}")
 
     async def transfer_some_usdt():
