@@ -8,7 +8,7 @@ XChainPy2 Avalanche client
 
 .. rubric:: Constants
 
-.. automodule:: xchainpy2_avalanche.consts
+.. automodule:: xchainpy2_avalanche.const
     :members:
     :undoc-members:
     :show-inheritance:
