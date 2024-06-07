@@ -5,7 +5,7 @@ from typing import NamedTuple, Union
 from web3 import Web3
 from web3.contract import Contract
 
-from xchainpy2_ethereum import get_erc20_abi, validated_checksum_address
+from .utils import get_erc20_abi, validated_checksum_address
 from xchainpy2_utils import Chain, Asset, CryptoAmount, Amount
 
 

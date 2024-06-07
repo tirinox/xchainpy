@@ -15,12 +15,13 @@ from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees,
     TokenTransfer, FeeOption
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset, Amount
 from .const import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMALS, DEFAULT_ETH_EXPLORER_PROVIDERS, \
-    FREE_ETH_PROVIDERS, GAS_LIMITS, ETH_CHAIN_ID
+    FREE_ETH_PROVIDERS, GAS_LIMITS, ETH_CHAIN_ID, ETH_TOKEN_LIST
 from .decode_logs import Web3LogDecoder
 from .extra.base import EVMDataProvider
 from .extra.etherscan import EtherscanDataProvider
 from .gas import GasOptions, GasEstimator
-from .utils import is_valid_eth_address, get_erc20_abi, select_random_free_provider
+from .token_info import TokenInfoList, TokenInfo
+from .utils import is_valid_eth_address, select_random_free_provider, validated_checksum_address
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +64,8 @@ class EthereumClient(XChainClient):
         self.gas_limits = GAS_LIMITS
         self._chain_ids = ETH_CHAIN_ID
 
+        self.token_list_file = ETH_TOKEN_LIST
+
         self._remake_provider(provider)
         self._ex_provider = extra_data_provider or EtherscanDataProvider(
             self.chain, self.network, os.environ.get('ETHERSCAN_API_KEY', '')
@@ -88,6 +91,7 @@ class EthereumClient(XChainClient):
         # todo: support multiple providers and round robin algorithm
         self.web3 = Web3(provider)
         self._log_decoder = Web3LogDecoder(self.web3, self.gas_asset)
+        self._token_list = TokenInfoList(self.chain, self.web3, self.token_list_file)
 
     def _get_default_provider(self):
         return select_random_free_provider(self.network, FREE_ETH_PROVIDERS)
@@ -133,33 +137,23 @@ class EthereumClient(XChainClient):
         :param contract_address: Contract address
         :return: Contract object
         """
-        contract_address = self.validated_checksum_address(contract_address)
-        # noinspection PyTypeChecker
-        return self.web3.eth.contract(address=contract_address, abi=get_erc20_abi())
+        return self._token_list.get_erc20_as_contract(contract_address)
 
     async def get_erc20_token_balance(self, contract_address: str, address: str = '') -> CryptoAmount:
         """
         Get the balance of a given address.
         """
-        address = address or self.get_address()
-        contract = self.get_erc20_as_contract(contract_address)
-        balance = await self.call_service(contract.functions.balanceOf(address).call)
+        if not address:
+            address = self.get_address()
+        return await self._token_list.get_erc20_token_balance(contract_address, address)
 
-        token_info = await self.get_erc20_token_info(contract)
-        return CryptoAmount(Amount(balance, token_info.amount.decimals), token_info.asset)
-
-    async def get_erc20_token_info(self, contract) -> CryptoAmount:
+    async def get_erc20_token_info(self, contract) -> TokenInfo:
         """
         Returns zero balance and token symbol for a given contract address.
         The balance is zero because we are only interested in the token symbol and decimals.
         :param contract: Contract object
         """
-        if not isinstance(contract, Contract):
-            contract = self.get_erc20_as_contract(contract)
-
-        decimals = await self.call_service(contract.functions.decimals().call)
-        token_symbol = await self.call_service(contract.functions.symbol().call)
-        return CryptoAmount(Amount.zero(decimals), Asset(self.chain.value, token_symbol, contract.address))
+        return await self._token_list.load_erc20_token_info(contract)
 
     async def get_erc20_allowance(self, contract_address: Union[Asset, str],
                                   spender: str, address: str = '') -> CryptoAmount:
@@ -173,17 +167,7 @@ class EthereumClient(XChainClient):
         if not address:
             address = self.get_address()
 
-        if isinstance(contract_address, Asset):
-            contract_address = contract_address.contract
-        contract_address = self.validated_checksum_address(contract_address)
-        contract = self.get_erc20_as_contract(contract_address)
-
-        spender = self.validated_checksum_address(spender)
-
-        token_info = await self.get_erc20_token_info(contract)
-        allowance = await self.call_service(contract.functions.allowance(address, spender).call)
-
-        return CryptoAmount(Amount(allowance, token_info.amount.decimals), token_info.asset)
+        return await self._token_list.get_erc20_allowance(contract_address, spender, address)
 
     def get_public_key(self):
         """
@@ -200,11 +184,28 @@ class EthereumClient(XChainClient):
     async def get_transactions(self, address: str, offset: int = 0, limit: int = 0,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None) -> TxPage:
-
+        """
+        Get transactions of a given address.
+        Works only if you have PRO subscription for EtherScan API!
+        # todo: find the other way to get transactions
+        :param address: Address
+        :param offset: (not supported)
+        :param limit: (not supported)
+        :param start_time: (not supported)
+        :param end_time: (not supported)
+        :param asset: (not supported)
+        :return:
+        """
         txs = await self._ex_provider.get_address_transactions(address)
         return TxPage(len(txs), txs)
 
     async def get_transaction_data(self, tx_id: str, with_timestamp=False) -> Optional[XcTx]:
+        """
+        Get transaction details by transaction ID (hash)
+        :param tx_id: Transaction ID (hash)
+        :param with_timestamp: If True, it will return the timestamp of the block. Extra API call!
+        :return: Optional[XcTx]
+        """
         try:
             receipt = await self.call_service(self.web3.eth.get_transaction_receipt, tx_id)
             tx_data = await self.call_service(self.web3.eth.get_transaction, tx_id)
@@ -215,15 +216,16 @@ class EthereumClient(XChainClient):
         if with_timestamp and receipt:
             timestamp = await self.get_block_timestamp(receipt['blockNumber'])
 
-        return self._convert_tx_data(receipt, tx_data, timestamp) if receipt else None
+        return await self._convert_tx_data(receipt, tx_data, timestamp) if receipt else None
 
-    def _convert_tx_data(self, receipt, tx_data, timestamp) -> XcTx:
-        # todo: decode input data to token transfers
+    async def _convert_tx_data(self, receipt, tx_data, timestamp) -> XcTx:
         value = tx_data['value']
         destination = tx_data['to']
         tx_hash = tx_data['hash'].hex()
 
         token_transfers = self._log_decoder.decode_events(receipt)
+
+        # todo: fix token names and their decimals!
 
         if int(value) > 0:
             token_transfers.append(TokenTransfer(
@@ -395,6 +397,11 @@ class EthereumClient(XChainClient):
         return tx_hash
 
     async def get_block_timestamp(self, block_number: int) -> int:
+        """
+        Get the timestamp of a given block number
+        :param block_number: Block number
+        :return: Timestamp
+        """
         block = await self.call_service(self.web3.eth.get_block, block_number)
         if not block:
             raise LookupError(f"Block {block_number} not found")
@@ -421,7 +428,7 @@ class EthereumClient(XChainClient):
 
         tx_data = await self.call_service(self.web3.eth.get_transaction, tx_id)
 
-        return self._convert_tx_data(receipt, tx_data, timestamp)
+        return await self._convert_tx_data(receipt, tx_data, timestamp)
 
     async def approve_erc20_token(self, spender: str, amount: CryptoAmount,
                                   gas: GasOptions) -> str:
@@ -456,37 +463,68 @@ class EthereumClient(XChainClient):
         return await self.approve_erc20_token(spender, CryptoAmount.zero(asset), gas)
 
     def erc20_asset_from_contract(self, contract: Union[Contract, str], symbol: str):
+        """
+        Create an Asset object from a contract address
+        :param contract: Contract address or Contract object
+        :param symbol: Symbol of the token
+        :return: Asset object
+        """
         if isinstance(contract, Contract):
             contract = contract.address
         return Asset(self.chain.value, symbol.upper(), contract)
 
     async def broadcast_tx(self, tx_hex: str) -> str:
+        """
+        Broadcast a signed transaction to the network.
+        :param tx_hex: Signed transaction in hex format
+        :return: Transaction ID that is broadcast to the network
+        """
         return await self.call_service(self.web3.eth.send_raw_transaction, tx_hex)
 
     async def get_nonce(self, address: str = '') -> int:
+        """
+        Get the nonce for a given address. Otherwise, it will return the nonce of the current wallet.
+        Nonce is the number of transactions sent from an address.
+        :param address: Address of a wallet (optional)
+        :type address: str
+        :return: Nonce
+        :rtype: int
+        """
         if not address:
             address = self.get_address()
         return await self.call_service(self.web3.eth.get_transaction_count, address, 'pending')
 
-    def get_explorer_tx_url(self, tx_id: str) -> str:
+    @staticmethod
+    def _normalize_tx_id(tx_id: Union[str, HexBytes, bytes]) -> str:
         if isinstance(tx_id, HexBytes):
             tx_id = tx_id.hex()
         if not tx_id.startswith('0x'):
             tx_id = '0x' + tx_id
+        return tx_id
+
+    def get_explorer_tx_url(self, tx_id: str) -> str:
+        """
+        Get the explorer URL for a given transaction ID
+        :param tx_id: Transaction ID
+        :return: URL
+        """
+        tx_id = self._normalize_tx_id(tx_id)
         return super().get_explorer_tx_url(tx_id)
 
     get_explorer_tx_url.__doc__ = XChainClient.get_explorer_tx_url.__doc__
 
     def validated_checksum_address(self, address: str) -> str:
-        if not address:
-            raise ValueError("Address is required")
-        if address.isupper():  # if it is in uppercase, that means it probably came from THORChain or other similar AMM
-            address = self.web3.to_checksum_address(address)
-        if not self.validate_address(address):
-            raise ValueError(f'Invalid address: {address}')
-        return address
+        """
+        Validate and checksum an Ethereum address if it's not checksummed.
+        :param address:
+        :return:
+        """
+        return validated_checksum_address(self.web3, address)
 
     def enable_web3_caching(self):
+        """
+        Enable Web3 caching middlewares
+        """
         w3 = self.web3
         w3.middleware_onion.add(middleware.time_based_cache_middleware)
         w3.middleware_onion.add(middleware.latest_block_based_cache_middleware)

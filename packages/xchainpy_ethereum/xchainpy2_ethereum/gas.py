@@ -9,6 +9,9 @@ from xchainpy2_client import FeeOption, Fees, FeeType
 
 
 class GasOptions(NamedTuple):
+    """
+    Gas options for transaction invocation
+    """
     fee_option: Optional[FeeOption] = None
     gas_price: Optional[int] = None  # legacy, in Wei
     max_fee_per_gas: Optional[int] = None  # EIP-1559, in Wei
