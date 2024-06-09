@@ -14,12 +14,19 @@ OP_RETURN_HEX = '6a'
 
 
 def try_get_memo_from_output(out: Output) -> Optional[str]:
+    """
+    Try to get the memo string from the output script.
+
+    :param out: Output to get the memo from
+    :return: Memo string if found, None otherwise
+    """
     if len(out.script.commands) >= 2 and out.script.commands[0] == OP_RETURN:
         return out.script.commands[1].decode('utf-8')
 
 
 def compile_memo(memo: str) -> bytes:
-    """Compile memo
+    """Compile a memo string to a script for OP_RETURN output.
+    https://dev.thorchain.org/concepts/sending-transactions.html#utxo-chains
 
     :param memo: The memo to be compiled
     :type memo: str
@@ -47,6 +54,11 @@ def compile_memo(memo: str) -> bytes:
 
 
 class UTXOPrepare:
+    """
+    UTXOPrepare is a class to prepare transactions in UTXO networks.
+    It computes the inputs and outputs of a transaction based on the available UTXOs and the desired outputs.
+    """
+
     def __init__(self, utxos: List[UTXO], service_network, fee_per_byte=1, min_confirmations=1):
         self.service_network = service_network
         self.utxos = utxos
@@ -56,19 +68,44 @@ class UTXOPrepare:
 
     @staticmethod
     def make_output_with_memo(memo: str):
+        """
+        Create an output with a memo which is OP_RETURN.
+
+        :param memo: Memo to be added to the output
+        :return: Output description
+        """
         return {
             'value': 0,
             'script': compile_memo(memo),
         }
 
     def available_utxos(self):
+        """
+        Get the available UTXOs based on the minimum confirmations.
+
+        :return: List of available UTXOs
+        """
         return [utxo for utxo in self.utxos if utxo.confirmations >= self.min_confirmations]
 
     @property
     def fee_rate_whole(self):
+        """
+        Get the fee rate in whole number.
+
+        :return: Fee rate in whole number
+        """
         return int(math.ceil(self.fee_per_byte))
 
     def build(self, sender: str, recipient: str, amount: Amount, memo: Optional[str] = None) -> Transaction:
+        """
+        Build a transaction based on the sender, recipient, amount and memo.
+
+        :param sender: Sender address
+        :param recipient: Address of the recipient
+        :param amount: Amount of gas asset to be transferred
+        :param memo: Optional memo to be added to the transaction
+        :return: Transaction object of bitcoinlib
+        """
         # return Output(0, recipient, lock_script=compile_memo(memo), network=self.service_network)
         outputs = [
             # this output is the actual transfer

@@ -1,22 +1,15 @@
 import asyncio
+import getpass
 
-from examples.common import get_phrase
 from xchainpy2_bitcoin import BitcoinClient
 from xchainpy2_utils import NetworkType
 
-FEE_RATE = 2
-DRY_RUN = False
-
 
 async def send_btc():
-    phrase = get_phrase()
+    phrase = getpass.getpass('Enter a BIP39 mnemonic phrase: ')
 
-    # provider_names = ['blockstream']
-    provider_names = ['mempool', 'blockstream']
-    # provider_names = []
-
-    btc = BitcoinClient(phrase=phrase, network=NetworkType.TESTNET, provider_names=provider_names)
-    btc2 = BitcoinClient(phrase=phrase, network=NetworkType.TESTNET, wallet_index=1, provider_names=provider_names)
+    btc = BitcoinClient(phrase=phrase, network=NetworkType.TESTNET)
+    btc2 = BitcoinClient(phrase=phrase, network=NetworkType.TESTNET, wallet_index=1)
 
     available_providers = btc.get_available_provider_names()
     print(f"Available providers: {available_providers}")
@@ -37,14 +30,9 @@ async def send_btc():
         print('Swapping addresses')
         btc, btc2 = btc2, btc
 
-    tx_hash = await btc.transfer(btc2.gas_amount(0.00001234), dest_address, memo='test',
-                                 # fee_rate=FEE_RATE,
-                                 dry_run=DRY_RUN)
-    print(f"Transfer hash: {tx_hash} ({btc2.get_explorer_tx_url(tx_hash)})")
+    tx_hash = await btc.transfer(btc2.gas_amount(0.00001234), dest_address, memo='test')
 
-    if DRY_RUN:
-        print('Dry run complete')
-        return
+    print(f"Transfer hash: {tx_hash} ({btc2.get_explorer_tx_url(tx_hash)})")
 
     print("Waiting for transaction to complete (10 minutes)...")
     tx = await btc.wait_for_transaction(tx_hash)

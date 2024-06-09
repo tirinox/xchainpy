@@ -23,6 +23,12 @@ from .utils import get_btc_address_prefix, UTXOException
 
 class BitcoinClient(XChainClient):
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+        """
+        Get the BTC balance of the wallet.
+
+        :param address: address (default is the address of the wallet)
+        :return: list of CryptoAmount, containing a single CryptoAmount with the balance
+        """
         address = address or self.get_address()
         result = await self.call_service(self.service.getbalance, address)
         return [self.gas_base_amount(result)]
@@ -31,6 +37,21 @@ class BitcoinClient(XChainClient):
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None,
                                height=None, detailed=False, after_tx_id='') -> TxPage:
+        """
+        Get the recent transactions of the wallet.
+
+        :param address: Address of the wallet
+        :param offset: Offset from the beginning of the list
+        :param limit: Count of transactions to return
+        :param start_time: (not supported)
+        :param end_time: (not supported)
+        :param asset: (not supported)
+        :param height: (not supported)
+        :param detailed: (not supported)
+        :param after_tx_id: Transaction ID to start listing from
+        :return: TxPage object
+        """
+
         if asset:
             raise UTXOException(f'asset parameter is not supported')
         if start_time or end_time:
@@ -45,6 +66,13 @@ class BitcoinClient(XChainClient):
         )
 
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
+        """
+        Get the transaction data of the given transaction ID (txid, hash).
+
+        :param tx_id: Transaction ID (txid, hash)
+        :return: XcTx object or None if the transaction is not found
+        """
+
         result = await self.call_service(self.service.gettransaction, tx_id)
         return self._convert_lib_tx_to_our_tx(result)
 
@@ -54,7 +82,8 @@ class BitcoinClient(XChainClient):
         """
         Transfer UTXO gas asset (BTC eg) to recipient.
         Memo is optional and encoded in OP_RETURN output.
-        :param what: amount to transfer
+
+        :param what: amount to transfer, must be gas asset (BTC.BTC)
         :param recipient: recipient address
         :param memo: optional memo
         :param fee_rate: fee rate in satoshi per kilobyte
@@ -125,12 +154,26 @@ class BitcoinClient(XChainClient):
         return tx.txid
 
     async def broadcast_tx(self, tx_hex: str) -> str:
+        """
+        Broadcast the transaction to the network.
+
+        :param tx_hex: Signed transaction in hex format string
+        :return: Transaction ID (txid)
+        """
         results = await self.call_service(self.service.sendrawtransaction, tx_hex)
         tx_id = results.get('txid') if isinstance(results, dict) else results
         self._save_last_response(tx_id, results)
         return tx_id
 
     async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> Fees:
+        """
+        Get the fee rates triplet (average, fast, fastest) in satoshi per byte.
+
+        :param average_blocks: Number of blocks to confirm in average case
+        :param fast_blocks: Number of blocks to confirm in fast case
+        :param fastest_blocks: Number of blocks to confirm in fastest case
+        :return: Fees object
+        """
         average = await self.call_service(self.service.estimatefee, average_blocks)
         fast = await self.call_service(self.service.estimatefee, fast_blocks)
         fastest = await self.call_service(self.service.estimatefee, fastest_blocks)
@@ -154,18 +197,26 @@ class BitcoinClient(XChainClient):
     def get_address(self) -> str:
         """
         Get the address of the wallet
-        Bech32 encoding is used to get the address from the public key
+        Bech32 encoding is used to get the address from the public key.
+
         :return: address
         """
         return self.get_public_key().address(encoding='bech32')
 
     def get_public_key(self) -> Key:
+        """
+        Get public key object of bitcoinlib
+
+        :return: Key
+        """
+
         return self.get_private_key().public()
 
     def get_private_key(self) -> Key:
         """
-        Get private key object
-        Key class is from bitcoinlib.
+        Get private key object.
+        Key class is declared in `bitcoinlib`.
+
         :return: private key object
         """
         pk = super().get_private_key()
@@ -186,8 +237,7 @@ class BitcoinClient(XChainClient):
                  service_kwargs=None,
                  ):
         """
-        BitcoinClient constructor
-        Uses bitcoinlib under the hood
+        BitcoinClient constructor. Uses bitcoinlib under the hood.
 
         :param provider_names: a list of Blockchain info provider names of bitcoinlib.
         See https://github.com/1200wd/bitcoinlib/blob/master/bitcoinlib/data/providers.json
@@ -250,6 +300,12 @@ class BitcoinClient(XChainClient):
         return BitcoindClient(base_url=url)
 
     def validate_address(self, address: str) -> bool:
+        """
+        Validate BTC address
+
+        :param address: address to validate
+        :return: bool
+        """
         try:
             deserialize_address(address, network=self._service_network)
             return True
@@ -258,8 +314,9 @@ class BitcoinClient(XChainClient):
 
     async def get_utxos(self, address='', limit=MAX_TRANSACTIONS, full=False) -> List[UTXO]:
         """
-        Get UTXOs of the wallet
-        UTxO is an unspent transaction output
+        Get UTXOs of the wallet. UTxO is an unspent transaction output.
+        If you request full data, it will iterate over all UTXOs and get the full transaction data (much slower).
+
         :param address: address (default is the address of the wallet)
         :param limit: maximum number of UTXOs to return
         :param full: if True, returns full transaction data
@@ -338,7 +395,8 @@ class BitcoinClient(XChainClient):
 
     def get_available_provider_names(self, network_name=None):
         """
-        Get available provider names for the network
+        Get available provider names for the network.
+
         :param network_name: network name like "bitcoin", "dogecoin", etc. (default is the current client's network)
         :return: set of provider names
         """
@@ -347,6 +405,13 @@ class BitcoinClient(XChainClient):
 
     @classmethod
     def get_available_providers_g(cls, network_name=None):
+        """
+        Get available providers for the network. This is a class method.
+
+        :param network_name: network name like "bitcoin", "dogecoin", etc. (default is None)
+        :return: set of provider names
+        """
+
         providers = cls._load_providers()
         filtered_providers = {
             k: v for k, v in providers.items()
@@ -356,7 +421,8 @@ class BitcoinClient(XChainClient):
 
     def recreate_service_with_providers(self, provider_names):
         """
-        Recreate the service with the specified provider names
+        Recreate the service with the specified provider names.
+
         :param provider_names: a list of provider names
         """
         self._provider_names = list(provider_names)

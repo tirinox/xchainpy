@@ -2,13 +2,17 @@ from xchainpy2_utils import NetworkType
 
 
 class UTXOException(Exception):
+    """
+    Exception raised when there is an issue with UTXO Client operations.
+    """
     ...
 
 
 def get_btc_address_prefix(network: NetworkType) -> str:
     """
     Get address prefix based on the network.
-    :param network:
+
+    :param network: Network type
     :return: string address prefix
     """
     if network == NetworkType.TESTNET:
