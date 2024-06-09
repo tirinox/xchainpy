@@ -108,9 +108,34 @@ class BitcoinCashClient(XChainClient):
             txs=list(transactions),
         )
 
+    @staticmethod
+    def _decode_op_return(value):
+        # Convert the value to a hexadecimal string and ensure it has an even length
+        hex_value = f"{value:08x}"
+
+        # Reverse the byte order and convert to ASCII characters in one step
+        decoded_string = ''.join(chr(int(hex_value[i:i + 2], 16)) for i in range(len(hex_value) - 2, -1, -2))
+
+        return decoded_string
+
+    def _get_memo(self, outputs):
+        memo = ''
+        for output in outputs:
+            if output.op_return:
+                try:
+                    # apparently the op_return can be an integer
+                    data = int(output.op_return)
+                    data = self._decode_op_return(data)
+                except ValueError:
+                    # otherwise it's a hex string
+                    data = bytes.fromhex(output.op_return).decode('utf-8')
+                memo += data
+
+        return memo
+
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
         data = await self._call_service(self.api.get_transaction, tx_id, self._underlying_network)
-        # todo: parse data to XcTx
+
         transfers = []
         for input in data.inputs:
             transfers.append(TokenTransfer(
@@ -134,12 +159,7 @@ class BitcoinCashClient(XChainClient):
                 ))
 
         # detect memo
-        memo = ''
-        for output in data.outputs:
-            if output.op_return:
-                # convert hex to string
-                memo = bytes.fromhex(output.op_return).decode('utf-8')
-                break
+        memo = self._get_memo(data.outputs)
 
         return XcTx(
             transfers=transfers,
@@ -148,7 +168,7 @@ class BitcoinCashClient(XChainClient):
             hash=data.txid,
             date=None,
             height=data.block or 0,
-            is_success=True,
+            is_success=data.block is not None,
             original=data,
             memo=memo,
         )
@@ -176,9 +196,11 @@ class BitcoinCashClient(XChainClient):
         :param kwargs: The additional parameters
         :return: The transaction hash
         """
-        if not fee_rate:
+        if fee_rate is None:
             fee_rates = await self.get_fees()
-            fee_rate = fee_rates.fast
+            fee_rate = int(fee_rates.fast)
+        elif not isinstance(fee_rate, int):
+            raise ValueError('fee_rate must be an integer')
 
         return await self._call_service(self._transfer_sync, what, recipient, memo, fee_rate, kwargs)
 
