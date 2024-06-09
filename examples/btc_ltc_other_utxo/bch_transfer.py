@@ -2,38 +2,34 @@ import asyncio
 
 from examples.common import get_phrase
 from xchainpy2_bitcoincash import BitcoinCashClient
-from xchainpy2_thorchain_query import THORChainQuery
-from xchainpy2_utils import Chain
 
 
 async def main():
     phrase = get_phrase()
     bch_client1 = BitcoinCashClient(phrase=phrase)
     bch_client2 = BitcoinCashClient(phrase=phrase, wallet_index=1)
-    print(f"Address1: {bch_client1.get_address()}")
-    print(f"Address2: {bch_client2.get_address()}")
 
-    # balance = await bch_client.get_balance('bitcoincash:qpcjl9qak89t5fexnspfpvzqs6tcaytzcqeex48k8t')
-    # print(balance)
+    balance1 = await bch_client1.get_balance()
+    balance2 = await bch_client2.get_balance()
+    print(f"{bch_client1.get_address()} has balance of {balance1}")
+    print(f"{bch_client2.get_address()} has balance of {balance2}")
 
-    # tx_contents = await bch_client1.get_transaction_data('A914E88F070440754D7967607D4D1447F6229117B715308749DE3A912373E831')
-    # print(tx_contents)
-    #
-    transactions = await bch_client1.get_transactions('bitcoincash:qq2m0assgsqq3ek7currz4grzka9hxcdpu3q43wezh')
-    print(transactions)
+    if balance2 > balance1:
+        print('Swapping addresses')
+        bch_client1, bch_client2 = bch_client2, bch_client1
 
-    # query = THORChainQuery()
-    # fee = await query.get_recommended_fee_rate(Chain.BitcoinCash)
-    # print(fee)
-    #
-    # tx_hash = await bch_client1.transfer(
-    #     what=bch_client1.gas_amount(0.0001),
-    #     recipient=bch_client2.get_address(),
-    #     memo="test memo",
-    #     fee_rate=fee,
-    # )
-    # print(f"TxHash: {tx_hash}, {bch_client1.get_explorer_tx_url(tx_hash)}")
-    #
+    tx_hash = await bch_client1.transfer(bch_client2.gas_amount(0.00001234),
+                                         bch_client2.get_address(), memo='foobar')
+    print(f"Transfer hash: {tx_hash} ({bch_client1.get_explorer_tx_url(tx_hash)})")
+
+    print("Waiting for transaction to complete (up to 10 minutes)...")
+    tx = await bch_client1.wait_for_transaction(tx_hash)
+    print(f"Transaction confirmed: {tx}")
+
+    balance1 = await bch_client1.get_balance()
+    balance2 = await bch_client2.get_balance()
+    print(f"{bch_client1.get_address()} has balance of {balance1}")
+    print(f"{bch_client2.get_address()} has balance of {balance2}")
 
 
 if __name__ == '__main__':
