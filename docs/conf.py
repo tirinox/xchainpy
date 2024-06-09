@@ -24,6 +24,13 @@ extensions = [
     'sphinx.ext.autodoc'
 ]
 
+# Configuration for autodoc
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'show-inheritance': True,
+}
+
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 source_suffix = ".rst"
