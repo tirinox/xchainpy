@@ -277,11 +277,23 @@ class XChainClient(abc.ABC):
                        fee_rate: Optional[int] = None, **kwargs) -> str:
         pass
 
-    async def wait_for_transaction(self, tx_id: str):
+    async def wait_for_transaction(self, tx_id: str, timeout=1200, poll_period=5):
         """
-        Wait for the transaction to be mined.
+        Wait for the transaction to be confirmed/mined. It will poll the transaction status every poll_period seconds.
+
+        :param tx_id: transaction ID
+        :param timeout: timeout in seconds
+        :param poll_period: poll period in seconds
         """
-        raise NotImplemented
+
+        while poll_period < timeout:
+            tx = await self.get_transaction_data(tx_id)
+            if tx.is_success:
+                return tx
+            await asyncio.sleep(poll_period)
+            timeout -= poll_period
+
+        raise TimeoutError(f'Transaction {tx_id} was not confirmed in {timeout} seconds')
 
     @abc.abstractmethod
     async def broadcast_tx(self, tx_hex: str) -> str:
