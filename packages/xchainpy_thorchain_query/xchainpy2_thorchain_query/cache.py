@@ -443,8 +443,10 @@ class THORChainCache:
             chain = chain.value
 
         inbound = await self.get_inbound_details()
-        if not inbound[chain]:
-            raise QueryError('router address is not defined')
+        if not inbound:
+            raise QueryError('Could not get inbound details')
+        if not inbound.get(chain.upper()):
+            raise QueryError(f'Could not get inbound details for {chain}')
         return inbound[chain]
 
     async def get_inbound_details(self, forced=False) -> InboundDetails:
@@ -562,20 +564,16 @@ class THORChainCache:
                      self.get_rune_address(lp) == address),
                     None)
 
-    async def get_fee_rates(self, chain: Chain) -> int:
+    async def get_fee_rate(self, chain: Union[str, Chain]) -> int:
         """
         Returns the fee rate for a given chain from the inbound details. Results are cached.
 
         :param chain: Chain
         :return: Typical fee rate for the chain. sat/byte for Bitcoin, gas for Ethereum, etc.
         """
-        inbound = await self.get_inbound_details()
-        if not inbound:
-            raise QueryError('Could not get inbound details')
 
-        for chain_details in inbound.values():
-            if chain_details.chain == chain.value:
-                return int(chain_details.outbound_fee)
+        inbound = await self.get_details_for_chain(chain)
+        return int(inbound.gas_rate)
 
     async def get_names_by_address(self, address: str) -> Set[str]:
         """
