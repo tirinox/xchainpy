@@ -1,10 +1,13 @@
 class URLs:
     """
-    A collection of URLs for public THORChain APIs
-    See https://ops.ninerealms.com/links for more links
+    A collection of URLs for public THORChain APIs (THORNode, RPC, Midgard).
+    See https://ops.ninerealms.com/links for more links.
     """
 
     class THORNode:
+        """
+        THORNode API URLs.
+        """
         PUBLIC = 'https://thornode.thorchain.info'
         NINE_REALMS = 'https://thornode.ninerealms.com'
         THORSWAP = 'https://thornode.thorswap.net'
@@ -19,6 +22,9 @@ class URLs:
         TESTNET = 'https://testnet.thornode.thorchain.info'
 
     class RPC:
+        """
+        THORChain RPC URLs.
+        """
         PUBLIC = 'https://rpc.thorchain.info'
         NINE_REALMS = 'https://rpc.ninerealms.com'
         THORSWAP = 'https://rpc.thorswap.net'
@@ -30,6 +36,9 @@ class URLs:
         TESTNET = 'https://testnet.rpc.thorchain.info/'
 
     class Midgard:
+        """
+        Midgard API URLs.
+        """
         PUBLIC = 'https://midgard.thorchain.info'
         NINE_REALMS = 'https://midgard.ninerealms.com'
         THORSWAP = 'https://midgard.thorswap.net'
@@ -37,7 +46,3 @@ class URLs:
         MAINNET = NINE_REALMS
         STAGENET = 'https://stagenet-midgard.ninerealms.com'
         TESTNET = 'https://testnet.midgard.thorchain.info'
-
-    class Seed:
-        MAINNET = 'https://seed.thorchain.info'
-        TESTNET = 'https://testnet.seed.thorchain.info'
