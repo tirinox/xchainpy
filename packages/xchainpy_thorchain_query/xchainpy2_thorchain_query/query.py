@@ -11,16 +11,22 @@ from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIM
     DEFAULT_ASSET_DECIMAL, YEAR
 from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES, THORNAME_BLOCKS_ONE_YEAR
-from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity, get_liquidity_protection_data
+from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity
 from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
-    LiquidityPosition, Block, PositionDepositValue, PoolRatios, EstimateWithdrawLP, \
+    LiquidityPosition, PositionDepositValue, PoolRatios, EstimateWithdrawLP, \
     EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails, LoanOpenQuote, \
-    BlockInformation, LoanCloseQuote, THORNameEstimate, WithdrawMode
+    BlockInformation, LoanCloseQuote, THORNameEstimate, WithdrawMode, InboundDetail
 from .swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
     get_chain_gas_asset
 
 
 class THORChainQuery:
+    """
+    THORChain Query Class
+
+
+    """
+
     def __init__(self,
                  cache: THORChainCache = None,
                  chain_attributes=DEFAULT_CHAIN_ATTRS,
@@ -35,8 +41,15 @@ class THORChainQuery:
         self.interface_id = interface_id
         self.native_decimal = native_decimal
 
+        # todo
+        # self.cache.midgard_api.patch_client(self.interface_id)
+
     @property
     def native_chain_attributes(self):
+        """
+
+        :return:
+        """
         return self.chain_attributes[self.native_asset.chain]
 
     @property
@@ -325,7 +338,8 @@ class THORChainQuery:
 
     async def check_liquidity_position(self, asset: Asset, asset_or_rune_address: str) -> LiquidityPosition:
         """
-        Checks the liquidity position of a given asset and address
+        Checks the liquidity position of a given asset and address.
+
         :param asset: Asset to check
         :param asset_or_rune_address: address to check
         :return: LiquidityPosition
@@ -356,12 +370,6 @@ class THORChainQuery:
 
         network_values = await self.cache.get_network_values()
 
-        block = Block(
-            current=self.cache.pluck_native_block_height(block),
-            last_added=liquidity_provider.last_add_height,
-            full_protection=network_values.get(Mimir.FULL_IL_PROTECTION_BLOCKS, 0),
-        )
-
         current_lp = PositionDepositValue(
             asset=Amount.from_base(liquidity_provider.asset_deposit_value),
             rune=Amount.from_base(liquidity_provider.rune_deposit_value),
@@ -383,13 +391,10 @@ class THORChainQuery:
         lp_growth = redeem_luvi - deposit_luvi
         current_lp_growth = (lp_growth / deposit_luvi if lp_growth > 0 else 0.0) * 100.0
 
-        impermanent_loss_protection = get_liquidity_protection_data(current_lp, pool_share, block)
-
         return LiquidityPosition(
             pool_share,
             liquidity_provider,
             f'{current_lp_growth:.2f} %',
-            impermanent_loss_protection
         )
 
     async def get_pool_ratio(self, asset: Asset) -> PoolRatios:
@@ -490,7 +495,7 @@ class THORChainQuery:
             self.cache.convert(asset_outbound, self.cache.native_asset),
         )
 
-        memo = THORMemo.withdraw().build() # todo
+        memo = THORMemo.withdraw().build()  # todo
 
         deposit_amount = CryptoAmount.zero(asset)  # todo!
 
@@ -529,10 +534,11 @@ class THORChainQuery:
 
     async def estimate_add_saver(self, add_amount: CryptoAmount) -> EstimateAddSaver:
         """
-        Estimate the add liquidity with saver
-        Derrived from https://dev.thorchain.org/thorchain-dev/connection-guide/savers-guide
+        Estimate the add liquidity with saver.
+        Derived from https://dev.thorchain.org/thorchain-dev/connection-guide/savers-guide
+
         :param add_amount: CryptoAmount
-        :return:
+        :return: EstimateAddSaver
         """
         # check for errors before sending quote
         errors = await self.get_add_savers_estimate_errors(add_amount)
@@ -862,14 +868,24 @@ class THORChainQuery:
                                    loan_asset: Asset, loan_owner: str,
                                    min_out: Amount, height: int = 0) -> LoanCloseQuote:
         """
-        Get a quote for closing a loan
-        :param amount: CryptoAmount (the asset amount in 1e8 decimals and asset the asset used to repay the loan)
-        :param from_address: the address that is paying off the loan
-        :param loan_asset: the collateral asset of the loan
-        :param loan_owner: the owner of the loan collateral
-        :param min_out: minimal threshold for output amount
-        :param height: optional block height, defaults to current tip
+        Get a quote for closing a loan.
+
+        :param amount:
+            CryptoAmount object representing the asset amount in 1e8 decimals and the asset used to repay the loan.
+        :param from_address:
+            The address that is paying off the loan.
+        :param loan_asset:
+            Asset object representing the collateral asset of the loan.
+        :param loan_owner:
+            The owner of the loan collateral.
+        :param min_out:
+            Amount object representing the minimal threshold for output amount.
+        :param height:
+            Optional block height, defaults to the current tip if not provided.
+        :type height: int, optional
         :return:
+            LoanCloseQuote object representing the quote for closing the loan.
+        :rtype: LoanCloseQuote
         """
         errors = []
 
@@ -884,7 +900,7 @@ class THORChainQuery:
         )
 
         if hasattr(resp, 'error'):
-            errors.append(f"Thornode request quote failed: {resp.error}")
+            errors.append(f"THORNode request quote failed: {resp.error}")
 
         if errors:
             return LoanCloseQuote(
@@ -933,11 +949,13 @@ class THORChainQuery:
 
     async def estimate_thor_name(self, is_update: bool, thorname: str, expiry: datetime = None) -> THORNameEstimate:
         """
-        Estimate the cost of registering or updating a THORName
+        Estimate the cost of registering or updating a THORName. Calculations are worked out locally based on the
+        current network values and the current state of the THORName.
+
         :param is_update: bool - True if updating an existing THORName
         :param thorname: str - the THORName to register or update
         :param expiry: datetime - the desired expiry date of the THORName
-        :return:
+        :return: THORNameEstimate
         """
         thor_name_details = await self.cache.get_name_details(thorname)
         if thor_name_details and thor_name_details.owner != '' and not is_update:
@@ -985,11 +1003,12 @@ class THORChainQuery:
             last_block_number=current_thorchain_height
         )
 
-    async def get_recommended_fee_rate(self, chain: Chain) -> int:
+    async def get_inbound_details(self, chain: Union[str, Chain]) -> InboundDetail:
         """
-        Get the recommended fee for a given chain from THORChain
-        :param chain: Chain - the chain to get the fee for
-        :return: int - the recommended fee rate
+        Get the inbound details for a given chain. It contains the recommended fee, fee units,
+        router and vault addresses and the status of the chain.
+
+        :param chain: str or Chain enum value
+        :return: InboundDetail
         """
-        fee_number = await self.cache.get_fee_rates(chain)
-        return fee_number
+        return await self.cache.get_details_for_chain(chain)

@@ -12,13 +12,10 @@ from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
 
 
 class QueryError(LookupError):
+    """
+    Query error is raised when the module fails to query the data from THORChain.
+    """
     pass
-
-
-class Block(NamedTuple):
-    current: int
-    last_added: Optional[int]
-    full_protection: int
 
 
 class TotalFees(NamedTuple):
@@ -28,6 +25,9 @@ class TotalFees(NamedTuple):
 
 
 class SwapEstimate(NamedTuple):
+    """
+    A named tuple representing an estimate for a swap transaction.
+    """
     total_fees: TotalFees
     slip_bps: int
     net_output: CryptoAmount
@@ -226,11 +226,6 @@ class LPAmountTotal(NamedTuple):
         return cls(CryptoAmount.zero(asset), CryptoAmount.zero(asset), CryptoAmount.zero(asset))
 
 
-class ILProtectionData(NamedTuple):
-    il_protection: Decimal
-    total_days: float
-
-
 class EstimateAddLP(NamedTuple):
     asset_pool: str
     slip_percent: float
@@ -262,7 +257,6 @@ class EstimateWithdrawLP(NamedTuple):
     asset_amount: CryptoAmount
     rune_amount: CryptoAmount
     lp_growth: str
-    impermanent_loss_protection: ILProtectionData
     estimated_wait_seconds: int
     asset_pool: str
     errors: List[str]
@@ -277,7 +271,7 @@ class EstimateWithdrawLP(NamedTuple):
             False, zero, None, None, 0,
             LPAmountTotal.zero(), LPAmountTotal.zero(), LPAmountTotal.zero(),
             zero, zero,
-            '', ILProtectionData(Decimal(0), 0), 0, '', [error],
+            '', 0, '', [error],
             '', '', mode
         )
 
@@ -325,7 +319,6 @@ class LiquidityPosition(NamedTuple):
     pool_share: LPAmount
     position: LiquidityProviderSummary
     lp_growth: str
-    impermanent_loss_protection: ILProtectionData
 
 
 class PoolRatios(NamedTuple):
