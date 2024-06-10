@@ -1,53 +1,65 @@
 XChainPy2 THORChain query
 =========================
 
+XChainPy2 THORChain query is a Python library for querying swap quotes, pools, and other data from THORChain.
+
+Main Query Module
+-----------------
+
 .. automodule:: xchainpy2_thorchain_query.query
-    :members:
-    :undoc-members:
-    :show-inheritance:
+
+Cache for frequently used data
+------------------------------
+
+.. automodule:: xchainpy2_thorchain_query.cache
+
+Transaction Status Checker
+--------------------------
 
 .. automodule:: xchainpy2_thorchain_query.check_tx
-    :members:
-    :undoc-members:
-    :show-inheritance:
+
+Constants
+---------
 
 .. automodule:: xchainpy2_thorchain_query.const
-    :members:
-    :undoc-members:
-    :show-inheritance:
+
+Models
+------
 
 .. automodule:: xchainpy2_thorchain_query.models
-    :members:
-    :undoc-members:
-    :show-inheritance:
+
+Midgard interface
+-----------------
 
 .. automodule:: xchainpy2_thorchain_query.midgard
-    :members:
-    :undoc-members:
-    :show-inheritance:
+
+THORNode interface
+------------------
 
 .. automodule:: xchainpy2_thorchain_query.thornode
-    :members:
-    :undoc-members:
-    :show-inheritance:
+
+Public API URLS
+---------------
 
 .. automodule:: xchainpy2_thorchain_query.env
-    :members:
-    :undoc-members:
-    :show-inheritance:
+
+Swap arithmetic
+---------------
 
 .. automodule:: xchainpy2_thorchain_query.swap
-    :members:
-    :undoc-members:
-    :show-inheritance:
+
+Liquidity math
+--------------
 
 .. automodule:: xchainpy2_thorchain_query.liquidity
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
+Patch clients
+-------------
+
+This module is used to patch the API clients with the following features:
+
+1. `x-client-id` header
+2. Retry mechanism
+3. Backup hosts
 
 .. automodule:: xchainpy2_thorchain_query.patch_clients
-    :members:
-    :undoc-members:
-    :show-inheritance:
