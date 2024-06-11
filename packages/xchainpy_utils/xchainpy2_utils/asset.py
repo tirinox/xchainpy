@@ -19,25 +19,20 @@ class Asset(NamedTuple):
     """
     Asset is used to identify a blockchain asset in the cross-chain environment.
     It has chain, symbol, and contract fields.
-
-    .. py:attribute:: chain
-
-            The blockchain identifier. E.g. 'BNB', 'ETH', 'BTC', etc.
-            This field has type str. Be careful to not confuse this with the Chain object.
-
-    .. py:attribute:: symbol
-
-            The asset symbol. E.g. 'RUNE', 'BTC', 'ETH', etc.
-
-    .. py:attribute:: contract
-
-            The contract address of the asset. E.g. '0x1234...5678'. Default is empty.
-
     """
+
     chain: str
+    """
+    The blockchain identifier. E.g. 'BNB', 'ETH', 'BTC', etc.
+    This field has type str. Be careful to not confuse this with the Chain object.
+    """
+
     symbol: str
+    """The asset symbol. E.g. 'RUNE', 'BTC', 'ETH', etc."""
     contract: str = ''
+    """The contract address of the asset. E.g. '0x1234...5678'. Default is empty."""
     synth: bool = False
+    """Whether the asset is a synth or not. Default is False."""
 
     @property
     def is_valid(self):

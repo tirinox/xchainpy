@@ -19,50 +19,32 @@ RUNE_TICKER = 'RUNE'
 class DustAmount(NamedTuple):
     """
     DustAmount is used to represent the smallest amount of an asset that can be used by a protocol.
-
-    .. py:attribute:: asset
-
-            The asset that the dust amount represents.
-
-    .. py:attribute:: rune
-
-            The Rune amount that the dust amount represents. It is used in case of THORChain.
-
-    .. py:attribute:: cacao
-
-            The Cacao amount that the dust amount represents. It is used in case of MayaProtocol.
     """
+
     asset: CryptoAmount
+    """The asset that the dust amount represents."""
     rune: CryptoAmount = CryptoAmount.zero(AssetRUNE)
+    """The Rune amount that the dust amount represents. It is used in case of THORChain."""
     cacao: CryptoAmount = CryptoAmount.zero(AssetCACAO)
+    """The Cacao amount that the dust amount represents. It is used in case of MayaProtocol."""
 
 
 class ChainAttributes(NamedTuple):
     """
     ChainAttributes is used to represent some attributes of a blockchain.
-
-    .. py:attribute:: block_reward
-
-                The reward for each block in the blockchain.
-
-    .. py:attribute:: avg_block_time
-
-                The average time in seconds it takes to mine a block in the blockchain.
-
-    .. py:attribute:: dust
-
-                Typically, the smallest amount of an asset that can be used by a protocol.
-
     """
     block_reward: float
+    """The reward for each block in the blockchain."""
+
     avg_block_time: float
+    """The average time in seconds it takes to mine a block in the blockchain."""
+
     dust: DustAmount
+    """Typically, the smallest amount of an asset that can be used by a protocol."""
 
 
-"""
-    AMOUNT_10K_SAT is an Amount object that represents 10,000 satoshis.
-"""
 AMOUNT_10K_SAT = Amount.from_asset(Decimal("0.0001"), DEFAULT_ASSET_DECIMAL)
+"""AMOUNT_10K_SAT is an Amount object that represents 10,000 satoshis."""
 
 """
 DEFAULT_CHAIN_ATTRS is a dictionary that contains the default attributes for each chain supported by THORChain.
@@ -159,16 +141,25 @@ class NetworkType(Enum):
     Enum representing the different networks types supported by THORChain.
     """
     TESTNET = 'testnet'
+    """Testnet network type can be used for some Chain clients but not for THORChain. Try STAGENET instead."""
+
     STAGENET = 'stagenet'
+    """
+        THORChain has introduced a stagenet with real-value tokens to attract more developers so they can test security 
+        features for the platform's new blockchains.
+    """
+
     MAINNET = 'mainnet'
+    """
+        Mainnet is the production network where real transactions are processed.
+    """
 
     DEVNET = 'devnet'
+    """This one is rarely used for some development purposes."""
 
 
-"""
-    Nine Reamls Client Header
-"""
 NINE_REALMS_CLIENT_HEADER = 'x-client-id'
+"""Nine Reamls Client Header"""
 
 """
     XCHAINJS_IDENTIFIER is the identifier for the xchainjs-client. 

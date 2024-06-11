@@ -40,7 +40,7 @@ The class **Amount** is a data class that represents an amount in the XChainPy2 
     For classes **Amount** and **CryptoAmount**, there are available math operations like addition, subtraction, multiplication, and division.
 
 
-.. literalinclude:: ./examples/crypto_amount_arithmetics.py
+.. literalinclude:: ../examples/crypto_amount_arithmetics.py
     :language: python
     :linenos:
 

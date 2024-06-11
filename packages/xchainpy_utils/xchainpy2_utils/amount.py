@@ -35,23 +35,14 @@ DEFAULT_ASSET_DECIMAL = 8
 class Amount(NamedTuple):
     """
     Represents an amount of an asset with a specific denomination and number of decimal places.
-
-    .. py:attribute:: internal_amount
-
-        The amount in base units (no decimal). Always an integer regardless of the denomination.
-
-    .. py:attribute:: decimals
-
-        The number of decimal places for the amount. Default is 8.
-
-    .. py:attribute:: denom
-
-        The denomination of the amount. Default is Denomination.ASSET.
-
     """
+
     internal_amount: int
+    """The amount in base units (no decimal). Always an integer regardless of the denomination."""
     decimals: int = DEFAULT_ASSET_DECIMAL
+    """The number of decimal places for the amount. Default is 8."""
     denom: Denomination = Denomination.ASSET
+    """The denomination of the amount. Default is Denomination.ASSET."""
 
     @property
     def ten_power(self):
@@ -317,18 +308,11 @@ class Amount(NamedTuple):
 class CryptoAmount(NamedTuple):
     """
     Represents an amount of a cryptocurrency asset. Basically a combination of an Amount and an Asset.
-
-    .. py:attribute:: amount
-
-            The amount of the asset with decimals. Amount Object
-
-    .. py:attribute:: asset
-
-            The asset itself. Asset Object
-
     """
     amount: Amount
+    """The amount of the asset with decimals. Amount Object"""
     asset: Asset
+    """The asset itself. Asset Object"""
 
     @classmethod
     def automatic(cls, _amount: Union[Amount, str, int, float], asset: Union[Asset, str], decimals=None):
