@@ -30,6 +30,12 @@ See how easy it is to swap assets using XChainPy2:
 .. literalinclude:: ./examples/amm_swap.py
    :language: python
 
+More examples
+-------------
+
+More examples can be found in the `examples` directory.
+https://github.com/tirinox/xchainpy/tree/main/examples
+
 Modular design
 --------------
 
