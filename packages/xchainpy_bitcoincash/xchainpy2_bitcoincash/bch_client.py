@@ -27,8 +27,7 @@ class BitcoinCashClient(XChainClient):
                  provider_names=DEFAULT_PROVIDER_NAMES,
                  concurrency=5):
         """
-        BitcoinCashClient interface
-        Constructor to create a new Do.
+        BitcoinCashClient is a client for Bitcoin Cash.
 
         :param network: The network type
         :param phrase: The seed phrase
@@ -64,6 +63,14 @@ class BitcoinCashClient(XChainClient):
         self._semaphore = asyncio.Semaphore(concurrency)
 
     def validate_address(self, address: str) -> bool:
+        """
+        Validate the BCH address
+
+        :param address: Address to validate
+        :type address: str
+        :return: True if the address is valid, False otherwise
+        :rtype: bool
+        """
         try:
             Address.from_string(address)
             return True
@@ -71,16 +78,41 @@ class BitcoinCashClient(XChainClient):
             return False
 
     def get_private_key_bitcash(self) -> Union[PrivateKey, PrivateKeyTestnet]:
+        """
+        Get the private key in bitcash format.
+
+        :return: The private key
+        :rtype: Union[PrivateKey, PrivateKeyTestnet]
+        """
         _class = PrivateKeyTestnet if self.network == NetworkType.TESTNET else PrivateKey
         return _class.from_hex(self.get_private_key())
 
     def get_public_key(self) -> bytes:
+        """
+        Get the public key as bytes.
+
+        :return: The public key
+        :rtype: bytes
+        """
         return self.get_private_key_bitcash().public_key
 
     def get_address(self) -> str:
+        """
+        Get the address of the current wallet.
+
+        :return: The address
+        :rtype: str
+        """
         return self.get_private_key_bitcash().address
 
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+        """
+        Get the balance of the wallet. If the address is not provided, the balance of the current wallet is returned.
+
+        :param address: The address (default is the address of the wallet)
+        :return: List of CryptoAmount, typically one element for BCH
+        :rtype: List[CryptoAmount]
+        """
         result = await self._call_service(self.api.get_balance, address or self.get_address())
         return [self.gas_base_amount(result)]
 
@@ -88,7 +120,8 @@ class BitcoinCashClient(XChainClient):
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None) -> TxPage:
         """
-        Get transactions of the wallet
+        Get transactions of the wallet.
+
         :param address: The address (default is the address of the wallet)
         :param offset: The offset (ignored)
         :param limit: The limit (ignored)
@@ -134,6 +167,12 @@ class BitcoinCashClient(XChainClient):
         return memo
 
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
+        """
+        Get transaction details by hash.
+
+        :param tx_id: The transaction hash
+        :return: Optional[XcTx]
+        """
         data = await self._call_service(self.api.get_transaction, tx_id, self._underlying_network)
 
         transfers = []
@@ -179,16 +218,18 @@ class BitcoinCashClient(XChainClient):
 
     async def get_fees(self) -> Fees:
         """
-        Get default fees
-        No API call is performed.
+        Get default fees. No API call is performed.
+
         :return: The fee
         """
+        # fixme: probably we should query some API for the fees
         return DEFAULT_BCH_FEES
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, **kwargs) -> str:
         """
-        Transfer the asset to the recipient address
+        Transfer the asset to the recipient address.
+
         :param what: The amount to transfer
         :param recipient: The recipient address
         :param memo: The memo (optional)
@@ -196,6 +237,11 @@ class BitcoinCashClient(XChainClient):
         :param kwargs: The additional parameters
         :return: The transaction hash
         """
+        if what.asset != self.gas_asset:
+            raise ValueError(f'Asset {what.asset} is not supported')
+
+        # todo: check balance
+
         if fee_rate is None:
             fee_rates = await self.get_fees()
             fee_rate = int(fee_rates.fast)
@@ -216,10 +262,11 @@ class BitcoinCashClient(XChainClient):
 
     async def get_utxos(self, address='') -> List[UTXO]:
         """
-        Get UTXOs of the wallet
-        UTxO is an unspent transaction output
+        Get the unspent transaction outputs (UTXOs) of the address.
+
         :param address: address (default is the address of the wallet)
         :return: list of UTXOs
+        :rtype: List[UTXO]
         """
         address = address or self.get_address()
         raw_data = await self._call_service(self.api.get_unspent, address, self._underlying_network)
