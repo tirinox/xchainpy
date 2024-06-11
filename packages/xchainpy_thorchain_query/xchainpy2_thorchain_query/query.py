@@ -22,9 +22,8 @@ from .swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_out
 
 class THORChainQuery:
     """
-    THORChain Query Class
-
-
+    THORChain Query Class is designed to query THORChain data and provide estimates for transactions.
+    It also supports caching of data through THORChainCache to reduce the number of API calls.
     """
 
     def __init__(self,
@@ -32,6 +31,15 @@ class THORChainQuery:
                  chain_attributes=DEFAULT_CHAIN_ATTRS,
                  interface_id=DEFAULT_INTERFACE_ID,
                  native_decimal=RUNE_DECIMAL):
+        """
+        Initialize THORChain Query.
+
+        :param cache: THORChainCache instance. If not provided, a new instance will be created.
+        :param chain_attributes: Dictionary of chain attributes. Default is DEFAULT_CHAIN_ATTRS.
+        :param interface_id: You need this field to mark your identifier for public APIs, and avoid blocking requests
+        from unknown sources. Default is DEFAULT_INTERFACE_ID.
+        :param native_decimal: Decimal places for the native asset, e.g. RUNE. Default is RUNE_DECIMAL.
+        """
 
         if not cache:
             cache = THORChainCache()
@@ -47,46 +55,70 @@ class THORChainQuery:
     @property
     def native_chain_attributes(self):
         """
+        Returns the chain attributes for the native chain (e.g. THORChain)
 
-        :return:
+        :return: ChainAttributes
         """
         return self.chain_attributes[self.native_asset.chain]
 
     @property
     def native_asset(self):
+        """
+        Returns the native asset (e.g. AssetRUNE or AssetCACAO).
+
+        :return: Asset
+        """
         return self.cache.native_asset
 
     @property
-    def native_block_time(self):
+    def native_block_time(self) -> float:
+        """
+        Returns the average block time for the native chain.
+
+        :return: block time in seconds
+        :rtype: float
+        """
         return self.chain_attributes[Chain(self.native_asset.chain)].avg_block_time
 
     @staticmethod
-    def abbreviate_asset_string(asset: Asset, max_length=5):
+    def abbreviate_asset_string(asset: Asset, max_length=5) -> str:
+        """
+        Helper method to abbreviate an asset string if it is too long.
+
+        :param asset: Asset to abbreviate
+        :param max_length: Maximum length of the asset string, default is 5
+        :return: Abbreviated asset string
+        :rtype: str
+        """
+
         if asset.contract and len(asset.contract) > max_length:
             abbrev = asset.contract[:max_length]
             asset = asset._replace(contract=abbrev)
         return str(asset)
 
     async def close(self):
+        """
+        Close the THORChain Query instance and the cache.
+        """
         await self.cache.close()
 
-    async def get_tx_details(self, txid: str) -> TxSignersResponse:
+    async def get_tx_details(self, tx_id: str) -> TxSignersResponse:
         """
-        Get Tx Details
-        :param txid: Transaction hash (inbound)
+        Get transaction details and status from the protocol API. See TxSignersResponse for more details.
+
+        :param tx_id: Transaction hash (inbound)
         :return: TxSignersResponse
         """
-        return await self.cache.tx_api.tx_signers(txid)
+        return await self.cache.tx_api.tx_signers(tx_id)
 
-    async def get_tx_status(self, txid: str) -> TxStatusResponse:
+    async def get_tx_status(self, tx_id: str) -> TxStatusResponse:
         """
-        Get Tx status and stages
-        :param txid:
+        Get transaction status and stages from the protocol API. See TxStatusResponse for more details.
+
+        :param tx_id: Transaction hash (inbound)
         :return: TxStatusResponse
         """
-        return await self.cache.tx_api.tx_status(txid)
-
-    # ------ old stuff ----
+        return await self.cache.tx_api.tx_status(tx_id)
 
     async def quote_swap(self,
                          input_amount: CryptoAmount,
@@ -101,6 +133,7 @@ class THORChainQuery:
                          ) -> SwapEstimate:
         """
         Quote a swap transaction. This is a read-only method and does not send any transactions.
+
         :param input_amount: CryptoAmount - amount to swap
         :param destination_address: Destination address to receive the swapped asset
         :param destination_asset: Destination asset to swap to
@@ -110,7 +143,8 @@ class THORChainQuery:
         :param streaming_interval: Streaming swap interval in blocks
         :param streaming_quantity: Streaming swap quantity
         :param height: Height to query (optional), 0 for latest
-        :return:
+        :return: Swap estimate
+        :rtype: SwapEstimate
         """
         errors = []
         from_asset = str(input_amount.asset) if isinstance(input_amount.asset, Asset) else input_amount.asset

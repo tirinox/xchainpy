@@ -19,9 +19,15 @@ class QueryError(LookupError):
 
 
 class TotalFees(NamedTuple):
+    """
+    A named tuple representing the total fees for a swap transaction including outbound and affiliate fees.
+    """
     asset: Asset
+    """Destination asset"""
     outbound_fee: CryptoAmount
+    """Outbound transaction fee"""
     affiliate_fee: CryptoAmount
+    """Fee for the affiliate, if any"""
 
 
 class SwapEstimate(NamedTuple):
@@ -29,26 +35,45 @@ class SwapEstimate(NamedTuple):
     A named tuple representing an estimate for a swap transaction.
     """
     total_fees: TotalFees
+    """Total fees that will be charged for the swap"""
     slip_bps: int
+    """Slippage in basis points (0-10000)"""
     net_output: CryptoAmount
+    """Net output amount after fees and slippage"""
     inbound_confirmation_seconds: float
+    """Estimated time in seconds for the inbound transaction to be confirmed"""
     outbound_delay_seconds: float
+    """Estimated time in seconds for the outbound transaction to be delayed"""
     can_swap: bool
+    """Whether the swap can be executed"""
     errors: List[str]
+    """List of errors, if any (in case the swap cannot be executed)"""
     recommended_min_amount_in: int
+    """Recommended minimum amount to send in the swap"""
     streaming_swap_interval: int
+    """Recommended interval for streaming swaps in blocks"""
     details: QuoteSwapResponse
+    """Original details of the swap estimate that was returned by THORChain API"""
 
     @property
     def memo(self):
         return self.details.memo
 
+    memo.__doc__ = QuoteSwapResponse.memo.__doc__
+
     @property
     def notes(self):
         return self.details.notes
 
+    notes.__doc__ = QuoteSwapResponse.notes.__doc__
+
     @property
     def is_less_than_price_limit(self):
+        """
+        Check if the swap is less than the price limit. Does search for the error message in the errors list.
+        :return: True if the swap is less than the price limit, False otherwise
+        :rtype: bool
+        """
         if self.errors:
             return any(
                 'less than price limit' in e for e in self.errors
@@ -57,7 +82,10 @@ class SwapEstimate(NamedTuple):
             return False
 
     @property
-    def streaming_swap_quantity(self) -> int:
+    def streaming_swap_max_quantity(self) -> int:
+        """
+        Get the maximum amount of trades a streaming swap can do for a trade
+        """
         return self.details.max_streaming_quantity
 
 
@@ -519,15 +547,41 @@ class LoanCloseQuote(NamedTuple):
 
 
 class THORNameEstimate(NamedTuple):
+    """
+    A named tuple representing a result of simulating a THORName registration. If successful, the `can_register` field
+    will be `True` and the `cost` field will contain the estimated cost of the registration. If the registration is not
+    possible, the `can_register` field will be `False` and the `reason` field will contain the reason why the
+    registration is not possible.
+    """
     can_register: bool
+    """Whether the registration is possible"""
     reason: str
+    """The reason why the registration is not possible"""
     cost: CryptoAmount
+    """The estimated cost of the registration"""
     details: Optional[THORNameDetails] = None
+    """The details of the registration, if successful"""
     last_block_number: int = 0
+    """The last block number when the estimate was made"""
 
     def expiry_block_from_date(self, expiry: datetime) -> int:
+        """
+        Calculate the block number at which the registration will expire.
+
+        :param expiry: The expiry date of the registration
+        :type expiry: datetime
+        :return: block number at which the registration will expire
+        :rtype: int
+        """
         return (expiry - datetime.now()).total_seconds() / THOR_BLOCK_TIME_SEC + self.last_block_number
 
     @classmethod
     def error(cls, reason: str, last_block_number: int) -> 'THORNameEstimate':
+        """
+        Create a THORNameEstimate instance representing an error.
+
+        :param reason: Reason for the error
+        :param last_block_number: Block number when the estimate was made
+        :return: THORNameEstimate
+        """
         return cls(False, reason, CryptoAmount.zero(Asset.from_string('')), None, last_block_number)

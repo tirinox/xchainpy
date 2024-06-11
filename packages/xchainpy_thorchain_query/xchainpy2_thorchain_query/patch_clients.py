@@ -14,10 +14,25 @@ from xchainpy2_midgard.rest import RESTClientObject
 from xchainpy2_utils import XCHAINPY_IDENTIFIER, NINE_REALMS_CLIENT_HEADER
 
 DEFAULT_RETRY_ATTEMPTS = 3
+"""
+Default number of retry attempts for requests.
+"""
+
 DEFAULT_TIMEOUT = 300
+"""
+Default request timeout in seconds.
+"""
 
 
 class ConfigurationEx(Configuration):
+    """
+    ConfigurationEx object extends Configuration with additional parameters.
+    timeout: request timeout in seconds
+    retry_config: retry configuration (see: https://github.com/inyutin/aiohttp_retry)
+    raise_for_status: if True, raise exceptions for HTTP errors
+    backup_hosts: list of backup hosts to try if the main host fails
+
+    """
     def __init__(self):
         super().__init__()
         self.timeout = DEFAULT_TIMEOUT
@@ -30,6 +45,24 @@ class ConfigurationEx(Configuration):
             ssl_ca_cert=None, cert_file=None, key_file=None, timeout=DEFAULT_TIMEOUT,
             retry_config=ExponentialRetry(attempts=DEFAULT_RETRY_ATTEMPTS), raise_for_status=False,
             backup_hosts=None, verify_ssl=True):
+        """
+        Create a new ConfigurationEx object.
+
+        :param host: The main host URL
+        :param api_key: Optional API key, not used by default in our case
+        :param api_key_prefix: Optional API key prefix, not used by default in our case
+        :param username: Optional username, not used by default in our case
+        :param password: Optional password, not used by default in our case
+        :param ssl_ca_cert: SSL CA certificate if needed
+        :param cert_file: Certificate file if needed
+        :param key_file: Key file if needed
+        :param timeout: Timeout in seconds for requests
+        :param retry_config: Retry configuration (see: https://github.com/inyutin/aiohttp_retry)
+        :param raise_for_status: if True, raise exceptions for HTTP errors
+        :param backup_hosts: An optional list of backup hosts to try if the main host fails
+        :param verify_ssl: Flag to verify SSL certificates, default is True
+        :return:
+        """
         if backup_hosts is None:
             backup_hosts = []
         self = cls()
@@ -100,6 +133,17 @@ logger = logging.getLogger('backup_hosts')
 
 
 async def request_api_with_backup_hosts(api, method, *args, **kwargs):
+    """
+    Request API with backup hosts.
+    It calls the specified method starting from the main host and then tries backup hosts if the main host fails.
+    This is a helper function. You probably don't need to call it directly.
+
+    :param api: API object to use
+    :param method: Method to call
+    :param args: Arguments
+    :param kwargs: Keyword arguments
+    :return:
+    """
     configuration = getattr(api, 'configuration', None)
     if not configuration:
         configuration = api.api_client.configuration
@@ -135,6 +179,10 @@ async def request_api_with_backup_hosts(api, method, *args, **kwargs):
 
 
 class HeadersPatch:
+    """
+    This is a trait class to patch REST clients with additional headers. Such as User-Agent and X-Chain-Client header.
+    You probably don't need to use it directly.
+    """
     def __init__(self):
         self.default_headers = None
 

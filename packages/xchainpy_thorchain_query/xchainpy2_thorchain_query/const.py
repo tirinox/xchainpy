@@ -1,14 +1,29 @@
 from xchainpy2_utils import NetworkType, Asset
 
 DEFAULT_INTERFACE_ID = 'XChainPy2'
+"""
+    Default Interface ID. This is used to identify the client when making requests to the public data provider.
+    If you don't attach an interface ID, the server may reject your request.
+"""
 
 TC_RESERVE_ADDR = 'thor1dheycdevq39qlkxs2a6wuuzyn4aqxhve4qxtxt'
+"""Reserve module's address for THORChain."""
+
 TC_BOND_ADDR = 'thor17gw75axcnr8747pkanye45pnrwk7p9c3cqncsv'
+"""Bond module's address for THORChain."""
+
 TC_POOL_ADDR = 'thor1g98cy3n9mmjrpn0sxmn63lztelera37n8n67c0'
+"""Pool module's address for THORChain."""
+
 TC_STANDBY_RESERVE_ADDR = 'thor1lj62pg6ryxv2htekqx04nv7wd3g98qf9gfvamy'
+"""Standby reserve module's address for THORChain. Burnt."""
 
 
 class Mimir:
+    """
+    This class holds some necessary Mimir constants names for THORChain.
+    """
+
     HALT_TRADING = 'HALTTRADING'
     HALT_CHAIN_GLOBAL = 'HALTCHAINGLOBAL'
     PAUSE_LP = 'PAUSELP'
@@ -21,18 +36,37 @@ class Mimir:
     TNS_FEE_PER_BLOCK = 'TNSFEEPERBLOCK'
 
     @staticmethod
-    def pause_lp(chain):
+    def pause_lp(chain: str):
+        """
+        Returns the Mimir constant name for pausing liquidity provision on a chain.
+
+        :param chain: Name of the chain
+        :type chain: str
+        :return: Mimir constant name
+        :rtype: str
+        """
         return f'PAUSELP{chain.upper()}'
 
     @staticmethod
     def halt_trading(chain):
+        """
+        Returns the Mimir constant name for halting trading on a chain.
+
+        :param chain: Name of the chain
+        :type chain: str
+        :return: Mimir constant name
+        :rtype: str
+        """
         return f'HALT{chain.upper()}TRADING'
 
 
 DEFAULT_EXTRA_ADD_MINUTES = 15
+"""Default extra minutes to add to the current time for the deadline of a transaction."""
 
 SAME_ASSET_EXCHANGE_RATE = 1.0
+
 TEN_MINUTES = 60 * 10
+"""Ten minutes in seconds."""
 
 USD_ASSETS = {
     NetworkType.MAINNET: [
@@ -54,5 +88,7 @@ USD_ASSETS = {
         Asset.from_string('ETH.USDT-0XA3910454BF2CB59B8B3A401589A3BACC5CA42306')
     ]
 }
+"""Popular USD assets for different networks types."""
 
 THORNAME_BLOCKS_ONE_YEAR = 5259600
+"""Number of blocks in one year for THORChain."""

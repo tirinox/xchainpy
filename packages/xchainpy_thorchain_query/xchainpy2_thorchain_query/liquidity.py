@@ -46,8 +46,9 @@ def get_pool_share(unit_data: UnitData, pool: LiquidityPool,
 
 def get_slip_on_liquidity(stake: LPAmount, pool: LiquidityPool) -> Decimal:
     """
-    Get slip percentage when adding liquidity
-    formula: (t * R - T * r)/ (T*r + R*T)
+    Get slip percentage when adding liquidity.
+    Formula: (t * R - T * r)/ (T*r + R*T).
+
     :param stake: the share of asset and rune added to the pool
     :param pool: Pool that the asset is attached to
     :return: returns bignumber representing a slip percentage
@@ -65,7 +66,8 @@ def get_slip_on_liquidity(stake: LPAmount, pool: LiquidityPool) -> Decimal:
 
 def get_pool_ownership(liquidity: LPAmount, pool: LiquidityPool) -> Decimal:
     """
-    Calculate liquidity units - % ownership of pool
+    Calculate liquidity units - % ownership of pool.
+
     See: https://docs.thorchain.org/thorchain-finance/continuous-liquidity-pools#calculating-pool-ownership
     :param liquidity: asset amount added
     :param pool: pool depths

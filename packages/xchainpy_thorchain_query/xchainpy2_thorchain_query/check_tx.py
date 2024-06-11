@@ -9,9 +9,16 @@ from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, remove_0x_prefix
 from .cache import THORChainCache
 
 DEFAULT_POLL_INTERVAL = 5  # sec
+"""
+Default poll interval in seconds for polling transaction status
+"""
 
 
 class TxStatus(Enum):
+    """
+    Transaction status enum
+
+    """
     UNKNOWN = 'unknown'
     OBSERVED = 'observed'
     DONE = 'done'
@@ -21,10 +28,17 @@ class TxStatus(Enum):
 
     @classmethod
     def finished(cls):
+        """
+        Return list of statuses that are considered finished (successful or failed)
+        :return:
+        """
         return cls.DONE, cls.REFUNDED, cls.BELOW_DUST
 
 
 class TxStage(Enum):
+    """
+    Transaction stage enum.
+    """
     Unknown = 'Unknown'
     InboundObserved = 'InboundObserved'
     InboundConfirmationCounted = 'InboundConfirmationCounted'
@@ -35,6 +49,10 @@ class TxStage(Enum):
 
 
 class TxDetails(NamedTuple):
+    """
+    Transaction details, stage and status
+    """
+
     txid: str
     action_type: ActionType
     status: TxStatus
@@ -160,7 +178,7 @@ class TransactionTracker:
 
     def poll(self, txid: str, interval=DEFAULT_POLL_INTERVAL, stage=True, status=True):
         """
-        Poll TX status
+        Poll TX status.
         Usages:
 
         async for details in tracker.poll(txid):
