@@ -13,7 +13,7 @@ from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES, THORNAME_BLOCKS_ONE_YEAR
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity
 from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
-    LiquidityPosition, PositionDepositValue, PoolRatios, EstimateWithdrawLP, \
+    LiquidityPosition, PoolRatios, EstimateWithdrawLP, \
     EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails, LoanOpenQuote, \
     BlockInformation, LoanCloseQuote, THORNameEstimate, WithdrawMode, InboundDetail
 from .swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
@@ -404,7 +404,7 @@ class THORChainQuery:
 
         network_values = await self.cache.get_network_values()
 
-        current_lp = PositionDepositValue(
+        current_lp = LPAmount(
             asset=Amount.from_base(liquidity_provider.asset_deposit_value),
             rune=Amount.from_base(liquidity_provider.rune_deposit_value),
         )
@@ -559,7 +559,6 @@ class THORChainQuery:
             rune_amount=pool_share.rune,
             lp_growth=member_detail.lp_growth,
             estimated_wait_seconds=wait_time_in_sec,
-            impermanent_loss_protection=member_detail.impermanent_loss_protection,
             asset_pool=asset_pool.pool.asset,
             errors=[],
             memo=memo,

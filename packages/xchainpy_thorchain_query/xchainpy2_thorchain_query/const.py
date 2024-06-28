@@ -88,7 +88,10 @@ USD_ASSETS = {
         Asset.from_string('ETH.USDT-0XA3910454BF2CB59B8B3A401589A3BACC5CA42306')
     ]
 }
-"""Popular USD assets for different networks types."""
+"""
+    Stable USD assets for different networks types. The list is based on the pool list from THORChain.
+    Subject to change.
+"""
 
 THORNAME_BLOCKS_ONE_YEAR = 5259600
 """Number of blocks in one year for THORChain."""

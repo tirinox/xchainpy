@@ -7,7 +7,7 @@ from typing import NamedTuple, List, Dict, Optional, Set
 
 from xchainpy2_midgard import PoolDetail, THORNameDetails
 from xchainpy2_thorchain import THOR_BLOCK_TIME_SEC
-from xchainpy2_thornode import Pool, LiquidityProviderSummary, Saver, QuoteFees, LastBlock, QuoteSwapResponse
+from xchainpy2_thornode import Pool, LiquidityProviderSummary, QuoteFees, LastBlock, QuoteSwapResponse
 from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
 
 
@@ -22,6 +22,7 @@ class TotalFees(NamedTuple):
     """
     A named tuple representing the total fees for a swap transaction including outbound and affiliate fees.
     """
+
     asset: Asset
     """Destination asset"""
     outbound_fee: CryptoAmount
@@ -34,6 +35,7 @@ class SwapEstimate(NamedTuple):
     """
     A named tuple representing an estimate for a swap transaction.
     """
+
     total_fees: TotalFees
     """Total fees that will be charged for the swap"""
     slip_bps: int
@@ -90,6 +92,12 @@ class SwapEstimate(NamedTuple):
 
 
 def get_rune_balance_of_node_pool(pool: Pool) -> Amount:
+    """
+    Helper function to get the rune/cacao balance of a pool. Just unification of the rune/cacao balance attribute.
+
+    :param pool: Pool object
+    :return: Amount of rune/cacao in the pool
+    """
     balance = getattr(pool, 'balance_rune', None)
     if balance is None:
         balance = getattr(pool, 'balance_cacao', None)
@@ -97,19 +105,44 @@ def get_rune_balance_of_node_pool(pool: Pool) -> Amount:
 
 
 class LiquidityPool(NamedTuple):
+    """
+    Compound Names Tuple class representing a liquidity pool in THORChain.
+    It includes the pool details taken from the Midgard API and THORNode API
+    """
+
+    # todo: get rid of duplicate fields, make them properties
+
     pool: Optional[PoolDetail]
+    """Pool details from Midgard API"""
     thornode_details: Optional[Pool]
+    """Pool details from THORNode API"""
     asset_balance: Amount
+    """Amount of asset in the pool"""
     rune_balance: Amount
+    """Amount of Rune/Cacao in the pool"""
     asset: Asset
+    """Collateral asset of the pool"""
     asset_string: str
+    """Collateral asset as a string"""
     rune_to_asset_ratio: Decimal
+    """Rune to asset ratio; asset price in Runes"""
     asset_to_rune_ratio: Decimal
+    """Asset to rune ratio; Rune price in asset units"""
 
     AVAILABLE = 'available'
+    """Pool status: available"""
 
     @classmethod
     def from_pool_details(cls, pool: PoolDetail, thornode_details: Pool):
+        """
+        Create a LiquidityPool instance from pool details from Midgard API and THORNode API.
+
+        :param pool: Midgard pool details
+        :param thornode_details: THORNode pool details
+        :return: a new LiquidityPool instance
+        :rtype: LiquidityPool
+        """
+
         ab = Amount.from_base(pool.asset_depth)
         rb = Amount.from_base(pool.rune_depth)
 
@@ -128,6 +161,14 @@ class LiquidityPool(NamedTuple):
 
     @classmethod
     def from_node_pool(cls, thornode_pool: Pool):
+        """
+        Create a LiquidityPool instance from THORNode pool details only.
+
+        :param thornode_pool: THORNode pool details
+        :type thornode_pool: Pool
+        :return: a new LiquidityPool instance
+        :rtype: LiquidityPool
+        """
         rune_balance = get_rune_balance_of_node_pool(thornode_pool)
         asset_balance = Amount.from_base(thornode_pool.balance_asset)
 
@@ -145,22 +186,50 @@ class LiquidityPool(NamedTuple):
         )
 
     def is_available(self) -> bool:
+        """
+        Check if the pool is in available status.
+
+        :return: True if the pool is available, False otherwise
+        :rtype: bool
+        """
         return self.pool.status.lower() == self.AVAILABLE
 
 
 @dataclass
 class PoolCache:
+    """
+    A dataclass representing a cache of liquidity pools.
+    """
+
     last_refreshed: float
+    """Timestamp of the last refresh"""
     pools: Dict[str, LiquidityPool]
+    """Mapping of liquidity pools by pool asset string"""
 
 
 @dataclass
 class NameCache:
+    """
+    A dataclass representing a cache of THORNames.
+    """
+
     address_to_name: Dict[str, Set[str]]
+    """Mapping of addresses to names"""
     name_details: Dict[str, THORNameDetails]
+    """Mapping of names to name details"""
     name_last_refreshed: Dict[str, float]
+    """Timestamp of the last refresh for each name"""
 
     def put(self, name: str, n: Optional[THORNameDetails]):
+        """
+        Put a THORNameDetails object into the cache.
+
+        :param name: Name of the THORName
+        :type name: str
+        :param n: THORNameDetails object, None if the name is to be removed from the cache
+        :type n: Optional[THORNameDetails]
+        :return: None
+        """
         if n is None and name:
             self.name_details.pop(name, None)
             self.name_last_refreshed[name] = time.monotonic()
@@ -174,9 +243,25 @@ class NameCache:
 
     @staticmethod
     def is_expired(n: THORNameDetails, last_block_height: int):
+        """
+        Check if a THORNameDetails object is expired.
+
+        :param n: THORName details
+        :type n: THORNameDetails
+        :param last_block_height: Last block height to compare the expiry with
+        :type last_block_height: int
+        :return: True if the THORNameDetails object is expired, False otherwise
+        :rtype: bool
+        """
         return int(n.expire) < last_block_height
 
     def invalidate(self, block_height: int):
+        """
+        Invalidate expired THORNameDetails at the given block height.
+
+        :param block_height: Block height to compare the expiry with
+        :return: None
+        """
         expired_names = [
             name for name, n in self.name_details.items() if self.is_expired(n, block_height)
         ]
@@ -190,106 +275,210 @@ class NameCache:
 
 @dataclass
 class LastBlockCache:
+    """
+    A dataclass representing a cache of last blocks of THORChain and connected chains.
+    """
+
     last_blocks: List[LastBlock]
+    """List of last blocks"""
     last_refreshed: float
+    """Timestamp of the last refresh"""
 
 
 class InboundDetail(NamedTuple):
+    """
+    A named tuple representing the inbound details for a chain. It includes the chain, Asgard address,
+    router, gas rate and other helpful information.
+    See: https://thornode.ninerealms.com/thorchain/inbound_addresses
+    """
+
     chain: Chain
+    """Chain"""
     address: Address
+    """Address of the vault"""
     router: Optional[Address]
+    """Router address for EVM chains"""
     gas_rate: int
+    """Gas rate"""
     gas_rate_units: str
+    """Gas rate units: gwei, satsperbyte, etc."""
     outbound_tx_size: int
+    """Outbound transaction size"""
     outbound_fee: int
+    """Outbound fee"""
     halted_chain: bool
+    """Whether the chain is halted"""
     halted_trading: bool
+    """Whether trading is halted"""
     halted_lp: bool
+    """Whether liquidity operations is halted"""
     dust_threshold: int
+    """Dust threshold, do not send amounts below this value"""
 
 
 InboundDetails = Dict[str, InboundDetail]
+"""Mapping of chain names to inbound details"""
 
 
 @dataclass
 class InboundDetailCache:
+    """
+    A dataclass representing a cache of inbound details for chains.
+    """
+
     last_refreshed: float
+    """Timestamp of the last refresh"""
     inbound_details: InboundDetails
+    """Mapping of chain names to inbound details"""
 
 
 @dataclass
 class NetworkValuesCache:
+    """
+    A dataclass representing a cache of network values (constants, Mimir) for THORChain.
+    """
+
     last_refreshed: float
+    """Timestamp of the last refresh"""
     network_values: Dict[str, int]
+    """Mapping of network values"""
 
 
 class UnitData(NamedTuple):
+    """
+    A named tuple representing the data of a unit of liquidity.
+    """
     liquidity_units: int
+    """Liquidity units"""
     total_units: int
+    """Total units of pool"""
 
 
 class LPAmount(NamedTuple):
+    """
+    A named tuple representing the amount of liquidity in a pool.
+    """
+
+    # todo: merge with LPAmountTotal
     rune: CryptoAmount
+    """Rune amount"""
     asset: CryptoAmount
+    """Asset amount"""
 
     @classmethod
     def zero(cls, asset: Asset = None) -> 'LPAmount':
+        """
+        Create a zero LPAmount instance.
+
+        :param asset: Asset
+        :return: LPAmount instance
+        :rtype: LPAmount
+        """
         asset = asset or Asset.from_string('')
         return cls(CryptoAmount.zero(asset), CryptoAmount.zero(asset))
 
 
-class PositionDepositValue(NamedTuple):
-    rune: Amount
-    asset: Amount
-
-
 class LPAmountTotal(NamedTuple):
+    """
+    A named tuple representing the total amount of liquidity in a pool.
+    """
+
     rune: CryptoAmount
+    """Rune amount"""
     asset: CryptoAmount
+    """Asset amount"""
     total: CryptoAmount
+    """Total amount in Rune"""
 
     @classmethod
     def zero(cls, asset: Asset = None) -> 'LPAmountTotal':
+        """
+        Create a zero LPAmountTotal instance.
+
+        :param asset: Asset
+        :return:
+        :rtype: LPAmountTotal
+        """
         asset = asset or Asset.from_string('')
         return cls(CryptoAmount.zero(asset), CryptoAmount.zero(asset), CryptoAmount.zero(asset))
 
 
 class EstimateAddLP(NamedTuple):
+    """
+    A named tuple representing an estimate for adding liquidity to a pool.
+    """
+
     asset_pool: str
+    """Pool name"""
     slip_percent: float
+    """Slippage percentage"""
     pool_share: LPAmount
+    """Pool share"""
     lp_units: int
+    """Liquidity units"""
     inbound_fees: LPAmountTotal
+    """Inbound fees"""
     rune_to_asset_ratio: int
+    """Rune to asset ratio"""
     estimated_wait_seconds: int
+    """Estimated wait time in seconds"""
     errors: List[str]
+    """List of errors, if any"""
     can_add: bool
+    """Whether the liquidity can be added"""
     recommended_min_amount_in: int
+    """Recommended minimum amount to send in the transaction"""
 
 
 class WithdrawMode(Enum):
+    """
+    An enumeration representing the mode of withdrawal.
+    """
+
     RuneOnly = 'RuneOnly'
+    """Withdraw only Rune"""
     AssetOnly = 'AssetOnly'
+    """Withdraw only Asset"""
     Symmetric = 'Symmetric'
+    """Both Rune and Asset"""
 
 
 class EstimateWithdrawLP(NamedTuple):
+    """
+    A named tuple representing an estimate for withdrawing liquidity from a pool.
+    """
     can_withdraw: bool
+    """Whether the liquidity can be withdrawn"""
     deposit_amount: CryptoAmount
+    """Deposit amount"""
     asset_address: Optional[str]
+    """Asset address"""
     rune_address: Optional[str]
+    """Rune address"""
     slip_percent: float
+    """Slippage percentage"""
     inbound_fee: LPAmountTotal
+    """Inbound fee"""
     inbound_min_to_send: LPAmountTotal
+    """Minimum amount to send"""
     outbound_fee: LPAmountTotal
+    """Outbound fee"""
     asset_amount: CryptoAmount
+    """Asset amount"""
     rune_amount: CryptoAmount
+    """Rune amount"""
     lp_growth: str
+    """LP growth"""
     estimated_wait_seconds: int
+    """Estimated wait time in seconds"""
     asset_pool: str
+    """Pool name"""
     errors: List[str]
+    """List of errors, if any"""
     memo: str
+    """Memo"""
     inbound_address: str
+    """Inbound address"""
     mode: WithdrawMode
 
     @classmethod
@@ -390,160 +579,213 @@ class SaversPosition(NamedTuple):
 
 
 class SwapOutput(NamedTuple):
+    """
+    A named tuple representing the output of a swap transaction.
+    """
     output: CryptoAmount
+    """Output amount and asset"""
     swap_fee: CryptoAmount
+    """Swap fee amount"""
     slip: Decimal
+    """Slippage 0..1"""
 
 
-class InboundStatus(Enum):
-    Observed_Consensus = 'Observed_Consensus'
-    Observed_Incomplete = 'Observed_Incomplete'
-    Unknown = 'Unknown'
+# class InboundStatus(Enum):
+#     Observed_Consensus = 'Observed_Consensus'
+#     Observed_Incomplete = 'Observed_Incomplete'
+#     Unknown = 'Unknown'
+#
+#
+# class SwapStatus(Enum):
+#     Complete = 'Complete'
+#     Complete_Refunded = 'Complete_Refunded'
+#     Complete_Below_Dust = 'Complete_Below_Dust'
+#     Incomplete = 'Incomplete'
+#
+#
+# class AddLpStatus(Enum):
+#     Complete = 'Complete'
+#     Complete_Refunded = 'Complete_Refunded'
+#     Complete_Below_Dust = 'Complete_Below_Dust'
+#     Incomplete = 'Incomplete'
+#
+#
+# class WithdrawStatus(Enum):
+#     Complete = 'Complete'
+#     Incomplete = 'Incomplete'
+#     Complete_Refunded = 'Complete_Refunded'
+#
+#
+# class RefundStatus(Enum):
+#     Complete = 'Complete'
+#     Incomplete = 'Incomplete'
+#     Complete_Refunded = 'Complete_Refunded'
+#
+#
+# class AddSaverStatus(Enum):
+#     Complete = 'Complete'
+#     Complete_Refunded = 'Complete_Refunded'
+#     Complete_Below_Dust = 'Complete_Below_Dust'
+#     Incomplete = 'Incomplete'
 
 
-class SwapStatus(Enum):
-    Complete = 'Complete'
-    Complete_Refunded = 'Complete_Refunded'
-    Complete_Below_Dust = 'Complete_Below_Dust'
-    Incomplete = 'Incomplete'
+# class SwapInfo(NamedTuple):
+#     status: SwapStatus
+#     to_address: str
+#     minimum_amount_out: CryptoAmount
+#     affliate_fee: CryptoAmount
+#     expected_out_block: int
+#     expected_out_date: datetime
+#     confirmations: int
+#     expected_amount_out: CryptoAmount
+#     actual_amount_out: Optional[CryptoAmount] = None
 
 
-class AddLpStatus(Enum):
-    Complete = 'Complete'
-    Complete_Refunded = 'Complete_Refunded'
-    Complete_Below_Dust = 'Complete_Below_Dust'
-    Incomplete = 'Incomplete'
+# class InboundTx(NamedTuple):
+#     status: InboundStatus
+#     date: datetime
+#     block: int
+#     expected_confirmation_block: int
+#     expected_confirmation_date: datetime
+#     amount: CryptoAmount
+#     from_address: str
+#     memo: str
+#
 
-
-class WithdrawStatus(Enum):
-    Complete = 'Complete'
-    Incomplete = 'Incomplete'
-    Complete_Refunded = 'Complete_Refunded'
-
-
-class RefundStatus(Enum):
-    Complete = 'Complete'
-    Incomplete = 'Incomplete'
-    Complete_Refunded = 'Complete_Refunded'
-
-
-class AddSaverStatus(Enum):
-    Complete = 'Complete'
-    Complete_Refunded = 'Complete_Refunded'
-    Complete_Below_Dust = 'Complete_Below_Dust'
-    Incomplete = 'Incomplete'
-
-
-class SwapInfo(NamedTuple):
-    status: SwapStatus
-    to_address: str
-    minimum_amount_out: CryptoAmount
-    affliate_fee: CryptoAmount
-    expected_out_block: int
-    expected_out_date: datetime
-    confirmations: int
-    expected_amount_out: CryptoAmount
-    actual_amount_out: Optional[CryptoAmount] = None
-
-
-class InboundTx(NamedTuple):
-    status: InboundStatus
-    date: datetime
-    block: int
-    expected_confirmation_block: int
-    expected_confirmation_date: datetime
-    amount: CryptoAmount
-    from_address: str
-    memo: str
-
-
-class AddLpInfo(NamedTuple):
-    status: AddLpStatus
-    is_symmetric: bool
-    asset_tx: Optional[InboundTx] = None
-    rune_tx: Optional[InboundTx] = None
-    asset_confirmation_date: Optional[datetime] = None
-    pool: Asset = None
-
-
-class WithdrawInfo(NamedTuple):
-    status: WithdrawStatus
-    withdrawal_amount: CryptoAmount
-    expected_confirmation_date: datetime
-    thorchain_height: int
-    outbound_height: int
-    estimated_wait_time: int
-
-
-class WithdrawSaverInfo(NamedTuple):
-    status: WithdrawStatus
-    withdrawal_amount: CryptoAmount
-    expected_confirmation_date: datetime
-    thorchain_height: int
-    finalised_height: int
-    outbound_block: int
-    estimated_wait_time: float
-
-
-class RefundInfo(NamedTuple):
-    status: RefundStatus
-    refund_amount: CryptoAmount
-    to_address: str
-    expected_confirmation_date: datetime
-    finalised_height: int
-    thorchain_height: int
-    outbound_block: int
-    estimated_wait_time: int
-
-
-class AddSaverInfo(NamedTuple):
-    status: AddSaverStatus
-    asset_tx: Optional[InboundTx] = None
-    saver_pos: Optional[Saver] = None
+# class AddLpInfo(NamedTuple):
+#     status: AddLpStatus
+#     is_symmetric: bool
+#     asset_tx: Optional[InboundTx] = None
+#     rune_tx: Optional[InboundTx] = None
+#     asset_confirmation_date: Optional[datetime] = None
+#     pool: Asset = None
+#
+#
+# class WithdrawInfo(NamedTuple):
+#     status: WithdrawStatus
+#     withdrawal_amount: CryptoAmount
+#     expected_confirmation_date: datetime
+#     thorchain_height: int
+#     outbound_height: int
+#     estimated_wait_time: int
+#
+#
+# class WithdrawSaverInfo(NamedTuple):
+#     status: WithdrawStatus
+#     withdrawal_amount: CryptoAmount
+#     expected_confirmation_date: datetime
+#     thorchain_height: int
+#     finalised_height: int
+#     outbound_block: int
+#     estimated_wait_time: float
+#
+#
+# class RefundInfo(NamedTuple):
+#     status: RefundStatus
+#     refund_amount: CryptoAmount
+#     to_address: str
+#     expected_confirmation_date: datetime
+#     finalised_height: int
+#     thorchain_height: int
+#     outbound_block: int
+#     estimated_wait_time: int
+#
+#
+# class AddSaverInfo(NamedTuple):
+#     status: AddSaverStatus
+#     asset_tx: Optional[InboundTx] = None
+#     saver_pos: Optional[Saver] = None
 
 
 class BlockInformation(NamedTuple):
+    """
+    A named tuple representing inbound/outbound TX delay in blocks and seconds.
+    """
+
     inbound_confirmation_blocks: int = 0
+    """Inbound confirmation blocks"""
     inbound_confirmation_seconds: float = 0.0
+    """Inbound confirmation seconds"""
     outbound_delay_blocks: int = 0
+    """Outbound delay blocks"""
     outbound_delay_seconds: float = 0.0
+    """Outbound delay seconds"""
 
 
 class LoanOpenQuote(NamedTuple):
+    """
+    A named tuple representing a quote for opening a loan.
+    """
+
     inbound_address: str
+    """Vault's address to send your collateral to"""
     expected_wait_time: BlockInformation
+    """Expected wait time for the transaction to be confirmed"""
     fees: QuoteFees
+    """Fees for the transaction"""
     slippage_bps: int
+    """Slippage in basis points"""
     router: str
+    """Router address (for EVM chains)"""
     expiry: int
+    """Expiry block number"""
     warning: str
+    """Warning message"""
     notes: str
+    """Notes and instructions"""
     dust_threshold: int
+    """Dust threshold"""
     memo: str
+    """Prepared memo for the transaction"""
     expected_amount_out: int
+    """Expected amount out"""
     expected_collateralization_ratio: float
+    """Expected collateralization ratio"""
     expected_collateral_up: int
+    """Expected collateral up"""
     expected_debt_up: int
+    """Expected debt up"""
     errors: List[str]
+    """List of errors, if any"""
     recommended_min_amount_in: int
+    """Recommended minimum amount to send in the transaction"""
 
 
 class LoanCloseQuote(NamedTuple):
+    """
+    A named tuple representing a quote for closing a loan.
+    """
+
     inbound_address: str
+    """Inbound address to repay the loan"""
     expected_wait_time: BlockInformation
+    """Expected wait time for the transaction to be confirmed"""
     fees: QuoteFees
+    """Fees for the transaction"""
     slippage_bps: int
+    """Slippage in basis points"""
     router: str
+    """Router address (for EVM chains)"""
     expiry: int
+    """Expiry block number"""
     warning: str
+    """Warning message"""
     notes: str
+    """Notes and instructions"""
     dust_threshold: int
+    """Dust threshold"""
     memo: str
+    """Prepared memo for the transaction"""
     expected_amount_out: int
+    """Expected amount out"""
     expected_collateral_down: int
+    """Expected collateral down"""
     expected_debt_down: int
+    """Expected debt down"""
     errors: List[str]
+    """List of errors, if any"""
     recommended_min_amount_in: int
+    """Recommended minimum amount to send in the transaction"""
 
 
 class THORNameEstimate(NamedTuple):
