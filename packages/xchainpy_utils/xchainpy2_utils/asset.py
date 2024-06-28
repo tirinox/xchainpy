@@ -1,18 +1,45 @@
+from enum import Enum
 from typing import NamedTuple, Optional, Union
 
 from .chain import Chain
 from .util import XChainProtocol
 
 SYNTH_DELIMITER = '/'
+"""Synth assets use '/' as delimiter (BTC/BTC)"""
+
+TRADE_DELIMITER = '~'
+"""Trade assets use '~' as delimiter (BTC~BTC)"""
+
 NON_SYNTH_DELIMITER = '.'
+"""Native assets use '.' as delimiter (THOR.RUNE, BTC.BTC)"""
 
 
-def get_delimiter(synth: bool):
-    """
-    Get the delimiter based on whether the asset is a synth or not.
-    Native assets use '.' as delimiter (THOR.RUNE) while synth assets use '/' as delimiter (BTC/BTC).
-    """
-    return SYNTH_DELIMITER if synth else NON_SYNTH_DELIMITER
+class AssetKind(Enum):
+    NORMAL = 'normal'
+    SYNTH = 'synth'
+    TRADE = 'trade'
+    DERIVED = 'derived'
+
+    @property
+    def delimiter(self):
+        """
+        Return the delimiter based on the asset kind.
+        """
+        if self == AssetKind.SYNTH:
+            return SYNTH_DELIMITER
+        elif self == AssetKind.TRADE:
+            return TRADE_DELIMITER
+        else:
+            return NON_SYNTH_DELIMITER
+
+    @classmethod
+    def recognize(cls, asset_str: str):
+        if SYNTH_DELIMITER in asset_str:
+            return cls.SYNTH
+        elif TRADE_DELIMITER in asset_str:
+            return cls.TRADE
+        else:
+            return cls.NORMAL
 
 
 class Asset(NamedTuple):
@@ -26,28 +53,87 @@ class Asset(NamedTuple):
     The blockchain identifier. E.g. 'BNB', 'ETH', 'BTC', etc.
     This field has type str. Be careful to not confuse this with the Chain object.
     """
+    # fixme: should we make chain type as Chain enum?
 
     symbol: str
     """The asset symbol. E.g. 'RUNE', 'BTC', 'ETH', etc."""
     contract: str = ''
     """The contract address of the asset. E.g. '0x1234...5678'. Default is empty."""
-    synth: bool = False
-    """Whether the asset is a synth or not. Default is False."""
+    kind: AssetKind = AssetKind.NORMAL
+    """Asset kind. Default is normal (L1 asset). Possible values: normal, synth, trade, derived."""
+
+    @property
+    def is_normal(self):
+        """
+        Check if the asset is a normal (L1) asset.
+        """
+        return self.kind == AssetKind.NORMAL
+
+    @property
+    def chain_enum(self) -> Chain:
+        """
+        Returns chain field in form of Chain enumeration instance
+        :return: Chain
+        """
+        return Chain(self.chain)
+
+    @property
+    def is_synth(self):
+        """
+        Check if the asset is a synth asset.
+        """
+        return self.kind == AssetKind.SYNTH
+
+    @property
+    def synth(self):
+        """
+        Check if the asset is a synth asset. Same as is_synth.
+        It is here for compatibility with the old version of the Asset class.
+        """
+        return self.is_synth
+
+    @property
+    def is_trade(self):
+        """
+        Check if the asset is a trade asset.
+        """
+        return self.kind == AssetKind.TRADE
+
+    @property
+    def is_derived(self):
+        """
+        Check if the asset is a derived asset.
+        :return:
+        """
+        return self.kind == AssetKind.DERIVED
 
     @property
     def is_valid(self):
         """
         Check if the asset is valid. An asset is valid if it has both chain and symbol.
+        If the asset is a derived asset, it must be a THORChain asset.
         """
-        return self.chain and self.symbol
+        if not self.chain or not self.symbol:
+            return False
+
+        if self.is_derived and self.chain != Chain.THORChain.value:
+            return False
+
+        return True
 
     @property
     def delimiter(self):
         """
         Get the delimiter based on whether the asset is a synth or not.
         Synth assets use '/' as delimiter (BTC/BTC) while non-synth (native) assets use '.' as delimiter (THOR.RUNE).
+        Trade assets use '~' as delimiter (BTC~BTC).
         """
-        return SYNTH_DELIMITER if self.synth else NON_SYNTH_DELIMITER
+        if self.is_synth:
+            return SYNTH_DELIMITER
+        elif self.is_trade:
+            return TRADE_DELIMITER
+        else:
+            return NON_SYNTH_DELIMITER  # normal and derived assets
 
     def __str__(self):
         """
@@ -79,7 +165,7 @@ class Asset(NamedTuple):
         """
         Create an Asset object by parsing the input string.
         If the input string is already an Asset object, it will be returned as is.
-        The format of the input string should be CHAIN.SYMBOL-CONTRACT. Synth assets should use '/' as delimiter.
+        The format of the input string should be "CHAIN.SYMBOL-CONTRACT". Synth assets should use '/' as delimiter.
         If you pass a string with only the symbol (e.g. ETH), it will be used as both symbol and ticker: ETH.ETH
         This method does not recognize short codes like 'rune' or 'btc' and does not do any case conversion.
         See Asset.automatic() for that.
@@ -93,16 +179,24 @@ class Asset(NamedTuple):
             raise ValueError(f'Asset string must be a string, not {type(s)}')
 
         s = s.strip()
+        if not s:
+            raise ValueError('Asset string cannot be empty')
 
-        is_synth = SYNTH_DELIMITER in s
-        data = s.split(get_delimiter(is_synth))
+        kind = AssetKind.recognize(s)
+
+        data = s.split(kind.delimiter)
         n = len(data)
         if n == 1:
             if symbol := data[0]:
                 return cls(symbol, symbol)
         elif n == 2:
             name, tag = cls.get_name_and_contract(data[1])
-            return cls(data[0], name, tag, is_synth)
+            chain = data[0]
+
+            if kind is AssetKind.NORMAL and chain.upper() == Chain.THORChain.value:
+                kind = AssetKind.DERIVED
+
+            return cls(chain, name, tag, kind)
 
     @classmethod
     def from_string_exc(cls, s) -> Optional['Asset']:
@@ -138,7 +232,7 @@ class Asset(NamedTuple):
         :return: A native version of the asset.
         """
         # noinspection PyArgumentEqualDefault
-        return self._replace(synth=False)
+        return self._replace(kind=AssetKind.NORMAL)
 
     @property
     def as_synth(self):
@@ -146,13 +240,35 @@ class Asset(NamedTuple):
         Get a synth copy of the asset object. Synth assets use '/' as delimiter (BTC/BTC).
         :return: A synth version of the asset.
         """
-        return self._replace(synth=True)
+        return self._replace(kind=AssetKind.SYNTH)
+
+    @property
+    def as_trade(self):
+        """
+        Get a trade copy of the asset object. Trade assets use '~' as delimiter (BTC~BTC).
+        :return: A trade version of the asset.
+        """
+        return self._replace(kind=AssetKind.TRADE)
+
+    @property
+    def as_derived(self):
+        return self._replace(kind=AssetKind.DERIVED, chain=Chain.THORChain.value)
 
     @property
     def is_rune_native(self):
-        return self.chain == 'THOR' and self.symbol == 'RUNE'
+        """
+        Check if the asset is a native RUNE asset.
+        :return:
+        """
+        return self.chain == Chain.THORChain.value and self.symbol == 'RUNE'
 
     def is_native(self, p: XChainProtocol = XChainProtocol.THORCHAIN):
+        """
+        Check if the asset is a native asset for the specified protocol.
+        :param p: Protocol to check
+        :type p: XChainProtocol
+        :return: bool
+        """
         if p == XChainProtocol.THORCHAIN:
             return self == AssetRUNE
         elif p == XChainProtocol.MAYA:
@@ -220,6 +336,7 @@ AssetRUNE = Asset.from_string('THOR.RUNE')
 AssetATOM = Asset.from_string('GAIA.ATOM')
 AssetCACAO = Asset.from_string('MAYA.CACAO')
 AssetDASH = Asset.from_string('DASH.DASH')
+AssetKUJI = Asset.from_string('KUJI.KUJI')
 
 
 def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
@@ -254,6 +371,9 @@ def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
         return AssetRUNE
     elif chain == Chain.Maya:
         return AssetCACAO
+    elif chain == Chain.Kujira:
+        return AssetKUJI
+
     else:
         raise ValueError(f"Could not get gas asset for {chain} chain")
 
@@ -273,18 +393,46 @@ class CommonAssets:
     Common assets used in the cross-chain environment and their short codes.
     """
     BTC = AssetBTC
+    """Bitcoin asset"""
+
     ETH = AssetETH
+    """Ethereum asset"""
+
     BNB = AssetBNB
+    """Binance Coin asset in the Beacon chain"""
+
     BSC = AssetBSC
+    """Binance Coin asset in the Binance Smart Chain"""
+
     BCH = AssetBCH
+    """Bitcoin Cash asset"""
+
     LTC = AssetLTC
+    """Litecoin asset"""
+
     DOGE = AssetDOGE
+    """Dogecoin asset"""
+
     AVAX = AssetAVAX
+    """Avalanche asset in the Avalanche C-Chain"""
+
     AEth = AssetAEth
+    """Arbitrum Ethereum asset"""
+
     RUNE = AssetRUNE
+    """THORChain asset"""
+
     ATOM = AssetATOM
+    """Cosmos Atom asset"""
+
     CACAO = AssetCACAO
+    """Maya Cacao asset"""
+
     DASH = AssetDASH
+    """Dash asset"""
+
+    KUJI = AssetKUJI
+    """Kujira asset"""
 
     SHORT_CODES = {
         'a': AssetAVAX,

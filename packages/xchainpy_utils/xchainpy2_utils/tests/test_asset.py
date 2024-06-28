@@ -124,3 +124,36 @@ def test_equality():
 ])
 def test_automatic_creating(source, expected):
     assert Asset.automatic(source) == expected
+
+
+def test_trade_asset():
+    a = Asset.automatic('BTC~BTC')
+    assert a.kind == AssetKind.TRADE
+    assert a.is_trade
+    assert not a.is_normal and not a.is_synth
+    assert a.symbol == 'BTC'
+    assert a.chain == 'BTC'
+    assert a.delimiter == TRADE_DELIMITER
+
+    assert str(a) == 'BTC~BTC'
+
+    assert a.as_native == AssetBTC
+    assert a.as_trade == a
+    assert a.as_synth == AssetBTC.as_synth
+
+    a = Asset.automatic('ETH~USDT-0xdac17f958d2ee523a2206206994597c13d831ec7')
+    assert a == Asset('ETH', 'USDT', '0xdac17f958d2ee523a2206206994597c13d831ec7', AssetKind.TRADE)
+    assert a.as_trade and a.is_valid
+
+
+def test_derived_asset():
+    a = Asset.automatic('THOR.BTC')
+    assert a.chain == Chain.THORChain.value
+    assert a.symbol == 'BTC'
+    assert a.kind == AssetKind.DERIVED and a.is_derived
+
+    a = AssetAVAX.as_derived
+    assert a.chain == Chain.THORChain.value
+    assert a.symbol == 'AVAX'
+    assert a.kind == AssetKind.DERIVED and a.is_derived
+    assert str(a) == 'THOR.AVAX'
