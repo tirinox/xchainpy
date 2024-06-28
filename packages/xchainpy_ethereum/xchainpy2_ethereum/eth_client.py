@@ -408,10 +408,13 @@ class EthereumClient(XChainClient):
         timestamp = block['timestamp']
         return timestamp
 
-    async def wait_for_transaction(self, tx_id: str, timeout: int = 120, with_timestamp=False) -> Optional[XcTx]:
+    async def wait_for_transaction(self, tx_id: str, timeout: int = 120, with_timestamp=False, *args,
+                                   **kwargs) -> Optional[XcTx]:
         """
         Wait for a transaction to be mined.
+        This method does not perform polling explicitly. It uses the `web3.wait_for_transaction_receipt` method.
         If the transaction is not mined within the timeout, it will raise a TimeExhausted exception.
+
         :param tx_id: Transaction ID
         :param timeout: Timeout in seconds. Default is 120 seconds
         :param with_timestamp: If True, it will return the timestamp of the block
