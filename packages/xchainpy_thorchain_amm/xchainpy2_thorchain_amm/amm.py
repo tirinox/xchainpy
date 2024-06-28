@@ -19,6 +19,17 @@ class THORChainAMM:
                  dry_run: bool = False,
                  check_balance: bool = True,
                  fee_option: FeeOption = FeeOption.FAST):
+        """
+        THORChain Automated Market Maker (AMM) interface.
+        The AMM interface provides a set of functions to interact with the THORChain protocol.
+
+        :param wallet: Wallet instance is mandatory
+        :param query: THORChainQuery instance (optional)
+        :param dry_run: If True, the transaction will not be submitted to the network, default is False
+        :param check_balance: This flag is used to check the balance before submitting a transaction, default is True
+        :param fee_option: Default fee option to use for transactions, default is FeeOption.FAST
+        """
+
         self.query = query or wallet.query_api or THORChainQuery()
         self.wallet = wallet
         self.dry_run = dry_run
@@ -29,7 +40,7 @@ class THORChainAMM:
 
     def get_track_url(self, tx_id) -> str:
         """
-        Get the URL to track the swap transaction
+        Get the URL to the website to track the transaction.
 
         :param tx_id: Transaction ID
         :return: str URL to track the transaction
@@ -56,8 +67,9 @@ class THORChainAMM:
                       gas_options: Optional[GasOptions] = None) -> str:
         # todo: add an ability to override swap limit
         """
-        Do a swap using the THORChain protocol AMM;
+        Do a swap using the THORChain protocol AMM.
         In case of EVM ERC20-like tokens, it will approve the token and then do the swap.
+        # todo: explain the swap process better
 
         :param input_amount: input amount and asset to swap
         :param destination_asset: output asset to swap to
@@ -103,7 +115,8 @@ class THORChainAMM:
     async def donate(self, amount: CryptoAmount, pool: Union[Asset, str] = '',
                      gas_options: Optional[GasOptions] = None) -> str:
         """
-        Donate some crypto to the pool
+        Donate some crypto to the pool. You can donate Rune or non-Rune assets.
+        Caution! After donating, you will not be able to withdraw the donation! This is irreversible.
 
         :param amount: CryptoAmount to donate
         :param pool: Pool name to donate to; can be empty if you donate non-Rune assets
@@ -141,7 +154,7 @@ class THORChainAMM:
         """
         Add liquidity to a pool on the Rune side.
         Attention: you must also add liquidity to the paired asset side (add_liquidity_asset_side)
-         to complete the liquidity addition! If you don't, your funds will be stuck in the pool.
+        to complete the liquidity addition! If you don't, your funds will be stuck in the pool.
 
         :param amount: Amount of Rune to add
         :param pool: Pool name to add liquidity to
@@ -226,12 +239,14 @@ class THORChainAMM:
         """
         Add liquidity to a pool on the asset side only.
 
-        :param amount: Amount of the asset to add
+        :param amount: CryptoAmount of the asset to add
         :param affiliate_address: Affiliate address to collect affiliate fee (optional)
         :param affiliate_bps: Affiliate fee in basis points (optional; default: 0)
         :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: String TX hash submitted to the network
+        :rtype: str
         """
+
         raise await self.add_liquidity_asset_side(amount, '',
                                                   affiliate_address, affiliate_bps, gas_options)
 
@@ -243,6 +258,9 @@ class THORChainAMM:
                                       gas_options: Optional[GasOptions] = None) -> (str, str):
         """
         Add liquidity to a pool on both sides (Rune and asset) at the same time.
+        This is 2-step operation: first, Rune side, then asset side.
+        Note: liquidity addition is not atomic; if one side fails, the other side will still be added.
+        Note: this method do not guarantee that your addition is symmetric; you need to check it yourself.
 
         :param asset_amount: Amount of the asset to add
         :param rune_amount: Amount of Rune to add
@@ -466,7 +484,7 @@ class THORChainAMM:
                             days: float = 365):
         """
         Register a THORName with a default expiry of one year. By default,
-         chain and chainAddress is getting from wallet instance and is BTC.
+        chain and chainAddress is getting from wallet instance and is BTC.
 
         :param thorname: The THORName to register
         :param chain: The chain associated with the THORName (optional)
