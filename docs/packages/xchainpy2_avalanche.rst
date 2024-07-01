@@ -1,14 +1,11 @@
 XChainPy2 Avalanche client
 ==========================
 
-.. automodule:: xchainpy2_avalanche.avax_client
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. rubric:: Avalanche client
 
-.. rubric:: Constants
+.. automodule:: xchainpy2_avalanche.avax_client
+
+.. rubric:: Avalanche Constants
 
 .. automodule:: xchainpy2_avalanche.const
-    :members:
-    :undoc-members:
-    :show-inheritance:
+
