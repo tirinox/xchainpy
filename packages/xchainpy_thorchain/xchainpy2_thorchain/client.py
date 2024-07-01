@@ -125,7 +125,11 @@ class THORChainClient(CosmosGaiaClient):
                       fee=None,
                       return_full_response=False) -> Union[SubmittedTx, str]:
         """
-        Send deposit transaction
+        Send a deposit transaction. MsgDeposit is a special kind of transaction to invoke THORChain protocol's action
+        like swap or liquidity addition. Note! It is not on ordinary transfer of tokens. It has no destination
+        address.
+        For more info see: https://dev.thorchain.org/concepts/sending-transactions.html?highlight=MsgDeposit#thorchain
+
         :param what: Amount and Asset
         :param second_asset: optional second asset if needed
         :param memo: Memo string (usually a command to the AMM)

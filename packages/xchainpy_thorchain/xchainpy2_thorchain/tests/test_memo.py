@@ -386,13 +386,13 @@ def test_add_liquidity():
 
 
 def test_trade_asset():
-    m = THORMemo.trade_account_deposit(THOR_ADDR_1)
+    m = THORMemo.deposit_trade_account(THOR_ADDR_1)
     assert m.action == ActionType.TRADE_ACC_DEPOSIT
     assert m.dest_address == THOR_ADDR_1
     assert m.build() == f'TRADE+:{THOR_ADDR_1}'
     assert THORMemo.parse_memo(f'TRADE+:{THOR_ADDR_1}') == m
 
-    m = THORMemo.trade_account_withdraw(ETH_ADDR)
+    m = THORMemo.withdraw_trade_account(ETH_ADDR)
     assert m.action == ActionType.TRADE_ACC_WITHDRAW
     assert m.dest_address == ETH_ADDR
     assert m.build() == f'TRADE-:{ETH_ADDR}'

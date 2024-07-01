@@ -266,10 +266,10 @@ class THORMemo:
             return cls.noop(no_vault)
 
         elif tx_type == ActionType.TRADE_ACC_DEPOSIT:
-            return cls.trade_account_deposit(dest_address=ith(components, 1, ''))
+            return cls.deposit_trade_account(dest_address=ith(components, 1, ''))
 
         elif tx_type == ActionType.TRADE_ACC_WITHDRAW:
-            return cls.trade_account_withdraw(dest_address=ith(components, 1, ''))
+            return cls.withdraw_trade_account(dest_address=ith(components, 1, ''))
 
         else:
             # todo: limit order, register memo, etc.
@@ -520,14 +520,14 @@ class THORMemo:
         return cls(ActionType.NOOP, no_vault=no_vault)
 
     @classmethod
-    def trade_account_deposit(cls, dest_address: str):
+    def deposit_trade_account(cls, dest_address: str):
         return cls(
             ActionType.TRADE_ACC_DEPOSIT,
             dest_address=dest_address
         )
 
     @classmethod
-    def trade_account_withdraw(cls, dest_address: str):
+    def withdraw_trade_account(cls, dest_address: str):
         return cls(
             ActionType.TRADE_ACC_WITHDRAW,
             dest_address=dest_address
