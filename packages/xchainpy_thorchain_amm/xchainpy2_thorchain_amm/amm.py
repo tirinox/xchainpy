@@ -55,6 +55,8 @@ class THORChainAMM:
             network=self.query.cache.network.value,
         )
 
+    # ---------------------------- SWAPS ----------------------------
+
     async def do_swap(self,
                       input_amount: CryptoAmount,
                       destination_asset: Union[Asset, str],
@@ -112,6 +114,8 @@ class THORChainAMM:
 
         return await self.general_deposit(input_amount, estimate.details.inbound_address, estimate.memo, gas_options)
 
+    # ---------------------------- LIQUIDITY ----------------------------
+
     async def donate(self, amount: CryptoAmount, pool: Union[Asset, str] = '',
                      gas_options: Optional[GasOptions] = None) -> str:
         """
@@ -125,8 +129,8 @@ class THORChainAMM:
         """
         self._validate_crypto_amount(amount)
 
-        if amount.asset.synth:
-            raise AMMException(f'Donating synth assets is not allowed')
+        if not amount.asset.is_normal:
+            raise AMMException(f'Donating "{amount.asset.kind}" assets is not allowed')
 
         if self.is_thorchain_asset(amount.asset) and not pool:
             raise AMMException(f'Pool name is required for Rune donations')
@@ -275,7 +279,7 @@ class THORChainAMM:
             raise AMMException(f'Client for {asset_chain} not found')
 
         asset_address = asset_client.get_address()
-        rune_address = self._get_thorchain_client().get_address()
+        rune_address = self.default_thor_address
 
         stage1 = await self.add_liquidity_rune_side(rune_amount, '',
                                                     asset_address,
@@ -305,7 +309,7 @@ class THORChainAMM:
 
         rune_address = ''
         if mode == WithdrawMode.RuneOnly or mode == WithdrawMode.Symmetric:
-            rune_address = self._get_thorchain_client().get_address()
+            rune_address = self.default_thor_address
 
         asset_address = ''
         if mode == WithdrawMode.AssetOnly or mode == WithdrawMode.Symmetric:
@@ -325,6 +329,73 @@ class THORChainAMM:
 
         return await self.general_deposit(estimate.deposit_amount, estimate.inbound_address, estimate.memo,
                                           gas_options)
+
+    # ---------------------------- TRADE ACCOUNT ----------------------------
+
+    async def deposit_to_trade_account(self, what: CryptoAmount,
+                                       target_thor_address: str = None,
+                                       gas_options: Optional[GasOptions] = None) -> str:
+        """
+        Deposit assets to the trade account.
+        Trade Accounts provide professional traders (mostly arbitrage bots) a method to execute instant trades on
+        THORChain without involving Layer1 transactions on external blockchains. Trade Accounts create a new type
+        of asset, backed by the network security rather than the liquidity in a pool (Synthetics),
+        or by the RUNE asset (Derived Assets).
+        See: https://dev.thorchain.org/concepts/trade-accounts.html
+
+        :param what: CryptoAmount to deposit (it must be normal L1 asset, not synth, not rune, etc.)
+        :type what: CryptoAmount
+        :param target_thor_address: Target THORChain address that will receive the deposit of the trade asset
+        :type target_thor_address: Optional[str]
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
+        :type gas_options: Optional[GasOptions]
+        :return: str TX hash submitted to the network
+        :rtype str
+        """
+        if not what:
+            raise AMMException('Invalid amount to deposit')
+
+        if not what.asset.is_normal:
+            raise AMMException(f'Invalid asset: {what.asset}! It must be a normal asset.')
+
+        if not target_thor_address:
+            target_thor_address = self.default_thor_address
+
+        memo = THORMemo.deposit_trade_account(target_thor_address)
+        inbound_address = await self._get_inbound_address(what.asset)
+        return await self.general_deposit(what, inbound_address, memo, gas_options)
+
+    async def withdraw_from_trade_account(self, what: CryptoAmount,
+                                          target_l1_address: str = None,
+                                          gas_options: Optional[GasOptions] = None) -> str:
+        """
+        Withdraw assets from the trade account.
+        See: https://dev.thorchain.org/concepts/trade-accounts.html
+
+        :param what:
+        :param target_l1_address:
+        :param gas_options:
+        :return:
+        """
+        if not what:
+            raise AMMException('Invalid amount to withdraw')
+
+        if not what.asset.is_trade:
+            raise AMMException(f'Invalid asset: {what.asset}! It must be a trade asset.')
+
+        chain = Chain(what.asset.chain)
+        if not target_l1_address:
+            cli = self.wallet.get_client(chain)
+            if not cli:
+                raise AMMException(f'Client for {chain} not found')
+            target_l1_address = cli.get_address()
+            if not target_l1_address:
+                raise AMMException(f'Cannot determine address for {chain} client')
+
+        memo = THORMemo.withdraw_trade_account(target_l1_address)
+        return await self.general_deposit(what, '', memo, gas_options)
+
+    # ---------------------------- LOANS ----------------------------
 
     async def open_loan(self,
                         amount: CryptoAmount,
@@ -411,7 +482,7 @@ class THORChainAMM:
     async def general_deposit(self,
                               input_amount: CryptoAmount,
                               to_address: str,
-                              memo: str,
+                              memo: Union[str, THORMemo],
                               gas_options: Optional[GasOptions] = None) -> str:
         """
         General deposit function to deposit assets to a specific inbound address with a memo.
@@ -419,29 +490,35 @@ class THORChainAMM:
         In case of other assets, it will invoke a transfer to the inbound address with the memo.
 
         :param input_amount: Input amount and asset to deposit
-        :param to_address: Inbound address to deposit to
+        :type input_amount: CryptoAmount
+        :param to_address: Inbound address to deposit to. It can be an empty string when depositing native Thor assets.
+        :type to_address: str
         :param memo: Memo to include with the deposit to identify your intent
+        :type memo: str or THORMemo
         :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
+        :type gas_options: Optional[GasOptions]
         :return: str TX hash submitted to the network
         """
         chain = Chain(input_amount.asset.chain)
 
         # noinspection PyTypeChecker
         client = self.wallet.get_client(chain)
-        memo = str(memo)
 
-        # determine the inbound address if not provided
-        if not to_address:
+        is_thor = self.is_thorchain_asset(input_amount.asset)
+        if not is_thor and not to_address:
+            # determine the inbound address if not provided
             to_address = await self._get_inbound_address(input_amount.asset)
 
         if not input_amount.asset.chain or not input_amount.asset.symbol:
             raise AMMException(f'Invalid asset: {input_amount.asset}')
 
-        if self.is_thorchain_asset(input_amount.asset):
+        memo = str(memo)
+
+        if is_thor:
             client: THORChainClient
 
             if self.dry_run:
-                return f'Dry-run: THORChain deposit {input_amount} to {to_address!r} with memo {memo!r}'
+                return f'Dry-run: THORChain deposit {input_amount} with memo {memo!r}'
 
             # invoke a THORChain's MsgDeposit call
             return await client.deposit(input_amount, memo, check_balance=self.check_balance)
@@ -471,11 +548,12 @@ class THORChainAMM:
         # todo: prevent submitting a tx before router is approved
 
         # noinspection PyTypeChecker
-        client: EthereumClient = self.wallet.get_client(input_amount.asset)
-        helper = EVMHelper(client, self.query.cache)
+        helper = self._get_evm_helper(input_amount.asset)
         gas_options = gas_options or GasOptions.automatic(self.fee_option)
         tx_hash = await helper.deposit(input_amount, memo, gas_options, self.evm_expiration_sec)
         return tx_hash
+
+    # ---------------------------- THORNAME ----------------------------
 
     async def register_name(self,
                             thorname: str,
@@ -524,7 +602,7 @@ class THORChainAMM:
             raise THORNameException('Invalid preferred asset')
 
         if not owner:
-            owner = self._get_thorchain_client().get_address()
+            owner = self.default_thor_address
 
         return await self.general_thorname_call(
             CryptoAmount.zero(AssetRUNE),
@@ -548,7 +626,7 @@ class THORChainAMM:
         :return: str TX hash
         """
         if not owner:
-            owner = self._get_thorchain_client().get_address()
+            owner = self.default_thor_address
 
         return await self.general_thorname_call(
             CryptoAmount.zero(AssetRUNE),
@@ -578,7 +656,7 @@ class THORChainAMM:
             raise THORNameException(f'Cannot renew THORName: {estimate.reason}')
 
         if not thor_address:
-            thor_address = self._get_thorchain_client().get_address()
+            thor_address = self.default_thor_address
 
         return await self.general_thorname_call(estimate.cost, thorname, Chain.THORChain, thor_address)
 
@@ -592,7 +670,7 @@ class THORChainAMM:
         :return: str TX hash
         """
         if not chain_address:
-            chain_address = self._get_thorchain_client().get_address()
+            chain_address = self.default_thor_address
 
         if not chain:
             chain = Chain.THORChain
@@ -684,6 +762,17 @@ class THORChainAMM:
 
     # -----------------------------------------
 
+    @property
+    def default_thor_address(self) -> str:
+        """
+        Get the default THORChain address from the wallet.
+        :return: str address
+        """
+        address = self._get_thorchain_client().get_address()
+        if not address:
+            raise AMMException('No default THORChain address!')
+        return address
+
     @staticmethod
     def is_erc20_asset(asset: Asset) -> bool:
         """
@@ -701,7 +790,7 @@ class THORChainAMM:
         :param asset: Asset to check
         :return: bool True if the asset is a THORChain asset
         """
-        return asset.chain == Chain.THORChain.value or asset.synth
+        return asset.chain.upper() == Chain.THORChain.value or asset.is_synth or asset.is_trade
 
     def _get_thorchain_client(self) -> THORChainClient:
         client = self.wallet.get_client(Chain.THORChain)
@@ -748,12 +837,13 @@ class THORChainAMM:
         if input_amount.amount.internal_amount <= 0:
             return f'Invalid input amount: {input_amount.amount}; must be greater than 0'
 
-        if input_amount.asset.synth:
+        if input_amount.asset.is_normal:
             return
 
         if self.is_erc20_asset(input_amount.asset):
-            # todo: validate allowance
-            return 'ERC20 allowance not implemented yet...'
+            helper = self._get_evm_helper(input_amount.asset)
+            if not await helper.is_tc_router_approved_to_spend(input_amount):
+                return f'TC Router is not allowed to spend {input_amount}'
 
     async def _validate_affiliate_address(self, affiliate_address: str) -> bool:
         if affiliate_address:
@@ -799,3 +889,8 @@ class THORChainAMM:
                 raise AMMException(f'LP actions are halted on {asset.chain} chain')
 
             return inbound_chain_details.address
+
+    def _get_evm_helper(self, asset: Asset):
+        # noinspection PyTypeChecker
+        client: EthereumClient = self.wallet.get_client(asset)
+        return EVMHelper(client, self.query.cache)
