@@ -1,15 +1,17 @@
 XChainPy2 Litecoin client
 =========================
 
-.. rubric:: LTC client
+Litecoin client
+---------------
 
 .. automodule:: xchainpy2_litecoin.ltc_client
 
-.. rubric:: Constants
+Litecoin constants
+------------------
 
 .. automodule:: xchainpy2_litecoin.const
 
-.. rubric:: Utils
+Litecoin Utils
+--------------
 
 .. automodule:: xchainpy2_litecoin.utils
-

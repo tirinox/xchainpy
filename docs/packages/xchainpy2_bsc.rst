@@ -1,10 +1,12 @@
 XChainPy2 Binance Smart Chain client
 ====================================
 
-.. rubric:: Smart chain client
+Binance Smart Chain client
+--------------------------
 
-.. automodule:: xchainpy2_bsc.bsc_client.py
+.. automodule:: xchainpy2_bsc.bsc_client
 
-.. rubric:: Constants
+Binance Smart Chain constants
+-----------------------------
 
-.. automodule:: xchainpy2_bsc.consts
+.. automodule:: xchainpy2_bsc.const

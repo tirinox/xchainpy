@@ -1,18 +1,22 @@
 XChainPy2 Ethereum client
 =========================
 
-.. rubric:: ETH client
+Ethereum client
+---------------
 
 .. automodule:: xchainpy2_ethereum.eth_client
 
-.. rubric:: ETH constants
+Ethereum constants
+------------------
 
 .. automodule:: xchainpy2_ethereum.const
 
-.. rubric:: Gas utilities
+Ethereum Gas Management
+-----------------------
 
 .. automodule:: xchainpy2_ethereum.gas
 
-.. rubric:: Other utilities
+Other Ethereum Utils
+--------------------
 
 .. automodule:: xchainpy2_ethereum.utils

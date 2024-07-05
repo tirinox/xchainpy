@@ -1,10 +1,12 @@
 XChainPy2 Dogecoin client
 =========================
 
-.. rubric:: Doge client
+Dogecoin client
+---------------
 
-.. automodule:: xchainpy2_dogecoin.doge_client.py
+.. automodule:: xchainpy2_dogecoin.doge_client
 
-.. rubric:: Constants
+Dogecoin constants
+------------------
 
 .. automodule:: xchainpy2_dogecoin.const

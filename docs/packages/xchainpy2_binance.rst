@@ -9,15 +9,24 @@ This is a Binance Beacon chain client for the XChainPy2 library.
     Please use the new Binance Smart Chain client instead.
 
 
+Binance Beacon Chain client
+---------------------------
+
 .. automodule:: xchainpy2_binance.client
     :members:
     :undoc-members:
     :show-inheritance:
 
+BNB Constants
+-------------
+
 .. automodule:: xchainpy2_binance.const
     :members:
     :undoc-members:
     :show-inheritance:
+
+BNB Utils
+---------
 
 .. automodule:: xchainpy2_binance.utils
     :members:

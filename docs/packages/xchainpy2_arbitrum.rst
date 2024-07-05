@@ -1,10 +1,12 @@
 XChainPy2 Arbitrum client
 =========================
 
-.. rubric:: ARB clients
+Arbitrum client
+---------------
 
 .. automodule:: xchainpy2_arbitrum.arb_client
 
-.. rubric:: Constants
+Arbitrum constants
+------------------
 
 .. automodule:: xchainpy2_arbitrum.consts

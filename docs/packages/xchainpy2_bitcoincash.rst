@@ -1,10 +1,12 @@
 XChainPy2 Bitcoin Cash client
 =============================
 
-.. rubric:: BCH client
+Bitcoin Cash client
+-------------------
 
 .. automodule::  xchainpy2_bitcoincash.bch_client
 
-.. rubric:: BCH constants
+Bitcoin Cash constants
+----------------------
 
 .. automodule::  xchainpy2_bitcoincash.const
