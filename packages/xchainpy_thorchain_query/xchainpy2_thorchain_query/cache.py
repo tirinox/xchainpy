@@ -170,7 +170,7 @@ class THORChainCache:
     async def get_pool_for_asset(self, asset: Asset) -> LiquidityPool:
         """
         Returns the liquidity pool for the given asset.
-        Rune does not have a pool, because it is the collateral for any other asset.
+        Rune/Cacao does not have a pool, because it is the collateral for any other asset for its protocol.
 
         :raises ValueError: if the asset is native
         :raises LookupError: if the pool is not found
@@ -179,6 +179,9 @@ class THORChainCache:
         """
         if self.is_native_asset(asset):
             raise ValueError('Native Rune does not have a pool')
+
+        await self.refresh_pool_cache()
+
         pool = self._pool_cache.pools.get(str(asset))
         if not pool:
             raise LookupError(f'Pool for {asset} not found')
@@ -403,6 +406,12 @@ class THORChainCache:
         return fee1_in_rune + fee2_in_rune
 
     async def get_decimal_for_asset(self, asset: Asset) -> int:
+        """
+        Returns the decimal for the given asset.
+
+        :param asset:
+        :return:
+        """
         if asset == self.native_asset:
             return self.native_decimals
         else:
@@ -466,10 +475,16 @@ class THORChainCache:
             raise QueryError('Could not refresh inbound cache')
 
     async def get_deepest_usd_pool(self) -> LiquidityPool:
+        """
+        Returns the deepest USD pool. The deepest pool is the pool with the most RUNE/CACAO in it.
+
+        :return: LiquidityPool
+        """
         deepest_rune_depth = 0
         deepest_pool = None
         for usd_asset in self.usd_stable_coins:
             usd_pool = await self.get_pool_for_asset(usd_asset)
+            # todo: Maya case (cacao_balance)
             if usd_pool.rune_balance.amount > deepest_rune_depth:
                 deepest_rune_depth = usd_pool.rune_balance.amount
                 deepest_pool = usd_pool
