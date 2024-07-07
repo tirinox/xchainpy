@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+source common.sh
+
 function build() {
   echo "---------------"
   echo "Building $1"
@@ -33,25 +35,7 @@ if [ "$#" -ge 2 ]; then
   # Use the second positional argument as the value for PACKS
   PACKS="../packages/$2"
 else
-  # Use the default value (all packages)
-  PACKS=(../packages/xchainpy_*)
-  echo "No package specified, available packages:"
-  counter=1
-  for i in "${PACKS[@]}"; do
-    echo " $counter) $(basename $i) [$counter]"
-    ((counter++))
-  done
-  echo "Which package do you want to publish (enter the number)?"
-  # ask for the number
-  read -r number
-  # check if the number is valid
-  if [ "$number" -gt "${#PACKS[@]}" ]; then
-    echo "Invalid number"
-    exit 1
-  fi
-  # get the package name
-  PACKS=${PACKS[$number - 1]}
-  echo "Selected package: $PACKS"
+  ask_for_package
 fi
 
 # Case commands

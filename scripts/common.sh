@@ -147,3 +147,36 @@ function set_version() {
   VERSION=$(python get_ver_from_spec.py $SWAGGER_FILE)
   echo "Version: ${VERSION}"
 }
+
+function invalid_number() {
+    echo "Invalid number. Must be greater in range 1-${#PACKS[@]}"
+    exit 1
+}
+
+function ask_for_package() {
+  # Use the default value (all packages)
+  PACKS=(../packages/xchainpy_*)
+  echo "Available packages:"
+  counter=1
+  for i in "${PACKS[@]}"; do
+    echo " $counter) $(basename $i) [$counter]"
+    ((counter++))
+  done
+
+  echo "Which package do you want to select (enter the number)?"
+
+  # ask for the number
+  read -r number
+
+  # check if the number is not a number
+  if ! [[ "$number" =~ ^[0-9]+$ ]]; then
+    invalid_number
+  elif [ "$number" -gt "${#PACKS[@]}" ]; then
+    invalid_number
+  elif [ "$number" -lt 1 ]; then  # check if the number is less than 1
+    invalid_number
+  fi
+  # get the package name
+  PACKS=${PACKS[$number - 1]}
+  echo "Selected package: $PACKS"
+}

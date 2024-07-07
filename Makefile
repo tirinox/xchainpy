@@ -1,4 +1,4 @@
-.PHONY: dev_tools test tc_env build publish_test publish gen_thornode gen_mayanode gen_midgard gen_binance_proto help
+.PHONY: dev_tools test tc_env build publish_test publish gen_thornode gen_mayanode gen_midgard gen_binance_proto help upver
 
 dev_tools:
 	pip install -U pytest pytest-asyncio requests-mock aioresponses
@@ -65,6 +65,9 @@ publish:
 doc:
 	cd docs && make html && open _build/html/index.html
 
+upver:
+	cd scripts && ./upver.sh
+
 help:
 	@echo "dev_tools: Install dev tools"
 	@echo "test: Run tests"
@@ -77,3 +80,4 @@ help:
 	@echo "gen_thornode: Generate thornode client"
 	@echo "gen_mayanode: Generate mayanode client"
 	@echo "gen_midgard: Generate midgard client"
+	@echo "upver: Helper script to raise package version number"
