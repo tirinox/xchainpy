@@ -29,7 +29,7 @@ async def main(seed_phrase):
         tolerance_bps=3000,
     )
 
-    print(f"Swap has been broadcasted. TX hash is {tx_hash}, {wallet.explorer_url_tx(tx_hash)}")
+    print(f"Swap has been broadcast. TX hash is {tx_hash}, {wallet.explorer_url_tx(tx_hash)}")
 
     tracker = amm.tracker()
     async for status in tracker.poll(tx_hash):

@@ -1,5 +1,7 @@
 import os
 
+from xchainpy2_thorchain_query import TxDetails
+
 
 def sep(title='', simple=False):
     if not simple:
@@ -18,3 +20,14 @@ def get_phrase():
 def get_thornode_url():
     thornode = os.environ.get('THORNODE')
     return thornode
+
+
+def thorchain_wait_tx_status(amm, tx_hash):
+    sep()
+    print(f"Swap has been broadcast. TX hash is {tx_hash}, {amm.wallet.explorer_url_tx(tx_hash)}")
+    tracker = amm.tracker()
+    async for status in tracker.poll(tx_hash):
+        status: TxDetails
+        print(f'Status: {status.status}; stage: {status.stage}')
+    print(f"Swap has been completed. TX hash is {tx_hash}, {amm.wallet.explorer_url_tx(tx_hash)}")
+    sep()
