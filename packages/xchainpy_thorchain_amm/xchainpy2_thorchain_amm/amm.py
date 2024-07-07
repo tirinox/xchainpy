@@ -894,3 +894,13 @@ class THORChainAMM:
         # noinspection PyTypeChecker
         client: EthereumClient = self.wallet.get_client(asset)
         return EVMHelper(client, self.query.cache)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
+        return False
+
+    def __enter__(self):
+        raise Exception('Use async with')

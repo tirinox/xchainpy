@@ -65,6 +65,7 @@ class Wallet:
     def _init_evm_helpers(self):
         for chain in EVM_CHAINS:
             if self.is_chain_enabled(chain):
+                # noinspection PyTypeChecker
                 self._evm_helpers[chain] = EVMHelper(self.get_client(chain), self.cache)
 
     def _create_clients(self, phrase):
@@ -75,6 +76,7 @@ class Wallet:
                                   f" 'pip install xchainpy2_{chain.value.lower()}' "
                                   f"or remove it from the enabled chains set in "
                                   f"config(WalletSettings).")
+            # todo add kwargs!
             self.clients[chain] = chain_class(phrase=phrase)
 
     async def get_all_balances(self) -> AllBalances:
