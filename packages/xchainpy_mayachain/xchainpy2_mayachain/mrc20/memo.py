@@ -1,6 +1,6 @@
 from typing import Union
 
-from xchainpy2_mayachain import MRC20_DECIMALS
+from .const import MRC20_DECIMALS
 from xchainpy2_utils import Amount, Asset
 
 
