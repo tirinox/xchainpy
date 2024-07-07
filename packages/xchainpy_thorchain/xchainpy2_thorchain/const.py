@@ -22,7 +22,7 @@ RUNE_TICKER = 'RUNE'
 
 DEFAULT_RUNE_FEE = Amount.from_asset(0.02, RUNE_DECIMAL)
 
-DEFAULT_EXPLORER_URL = 'https://viewblock.io/thorchain{path}{network_tag}'
+DEFAULT_EXPLORER_URL = 'https://https://runescan.io{path}{network_tag}'
 
 THOR_BASIS_POINT_MAX = 10_000
 
