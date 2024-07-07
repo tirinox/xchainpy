@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Thornode API
-  version: 1.132.0
+  version: 1.133.0
   contact:
     email: devs@thorchain.org
   description: Thornode REST API.
@@ -725,7 +725,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TradeAccountResponse'
+                $ref: '#/components/schemas/TradeAccountsResponse'
   /thorchain/trade/accounts/{asset}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -1389,6 +1389,7 @@ components:
       - pending_inbound_rune
       - balance_asset
       - balance_rune
+      - asset_tor_price
       - pool_units
       - LP_units
       - synth_units
@@ -1427,6 +1428,10 @@ components:
         balance_rune:
           type: string
           example: '13460619152985'
+        asset_tor_price:
+          type: string
+          example: '123456'
+          description: the USD (TOR) price of the asset in 1e8
         pool_units:
           type: string
           description: the total pool units, this is the sum of LP and synth units

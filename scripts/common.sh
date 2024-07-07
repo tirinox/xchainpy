@@ -67,7 +67,22 @@ function fix_swagger_spec() {
   read -p "Do you want fix swagger spec to generate complete Python models? (y/n) " yn
   case $yn in
   [yY])
-    python3 fix_swagger_spec.py -i ${SWAGGER_FILE} -o ${SWAGGER_FIXED_FILE}
+    # if package is xchainpy2_thornode then set mode = thor
+    if [ "$PACKAGE_NAME" == "xchainpy2_thornode" ]; then
+      SWAGGER_FIX_MODE="thor"
+    # maya
+    elif [ "$PACKAGE_NAME" == "xchainpy2_maya" ]; then
+      SWAGGER_FIX_MODE="maya"
+    # midgard
+    elif [ "$PACKAGE_NAME" == "xchainpy2_midgard" ]; then
+      SWAGGER_FIX_MODE="midgard"
+    else
+      # raise error
+      echo "Invalid package name ($PACKAGE_NAME). Cannot set SWAGGER_FIX_MODE! Aborting."
+      exit 1
+    fi
+
+    python3 fix_swagger_spec.py -i ${SWAGGER_FILE} -o ${SWAGGER_FIXED_FILE} -m ${SWAGGER_FIX_MODE}
     export SWAGGER_FILE=${SWAGGER_FIXED_FILE}
     return
     ;;

@@ -25,9 +25,13 @@ def parse_args():
     )
     parser.add_argument('-i', '--input', help='Input URL', required=True)
     parser.add_argument('-o', '--output', help='Output file')
+    parser.add_argument('-m', '--mode', help='Script mode: MAYA, THOR', required=True)
     args = parser.parse_args()
     if not args.output:
         args.output = urllib.parse.urlparse(args.input).path.split('/')[-1]
+
+    if args.mode.upper() not in ['MAYA', 'THOR', 'MIDGARD']:
+        raise ValueError('Mode (-m mode) must be either MIDGARD, MAYA or THOR')
 
     print(f'Input: {args.input}')
     print(f'Output: {args.output}')
@@ -79,6 +83,9 @@ def make_ref(ref):
 
 
 def fix_spec(spec):
+    """
+    Fix the spec about array responses
+    """
     paths = spec['paths']
 
     for path, method in paths.items():
@@ -141,6 +148,17 @@ def fix_thor_tx_details_nullable(spec):
     return spec
 
 
+def fix_thor_trade_account_array(spec):
+    """
+    /thorchain/trade/account/{address} should return an array of TradeAccountsResponse (arrau of objects)
+    not just TradeAccountResponse which is a single object
+    """
+    place = drill(spec, ['paths', '/thorchain/trade/account/{address}',
+                         'get', 'responses', 200, 'content', 'application/json'])
+    place['schema'] = {'$ref': '#/components/schemas/TradeAccountsResponse'}
+    return spec
+
+
 def add_readme(spec):
     spec['x-readme-file'] = 'README.md'
     return spec
@@ -154,10 +172,19 @@ async def main():
     pprint(spec, depth=2)
 
     print('Fixing spec...')
+
+    # all modes
     spec = fix_spec(spec)
-    spec = fix_maya_liquidity_providers(spec)
     spec = fix_thor_tx_details_nullable(spec)
     spec = add_readme(spec)
+
+    # specific modes for different protocols
+    if args.mode.upper() == 'MAYA':
+        spec = fix_maya_liquidity_providers(spec)
+    elif args.mode.upper() == 'THOR':
+        spec = fix_thor_trade_account_array(spec)
+    elif args.mode.upper() == 'MIDGARD':
+        pass  # no specific fixes for Midgard yet
 
     with open(args.output, 'w') as f:
         yaml.dump(spec, f, sort_keys=False)
