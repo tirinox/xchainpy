@@ -11,7 +11,7 @@ from xchainpy2_utils import NetworkType, Chain
 from .consts import AssetAETH
 
 
-class ArbitrumChainClient(EthereumClient):
+class ArbitrumClient(EthereumClient):
     def __init__(self,
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
