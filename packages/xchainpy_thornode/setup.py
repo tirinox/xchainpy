@@ -47,5 +47,6 @@ setup(
     install_requires=REQUIRES,
     packages=find_packages(),
     include_package_data=True,
-    long_description=load_description()
+    long_description=load_description(),
+    long_description_content_type="text/markdown",
 )
