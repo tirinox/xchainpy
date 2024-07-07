@@ -2,15 +2,26 @@ from xchainpy2_client import NoClient
 
 # You don't have to install absolutely all clients. You can install only the ones you need.
 # We will try to import all clients and if they are not found, we will use NoClient instead.
-try:
-    from xchainpy2_binance import BinanceChainClient
-except ImportError:
-    BinanceChainClient = NoClient
 
 try:
     from xchainpy2_bitcoin import BitcoinClient
 except ImportError:
     BitcoinClient = NoClient
+
+try:
+    from xchainpy2_litecoin import LitecoinClient
+except ImportError:
+    LitecoinClient = NoClient
+
+try:
+    from xchainpy2_dogecoin import DogecoinClient
+except ImportError:
+    DogecoinClient = NoClient
+
+try:
+    from xchainpy2_bitcoincash import BitcoinCashClient
+except ImportError:
+    BitcoinCashClient = NoClient
 
 try:
     from xchainpy2_cosmos import CosmosGaiaClient
@@ -37,8 +48,17 @@ try:
 except ImportError:
     BinanceSmartChainClient = NoClient
 
-
 try:
     from xchainpy2_avalanche import AvalancheClient
 except:
     AvalancheChainClient = NoClient
+
+try:
+    from xchainpy2_binance import BinanceChainClient
+except ImportError:
+    BinanceChainClient = NoClient
+
+try:
+    from xchainpy2_arbitrum import ArbitrumClient
+except ImportError:
+    ArbitrumClient = NoClient

@@ -4,14 +4,14 @@ from contextlib import suppress
 from typing import Optional, Set, Union
 
 from xchainpy2_client import NoClient, XChainClient
-from xchainpy2_thorchain_query.models import InboundDetail
-
 from xchainpy2_thorchain_query import THORChainQuery, THORChainCache
+from xchainpy2_thorchain_query.models import InboundDetail
 from xchainpy2_utils import Chain, EVM_CHAINS, Asset
-from .models import AllBalances, ChainBalances, ALL
-from .evm_helper import EVMHelper
 from .detect_clients import THORChainClient, CosmosGaiaClient, BinanceSmartChainClient, BinanceChainClient, \
-    MayaChainClient, BitcoinClient, EthereumClient, AvalancheClient
+    MayaChainClient, BitcoinClient, EthereumClient, AvalancheClient, LitecoinClient, DogecoinClient, BitcoinCashClient, \
+    ArbitrumClient
+from .evm_helper import EVMHelper
+from .models import AllBalances, ChainBalances, ALL
 
 
 class Wallet:
@@ -27,9 +27,13 @@ class Wallet:
         Chain.Binance: BinanceChainClient,
         Chain.Maya: MayaChainClient,
         Chain.Bitcoin: BitcoinClient,
+        Chain.BitcoinCash: BitcoinCashClient,
+        Chain.Litecoin: LitecoinClient,
+        Chain.Doge: DogecoinClient,
         Chain.Ethereum: EthereumClient,
         Chain.BinanceSmartChain: BinanceSmartChainClient,
         Chain.Avalanche: AvalancheClient,
+        Chain.Arbitrum: ArbitrumClient,
         # to be continued
     }
     """
@@ -58,7 +62,7 @@ class Wallet:
 
         self.query_api = query_api or THORChainQuery()
 
-        self._enabled_chains = enabled_chains or set(self.CLIENT_CLASSES.keys())
+        self._enabled_chains = set(self.CLIENT_CLASSES.keys()) if enabled_chains is ALL else set(enabled_chains)
 
         self.network = self.cache.network
 
