@@ -7,7 +7,7 @@ Method | HTTP request | Description
 [**trade_account**](TradeAccountApi.md#trade_account) | **GET** /thorchain/trade/account/{address} | 
 
 # **trade_account**
-> TradeAccountResponse trade_account(address, height=height)
+> TradeAccountsResponse trade_account(address, height=height)
 
 
 
@@ -42,7 +42,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**TradeAccountResponse**](TradeAccountResponse.md)
+[**TradeAccountsResponse**](TradeAccountsResponse.md)
 
 ### Authorization
 

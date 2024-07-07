@@ -11,6 +11,7 @@ Name | Type | Description | Notes
 **pending_inbound_rune** | **str** |  | 
 **balance_asset** | **str** |  | 
 **balance_rune** | **str** |  | 
+**asset_tor_price** | **str** | the USD (TOR) price of the asset in 1e8 | 
 **pool_units** | **str** | the total pool units, this is the sum of LP and synth units | 
 **lp_units** | **str** | the total pool liquidity provider units | 
 **synth_units** | **str** | the total synth units in the pool | 
