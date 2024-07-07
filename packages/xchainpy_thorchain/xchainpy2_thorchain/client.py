@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.tx import Transaction
@@ -11,7 +11,7 @@ from xchainpy2_client.fees import single_fee
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
-from xchainpy2_thornode import ApiClient, MimirApi, NetworkApi
+from xchainpy2_thornode import ApiClient, NetworkApi, TradeAccountApi, TradeAccountResponse
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, \
     Asset, SYNTH_DELIMITER
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
@@ -84,6 +84,7 @@ class THORChainClient(CosmosGaiaClient):
         self._deposit_gas_limit = DEPOSIT_GAS_LIMIT_VALUE
         self.standard_tx_fee = DEFAULT_RUNE_FEE
 
+        self.set_network(self.network)  # this will set the prefix and client urls for THORNode client
         self._recreate_client()
         self._make_wallet()
 
@@ -309,3 +310,43 @@ class THORChainClient(CosmosGaiaClient):
             prefix=self.prefix,
         )
         return tx
+
+    async def get_trade_asset_balance(self, address: str = '') -> List[CryptoAmount]:
+        """
+        Get the balance of trade assets of a given address. Trade assets are not listed in the ordinary cosmos/bank.
+        This method calls a special THORChain API endpoint.
+        See: https://dev.thorchain.org/concepts/trade-accounts.html
+
+        :param address: THORChain address, if not specified, the address of the wallet will be used
+        :type address: str
+        :return: List of CryptoAmount
+        :rtype: List[CryptoAmount]
+        """
+        if not address:
+            address = self.get_address()
+
+        api = TradeAccountApi(self.thornode_api_client)
+        result: List[TradeAccountResponse] = await api.trade_account(address)
+
+        return [
+            CryptoAmount(
+                Amount.from_base(trade_acc.units, decimals=self.decimal),
+                Asset.from_string(trade_acc.asset),
+            ) for
+            trade_acc in result
+        ]
+
+    async def get_balance(self, address: str = '', with_trade_accounts=True) -> List[CryptoAmount]:
+        """
+        Get the native balance of a given address.
+        If `with_trade_accounts` is True, the balance will include trade assets, that takes 2 API calls.
+
+        :param address:
+        :param with_trade_accounts: Whether include trade account balance or not
+        :return: List[CryptoAmount]
+        """
+
+        main_balance = await super().get_balance(address)
+        if with_trade_accounts:
+            main_balance += await self.get_trade_asset_balance(address)
+        return main_balance
