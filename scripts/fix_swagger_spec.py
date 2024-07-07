@@ -175,13 +175,13 @@ async def main():
 
     # all modes
     spec = fix_spec(spec)
-    spec = fix_thor_tx_details_nullable(spec)
     spec = add_readme(spec)
 
     # specific modes for different protocols
     if args.mode.upper() == 'MAYA':
         spec = fix_maya_liquidity_providers(spec)
     elif args.mode.upper() == 'THOR':
+        spec = fix_thor_tx_details_nullable(spec)
         spec = fix_thor_trade_account_array(spec)
     elif args.mode.upper() == 'MIDGARD':
         pass  # no specific fixes for Midgard yet

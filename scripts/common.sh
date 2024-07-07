@@ -71,7 +71,7 @@ function fix_swagger_spec() {
     if [ "$PACKAGE_NAME" == "xchainpy2_thornode" ]; then
       SWAGGER_FIX_MODE="thor"
     # maya
-    elif [ "$PACKAGE_NAME" == "xchainpy2_maya" ]; then
+    elif [ "$PACKAGE_NAME" == "xchainpy2_mayanode" ]; then
       SWAGGER_FIX_MODE="maya"
     # midgard
     elif [ "$PACKAGE_NAME" == "xchainpy2_midgard" ]; then
