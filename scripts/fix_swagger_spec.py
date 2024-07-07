@@ -156,6 +156,10 @@ def fix_thor_trade_account_array(spec):
     place = drill(spec, ['paths', '/thorchain/trade/account/{address}',
                          'get', 'responses', 200, 'content', 'application/json'])
     place['schema'] = {'$ref': '#/components/schemas/TradeAccountsResponse'}
+
+    place = drill(spec, ['components', 'schemas', 'TradeAccountsResponse'])
+    place['items'] = {'$ref': '#/components/schemas/TradeAccountResponse'}  # instead of "items: *id021"
+
     return spec
 
 
@@ -174,8 +178,6 @@ async def main():
     print('Fixing spec...')
 
     # all modes
-    spec = fix_spec(spec)
-    spec = add_readme(spec)
 
     # specific modes for different protocols
     if args.mode.upper() == 'MAYA':
@@ -185,6 +187,9 @@ async def main():
         spec = fix_thor_trade_account_array(spec)
     elif args.mode.upper() == 'MIDGARD':
         pass  # no specific fixes for Midgard yet
+
+    spec = fix_spec(spec)
+    spec = add_readme(spec)
 
     with open(args.output, 'w') as f:
         yaml.dump(spec, f, sort_keys=False)

@@ -54,7 +54,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id005
+                items: &id006
                   $ref: '#/components/schemas/Pool'
   /thorchain/slip/{asset}:
     parameters:
@@ -163,7 +163,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id006
+                items: &id007
                   $ref: '#/components/schemas/DerivedPool'
   /thorchain/pool/{asset}/liquidity_provider/{address}:
     parameters:
@@ -198,7 +198,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id007
+                items: &id008
                   $ref: '#/components/schemas/LiquidityProviderSummary'
   /thorchain/pool/{asset}/saver/{address}:
     parameters:
@@ -233,7 +233,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id008
+                items: &id009
                   $ref: '#/components/schemas/Saver'
   /thorchain/pool/{asset}/borrower/{address}:
     parameters:
@@ -268,7 +268,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id009
+                items: &id010
                   $ref: '#/components/schemas/Borrower'
   /thorchain/tx/{hash}:
     parameters:
@@ -382,7 +382,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id011
+                items: &id012
                   $ref: '#/components/schemas/Node'
   /thorchain/vaults/asgard:
     parameters:
@@ -399,7 +399,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id014
+                items: &id015
                   $ref: '#/components/schemas/Vault'
   /thorchain/vaults/yggdrasil:
     parameters:
@@ -416,7 +416,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id013
+                items: &id014
                   $ref: '#/components/schemas/YggdrasilVault'
   /thorchain/vault/{pubkey}:
     parameters:
@@ -529,7 +529,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id015
+                items: &id016
                   $ref: '#/components/schemas/InboundAddress'
   /thorchain/lastblock:
     parameters:
@@ -659,7 +659,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id012
+                items: &id013
                   $ref: '#/components/schemas/StreamingSwap'
   /thorchain/clout/swap/{address}:
     parameters:
@@ -708,7 +708,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id020
+                items: &id021
                   $ref: '#/components/schemas/TradeUnitResponse'
   /thorchain/trade/account/{address}:
     parameters:
@@ -725,7 +725,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TradeAccountsResponse'
+                type: array
+                items: &id004
+                  $ref: '#/components/schemas/TradeAccountResponse'
   /thorchain/trade/accounts/{asset}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -742,8 +744,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id021
-                  $ref: '#/components/schemas/TradeAccountResponse'
+                items: *id004
   /thorchain/queue:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -774,7 +775,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id016
+                items: &id017
                   $ref: '#/components/schemas/MsgSwap'
   /thorchain/queue/scheduled:
     parameters:
@@ -791,7 +792,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id018
+                items: &id019
                   $ref: '#/components/schemas/TxOutItem'
   /thorchain/queue/outbound:
     parameters:
@@ -808,7 +809,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id017
+                items: &id018
                   $ref: '#/components/schemas/TxOutItem'
   /thorchain/keysign/{height}:
     parameters:
@@ -820,7 +821,7 @@ paths:
       operationId: keysign
       tags:
       - TSS
-      responses: &id004
+      responses: &id005
         200:
           description: OK
           content:
@@ -838,7 +839,7 @@ paths:
       operationId: keysignPubkey
       tags:
       - TSS
-      responses: *id004
+      responses: *id005
   /thorchain/keygen/{height}/{pubkey}:
     parameters:
     - $ref: '#/components/parameters/pathHeight'
@@ -887,7 +888,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id019
+                items: &id020
                   $ref: '#/components/schemas/KeygenMetric'
   /thorchain/thorname/{name}:
     parameters:
@@ -2566,7 +2567,7 @@ components:
       $ref: '#/components/schemas/Pool'
     PoolsResponse:
       type: array
-      items: *id005
+      items: *id006
     PoolSlipResponse:
       type: array
       title: PoolSlipResponse
@@ -2575,22 +2576,22 @@ components:
       $ref: '#/components/schemas/DerivedPool'
     DerivedPoolsResponse:
       type: array
-      items: *id006
+      items: *id007
     LiquidityProvidersResponse:
       type: array
-      items: *id007
+      items: *id008
     LiquidityProviderResponse:
       $ref: '#/components/schemas/LiquidityProvider'
     SaverResponse:
       $ref: '#/components/schemas/Saver'
     SaversResponse:
       type: array
-      items: *id008
+      items: *id009
     BorrowerResponse:
       $ref: '#/components/schemas/Borrower'
     BorrowersResponse:
       type: array
-      items: *id009
+      items: *id010
     TxResponse:
       type: object
       properties:
@@ -2613,7 +2614,7 @@ components:
           description: the thorchain height for which the outbound was scheduled
         keysign_metric:
           $ref: '#/components/schemas/TssKeysignMetric'
-    TxDetailsResponse: &id010
+    TxDetailsResponse: &id011
       type: object
       required:
       - tx
@@ -2661,7 +2662,7 @@ components:
           format: int64
           example: 1234
           description: the thorchain height for which the outbound was scheduled
-    TxSignersResponse: *id010
+    TxSignersResponse: *id011
     TxStagesResponse:
       type: object
       required:
@@ -2871,18 +2872,18 @@ components:
       $ref: '#/components/schemas/Node'
     NodesResponse:
       type: array
-      items: *id011
+      items: *id012
     StreamingSwapsResponse:
       type: array
-      items: *id012
+      items: *id013
     StreamingSwapResponse:
       $ref: '#/components/schemas/StreamingSwap'
     YggdrasilVaultsResponse:
       type: array
-      items: *id013
+      items: *id014
     VaultsResponse:
       type: array
-      items: *id014
+      items: *id015
     VaultResponse:
       $ref: '#/components/schemas/Vault'
     VaultPubkeysResponse:
@@ -3026,7 +3027,7 @@ components:
           description: current amount of rune deposited
     InboundAddressesResponse:
       type: array
-      items: *id015
+      items: *id016
     LastBlockResponse:
       type: array
       items: *id003
@@ -3119,13 +3120,13 @@ components:
           description: scheduled outbound clout in RUNE
     SwapQueueResponse:
       type: array
-      items: *id016
+      items: *id017
     OutboundResponse:
       type: array
-      items: *id017
+      items: *id018
     ScheduledResponse:
       type: array
-      items: *id018
+      items: *id019
     KeysignResponse:
       type: object
       required:
@@ -3185,7 +3186,7 @@ components:
           type: string
     KeygenMetricsResponse:
       type: array
-      items: *id019
+      items: *id020
     MetricsResponse:
       type: object
       properties:
@@ -3249,7 +3250,7 @@ components:
           description: total depth of trade asset
     TradeUnitsResponse:
       type: array
-      items: *id020
+      items: *id021
     TradeAccountResponse:
       type: object
       required:
@@ -3278,7 +3279,7 @@ components:
             account
     TradeAccountsResponse:
       type: array
-      items: *id021
+      items: *id004
     MimirResponse:
       type: object
       additionalProperties:
