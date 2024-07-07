@@ -31,7 +31,7 @@ Method | HTTP request | Description
 [**get_tvl_history**](DefaultApi.md#get_tvl_history) | **GET** /v2/history/tvl | Total Value Locked History
 
 # **get_actions**
-> InlineResponse200 get_actions(address=address, txid=txid, asset=asset, type=type, affiliate=affiliate, limit=limit, offset=offset, next_page_token=next_page_token, timestamp=timestamp, height=height, prev_page_token=prev_page_token, from_timestamp=from_timestamp, from_height=from_height)
+> InlineResponse200 get_actions(address=address, txid=txid, asset=asset, type=type, tx_type=tx_type, affiliate=affiliate, limit=limit, offset=offset, next_page_token=next_page_token, timestamp=timestamp, height=height, prev_page_token=prev_page_token, from_timestamp=from_timestamp, from_height=from_height)
 
 Actions List
 
@@ -51,6 +51,7 @@ address = 'address_example' # str | Comma separated list. Address of sender or r
 txid = 'txid_example' # str | ID of any in/out tx related to the action (optional)
 asset = 'asset_example' # str | Comma separated list. Any asset that is part of the action (CHAIN.SYMBOL) Additionally, synth, nosynth, and norune filters can be used for swap, add/withdraw actions.  (optional)
 type = 'type_example' # str | One or more comma separated unique types of action (swap, addLiquidity, withdraw, donate, refund, switch)  (optional)
+tx_type = 'tx_type_example' # str | One or more comma separated transaction type of the action, it's the tx type parsed from memo. For example: Loan is a swap event but it's considered as loan tx type Type of Transactions:  \"unknown\", \"add\", \"withdraw\", \"swap\", \"limitOrder\", \"outbound\", \"donate\", \"bond\", \"unbond\", \"leave\", \"yggdrasilFund\", \"yggdrasilReturn\", \"reserve\", \"refund\", \"migrate\", \"ragnarok\", \"switch\", \"noOp\", \"consolidate\", \"thorname\", \"loanOpen\", \"loanRepayment\"  (optional)
 affiliate = 'affiliate_example' # str | Comma separated list. Affiliate address of the action (swap, refund)  (optional)
 limit = 789 # int | number of actions returned, default is 50 (optional)
 offset = 789 # int | pagination offset, default is 0 (optional)
@@ -63,7 +64,7 @@ from_height = 789 # int | if this is given, the actions newer than the height wi
 
 try:
     # Actions List
-    api_response = api_instance.get_actions(address=address, txid=txid, asset=asset, type=type, affiliate=affiliate, limit=limit, offset=offset, next_page_token=next_page_token, timestamp=timestamp, height=height, prev_page_token=prev_page_token, from_timestamp=from_timestamp, from_height=from_height)
+    api_response = api_instance.get_actions(address=address, txid=txid, asset=asset, type=type, tx_type=tx_type, affiliate=affiliate, limit=limit, offset=offset, next_page_token=next_page_token, timestamp=timestamp, height=height, prev_page_token=prev_page_token, from_timestamp=from_timestamp, from_height=from_height)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_actions: %s\n" % e)
@@ -77,6 +78,7 @@ Name | Type | Description  | Notes
  **txid** | **str**| ID of any in/out tx related to the action | [optional] 
  **asset** | **str**| Comma separated list. Any asset that is part of the action (CHAIN.SYMBOL) Additionally, synth, nosynth, and norune filters can be used for swap, add/withdraw actions.  | [optional] 
  **type** | **str**| One or more comma separated unique types of action (swap, addLiquidity, withdraw, donate, refund, switch)  | [optional] 
+ **tx_type** | **str**| One or more comma separated transaction type of the action, it&#x27;s the tx type parsed from memo. For example: Loan is a swap event but it&#x27;s considered as loan tx type Type of Transactions:  \&quot;unknown\&quot;, \&quot;add\&quot;, \&quot;withdraw\&quot;, \&quot;swap\&quot;, \&quot;limitOrder\&quot;, \&quot;outbound\&quot;, \&quot;donate\&quot;, \&quot;bond\&quot;, \&quot;unbond\&quot;, \&quot;leave\&quot;, \&quot;yggdrasilFund\&quot;, \&quot;yggdrasilReturn\&quot;, \&quot;reserve\&quot;, \&quot;refund\&quot;, \&quot;migrate\&quot;, \&quot;ragnarok\&quot;, \&quot;switch\&quot;, \&quot;noOp\&quot;, \&quot;consolidate\&quot;, \&quot;thorname\&quot;, \&quot;loanOpen\&quot;, \&quot;loanRepayment\&quot;  | [optional] 
  **affiliate** | **str**| Comma separated list. Affiliate address of the action (swap, refund)  | [optional] 
  **limit** | **int**| number of actions returned, default is 50 | [optional] 
  **offset** | **int**| pagination offset, default is 0 | [optional] 
@@ -171,7 +173,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = xchainpy2_midgard.DefaultApi()
-address = 'address_example' # str | Address to match borrower, an asset address is given. Query can also be multiple addresses should be seperated by comma (',') 
+address = 'address_example' # str | Address to match borrower, an asset address is given. Query can also be multiple addresses should be separated by comma (',') 
 
 try:
     # Borrower Details
@@ -185,7 +187,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **address** | **str**| Address to match borrower, an asset address is given. Query can also be multiple addresses should be seperated by comma (&#x27;,&#x27;)  | 
+ **address** | **str**| Address to match borrower, an asset address is given. Query can also be multiple addresses should be separated by comma (&#x27;,&#x27;)  | 
 
 ### Return type
 
@@ -565,7 +567,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = xchainpy2_midgard.DefaultApi()
-address = 'address_example' # str | Address to match liquidity providers. Either a rune or an asset address may be given. Query can also be multiple addresses should be seperated by comma (',') 
+address = 'address_example' # str | Address to match liquidity providers. Either a rune or an asset address may be given. Query can also be multiple addresses should be separated by comma (',') 
 show_savers = false # bool | A flag to show saver vault membership details, the default is false.  (optional) (default to false)
 
 try:
@@ -580,7 +582,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **address** | **str**| Address to match liquidity providers. Either a rune or an asset address may be given. Query can also be multiple addresses should be seperated by comma (&#x27;,&#x27;)  | 
+ **address** | **str**| Address to match liquidity providers. Either a rune or an asset address may be given. Query can also be multiple addresses should be separated by comma (&#x27;,&#x27;)  | 
  **show_savers** | **bool**| A flag to show saver vault membership details, the default is false.  | [optional] [default to false]
 
 ### Return type
@@ -889,7 +891,7 @@ No authorization required
 
 Saver Details
 
-Returns an array of statistics for all the savers associated with a given member address. Query can also be multiple addresses should be seperated by comma (',') 
+Returns an array of statistics for all the savers associated with a given member address. Query can also be multiple addresses should be separated by comma (',') 
 
 ### Example
 ```python

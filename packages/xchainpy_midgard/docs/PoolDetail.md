@@ -18,6 +18,7 @@ Name | Type | Description | Notes
 **savers_apr** | **str** | Float, Annual Return estimated linearly (not compounded) for savers from a period of typically the last 30 or 100 days (configurable by the period parameter, default is 14). E.g. 0.1 means 10% yearly return. If the savers period has not yet been reached, It will show zero instead.  | 
 **savers_depth** | **str** | Int64, Total synth locked in saver vault. | 
 **savers_units** | **str** | Int64, Units tracking savers vault ownership. | 
+**savers_yield_share** | **str** | Float, the proportion of overall yield that is given to savers based on its size  (relative to dual side LPs) and the SynthYieldBasisPoints. E.g. 0.1 means 10% of the yield goes to the savers.  | [optional] 
 **status** | **str** | The state of the pool, e.g. Available, Staged. | 
 **synth_supply** | **str** | Int64, Synth supply in the pool. | 
 **synth_units** | **str** | Int64, Synth Units in the pool. | 

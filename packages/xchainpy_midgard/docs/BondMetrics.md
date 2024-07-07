@@ -10,8 +10,8 @@ Name | Type | Description | Notes
 **maximum_standby_bond** | **str** | Int64(e8), Maximum bond of standby nodes | 
 **median_active_bond** | **str** | Int64(e8), Median bond of active nodes | 
 **median_standby_bond** | **str** | Int64(e8), Median bond of standby nodes | 
-**minimum_active_bond** | **str** | Int64(e8), Minumum bond of active nodes | 
-**minimum_standby_bond** | **str** | Int64(e8), Minumum bond of standby nodes | 
+**minimum_active_bond** | **str** | Int64(e8), Minimum bond of active nodes | 
+**minimum_standby_bond** | **str** | Int64(e8), Minimum bond of standby nodes | 
 **total_active_bond** | **str** | Int64(e8), Total bond of active nodes | 
 **total_standby_bond** | **str** | Int64(e8), Total bond of standby nodes | 
 

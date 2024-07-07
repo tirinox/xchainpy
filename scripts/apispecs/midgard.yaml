@@ -313,10 +313,10 @@ components:
           description: Int64(e8), Median bond of standby nodes
           type: string
         minimumActiveBond:
-          description: Int64(e8), Minumum bond of active nodes
+          description: Int64(e8), Minimum bond of active nodes
           type: string
         minimumStandbyBond:
-          description: Int64(e8), Minumum bond of standby nodes
+          description: Int64(e8), Minimum bond of standby nodes
           type: string
         totalActiveBond:
           description: Int64(e8), Total bond of active nodes
@@ -985,8 +985,12 @@ components:
           $ref: '#/components/schemas/AddLiquidityMetadata'
         refund:
           $ref: '#/components/schemas/RefundMetadata'
+        send:
+          $ref: '#/components/schemas/SendMetadata'
         swap:
           $ref: '#/components/schemas/SwapMetadata'
+        thorname:
+          $ref: '#/components/schemas/ThornameMetadata'
         withdraw:
           $ref: '#/components/schemas/WithdrawMetadata'
       type: object
@@ -1200,6 +1204,11 @@ components:
           type: string
         saversUnits:
           description: Int64, Units tracking savers vault ownership.
+          type: string
+        saversYieldShare:
+          description: "Float, the proportion of overall yield that is given to savers\
+            \ based on its size \n(relative to dual side LPs) and the SynthYieldBasisPoints.\
+            \ E.g. 0.1 means 10% of the yield\ngoes to the savers.\n"
           type: string
         status:
           description: The state of the pool, e.g. Available, Staged.
@@ -1450,12 +1459,22 @@ components:
         reason:
           description: Reason for the refund
           type: string
+        txType:
+          description: "The type of the transaction given from its Memo\nType of Transaction\
+            \ type: \n\"unknown\", \"add\", \"withdraw\", \"swap\", \"limitOrder\"\
+            , \"outbound\", \"donate\",\n\"bond\", \"unbond\", \"leave\", \"yggdrasilFund\"\
+            , \"yggdrasilReturn\", \"reserve\",\n\"refund\", \"migrate\", \"ragnarok\"\
+            , \"switch\", \"noOp\", \"consolidate\", \"thorname\",\n\"loanOpen\",\
+            \ \"loanRepayment\"\n"
+          example: loanOpen
+          type: string
       required:
       - networkFees
       - reason
       - memo
       - affiliateFee
       - affiliateAddress
+      - txType
       type: object
     ReverseTHORNames:
       items: &id006
@@ -1500,7 +1519,7 @@ components:
             the saver pool
           type: string
         pool:
-          description: The Pool rest of the data are refering to (only those pools
+          description: The Pool rest of the data are referring to (only those pools
             can show up which have a corresponding saver pool)
           type: string
         saverUnits:
@@ -1612,6 +1631,17 @@ components:
       - endSaversDepth
       - endUnits
       - endSaversCount
+      type: object
+    SendMetadata:
+      properties:
+        memo:
+          description: Transaction memo of the send action
+          type: string
+        networkFees:
+          $ref: '#/components/schemas/NetworkFees'
+      required:
+      - networkFees
+      - memo
       type: object
     StatsData:
       properties:
@@ -1725,7 +1755,7 @@ components:
             means every block.
           type: string
         lastHeight:
-          description: 'Int64, The last blockheight the final swap happend (not outbound).
+          description: 'Int64, The last blockheight the final swap happened (not outbound).
             This field will be missing until the final swap happens.
 
             '
@@ -1775,6 +1805,31 @@ components:
           type: string
         endTime:
           description: Int64, The end time of bucket in unix timestamp
+          type: string
+        fromTradeAverageSlip:
+          description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
+            slip for swaps
+
+            from asset to trade asset.
+
+            Big swaps have the same weight as small swaps
+
+            '
+          type: string
+        fromTradeCount:
+          description: Int64, count of swaps from trade asset to rune
+          type: string
+        fromTradeFees:
+          description: Int64(e8), the fees collected from swaps from rune to trade
+            asset (in rune)
+          type: string
+        fromTradeVolume:
+          description: Int64(e8), volume of swaps from rune to trade asset denoted
+            in rune
+          type: string
+        fromTradeVolumeUSD:
+          description: Int64(e2), volume of swaps from trade asset to rune denoted
+            in USD price of the rune in each swap
           type: string
         runePriceUSD:
           description: 'Float, the price of Rune based on the deepest USD pool at
@@ -1887,6 +1942,31 @@ components:
           description: Int64(e2), volume of swaps from asset to rune denoted in USD
             price of the rune in each swap
           type: string
+        toTradeAverageSlip:
+          description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
+            slip for swaps
+
+            from rune to trade asset.
+
+            Big swaps have the same weight as small swaps
+
+            '
+          type: string
+        toTradeCount:
+          description: Int64, count of swaps from rune to trade asset
+          type: string
+        toTradeFees:
+          description: Int64(e8), the fees collected from swaps from rune to trade
+            asset (in rune)
+          type: string
+        toTradeVolume:
+          description: Int64(e8), volume of swaps from trade asset to rune denoted
+            in rune
+          type: string
+        toTradeVolumeUSD:
+          description: Int64(e2), volume of swaps from rune to trade asset denoted
+            in USD price of the rune in each swap
+          type: string
         totalCount:
           description: Int64, toAssetCount + toRuneCount + synthMintCount + synthRedeemCount
           type: string
@@ -1914,27 +1994,37 @@ components:
       - endTime
       - toAssetCount
       - toRuneCount
+      - toTradeCount
+      - fromTradeCount
       - synthMintCount
       - synthRedeemCount
       - totalCount
       - toAssetVolume
       - toRuneVolume
+      - toTradeVolume
+      - fromTradeVolume
       - synthMintVolume
       - synthRedeemVolume
       - totalVolume
       - toAssetVolumeUSD
       - toRuneVolumeUSD
+      - toTradeVolumeUSD
+      - fromTradeVolumeUSD
       - synthMintVolumeUSD
       - synthRedeemVolumeUSD
       - totalVolumeUSD
       - toAssetFees
       - toRuneFees
+      - toTradeFees
+      - fromTradeFees
       - synthMintFees
       - synthRedeemFees
       - totalFees
       - toAssetAverageSlip
       - toRuneAverageSlip
       - synthMintAverageSlip
+      - toTradeAverageSlip
+      - fromTradeAverageSlip
       - synthRedeemAverageSlip
       - averageSlip
       - runePriceUSD
@@ -1968,6 +2058,15 @@ components:
         swapTarget:
           description: Int64(e8), minimum output amount specified for the swap
           type: string
+        txType:
+          description: "The type of the transaction given from its Memo.\nType of\
+            \ Transaction: \n\"unknown\", \"add\", \"withdraw\", \"swap\", \"limitOrder\"\
+            , \"outbound\", \"donate\",\n\"bond\", \"unbond\", \"leave\", \"yggdrasilFund\"\
+            , \"yggdrasilReturn\", \"reserve\",\n\"refund\", \"migrate\", \"ragnarok\"\
+            , \"switch\", \"noOp\", \"consolidate\", \"thorname\",\n\"loanOpen\",\
+            \ \"loanRepayment\"\n"
+          example: loanOpen
+          type: string
       required:
       - networkFees
       - liquidityFee
@@ -1977,6 +2076,7 @@ components:
       - affiliateAddress
       - memo
       - isStreamingSwap
+      - txType
       type: object
     THORNameDetails:
       properties:
@@ -2077,6 +2177,47 @@ components:
       - runePriceUSD
       - poolsDepth
       type: object
+    ThornameMetadata:
+      properties:
+        address:
+          description: The CHAIN address thorname has been registered to.
+          type: string
+        chain:
+          description: The thorname's chain.
+          type: string
+        expire:
+          description: Int64, THORChain block height in which THORName expires.
+          type: string
+        fundAmount:
+          description: Int64, the amount of funding for the THORName registration.
+          type: string
+        memo:
+          description: Transaction memo of thorname deposit message.
+          type: string
+        owner:
+          description: owner's THOR address.
+          example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+          type: string
+        registrationFee:
+          description: Int64, the registration fee paid.
+          type: string
+        thorname:
+          description: The thorname registered to the address.
+          type: string
+        txType:
+          description: The type of the transaction given from its Memo.
+          type: string
+      required:
+      - memo
+      - thorname
+      - address
+      - owner
+      - expire
+      - chain
+      - fundAmount
+      - registrationFee
+      - txType
+      type: object
     Transaction:
       description: Transaction data
       properties:
@@ -2106,10 +2247,10 @@ components:
     WithdrawMetadata:
       properties:
         asymmetry:
-          description: 'Decimal (-1.0 <=> 1.0), indicates how assymetrical the withdrawal
+          description: 'Decimal (-1.0 <=> 1.0), indicates how asymmetrical the withdrawal
             was. 0 means
 
-            totally symetrical
+            totally symmetrical
 
             '
           type: string
@@ -2122,7 +2263,7 @@ components:
             '
           type: string
         impermanentLossProtection:
-          description: Int64, additional Rune payed out because of impermanent loss
+          description: Int64, additional Rune paid out because of impermanent loss
             protection
           type: string
         liquidityUnits:
@@ -2154,7 +2295,7 @@ info:
     \ does not hold critical information. To interact with THORChain protocol, users\
     \ should query THORNode directly."
   title: Midgard Public API
-  version: 2.20.1
+  version: 2.22.4
 openapi: 3.0.0
 paths:
   /v2/actions:
@@ -2216,6 +2357,18 @@ paths:
         example: swap,addLiquidity
         in: query
         name: type
+        schema:
+          type: string
+      - description: "One or more comma separated transaction type of the action,\
+          \ it's the tx type parsed\nfrom memo. For example: Loan is a swap event\
+          \ but it's considered as loan tx type\nType of Transactions: \n\"unknown\"\
+          , \"add\", \"withdraw\", \"swap\", \"limitOrder\", \"outbound\", \"donate\"\
+          ,\n\"bond\", \"unbond\", \"leave\", \"yggdrasilFund\", \"yggdrasilReturn\"\
+          , \"reserve\",\n\"refund\", \"migrate\", \"ragnarok\", \"switch\", \"noOp\"\
+          , \"consolidate\", \"thorname\",\n\"loanOpen\", \"loanRepayment\"\n"
+        example: loanOpen,loanRepayment
+        in: query
+        name: txType
         schema:
           type: string
       - description: 'Comma separated list. Affiliate address of the action (swap,
@@ -2351,7 +2504,7 @@ paths:
       parameters:
       - description: 'Address to match borrower, an asset address is given.
 
-          Query can also be multiple addresses should be seperated by comma ('','')
+          Query can also be multiple addresses should be separated by comma ('','')
 
           '
         example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m,bc1qcxssye4j6730h7ehgega3gyykkuwgdgmmpu62n
@@ -2877,7 +3030,7 @@ paths:
       - description: 'Address to match liquidity providers. Either a rune or an asset
           address may be given.
 
-          Query can also be multiple addresses should be seperated by comma ('','')
+          Query can also be multiple addresses should be separated by comma ('','')
 
           '
         example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m,bc1qcxssye4j6730h7ehgega3gyykkuwgdgmmpu62n
@@ -3087,7 +3240,7 @@ paths:
 
         member address.
 
-        Query can also be multiple addresses should be seperated by comma ('','')
+        Query can also be multiple addresses should be separated by comma ('','')
 
         '
       operationId: GetSaverDetail

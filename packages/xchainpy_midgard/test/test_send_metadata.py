@@ -15,12 +15,12 @@ from __future__ import absolute_import
 import unittest
 
 import xchainpy2_midgard
-from xchainpy2_midgard.models.tvl_history import TVLHistory  # noqa: E501
+from xchainpy2_midgard.models.send_metadata import SendMetadata  # noqa: E501
 from xchainpy2_midgard.rest import ApiException
 
 
-class TestTVLHistory(unittest.TestCase):
-    """TVLHistory unit test stubs"""
+class TestSendMetadata(unittest.TestCase):
+    """SendMetadata unit test stubs"""
 
     def setUp(self):
         pass
@@ -28,10 +28,10 @@ class TestTVLHistory(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def testTVLHistory(self):
-        """Test TVLHistory"""
+    def testSendMetadata(self):
+        """Test SendMetadata"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = xchainpy2_midgard.models.tvl_history.TVLHistory()  # noqa: E501
+        # model = xchainpy2_midgard.models.send_metadata.SendMetadata()  # noqa: E501
         pass
 
 
