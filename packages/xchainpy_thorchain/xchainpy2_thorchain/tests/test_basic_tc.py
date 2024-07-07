@@ -102,6 +102,7 @@ def test_maya_get_denom(client, asset, denom):
     ('cacao', None),
     ('rune', AssetRUNE),
     ('eth/eth', AssetETH.as_synth),
+    ('eth~eth', AssetETH.as_trade),
 ])
 def test_maya_parse_denom_to_asset(client, denom, asset):
     assert client.parse_denom_to_asset(denom) == asset

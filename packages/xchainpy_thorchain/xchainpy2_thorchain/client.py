@@ -13,7 +13,7 @@ from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
 from xchainpy2_thornode import ApiClient, NetworkApi, TradeAccountApi, TradeAccountResponse
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, \
-    Asset, SYNTH_DELIMITER
+    Asset, AssetKind
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_RUNE_FEE, \
     make_client_urls_from_ip_address
@@ -25,6 +25,7 @@ class THORChainClient(CosmosGaiaClient):
     def from_node_ip(cls, ip: str):
         """
         Initialize THORChainClient from node IP address.
+
         :param ip: IP address of the node
         :return: THORChainClient
         """
@@ -44,6 +45,7 @@ class THORChainClient(CosmosGaiaClient):
                  ):
         """
         Initialize THORChainClient.
+
         :param network: Network type. Default is `NetworkType.MAINNET`
         :param phrase: Mnemonic phrase
         :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
@@ -89,9 +91,17 @@ class THORChainClient(CosmosGaiaClient):
         self._make_wallet()
 
     async def close(self):
+        """
+        Close the client.
+        """
         await self.thornode_api_client.rest_client.pool_manager.close()
 
     def set_network(self, network: NetworkType):
+        """
+        Set network type for THORChainClient.
+
+        :param network: new network type
+        """
         super().set_network(network)
         self._prefix = get_thor_address_prefix(network)
         self.thornode_api_client.configuration.host = self._client_urls[self.network].node
@@ -100,13 +110,29 @@ class THORChainClient(CosmosGaiaClient):
 
     @property
     def server_url(self) -> str:
+        """
+        Get THORNode URL.
+
+        :return: str
+        """
         return self._client_urls[self.network].node
 
     @property
     def rpc_url(self) -> str:
+        """
+        Get RPC URL for THORChain.
+
+        :return: str
+        """
         return self._client_urls[self.network].rpc
 
     def validate_address(self, address: str) -> bool:
+        """
+        Validate THORChain address.
+
+        :param address: Address to validate
+        :return: bool
+        """
         if not super().validate_address(address):
             return False
         try:
@@ -280,6 +306,11 @@ class THORChainClient(CosmosGaiaClient):
             return await self.get_transaction_data_thornode(tx_id)
 
     async def get_fees(self) -> Fees:
+        """
+        Get THORChain interaction fees from THORNode API.
+
+        :return: Fees object
+        """
         network_api = NetworkApi(self.thornode_api_client)
         network_params = await network_api.network()
 
@@ -290,19 +321,42 @@ class THORChainClient(CosmosGaiaClient):
         return single_fee(FeeType.FLAT_FEE, Amount.from_base(fee, self._decimal))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
-        if SYNTH_DELIMITER in denom:
-            # special case for synths
+        """
+        Parse denomination to Asset. RUNE is a special case (just 'rune')
+
+        :param denom: Cosmos coin denomination string
+        :return: Asset
+        """
+        kind = AssetKind.recognize(denom)
+        if kind in (AssetKind.SYNTH, AssetKind.TRADE):
+            # convert to uppercase and then convert to Asset
             return Asset.from_string(denom.upper())
         elif denom == DENOM_RUNE_NATIVE:
             return AssetRUNE
 
     def get_denom(self, asset: Asset) -> str:
+        """
+        Get the denomination of the asset. RUNE is a special case. Other native assets (like synths and trade assets)
+        are lowercase.
+
+        :param asset: Asset to get the denomination for
+        :return: str
+        """
         if asset == AssetRUNE:
             return DENOM_RUNE_NATIVE
         else:
             return str(asset).lower()
 
     def build_transfer_tx(self, what: CryptoAmount, recipient: str) -> Transaction:
+        """
+        Build a transfer transaction of THORChain native asset.
+
+        :param what: What to transfer
+        :type what: CryptoAmount
+        :param recipient: THORChain address of the recipient
+        :type recipient: str
+        :return: Transaction
+        """
         tx = build_transfer_tx_draft(
             what, denom=self.get_denom(what.asset),
             sender=str(self._wallet.address()),
