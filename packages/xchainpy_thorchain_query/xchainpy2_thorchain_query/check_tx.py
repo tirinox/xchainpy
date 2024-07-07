@@ -17,8 +17,8 @@ Default poll interval in seconds for polling transaction status
 class TxStatus(Enum):
     """
     Transaction status enum
-
     """
+
     UNKNOWN = 'unknown'
     OBSERVED = 'observed'
     DONE = 'done'
@@ -151,6 +151,23 @@ class TxDetails(NamedTuple):
     def has_out_txs(self):
         return bool(self.status_details.out_txs)
 
+    @classmethod
+    def dry_run_success(cls, tx_hash: str):
+        """
+        Create TxDetails that represents successful dry-run transaction
+
+        :param tx_hash: TX hash string
+        :return: TxDetails
+        """
+        # noinspection PyTypeChecker
+        return cls(
+            tx_hash,
+            ActionType.UNKNOWN,
+            TxStatus.DONE,
+            TxStage.Unknown,
+            None, None
+        )
+
 
 class TransactionTracker:
     def __init__(self, cache: THORChainCache, chain_attributes=DEFAULT_CHAIN_ATTRS):
@@ -158,6 +175,12 @@ class TransactionTracker:
         self.chain_attributes = chain_attributes
 
     async def check_tx_progress(self, inbound_tx_hash: str) -> TxDetails:
+        if not isinstance(inbound_tx_hash, str):
+            raise ValueError('inbound_tx_hash should be a string')
+
+        if 'dry-run' in inbound_tx_hash.lower():
+            return TxDetails.dry_run_success(inbound_tx_hash)
+
         if len(inbound_tx_hash) <= 10:
             raise ValueError('inbound_tx_hash is too short')
         try:
