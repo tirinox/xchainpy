@@ -158,10 +158,22 @@ function ask_for_package() {
   PACKS=(../packages/xchainpy_*)
   echo "Available packages:"
   counter=1
+  column=1
   for i in "${PACKS[@]}"; do
-    echo " $counter) $(basename $i) [$counter]"
+    if (( column == 1 )); then
+      printf "%-40s" "$counter) $(basename $i)"
+      column=2
+    else
+      printf "%-40s\n" "$counter) $(basename $i)"
+      column=1
+    fi
     ((counter++))
   done
+
+  # Print a newline if the last line has only one column
+  if (( column == 2 )); then
+    echo
+  fi
 
   echo "Which package do you want to select (enter the number)?"
 
@@ -176,6 +188,7 @@ function ask_for_package() {
   elif [ "$number" -lt 1 ]; then  # check if the number is less than 1
     invalid_number
   fi
+
   # get the package name
   PACKS=${PACKS[$number - 1]}
   echo "Selected package: $PACKS"
