@@ -8,3 +8,4 @@ from .util import *
 from .dates import *
 from .decimals import *
 from .chain import *
+from .type_hint import *
