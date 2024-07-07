@@ -22,7 +22,7 @@ def get_thornode_url():
     return thornode
 
 
-def thorchain_wait_tx_status(amm, tx_hash):
+async def thorchain_wait_tx_status(amm, tx_hash):
     sep()
     print(f"Swap has been broadcast. TX hash is {tx_hash}, {amm.wallet.explorer_url_tx(tx_hash)}")
     tracker = amm.tracker()
