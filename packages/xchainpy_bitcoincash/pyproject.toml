@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xchainpy2_bitcoincash"
-version = "0.0.5"
+version = "0.0.6"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
-description = "XChainPy2 Bitcoin Cache Chain Client"
+description = "XChainPy2 Bitcoin Cash Chain Client"
 readme = "README.md"
 requires-python = ">=3.7"
 keywords = ["Crypto", "BCH", "Bitcoin cash", "Blockchain", "XChain"]
