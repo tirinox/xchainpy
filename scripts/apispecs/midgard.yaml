@@ -2295,7 +2295,7 @@ info:
     \ does not hold critical information. To interact with THORChain protocol, users\
     \ should query THORNode directly."
   title: Midgard Public API
-  version: 2.22.4
+  version: 2.23.2
 openapi: 3.0.0
 paths:
   /v2/actions:
