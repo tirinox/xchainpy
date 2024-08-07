@@ -32,6 +32,10 @@ class ActionType(Enum):
     # Prospective
     LIMIT_ORDER = 'limit_order'
 
+    # RunePool
+    RUNEPOOL_ADD = 'pool+'
+    RUNEPOOL_WITHDRAW = 'pool-'
+
     # Outbounds
     REFUND = 'refund'
     OUTBOUND = 'out'
@@ -75,6 +79,8 @@ MEMO_ACTION_TABLE = {
     "loan-": ActionType.LOAN_CLOSE,
     "trade+": ActionType.TRADE_ACC_DEPOSIT,
     "trade-": ActionType.TRADE_ACC_WITHDRAW,
+    "pool+": ActionType.RUNEPOOL_ADD,
+    "pool-": ActionType.RUNEPOOL_WITHDRAW,
     # "migrate": TxMigrate,
     # "ragnarok": TxRagnarok,
     # "consolidate": TxConsolidate,
@@ -271,6 +277,16 @@ class THORMemo:
         elif tx_type == ActionType.TRADE_ACC_WITHDRAW:
             return cls.withdraw_trade_account(dest_address=ith(components, 1, ''))
 
+        elif tx_type == ActionType.RUNEPOOL_ADD:
+            return cls.runepool_add()
+
+        elif tx_type == ActionType.RUNEPOOL_WITHDRAW:
+            return cls.runepool_withdraw(
+                bp=ith(components, 1, THOR_BASIS_POINT_MAX, is_number=True),
+                affiliate=ith(components, 2, ''),
+                affiliate_fee_bp=ith(components, 3, 0, is_number=True)
+            )
+
         else:
             # todo: limit order, register memo, etc.
             if no_raise:
@@ -362,6 +378,12 @@ class THORMemo:
 
         elif self.action == ActionType.TRADE_ACC_WITHDRAW:
             memo = f'TRADE-:{self.dest_address}'
+
+        elif self.action == ActionType.RUNEPOOL_ADD:
+            memo = 'POOL+'
+
+        elif self.action == ActionType.RUNEPOOL_WITHDRAW:
+            memo = f'POOL-:{self.withdraw_portion_bp}:{self.affiliate_address}:{self.affiliate_fee_bp}'
 
         else:
             raise NotImplementedError(f"Can not build memo for {self.action}")
@@ -531,6 +553,19 @@ class THORMemo:
         return cls(
             ActionType.TRADE_ACC_WITHDRAW,
             dest_address=dest_address
+        )
+
+    @classmethod
+    def runepool_add(cls):
+        return cls(ActionType.RUNEPOOL_ADD)
+
+    @classmethod
+    def runepool_withdraw(cls, bp: int, affiliate: str = '', affiliate_fee_bp: int = 0):
+        return cls(
+            ActionType.RUNEPOOL_WITHDRAW,
+            withdraw_portion_bp=bp,
+            affiliate_address=affiliate,
+            affiliate_fee_bp=affiliate_fee_bp,
         )
 
     # Utils:

@@ -401,3 +401,25 @@ def test_trade_asset():
     m = THORMemo.parse_memo('tRaDe-')
     assert m.action == ActionType.TRADE_ACC_WITHDRAW
     assert m.dest_address == ''
+
+
+def test_memo_runepool():
+    m = THORMemo.runepool_add()
+    assert m.action == ActionType.RUNEPOOL_ADD
+    assert m.build() == 'POOL+'
+    assert THORMemo.parse_memo('POOL+') == m
+    assert THORMemo.parse_memo('pool+') == m
+    assert THORMemo.parse_memo('Pool+') == m
+
+    m = THORMemo.runepool_withdraw(9955, 't', 23)
+    assert m.action == ActionType.RUNEPOOL_WITHDRAW
+    assert m.withdraw_portion_bp == 9955
+    assert m.affiliate_address == 't'
+    assert m.affiliate_fee_bp == 23
+    assert m.build() == 'POOL-:9955:t:23'
+
+    m = THORMemo.runepool_withdraw(10000)
+    assert m.action == ActionType.RUNEPOOL_WITHDRAW
+    assert m.withdraw_portion_bp == 10000
+    assert m.affiliate_address == ''
+    assert m.affiliate_fee_bp == 0
