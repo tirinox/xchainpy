@@ -1,11 +1,15 @@
+sphinx
 sphinx_rtd_theme
 sphinx-copybutton
+pydantic
 
 packages/xchainpy_utils
 packages/xchainpy_client
 packages/xchainpy_crypto
-packages/xchainpy_thorchain_amm
-packages/xchainpy_thorchain_query
+
+packages/xchainpy_midgard
+packages/xchainpy_mayanode
+packages/xchainpy_thornode
 
 packages/xchainpy_arbitrum
 packages/xchainpy_avalanche
@@ -14,13 +18,13 @@ packages/xchainpy_bitcoin
 packages/xchainpy_bitcoincash
 packages/xchainpy_bsc
 packages/xchainpy_cosmos
-packages/xchainpy_crypto
 packages/xchainpy_dogecoin
 packages/xchainpy_ethereum
 packages/xchainpy_litecoin
 packages/xchainpy_mayachain
-packages/xchainpy_mayanode
-packages/xchainpy_midgard
 packages/xchainpy_thorchain
-packages/xchainpy_thornode
+
 packages/xchainpy_utxo_providers
+
+packages/xchainpy_thorchain_amm
+packages/xchainpy_thorchain_query
