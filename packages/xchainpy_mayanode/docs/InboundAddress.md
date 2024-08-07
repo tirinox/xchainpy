@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 **gas_rate_units** | **str** | Units of the gas_rate. | [optional] 
 **outbound_tx_size** | **str** | Avg size of outbound TXs on each chain. For UTXO chains it may be larger than average, as it takes into account vault consolidation txs, which can have many vouts | [optional] 
 **outbound_fee** | **str** | The total outbound fee charged to the user for outbound txs in the gas asset of the chain. | [optional] 
-**dust_threshold** | **str** | Defines the minimum transaction size for the chain in base units (sats, wei, uatom). Transctions with asset amounts lower than the dust_thresold are ignored. | [optional] 
+**dust_threshold** | **str** | Defines the minimum transaction size for the chain in base units (sats, wei, uatom). Transactions with asset amounts lower than the dust_threshold are ignored. | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
