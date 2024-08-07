@@ -5,6 +5,7 @@ from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.client import Coin
 from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.tx_helpers import SubmittedTx
+from xchainpy2_mayanode import MimirApi, ApiClient
 
 from xchainpy2_client import RootDerivationPaths, FeeBounds
 from xchainpy2_client import XcTx, TxType, Fees, FeeType, TokenTransfer
@@ -12,12 +13,12 @@ from xchainpy2_client.fees import single_fee
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
-from xchainpy2_mayanode import MimirApi, ApiClient
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Amount, remove_0x_prefix, \
     Asset, SYNTH_DELIMITER, CACAO_DECIMAL, AssetCACAO
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_CACAO_NATIVE, ROOT_DERIVATION_PATHS, \
-    DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_CACAO_FEE, \
-    make_client_urls_from_ip_address, DEFAULT_MAYA_EXPLORERS, AssetMAYA, DENOM_MAYA, MAYA_DECIMAL, CACAO_DUST
+    DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, make_client_urls_from_ip_address, \
+    DEFAULT_MAYA_EXPLORERS, AssetMAYA, DENOM_MAYA, MAYA_DECIMAL, CACAO_DUST, \
+    DEFAULT_CACAO_NETWORK_FEE
 from .mrc20.api import MayaScanClient, MayaScanException
 from .mrc20.const import is_mrc20, make_mrc20_asset, MRC20_DECIMALS
 from .mrc20.memo import MRC20Memo, MNFTMemo
@@ -85,7 +86,7 @@ class MayaChainClient(CosmosGaiaClient):
         self._decimal = CACAO_DECIMAL
         self._gas_limit = DEFAULT_GAS_LIMIT_VALUE
         self._deposit_gas_limit = DEPOSIT_GAS_LIMIT_VALUE
-        self.standard_tx_fee = DEFAULT_CACAO_FEE
+        self.standard_tx_fee = DEFAULT_CACAO_NETWORK_FEE.amount
 
         self._recreate_client()
         self._make_wallet()
