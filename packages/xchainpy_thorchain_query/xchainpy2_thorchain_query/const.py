@@ -97,3 +97,7 @@ USD_ASSETS = {
 
 THORNAME_BLOCKS_ONE_YEAR = 5259600
 """Number of blocks in one year for THORChain."""
+
+
+THOR_BLOCK_TIME_SEC = 6.0
+"""Typical time in seconds for a block to be produced in THORChain."""
