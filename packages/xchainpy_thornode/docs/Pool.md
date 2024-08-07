@@ -18,6 +18,8 @@ Name | Type | Description | Notes
 **synth_supply** | **str** | the total supply of synths for the asset | 
 **savers_depth** | **str** | the balance of L1 asset deposited into the Savers Vault | 
 **savers_units** | **str** | the number of units owned by Savers | 
+**savers_fill_bps** | **str** | the filled savers capacity in basis points, 4500/10000 &#x3D; 45% | 
+**savers_capacity_remaining** | **str** | amount of remaining capacity in asset | 
 **synth_mint_paused** | **bool** | whether additional synths cannot be minted | 
 **synth_supply_remaining** | **str** | the amount of synth supply remaining before the current max supply is reached | 
 **loan_collateral** | **str** | the amount of collateral collects for loans | 

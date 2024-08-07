@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Thornode API
-  version: 1.133.0
+  version: 1.134.0
   contact:
     email: devs@thorchain.org
   description: Thornode REST API.
@@ -198,8 +198,56 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id008
+                items: &id009
                   $ref: '#/components/schemas/LiquidityProviderSummary'
+  /thorchain/runepool:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns the pool information for the RUNE pool.
+      operationId: runePool
+      tags:
+      - RUNE Pool
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RUNEPoolResponse'
+  /thorchain/rune_provider/{address}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/address'
+    get:
+      description: Returns the RUNE Provider information for an address.
+      operationId: runeProvider
+      tags:
+      - RUNE Pool
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RUNEProvider'
+  /thorchain/rune_providers:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns all RUNE Providers.
+      operationId: runeProviders
+      tags:
+      - RUNE Pool
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: &id008
+                  $ref: '#/components/schemas/RUNEProvider'
   /thorchain/pool/{asset}/saver/{address}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -233,7 +281,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id009
+                items: &id010
                   $ref: '#/components/schemas/Saver'
   /thorchain/pool/{asset}/borrower/{address}:
     parameters:
@@ -268,7 +316,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id010
+                items: &id011
                   $ref: '#/components/schemas/Borrower'
   /thorchain/tx/{hash}:
     parameters:
@@ -382,7 +430,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id012
+                items: &id013
                   $ref: '#/components/schemas/Node'
   /thorchain/vaults/asgard:
     parameters:
@@ -399,7 +447,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id015
+                items: &id016
                   $ref: '#/components/schemas/Vault'
   /thorchain/vaults/yggdrasil:
     parameters:
@@ -416,7 +464,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id014
+                items: &id015
                   $ref: '#/components/schemas/YggdrasilVault'
   /thorchain/vault/{pubkey}:
     parameters:
@@ -498,21 +546,6 @@ paths:
               schema:
                 type: array
                 items: *id002
-  /thorchain/pol:
-    parameters:
-    - $ref: '#/components/parameters/queryHeight'
-    get:
-      description: Returns protocol owned liquidity overview statistics.
-      operationId: pol
-      tags:
-      - POL
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/POLResponse'
   /thorchain/inbound_addresses:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -529,7 +562,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id016
+                items: &id017
                   $ref: '#/components/schemas/InboundAddress'
   /thorchain/lastblock:
     parameters:
@@ -659,7 +692,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id013
+                items: &id014
                   $ref: '#/components/schemas/StreamingSwap'
   /thorchain/clout/swap/{address}:
     parameters:
@@ -708,7 +741,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id021
+                items: &id022
                   $ref: '#/components/schemas/TradeUnitResponse'
   /thorchain/trade/account/{address}:
     parameters:
@@ -775,7 +808,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id017
+                items: &id018
                   $ref: '#/components/schemas/MsgSwap'
   /thorchain/queue/scheduled:
     parameters:
@@ -792,7 +825,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id019
+                items: &id020
                   $ref: '#/components/schemas/TxOutItem'
   /thorchain/queue/outbound:
     parameters:
@@ -809,7 +842,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id018
+                items: &id019
                   $ref: '#/components/schemas/TxOutItem'
   /thorchain/keysign/{height}:
     parameters:
@@ -888,7 +921,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id020
+                items: &id021
                   $ref: '#/components/schemas/KeygenMetric'
   /thorchain/thorname/{name}:
     parameters:
@@ -995,36 +1028,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MimirResponse'
-  /thorchain/mimirV2:
-    parameters:
-    - $ref: '#/components/parameters/queryHeight'
-    get:
-      description: Returns current mimir V2 configuration.
-      operationId: mimirV2
-      tags:
-      - Mimir
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MimirResponse'
-  /thorchain/mimirV2/ids:
-    parameters:
-    - $ref: '#/components/parameters/queryHeight'
-    get:
-      description: Returns mapping of mimir V2 IDs to name.
-      operationId: mimirV2IDs
-      tags:
-      - Mimir
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MimirV2IDsResponse'
   /thorchain/quote/swap:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -1397,6 +1400,8 @@ components:
       - synth_supply
       - savers_depth
       - savers_units
+      - savers_fill_bps
+      - savers_capacity_remaining
       - synth_mint_paused
       - synth_supply_remaining
       - loan_collateral
@@ -1457,6 +1462,14 @@ components:
           type: string
           example: '199998'
           description: the number of units owned by Savers
+        savers_fill_bps:
+          type: string
+          example: '4500'
+          description: the filled savers capacity in basis points, 4500/10000 = 45%
+        savers_capacity_remaining:
+          type: string
+          example: '1000'
+          description: amount of remaining capacity in asset
         synth_mint_paused:
           type: boolean
           example: true
@@ -1513,6 +1526,73 @@ components:
           example: '123456'
           description: the depth of the derived virtual pool relative to L1 pool (in
             basis points)
+    POL:
+      type: object
+      required:
+      - rune_deposited
+      - rune_withdrawn
+      - value
+      - pnl
+      - current_deposit
+      properties:
+        rune_deposited:
+          type: string
+          example: '857134475040'
+          description: total amount of RUNE deposited into the pools
+        rune_withdrawn:
+          type: string
+          example: '0'
+          description: total amount of RUNE withdrawn from the pools
+        value:
+          type: string
+          example: '21999180112172346'
+          description: total value of protocol's LP position in RUNE value
+        pnl:
+          type: string
+          example: '21999180112172346'
+          description: profit and loss of protocol owned liquidity
+        current_deposit:
+          type: string
+          example: '21999180112172346'
+          description: current amount of rune deposited
+    RUNEProvider:
+      type: object
+      required:
+      - rune_address
+      - units
+      - value
+      - pnl
+      - deposit_amount
+      - withdraw_amount
+      - last_deposit_height
+      - last_withdraw_height
+      properties:
+        rune_address:
+          type: string
+          example: THOR.RUNE
+        units:
+          type: string
+          example: '1234'
+        value:
+          type: string
+          example: '123456'
+        pnl:
+          type: string
+          example: '123456'
+        deposit_amount:
+          type: string
+          example: '6677'
+        withdraw_amount:
+          type: string
+          example: '5443'
+        last_deposit_height:
+          type: integer
+          format: int64
+          example: 82745
+        last_withdraw_height:
+          type: integer
+          format: int64
+          example: 82745
     LiquidityProviderSummary:
       type: object
       required:
@@ -2577,21 +2657,98 @@ components:
     DerivedPoolsResponse:
       type: array
       items: *id007
-    LiquidityProvidersResponse:
+    RUNEPoolResponse:
+      type: object
+      required:
+      - pol
+      - providers
+      - reserve
+      properties:
+        pol:
+          $ref: '#/components/schemas/POL'
+        providers:
+          type: object
+          required:
+          - units
+          - pending_units
+          - pending_rune
+          - value
+          - pnl
+          - rune_deposited
+          - rune_withdrawn
+          - current_deposit
+          properties:
+            units:
+              type: string
+              example: '123456'
+              description: the units of RUNEPool owned by providers (including pending)
+            pending_units:
+              type: string
+              example: '123456'
+              description: the units of RUNEPool owned by providers that remain pending
+            pending_rune:
+              type: string
+              example: '123456'
+              description: the amount of RUNE pending
+            value:
+              type: string
+              example: '123456'
+              description: the value of the provider share of the RUNEPool (includes
+                pending RUNE)
+            pnl:
+              type: string
+              example: '123456'
+              description: the profit and loss of the provider share of the RUNEPool
+            current_deposit:
+              type: string
+              example: '123456'
+              description: the current RUNE deposited by providers
+        reserve:
+          type: object
+          required:
+          - units
+          - value
+          - pnl
+          - rune_deposited
+          - rune_withdrawn
+          - current_deposit
+          properties:
+            units:
+              type: string
+              example: '123456'
+              description: the units of RUNEPool owned by the reserve
+            value:
+              type: string
+              example: '123456'
+              description: the value of the reserve share of the RUNEPool
+            pnl:
+              type: string
+              example: '123456'
+              description: the profit and loss of the reserve share of the RUNEPool
+            current_deposit:
+              type: string
+              example: '123456'
+              description: the current RUNE deposited by the reserve
+    RUNEProviderResponse:
+      $ref: '#/components/schemas/RUNEProvider'
+    RUNEProvidersResponse:
       type: array
       items: *id008
+    LiquidityProvidersResponse:
+      type: array
+      items: *id009
     LiquidityProviderResponse:
       $ref: '#/components/schemas/LiquidityProvider'
     SaverResponse:
       $ref: '#/components/schemas/Saver'
     SaversResponse:
       type: array
-      items: *id009
+      items: *id010
     BorrowerResponse:
       $ref: '#/components/schemas/Borrower'
     BorrowersResponse:
       type: array
-      items: *id010
+      items: *id011
     TxResponse:
       type: object
       properties:
@@ -2614,7 +2771,7 @@ components:
           description: the thorchain height for which the outbound was scheduled
         keysign_metric:
           $ref: '#/components/schemas/TssKeysignMetric'
-    TxDetailsResponse: &id011
+    TxDetailsResponse: &id012
       type: object
       required:
       - tx
@@ -2662,7 +2819,7 @@ components:
           format: int64
           example: 1234
           description: the thorchain height for which the outbound was scheduled
-    TxSignersResponse: *id011
+    TxSignersResponse: *id012
     TxStagesResponse:
       type: object
       required:
@@ -2872,18 +3029,18 @@ components:
       $ref: '#/components/schemas/Node'
     NodesResponse:
       type: array
-      items: *id012
+      items: *id013
     StreamingSwapsResponse:
       type: array
-      items: *id013
+      items: *id014
     StreamingSwapResponse:
       $ref: '#/components/schemas/StreamingSwap'
     YggdrasilVaultsResponse:
       type: array
-      items: *id014
+      items: *id015
     VaultsResponse:
       type: array
-      items: *id015
+      items: *id016
     VaultResponse:
       $ref: '#/components/schemas/Vault'
     VaultPubkeysResponse:
@@ -2996,38 +3153,9 @@ components:
     OutboundFeesResponse:
       type: array
       items: *id002
-    POLResponse:
-      type: object
-      required:
-      - rune_deposited
-      - rune_withdrawn
-      - value
-      - pnl
-      - current_deposit
-      properties:
-        rune_deposited:
-          type: string
-          example: '857134475040'
-          description: total amount of RUNE deposited into the pools
-        rune_withdrawn:
-          type: string
-          example: '0'
-          description: total amount of RUNE withdrawn from the pools
-        value:
-          type: string
-          example: '21999180112172346'
-          description: total value of protocol's LP position in RUNE value
-        pnl:
-          type: string
-          example: '21999180112172346'
-          description: profit and loss of protocol owned liquidity
-        current_deposit:
-          type: string
-          example: '21999180112172346'
-          description: current amount of rune deposited
     InboundAddressesResponse:
       type: array
-      items: *id016
+      items: *id017
     LastBlockResponse:
       type: array
       items: *id003
@@ -3120,13 +3248,13 @@ components:
           description: scheduled outbound clout in RUNE
     SwapQueueResponse:
       type: array
-      items: *id017
+      items: *id018
     OutboundResponse:
       type: array
-      items: *id018
+      items: *id019
     ScheduledResponse:
       type: array
-      items: *id019
+      items: *id020
     KeysignResponse:
       type: object
       required:
@@ -3186,7 +3314,7 @@ components:
           type: string
     KeygenMetricsResponse:
       type: array
-      items: *id020
+      items: *id021
     MetricsResponse:
       type: object
       properties:
@@ -3250,7 +3378,7 @@ components:
           description: total depth of trade asset
     TradeUnitsResponse:
       type: array
-      items: *id021
+      items: *id022
     TradeAccountResponse:
       type: object
       required:
@@ -3287,46 +3415,6 @@ components:
       example:
         NODEOPERATORFEE: 2000
         NUMBEROFNEWNODESPERCHURN: 2
-    MimirV2IDsResponse:
-      type: object
-      required:
-      - id
-      - name
-      - vote_key
-      - legacy_key
-      - type
-      - votes
-      properties:
-        id:
-          type: int
-        name:
-          type: string
-        vote_key:
-          type: string
-        legacy_key:
-          type: string
-        type:
-          type: string
-        votes:
-          type: object
-          additionalProperties:
-            type: integer
-            format: int64
-      example:
-      - id: 1
-        name: AFFILIATEFEEBASISPOINTSMAXGLOBAL
-        legacy_key: MAXAFFILIATEFEEBASISPOINTS
-        vote_key: 1-GLOBAL
-        type: Economic
-        votes:
-          500: 4
-      - id: 2
-        name: BONDPAUSEGLOBAL
-        legacy_key: PAUSEBOND
-        vote_key: 2-GLOBAL
-        type: Operational
-        votes:
-          1: 1
     InvariantResponse:
       type: object
       required:
@@ -3512,75 +3600,75 @@ components:
             $ref: '#/components/schemas/BlockTx'
     baseQuoteResponse:
       properties:
-        inbound_address: &id022
+        inbound_address: &id023
           type: string
           description: the inbound address for the transaction on the source chain
           example: bc1qjk3xzu5slu7mtmc8jc9yed3zqvkhkttm700g9a
-        inbound_confirmation_blocks: &id023
+        inbound_confirmation_blocks: &id024
           type: integer
           format: int64
           description: the approximate number of source chain blocks required before
             processing
-        inbound_confirmation_seconds: &id024
+        inbound_confirmation_seconds: &id025
           type: integer
           format: int64
           description: the approximate seconds for block confirmations required before
             processing
-        outbound_delay_blocks: &id025
+        outbound_delay_blocks: &id026
           type: integer
           format: int64
           description: the number of thorchain blocks the outbound will be delayed
-        outbound_delay_seconds: &id026
+        outbound_delay_seconds: &id027
           type: integer
           format: int64
           description: the approximate seconds for the outbound delay before it will
             be sent
-        fees: &id027
+        fees: &id028
           $ref: '#/components/schemas/QuoteFees'
-        slippage_bps: &id028
+        slippage_bps: &id029
           type: integer
           format: int64
           description: Deprecated - migrate to fees object.
-        streaming_slippage_bps: &id029
+        streaming_slippage_bps: &id030
           type: integer
           format: int64
           description: Deprecated - migrate to fees object.
-        router: &id030
+        router: &id031
           type: string
           description: the EVM chain router contract address
           example: '0x3624525075b88B24ecc29CE226b0CEc1fFcB6976'
-        expiry: &id031
+        expiry: &id032
           type: integer
           format: int64
           description: expiration timestamp in unix seconds
           example: 1671660285
-        warning: &id032
+        warning: &id033
           type: string
           description: static warning message
           example: Do not cache this response. Do not send funds after the expiry.
-        notes: &id033
+        notes: &id034
           type: string
           description: chain specific quote notes
           example: Transfer the inbound_address the asset with the memo. Do not use
             multi-in, multi-out transactions.
-        dust_threshold: &id034
+        dust_threshold: &id035
           type: string
           example: '10000'
           description: Defines the minimum transaction size for the chain in base
             units (sats, wei, uatom). Transactions with asset amounts lower than the
             dust_threshold are ignored.
-        recommended_min_amount_in: &id035
+        recommended_min_amount_in: &id036
           type: string
           description: The recommended minimum inbound amount for this transaction
             type & inbound asset. Sending less than this amount could result in failed
             refunds.
           example: '15000'
-        recommended_gas_rate: &id036
+        recommended_gas_rate: &id037
           type: string
           example: '10'
           description: the recommended gas rate to use for the inbound to ensure timely
             confirmation
-        gas_rate_units: &id037
+        gas_rate_units: &id038
           type: string
           example: gwei
           description: the units of the recommended gas rate
@@ -3598,22 +3686,22 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id022
-        inbound_confirmation_blocks: *id023
-        inbound_confirmation_seconds: *id024
-        outbound_delay_blocks: *id025
-        outbound_delay_seconds: *id026
-        fees: *id027
-        slippage_bps: *id028
-        streaming_slippage_bps: *id029
-        router: *id030
-        expiry: *id031
-        warning: *id032
-        notes: *id033
-        dust_threshold: *id034
-        recommended_min_amount_in: *id035
-        recommended_gas_rate: *id036
-        gas_rate_units: *id037
+        inbound_address: *id023
+        inbound_confirmation_blocks: *id024
+        inbound_confirmation_seconds: *id025
+        outbound_delay_blocks: *id026
+        outbound_delay_seconds: *id027
+        fees: *id028
+        slippage_bps: *id029
+        streaming_slippage_bps: *id030
+        router: *id031
+        expiry: *id032
+        warning: *id033
+        notes: *id034
+        dust_threshold: *id035
+        recommended_min_amount_in: *id036
+        recommended_gas_rate: *id037
+        gas_rate_units: *id038
         memo:
           type: string
           description: generated memo for the swap
@@ -3665,22 +3753,22 @@ components:
       - recommended_gas_rate
       - gas_rate_units
       properties:
-        inbound_address: *id022
-        inbound_confirmation_blocks: *id023
-        inbound_confirmation_seconds: *id024
-        outbound_delay_blocks: *id025
-        outbound_delay_seconds: *id026
-        fees: *id027
-        slippage_bps: *id028
-        streaming_slippage_bps: *id029
-        router: *id030
-        expiry: *id031
-        warning: *id032
-        notes: *id033
-        dust_threshold: *id034
-        recommended_min_amount_in: *id035
-        recommended_gas_rate: *id036
-        gas_rate_units: *id037
+        inbound_address: *id023
+        inbound_confirmation_blocks: *id024
+        inbound_confirmation_seconds: *id025
+        outbound_delay_blocks: *id026
+        outbound_delay_seconds: *id027
+        fees: *id028
+        slippage_bps: *id029
+        streaming_slippage_bps: *id030
+        router: *id031
+        expiry: *id032
+        warning: *id033
+        notes: *id034
+        dust_threshold: *id035
+        recommended_min_amount_in: *id036
+        recommended_gas_rate: *id037
+        gas_rate_units: *id038
         memo:
           type: string
           description: generated memo for the deposit
@@ -3712,22 +3800,22 @@ components:
       - recommended_gas_rate
       - gas_rate_units
       properties:
-        inbound_address: *id022
-        inbound_confirmation_blocks: *id023
-        inbound_confirmation_seconds: *id024
-        outbound_delay_blocks: *id025
-        outbound_delay_seconds: *id026
-        fees: *id027
-        slippage_bps: *id028
-        streaming_slippage_bps: *id029
-        router: *id030
-        expiry: *id031
-        warning: *id032
-        notes: *id033
-        dust_threshold: *id034
-        recommended_min_amount_in: *id035
-        recommended_gas_rate: *id036
-        gas_rate_units: *id037
+        inbound_address: *id023
+        inbound_confirmation_blocks: *id024
+        inbound_confirmation_seconds: *id025
+        outbound_delay_blocks: *id026
+        outbound_delay_seconds: *id027
+        fees: *id028
+        slippage_bps: *id029
+        streaming_slippage_bps: *id030
+        router: *id031
+        expiry: *id032
+        warning: *id033
+        notes: *id034
+        dust_threshold: *id035
+        recommended_min_amount_in: *id036
+        recommended_gas_rate: *id037
+        gas_rate_units: *id038
         memo:
           type: string
           description: generated memo for the withdraw, the client can use this OR
@@ -3762,22 +3850,22 @@ components:
       - recommended_gas_rate
       - gas_rate_units
       properties:
-        inbound_address: *id022
-        inbound_confirmation_blocks: *id023
-        inbound_confirmation_seconds: *id024
-        outbound_delay_blocks: *id025
-        outbound_delay_seconds: *id026
-        fees: *id027
-        slippage_bps: *id028
-        streaming_slippage_bps: *id029
-        router: *id030
-        expiry: *id031
-        warning: *id032
-        notes: *id033
-        dust_threshold: *id034
-        recommended_min_amount_in: *id035
-        recommended_gas_rate: *id036
-        gas_rate_units: *id037
+        inbound_address: *id023
+        inbound_confirmation_blocks: *id024
+        inbound_confirmation_seconds: *id025
+        outbound_delay_blocks: *id026
+        outbound_delay_seconds: *id027
+        fees: *id028
+        slippage_bps: *id029
+        streaming_slippage_bps: *id030
+        router: *id031
+        expiry: *id032
+        warning: *id033
+        notes: *id034
+        dust_threshold: *id035
+        recommended_min_amount_in: *id036
+        recommended_gas_rate: *id037
+        gas_rate_units: *id038
         memo:
           type: string
           description: generated memo for the loan open
@@ -3836,22 +3924,22 @@ components:
       - streaming_swap_seconds
       - total_repay_seconds
       properties:
-        inbound_address: *id022
-        inbound_confirmation_blocks: *id023
-        inbound_confirmation_seconds: *id024
-        outbound_delay_blocks: *id025
-        outbound_delay_seconds: *id026
-        fees: *id027
-        slippage_bps: *id028
-        streaming_slippage_bps: *id029
-        router: *id030
-        expiry: *id031
-        warning: *id032
-        notes: *id033
-        dust_threshold: *id034
-        recommended_min_amount_in: *id035
-        recommended_gas_rate: *id036
-        gas_rate_units: *id037
+        inbound_address: *id023
+        inbound_confirmation_blocks: *id024
+        inbound_confirmation_seconds: *id025
+        outbound_delay_blocks: *id026
+        outbound_delay_seconds: *id027
+        fees: *id028
+        slippage_bps: *id029
+        streaming_slippage_bps: *id030
+        router: *id031
+        expiry: *id032
+        warning: *id033
+        notes: *id034
+        dust_threshold: *id035
+        recommended_min_amount_in: *id036
+        recommended_gas_rate: *id037
+        gas_rate_units: *id038
         memo:
           type: string
           description: generated memo for the loan close

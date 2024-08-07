@@ -12,11 +12,11 @@ from xchainpy2_thornode.api.liquidity_providers_api import LiquidityProvidersApi
 from xchainpy2_thornode.api.mimir_api import MimirApi
 from xchainpy2_thornode.api.network_api import NetworkApi
 from xchainpy2_thornode.api.nodes_api import NodesApi
-from xchainpy2_thornode.api.pol_api import POLApi
 from xchainpy2_thornode.api.pool_slip_api import PoolSlipApi
 from xchainpy2_thornode.api.pools_api import PoolsApi
 from xchainpy2_thornode.api.queue_api import QueueApi
 from xchainpy2_thornode.api.quote_api import QuoteApi
+from xchainpy2_thornode.api.rune_pool_api import RUNEPoolApi
 from xchainpy2_thornode.api.savers_api import SaversApi
 from xchainpy2_thornode.api.streaming_swap_api import StreamingSwapApi
 from xchainpy2_thornode.api.tss_api import TSSApi

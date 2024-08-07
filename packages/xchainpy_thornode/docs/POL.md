@@ -1,4 +1,4 @@
-# POLResponse
+# POL
 
 ## Properties
 Name | Type | Description | Notes
