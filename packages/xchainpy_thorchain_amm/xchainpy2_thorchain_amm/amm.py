@@ -168,14 +168,16 @@ class THORChainAMM:
         :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: TX hash submitted to the network
         """
+        self._validate_crypto_amount(amount)
+
         if amount.asset != AssetRUNE:
             raise AMMException(f'Invalid asset: {amount.asset}; must be Rune')
 
         self._validate_bps(affiliate_bps, 'affiliate_bps')
-        self._validate_crypto_amount(amount)
 
-        if affiliate_address and not self._validate_affiliate_address(affiliate_address):
-            raise AMMException(f'Invalid affiliate address: {affiliate_address}')
+        if affiliate_address:
+            if not await self._validate_affiliate_address(affiliate_address):
+                raise AMMException(f'Invalid affiliate address: {affiliate_address}')
 
         pool_name = Asset.automatic(pool).upper()
         memo = THORMemo.add_liquidity(pool_name, paired_address).build()
@@ -394,6 +396,46 @@ class THORChainAMM:
 
         memo = THORMemo.withdraw_trade_account(target_l1_address)
         return await self.general_deposit(what, '', memo, gas_options)
+
+    # ---------------------------- RUNEPOOL ----------------------------
+
+    async def deposit_to_runepool(self, what: CryptoAmount) -> str:
+        """
+        Deposit assets to the RUNEPool.
+        Attention! After depositing, you will not be able to withdraw the deposit until the lock up period ends.
+        See constant/Mimir: RUNEPoolDepositMaturityBlocks
+
+        :param what: CryptoAmount to deposit, Rune only
+        :return: str TX hash submitted to the network
+        """
+
+        self._validate_crypto_amount(what)
+        if not what.asset.is_rune_native:
+            raise AMMException('Invalid amount to deposit. Only Rune is allowed.')
+
+        memo = THORMemo.runepool_add()
+        return await self.general_deposit(what, '', memo)
+
+    async def withdraw_from_runepool(self, bp: int, affiliate_bps=0, affiliate_address: str = '') -> str:
+        """
+        Withdraw assets from the RUNEPool.
+        Attention! After depositing, you will not be able to withdraw the deposit until the lock up period ends.
+        See constant/Mimir: RUNEPoolDepositMaturityBlocks
+
+        :param bp: Basis points to withdraw (0-10000)
+        :param affiliate_bps: Affiliate fee in basis points (0-10000), default 0
+        :param affiliate_address: Affiliate address to collect affiliate fee THORName or THOR address
+        :return: str TX hash submitted to the network
+        """
+        self._validate_bps(bp, 'bp')
+        self._validate_bps(affiliate_bps, 'affiliate_bps')
+
+        if affiliate_address:
+            if not await self._validate_affiliate_address(affiliate_address):
+                raise AMMException(f'Invalid affiliate address: {affiliate_address}')
+
+        memo = THORMemo.runepool_withdraw(bp, affiliate_address, affiliate_bps)
+        return await self.general_deposit(CryptoAmount.zero(AssetRUNE), '', memo)
 
     # ---------------------------- LOANS ----------------------------
 
@@ -864,6 +906,9 @@ class THORChainAMM:
 
     @staticmethod
     def _validate_crypto_amount(amount: CryptoAmount, allow_synthetic: bool = False):
+        if not amount or not amount.amount or not amount.asset:
+            raise AMMException(f'Invalid amount: {amount}')
+
         if amount.amount.internal_amount <= 0:
             raise AMMException(f'Invalid amount: {amount.amount}')
 

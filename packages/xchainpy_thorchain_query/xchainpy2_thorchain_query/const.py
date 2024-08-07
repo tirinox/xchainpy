@@ -35,6 +35,8 @@ class Mimir:
     TNS_REGISTER_FEE = 'TNSREGISTERFEE'
     TNS_FEE_PER_BLOCK = 'TNSFEEPERBLOCK'
 
+    RUNEPoolDepositMaturityBlocks = 'RUNEPoolDepositMaturityBlocks'
+
     @staticmethod
     def pause_lp(chain: str):
         """
