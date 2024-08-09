@@ -65,10 +65,10 @@ Node API
     :members:
 
 
-POL API
+RUNEPool API
 -------
 
-.. automodule:: xchainpy2_thornode.api.pol_api
+.. automodule:: xchainpy2_thornode.api.rune_pool_api
     :members:
 
 Pool API
