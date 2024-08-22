@@ -69,6 +69,18 @@ def test_change_amount():
     assert amt.change_amount(0) == CryptoAmount(Amount(0, 8), AssetRUNE)
 
 
+def test_change_decimals():
+    amt = CryptoAmount(Amount.automatic(2.22, 18), Asset.from_string('ETH~ETH'))
+    assert amt.decimals == amt.amount.decimals == 18
+    amt2 = amt.changed_decimals(8)
+    assert amt2.decimals == amt2.amount.decimals == 8
+
+    assert amt2.amount.internal_amount == 222000000
+    assert amt.amount.internal_amount == 2220000000000000195
+
+    assert float(amt2.amount) == float(amt.amount)
+
+
 def test_arithmetic():
     amt = CryptoAmount(Amount(100, 8), AssetRUNE)
     assert amt + amt == CryptoAmount(Amount(200, 8), AssetRUNE)

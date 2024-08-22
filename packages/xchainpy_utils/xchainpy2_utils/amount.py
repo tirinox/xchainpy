@@ -157,7 +157,7 @@ class Amount(NamedTuple):
             return self
 
         a = Decimal(self.internal_amount) * decimal_power_10(new_decimals - self.decimals, context)
-        return Amount(int(a), new_decimals, Denomination.BASE)
+        return Amount(int(a), new_decimals, self.denom)
 
     @classmethod
     def from_asset(cls, asset_amount: Union[float, str, int, Decimal], decimals=DEFAULT_ASSET_DECIMAL, context=DC):
@@ -466,3 +466,20 @@ class CryptoAmount(NamedTuple):
                 return b.as_asset
         else:
             return cls.zero(asset)
+
+    def changed_decimals(self, new_decimals, context=DC) -> 'CryptoAmount':
+        """
+        Change the decimals of the amount. Non-destructive. Returns a new instance.
+        :param new_decimals: New number of decimals
+        :param context: Decimal context (optional)
+        :return: CryptoAmount
+        """
+        return CryptoAmount(self.amount.changed_decimals(new_decimals, context), self.asset)
+
+    @property
+    def decimals(self):
+        """
+        Return the number of decimals for the amount. Instead of calling self.amount.decimals
+        :return:
+        """
+        return self.amount.decimals

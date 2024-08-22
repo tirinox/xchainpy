@@ -145,6 +145,12 @@ def test_trade_asset():
     assert a == Asset('ETH', 'USDT', '0xdac17f958d2ee523a2206206994597c13d831ec7', AssetKind.TRADE)
     assert a.as_trade and a.is_valid
 
+    a = AssetBTC
+    assert not a.is_trade
+    b = a.as_trade
+    assert b.is_trade
+    assert str(b) == 'BTC~BTC'
+
 
 def test_derived_asset():
     a = Asset.automatic('THOR.BTC')
