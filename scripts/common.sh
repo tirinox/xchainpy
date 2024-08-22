@@ -130,8 +130,8 @@ function ask_dev_virtual_env() {
   read -p "Do you want to create new virtual environment and install dev tools? (y/n) " yn
   case $yn in
   [yY])
-    python3 -m venv temp/venv
-    source temp/venv/bin/activate
+    python3 -m venv "../temp/venv"
+    source "../temp/venv/bin/activate"
     pip install "betterproto[compiler]" betterproto
     pip install grpcio grpcio-tools
     ;;

@@ -1,4 +1,5 @@
 .PHONY: dev_tools test tc_env build publish_test publish gen_thornode gen_mayanode gen_midgard gen_binance_proto help upver
+.DEFAULT_GOAL := help
 
 dev_tools:
 	pip install -U pytest pytest-asyncio requests-mock aioresponses sphinx sphinx-rtd-theme

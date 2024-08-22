@@ -81,6 +81,9 @@ case $yn in
   pwd
 
   mkdir -p $PROTO_OUT_PATH
+
+  ls $TEMP
+
   $TEMP/venv/bin/python3 -m grpc_tools.protoc --proto_path="${NODE_CODE}/proto" \
     --proto_path="${NODE_CODE}/third_party/proto" \
     --proto_path="${COSMOS_CODE}/proto" \
