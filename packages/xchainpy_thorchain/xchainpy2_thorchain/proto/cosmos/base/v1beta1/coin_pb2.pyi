@@ -6,7 +6,7 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Coin(_message.Message):
-    __slots__ = ["denom", "amount"]
+    __slots__ = ("denom", "amount")
     DENOM_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
     denom: str
@@ -14,7 +14,7 @@ class Coin(_message.Message):
     def __init__(self, denom: _Optional[str] = ..., amount: _Optional[str] = ...) -> None: ...
 
 class DecCoin(_message.Message):
-    __slots__ = ["denom", "amount"]
+    __slots__ = ("denom", "amount")
     DENOM_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
     denom: str
@@ -22,13 +22,13 @@ class DecCoin(_message.Message):
     def __init__(self, denom: _Optional[str] = ..., amount: _Optional[str] = ...) -> None: ...
 
 class IntProto(_message.Message):
-    __slots__ = ["int"]
+    __slots__ = ("int",)
     INT_FIELD_NUMBER: _ClassVar[int]
     int: str
     def __init__(self, int: _Optional[str] = ...) -> None: ...
 
 class DecProto(_message.Message):
-    __slots__ = ["dec"]
+    __slots__ = ("dec",)
     DEC_FIELD_NUMBER: _ClassVar[int]
     dec: str
     def __init__(self, dec: _Optional[str] = ...) -> None: ...

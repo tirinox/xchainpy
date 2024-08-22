@@ -68,8 +68,8 @@ ROOT_DERIVATION_PATHS = {
 """Root derivation paths for the THORChain network."""
 
 DEFAULT_CHAIN_IDS = {
-    NetworkType.MAINNET: 'thorchain-mainnet-v1',
-    NetworkType.STAGENET: 'thorchain-stagenet-v2',
+    NetworkType.MAINNET: 'thorchain-mainnet-v1',  # todo: watch out for hard fork
+    NetworkType.STAGENET: 'thorchain-stagenet-v2',  # todo: watch out for hard fork
     NetworkType.TESTNET: 'deprecated',
 }
 """Default chain IDs for the THORChain network. Subject to change."""

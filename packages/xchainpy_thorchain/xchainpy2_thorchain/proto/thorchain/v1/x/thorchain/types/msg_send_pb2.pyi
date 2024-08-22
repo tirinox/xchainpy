@@ -8,7 +8,7 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class MsgSend(_message.Message):
-    __slots__ = ["from_address", "to_address", "amount"]
+    __slots__ = ("from_address", "to_address", "amount")
     FROM_ADDRESS_FIELD_NUMBER: _ClassVar[int]
     TO_ADDRESS_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]

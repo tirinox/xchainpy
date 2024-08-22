@@ -40,7 +40,8 @@ def crypto_amount_to_msg_coin(a: CryptoAmount) -> THORCoin:
         chain=a.asset.chain,
         symbol=a.asset.full_symbol,
         ticker=a.asset.symbol,
-        synth=a.asset.synth
+        synth=a.asset.synth,
+        trade=a.asset.is_trade,
     )
     return THORCoin(
         asset=asset,

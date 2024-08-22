@@ -8,7 +8,7 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Map
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class MsgDeposit(_message.Message):
-    __slots__ = ["coins", "memo", "signer"]
+    __slots__ = ("coins", "memo", "signer")
     COINS_FIELD_NUMBER: _ClassVar[int]
     MEMO_FIELD_NUMBER: _ClassVar[int]
     SIGNER_FIELD_NUMBER: _ClassVar[int]
