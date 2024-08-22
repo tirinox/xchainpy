@@ -24,10 +24,10 @@ def get_thornode_url():
 
 async def thorchain_wait_tx_status(amm, tx_hash):
     sep()
-    print(f"Swap has been broadcast. TX hash is {tx_hash}, {amm.wallet.explorer_url_tx(tx_hash)}")
+    print(f"Tx has been broadcast. TX hash is {tx_hash}, {amm.wallet.explorer_url_tx(tx_hash)}")
     tracker = amm.tracker()
     async for status in tracker.poll(tx_hash):
         status: TxDetails
         print(f'Status: {status.status}; stage: {status.stage}')
-    print(f"Swap has been completed. TX hash is {tx_hash}, {amm.wallet.explorer_url_tx(tx_hash)}")
+    print(f"Tx has been completed. TX hash is {tx_hash}, {amm.wallet.explorer_url_tx(tx_hash)}")
     sep()
