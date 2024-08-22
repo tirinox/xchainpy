@@ -541,15 +541,20 @@ class THORChainAMM:
         :type gas_options: Optional[GasOptions]
         :return: str TX hash submitted to the network
         """
+
         chain = Chain(input_amount.asset.chain)
+        is_thor = self.is_thorchain_asset(input_amount.asset)
+        if not is_thor:
+            if not to_address:
+                # determine the inbound address if not provided
+                to_address = await self._get_inbound_address(input_amount.asset)
+
+        if is_thor:
+            # this is synth or trade asset, so we manage it with THORChain client
+            chain = Chain.THORChain
 
         # noinspection PyTypeChecker
         client = self.wallet.get_client(chain)
-
-        is_thor = self.is_thorchain_asset(input_amount.asset)
-        if not is_thor and not to_address:
-            # determine the inbound address if not provided
-            to_address = await self._get_inbound_address(input_amount.asset)
 
         if not input_amount.asset.chain or not input_amount.asset.symbol:
             raise AMMException(f'Invalid asset: {input_amount.asset}')
