@@ -1,6 +1,7 @@
 import asyncio
 from typing import Optional, Union, List
 
+from aiohttp import ClientSession
 from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.tx_helpers import SubmittedTx
@@ -404,3 +405,18 @@ class THORChainClient(CosmosGaiaClient):
         if with_trade_accounts:
             main_balance += await self.get_trade_asset_balance(address)
         return main_balance
+
+    @property
+    def rest_session(self) -> ClientSession:
+        return self.thornode_api_client.rest_client.pool_manager
+
+    async def refresh_chain_id(self):
+        """
+        Refresh chain ID for the current network.
+        """
+        rpc = self._client_urls[self.network].rpc
+        async with self.rest_session.get(f'{rpc}/status?') as resp:
+            data = await resp.json()
+            new_chain_id = data['result']['node_info']['network']
+            self.chain_ids[self.network] = new_chain_id
+            return new_chain_id

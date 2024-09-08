@@ -19,7 +19,10 @@ async def main():
         raise ValueError("PHRASE env var is empty!")
 
     client_a = THORChainClient(phrase=phrase, network=NETWORK)
+    await client_a.refresh_chain_id()
+
     client_b = THORChainClient(phrase=phrase, network=NETWORK, wallet_index=1)
+    await client_b.refresh_chain_id()
 
     balance = await client_a.get_balance()
     print(f"{client_a.get_address()}'s balance is {balance}")
