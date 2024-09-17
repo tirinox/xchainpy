@@ -124,6 +124,18 @@ components:
           schema:
             $ref: '#/components/schemas/PoolDetails'
       description: Array of pool details
+    RUNEPoolDetailsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RUNEPoolDetails'
+      description: object containing RUNEPool data for a specific members
+    RUNEPoolHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RUNEPoolHistory'
+      description: Members and Units history of RUNEPool
     ReverseTHORNameResponse:
       content:
         application/json:
@@ -214,6 +226,10 @@ components:
           - donate
           - refund
           - switch
+          - thorname
+          - send
+          - runePoolDeposit
+          - runePoolWithdraw
           type: string
       required:
       - pools
@@ -985,6 +1001,10 @@ components:
           $ref: '#/components/schemas/AddLiquidityMetadata'
         refund:
           $ref: '#/components/schemas/RefundMetadata'
+        runePoolDeposit:
+          $ref: '#/components/schemas/RunePoolDepositMetadata'
+        runePoolWithdraw:
+          $ref: '#/components/schemas/RunePoolWithdrawMetadata'
         send:
           $ref: '#/components/schemas/SendMetadata'
         swap:
@@ -1443,6 +1463,122 @@ components:
       - withdrawCount
       - uniqueMemberCount
       type: object
+    RUNEPoolDetails:
+      description: List details of all the RUNEPools identified with the given addresses
+      items: &id006
+        $ref: '#/components/schemas/RUNEPoolProvider'
+      type: array
+    RUNEPoolHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/RUNEPoolHistoryIntervals'
+        meta:
+          $ref: '#/components/schemas/RUNEPoolHistoryMeta'
+      required:
+      - meta
+      - intervals
+      type: object
+    RUNEPoolHistoryIntervals:
+      items:
+        $ref: '#/components/schemas/RUNEPoolHistoryItem'
+      type: array
+    RUNEPoolHistoryItem:
+      properties:
+        count:
+          description: Int64, Number of RUNEPool members in the pool at the end of
+            the interval
+          type: string
+        depth:
+          description: Int64(e8), The depth in the RUNEPool vault at the end of the
+            interval
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+        units:
+          description: 'Int64, Units in the RUNEPool vault at the end of the interval
+
+            '
+          type: string
+      required:
+      - startTime
+      - endTime
+      - count
+      - units
+      type: object
+    RUNEPoolHistoryMeta:
+      properties:
+        endCount:
+          description: Int64, Number of RUNEPool member in the RUNEPool vault at the
+            end of the interval at time endTime
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        endUnits:
+          description: Int64,  Units in the RUNEPool vault at the end of the interval
+            at time endTime
+          type: string
+        startCount:
+          description: 'Int64, Number of RUNEPool member in the RUNEPool vault at
+            the start of the interval at time startTime
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+        startUnits:
+          description: 'Int64,  Units in the RUNEPool vault at the start of the interval
+            at time startTime
+
+            '
+          type: string
+      required:
+      - startTime
+      - endTime
+      - startUnits
+      - startCount
+      - endUnits
+      - endCount
+      type: object
+    RUNEPoolProvider:
+      properties:
+        dateFirstAdded:
+          description: Int64, Unix timestamp for the first time member deposited into
+            the RUNEPool
+          type: string
+        dateLastAdded:
+          description: Int64, Unix timestamp for the last time member deposited into
+            the RUNEPool
+          type: string
+        runeAdded:
+          description: Int64(e8), total asset added in the RUNEPool by member
+          type: string
+        runeAddress:
+          description: address used by the member
+          type: string
+        runeDeposit:
+          description: Int64(e8), total asset that is currently deposited by the member
+          type: string
+        runeWithdrawn:
+          description: Int64(e8), total asset withdrawn from the RUNEPool by the member
+          type: string
+        units:
+          description: Int64, units that belong the the member
+          type: string
+      required:
+      - runeAddress
+      - units
+      - runeAdded
+      - runeWithdrawn
+      - runeDeposit
+      - dateFirstAdded
+      - dateLastAdded
+      type: object
     RefundMetadata:
       properties:
         affiliateAddress:
@@ -1477,11 +1613,52 @@ components:
       - txType
       type: object
     ReverseTHORNames:
-      items: &id006
+      items: &id007
         description: THORName name
         example: myname
         type: string
       type: array
+    RunePoolDepositMetadata:
+      properties:
+        units:
+          description: "Int64, amount of units assigned to the member as result of\
+            \ the \ndeposit\n"
+          type: string
+      required:
+      - units
+      type: object
+    RunePoolWithdrawMetadata:
+      properties:
+        affiliateAddress:
+          description: Transaction affiliate address
+          type: string
+        affiliateAmount:
+          description: Int64, Transaction affiliate amount in rune
+          type: string
+        affiliateBasisPoint:
+          description: Transaction affiliate basis point
+          type: string
+        basisPoints:
+          description: 'Int64 (Basis points, 0-10000, where 10000=100%), percentage
+            of total ownership
+
+            withdrawn
+
+            '
+          type: string
+        units:
+          description: 'Int64, amount of units removed from the member as result of
+            the withdrawal
+
+            '
+          type: string
+      required:
+      - units
+      - basisPoints
+      - affiliateAmount
+      - affiliateAddress
+      - affiliateBasisPoint
+      type: object
     SaverDetails:
       properties:
         pools:
@@ -2295,7 +2472,7 @@ info:
     \ does not hold critical information. To interact with THORChain protocol, users\
     \ should query THORNode directly."
   title: Midgard Public API
-  version: 2.23.2
+  version: 2.24.3
 openapi: 3.0.0
 paths:
   /v2/actions:
@@ -2351,7 +2528,8 @@ paths:
           type: string
       - description: 'One or more comma separated unique types of action
 
-          (swap, addLiquidity, withdraw, donate, refund, switch)
+          (swap, addLiquidity, withdraw, donate, refund, switch, thorname, runePoolDeposit,
+          runePoolWithdraw)
 
           '
         example: swap,addLiquidity
@@ -2799,6 +2977,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/LiquidityHistory'
       summary: Liquidity Changes History
+  /v2/history/runepool:
+    get:
+      description: "Returns RUNEPool members and units.\nThe values report the state\
+        \ at the end of each interval.\n\nHistory endpoint has two modes:\n* With\
+        \ Interval parameter it returns a series of time buckets. From and To dates\
+        \ will\n  be rounded to the Interval boundaries.\n* Without Interval parameter\
+        \ a single From..To search is performed with exact timestamps.\n\n\n* Interval:\
+        \ possible values: 5min, hour, day, week, month, quarter, year.\n* count:\
+        \ [1..400]. Defines number of intervals. Don't provide if Interval is missing.\n\
+        * from/to: optional int, unix second.\n\nPossible usages with interval.\n\
+        * last 10 days: `?interval=day&count=10`\n* last 10 days before to: `?interval=day&count=10&to=1608825600`\n\
+        * next 10 days after from: `?interval=day&count=10&from=1606780800`\n* Days\
+        \ between from and to. From defaults to start of chain, to defaults to now.\n\
+        \  Only the first 400 intervals are returned:\n  `interval=day&from=1606780800&to=1608825600`\n\
+        \nPagination is possible with from&count and then using the returned meta.endTime\
+        \ as the\nFrom parameter of the next query.\n\nPossible configurations without\
+        \ interval:\n* exact search for one time frame: `?from=1606780899&to=1608825600`\n\
+        * one time frame until now: `?from=1606780899`\n* from chain start until now:\
+        \ no query parameters\n"
+      operationId: GetRUNEPoolHistory
+      parameters:
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400].
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now.
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RUNEPoolHistory'
+      summary: RUNEPool total members and units History
   /v2/history/savers/{pool}:
     get:
       description: "Returns savers depths and units.\nThe values report the state\
@@ -3233,6 +3476,38 @@ paths:
                 items: *id005
                 type: array
       summary: Pools List
+  /v2/runepool/{address}:
+    get:
+      description: 'Returns an array of statistics for all the RUNEPool associated
+        with given
+
+        member addresses.
+
+        Query can also be multiple addresses should be separated by comma ('','')
+
+        '
+      operationId: GetRUNEPoolDetail
+      parameters:
+      - description: 'Address to match the RUNEPool. multiple rune addresses can be
+          given.
+
+          '
+        example: thor1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m,thor2qcxssye4j6730h7ehgega3gyykkuwgdgmmpu62n
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: List details of all the RUNEPools identified with the
+                  given addresses
+                items: *id006
+                type: array
+      summary: RUNEPool Details
   /v2/saver/{address}:
     get:
       description: 'Returns an array of statistics for all the savers associated with
@@ -3325,7 +3600,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id006
+                items: *id007
                 type: array
       summary: THORName owner
   /v2/thorname/rlookup/{address}:
@@ -3345,7 +3620,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id006
+                items: *id007
                 type: array
       summary: Gives a list of THORNames by reverse lookup
 x-readme-file: README.md

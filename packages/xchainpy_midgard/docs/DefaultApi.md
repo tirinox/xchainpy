@@ -21,6 +21,8 @@ Method | HTTP request | Description
 [**get_pool**](DefaultApi.md#get_pool) | **GET** /v2/pool/{asset} | Details of a Pool
 [**get_pool_stats**](DefaultApi.md#get_pool_stats) | **GET** /v2/pool/{asset}/stats | Pool Statistics
 [**get_pools**](DefaultApi.md#get_pools) | **GET** /v2/pools | Pools List
+[**get_rune_pool_detail**](DefaultApi.md#get_rune_pool_detail) | **GET** /v2/runepool/{address} | RUNEPool Details
+[**get_rune_pool_history**](DefaultApi.md#get_rune_pool_history) | **GET** /v2/history/runepool | RUNEPool total members and units History
 [**get_saver_detail**](DefaultApi.md#get_saver_detail) | **GET** /v2/saver/{address} | Saver Details
 [**get_savers_history**](DefaultApi.md#get_savers_history) | **GET** /v2/history/savers/{pool} | Savers Units and Depth History
 [**get_stats**](DefaultApi.md#get_stats) | **GET** /v2/stats | Global Stats
@@ -50,7 +52,7 @@ api_instance = xchainpy2_midgard.DefaultApi()
 address = 'address_example' # str | Comma separated list. Address of sender or recipient of any in/out transaction related to the action.  (optional)
 txid = 'txid_example' # str | ID of any in/out tx related to the action (optional)
 asset = 'asset_example' # str | Comma separated list. Any asset that is part of the action (CHAIN.SYMBOL) Additionally, synth, nosynth, and norune filters can be used for swap, add/withdraw actions.  (optional)
-type = 'type_example' # str | One or more comma separated unique types of action (swap, addLiquidity, withdraw, donate, refund, switch)  (optional)
+type = 'type_example' # str | One or more comma separated unique types of action (swap, addLiquidity, withdraw, donate, refund, switch, thorname, runePoolDeposit, runePoolWithdraw)  (optional)
 tx_type = 'tx_type_example' # str | One or more comma separated transaction type of the action, it's the tx type parsed from memo. For example: Loan is a swap event but it's considered as loan tx type Type of Transactions:  \"unknown\", \"add\", \"withdraw\", \"swap\", \"limitOrder\", \"outbound\", \"donate\", \"bond\", \"unbond\", \"leave\", \"yggdrasilFund\", \"yggdrasilReturn\", \"reserve\", \"refund\", \"migrate\", \"ragnarok\", \"switch\", \"noOp\", \"consolidate\", \"thorname\", \"loanOpen\", \"loanRepayment\"  (optional)
 affiliate = 'affiliate_example' # str | Comma separated list. Affiliate address of the action (swap, refund)  (optional)
 limit = 789 # int | number of actions returned, default is 50 (optional)
@@ -77,7 +79,7 @@ Name | Type | Description  | Notes
  **address** | **str**| Comma separated list. Address of sender or recipient of any in/out transaction related to the action.  | [optional] 
  **txid** | **str**| ID of any in/out tx related to the action | [optional] 
  **asset** | **str**| Comma separated list. Any asset that is part of the action (CHAIN.SYMBOL) Additionally, synth, nosynth, and norune filters can be used for swap, add/withdraw actions.  | [optional] 
- **type** | **str**| One or more comma separated unique types of action (swap, addLiquidity, withdraw, donate, refund, switch)  | [optional] 
+ **type** | **str**| One or more comma separated unique types of action (swap, addLiquidity, withdraw, donate, refund, switch, thorname, runePoolDeposit, runePoolWithdraw)  | [optional] 
  **tx_type** | **str**| One or more comma separated transaction type of the action, it&#x27;s the tx type parsed from memo. For example: Loan is a swap event but it&#x27;s considered as loan tx type Type of Transactions:  \&quot;unknown\&quot;, \&quot;add\&quot;, \&quot;withdraw\&quot;, \&quot;swap\&quot;, \&quot;limitOrder\&quot;, \&quot;outbound\&quot;, \&quot;donate\&quot;, \&quot;bond\&quot;, \&quot;unbond\&quot;, \&quot;leave\&quot;, \&quot;yggdrasilFund\&quot;, \&quot;yggdrasilReturn\&quot;, \&quot;reserve\&quot;, \&quot;refund\&quot;, \&quot;migrate\&quot;, \&quot;ragnarok\&quot;, \&quot;switch\&quot;, \&quot;noOp\&quot;, \&quot;consolidate\&quot;, \&quot;thorname\&quot;, \&quot;loanOpen\&quot;, \&quot;loanRepayment\&quot;  | [optional] 
  **affiliate** | **str**| Comma separated list. Affiliate address of the action (swap, refund)  | [optional] 
  **limit** | **int**| number of actions returned, default is 50 | [optional] 
@@ -874,6 +876,108 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**list[PoolDetail]**](PoolDetail.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_rune_pool_detail**
+> list[RUNEPoolProvider] get_rune_pool_detail(address)
+
+RUNEPool Details
+
+Returns an array of statistics for all the RUNEPool associated with given member addresses. Query can also be multiple addresses should be separated by comma (',') 
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard.DefaultApi()
+address = 'address_example' # str | Address to match the RUNEPool. multiple rune addresses can be given. 
+
+try:
+    # RUNEPool Details
+    api_response = api_instance.get_rune_pool_detail(address)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_rune_pool_detail: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **address** | **str**| Address to match the RUNEPool. multiple rune addresses can be given.  | 
+
+### Return type
+
+[**list[RUNEPoolProvider]**](RUNEPoolProvider.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_rune_pool_history**
+> RUNEPoolHistory get_rune_pool_history(interval=interval, count=count, to=to, _from=_from)
+
+RUNEPool total members and units History
+
+Returns RUNEPool members and units. The values report the state at the end of each interval.  History endpoint has two modes: * With Interval parameter it returns a series of time buckets. From and To dates will   be rounded to the Interval boundaries. * Without Interval parameter a single From..To search is performed with exact timestamps.   * Interval: possible values: 5min, hour, day, week, month, quarter, year. * count: [1..400]. Defines number of intervals. Don't provide if Interval is missing. * from/to: optional int, unix second.  Possible usages with interval. * last 10 days: `?interval=day&count=10` * last 10 days before to: `?interval=day&count=10&to=1608825600` * next 10 days after from: `?interval=day&count=10&from=1606780800` * Days between from and to. From defaults to start of chain, to defaults to now.   Only the first 400 intervals are returned:   `interval=day&from=1606780800&to=1608825600`  Pagination is possible with from&count and then using the returned meta.endTime as the From parameter of the next query.  Possible configurations without interval: * exact search for one time frame: `?from=1606780899&to=1608825600` * one time frame until now: `?from=1606780899` * from chain start until now: no query parameters 
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard.DefaultApi()
+interval = 'interval_example' # str | Interval of calculations (optional)
+count = 56 # int | Number of intervals to return. Should be between [1..400]. (optional)
+to = 789 # int | End time of the query as unix timestamp. If only count is given, defaults to now.  (optional)
+_from = 789 # int | Start time of the query as unix timestamp (optional)
+
+try:
+    # RUNEPool total members and units History
+    api_response = api_instance.get_rune_pool_history(interval=interval, count=count, to=to, _from=_from)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_rune_pool_history: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **interval** | **str**| Interval of calculations | [optional] 
+ **count** | **int**| Number of intervals to return. Should be between [1..400]. | [optional] 
+ **to** | **int**| End time of the query as unix timestamp. If only count is given, defaults to now.  | [optional] 
+ **_from** | **int**| Start time of the query as unix timestamp | [optional] 
+
+### Return type
+
+[**RUNEPoolHistory**](RUNEPoolHistory.md)
 
 ### Authorization
 
