@@ -1,14 +1,13 @@
 from typing import Optional
 
-from cosmpy.aerial.client import Coin as CosmosCoin
+# from cosmpy.aerial.client import Coin as CosmosCoin
 from cosmpy.aerial.tx import Transaction, SigningCfg
 from cosmpy.crypto.keypairs import PublicKey
 
 from xchainpy2_cosmos.utils import convert_address_for_msg
 from xchainpy2_utils import NetworkType, CryptoAmount, Amount, Asset, CACAO_DECIMAL, AssetCACAO
 from .const import DEPOSIT_GAS_LIMIT_VALUE, DENOM_CACAO_NATIVE
-from .proto.cosmos.base.v1beta1.coin_pb2 import Coin
-from .proto import THORCoin, THORAsset, MsgSend, MsgDeposit
+from .proto import THORCoin, THORAsset, MsgSend, MsgDeposit, CosmosCoin
 
 
 def get_maya_address_prefix(network: NetworkType) -> str:
@@ -87,7 +86,7 @@ def build_transfer_tx_draft(what: CryptoAmount, denom: str, sender: str, recipie
             from_address=convert_address_for_msg(sender, prefix),
             to_address=convert_address_for_msg(recipient, prefix),
             amount=[
-                Coin(amount=str(what.amount.internal_amount), denom=denom)
+                CosmosCoin(amount=str(what.amount.internal_amount), denom=denom)
             ],
         )
     )
