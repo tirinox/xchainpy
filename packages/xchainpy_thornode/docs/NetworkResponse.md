@@ -4,8 +4,6 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **bond_reward_rune** | **str** | total amount of RUNE awarded to node operators | 
-**burned_bep_2_rune** | **str** | total of burned BEP2 RUNE | 
-**burned_erc_20_rune** | **str** | total of burned ERC20 RUNE | 
 **total_bond_units** | **str** | total bonded RUNE | 
 **effective_security_bond** | **str** | effective security bond used to determine maximum pooled RUNE | 
 **total_reserve** | **str** | total reserve RUNE | 

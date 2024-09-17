@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Thornode API
-  version: 1.134.0
+  version: 2.135.0
   contact:
     email: devs@thorchain.org
   description: Thornode REST API.
@@ -1605,13 +1605,13 @@ components:
       properties:
         asset:
           type: string
-          example: BNB.BNB
+          example: BTC.BTC
         rune_address:
           type: string
           example: thor1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         asset_address:
           type: string
-          example: bnb1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          example: bc1qn9esxuw8ca7ts8l6w66kdh800s09msvutydc46
         last_add_height:
           type: integer
           format: int64
@@ -1650,13 +1650,13 @@ components:
       properties:
         asset:
           type: string
-          example: BNB.BNB
+          example: BTC.BTC
         rune_address:
           type: string
           example: thor1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         asset_address:
           type: string
-          example: bnb1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          example: bc1qn9esxuw8ca7ts8l6w66kdh800s09msvutydc46
         last_add_height:
           type: integer
           format: int64
@@ -1710,10 +1710,10 @@ components:
       properties:
         asset:
           type: string
-          example: BNB.BNB
+          example: BTC.BTC
         asset_address:
           type: string
-          example: bnb1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          example: bc1qn9esxuw8ca7ts8l6w66kdh800s09msvutydc46
         last_add_height:
           type: integer
           format: int64
@@ -1750,10 +1750,10 @@ components:
       properties:
         owner:
           type: string
-          example: bnb1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+          example: bc1qn9esxuw8ca7ts8l6w66kdh800s09msvutydc46
         asset:
           type: string
-          example: BNB.BNB
+          example: BTC.BTC
         debt_issued:
           type: string
           example: '123456'
@@ -3066,8 +3066,6 @@ components:
       type: object
       required:
       - bond_reward_rune
-      - burned_bep_2_rune
-      - burned_erc_20_rune
       - total_bond_units
       - effective_security_bond
       - total_reserve
@@ -3085,14 +3083,6 @@ components:
           type: string
           example: '857134475040'
           description: total amount of RUNE awarded to node operators
-        burned_bep_2_rune:
-          type: string
-          example: '674699077345087'
-          description: total of burned BEP2 RUNE
-        burned_erc_20_rune:
-          type: string
-          example: '66369401654835'
-          description: total of burned ERC20 RUNE
         total_bond_units:
           type: string
           example: '0'
@@ -3625,50 +3615,42 @@ components:
             be sent
         fees: &id028
           $ref: '#/components/schemas/QuoteFees'
-        slippage_bps: &id029
-          type: integer
-          format: int64
-          description: Deprecated - migrate to fees object.
-        streaming_slippage_bps: &id030
-          type: integer
-          format: int64
-          description: Deprecated - migrate to fees object.
-        router: &id031
+        router: &id029
           type: string
           description: the EVM chain router contract address
           example: '0x3624525075b88B24ecc29CE226b0CEc1fFcB6976'
-        expiry: &id032
+        expiry: &id030
           type: integer
           format: int64
           description: expiration timestamp in unix seconds
           example: 1671660285
-        warning: &id033
+        warning: &id031
           type: string
           description: static warning message
           example: Do not cache this response. Do not send funds after the expiry.
-        notes: &id034
+        notes: &id032
           type: string
           description: chain specific quote notes
           example: Transfer the inbound_address the asset with the memo. Do not use
             multi-in, multi-out transactions.
-        dust_threshold: &id035
+        dust_threshold: &id033
           type: string
           example: '10000'
           description: Defines the minimum transaction size for the chain in base
             units (sats, wei, uatom). Transactions with asset amounts lower than the
             dust_threshold are ignored.
-        recommended_min_amount_in: &id036
+        recommended_min_amount_in: &id034
           type: string
           description: The recommended minimum inbound amount for this transaction
             type & inbound asset. Sending less than this amount could result in failed
             refunds.
           example: '15000'
-        recommended_gas_rate: &id037
+        recommended_gas_rate: &id035
           type: string
           example: '10'
           description: the recommended gas rate to use for the inbound to ensure timely
             confirmation
-        gas_rate_units: &id038
+        gas_rate_units: &id036
           type: string
           example: gwei
           description: the units of the recommended gas rate
@@ -3676,12 +3658,9 @@ components:
       type: object
       required:
       - expected_amount_out
-      - expected_amount_out_streaming
       - outbound_delay_blocks
       - outbound_delay_seconds
       - fees
-      - slippage_bps
-      - streaming_slippage_bps
       - warning
       - notes
       - expiry
@@ -3692,16 +3671,14 @@ components:
         outbound_delay_blocks: *id026
         outbound_delay_seconds: *id027
         fees: *id028
-        slippage_bps: *id029
-        streaming_slippage_bps: *id030
-        router: *id031
-        expiry: *id032
-        warning: *id033
-        notes: *id034
-        dust_threshold: *id035
-        recommended_min_amount_in: *id036
-        recommended_gas_rate: *id037
-        gas_rate_units: *id038
+        router: *id029
+        expiry: *id030
+        warning: *id031
+        notes: *id032
+        dust_threshold: *id033
+        recommended_min_amount_in: *id034
+        recommended_gas_rate: *id035
+        gas_rate_units: *id036
         memo:
           type: string
           description: generated memo for the swap
@@ -3710,11 +3687,6 @@ components:
           type: string
           description: the amount of the target asset the user can expect to receive
             after fees
-          example: '10000'
-        expected_amount_out_streaming:
-          type: string
-          description: Deprecated - expected_amount_out is streaming amount if interval
-            provided.
           example: '10000'
         max_streaming_quantity:
           type: integer
@@ -3759,16 +3731,14 @@ components:
         outbound_delay_blocks: *id026
         outbound_delay_seconds: *id027
         fees: *id028
-        slippage_bps: *id029
-        streaming_slippage_bps: *id030
-        router: *id031
-        expiry: *id032
-        warning: *id033
-        notes: *id034
-        dust_threshold: *id035
-        recommended_min_amount_in: *id036
-        recommended_gas_rate: *id037
-        gas_rate_units: *id038
+        router: *id029
+        expiry: *id030
+        warning: *id031
+        notes: *id032
+        dust_threshold: *id033
+        recommended_min_amount_in: *id034
+        recommended_gas_rate: *id035
+        gas_rate_units: *id036
         memo:
           type: string
           description: generated memo for the deposit
@@ -3806,16 +3776,14 @@ components:
         outbound_delay_blocks: *id026
         outbound_delay_seconds: *id027
         fees: *id028
-        slippage_bps: *id029
-        streaming_slippage_bps: *id030
-        router: *id031
-        expiry: *id032
-        warning: *id033
-        notes: *id034
-        dust_threshold: *id035
-        recommended_min_amount_in: *id036
-        recommended_gas_rate: *id037
-        gas_rate_units: *id038
+        router: *id029
+        expiry: *id030
+        warning: *id031
+        notes: *id032
+        dust_threshold: *id033
+        recommended_min_amount_in: *id034
+        recommended_gas_rate: *id035
+        gas_rate_units: *id036
         memo:
           type: string
           description: generated memo for the withdraw, the client can use this OR
@@ -3856,16 +3824,14 @@ components:
         outbound_delay_blocks: *id026
         outbound_delay_seconds: *id027
         fees: *id028
-        slippage_bps: *id029
-        streaming_slippage_bps: *id030
-        router: *id031
-        expiry: *id032
-        warning: *id033
-        notes: *id034
-        dust_threshold: *id035
-        recommended_min_amount_in: *id036
-        recommended_gas_rate: *id037
-        gas_rate_units: *id038
+        router: *id029
+        expiry: *id030
+        warning: *id031
+        notes: *id032
+        dust_threshold: *id033
+        recommended_min_amount_in: *id034
+        recommended_gas_rate: *id035
+        gas_rate_units: *id036
         memo:
           type: string
           description: generated memo for the loan open
@@ -3930,16 +3896,14 @@ components:
         outbound_delay_blocks: *id026
         outbound_delay_seconds: *id027
         fees: *id028
-        slippage_bps: *id029
-        streaming_slippage_bps: *id030
-        router: *id031
-        expiry: *id032
-        warning: *id033
-        notes: *id034
-        dust_threshold: *id035
-        recommended_min_amount_in: *id036
-        recommended_gas_rate: *id037
-        gas_rate_units: *id038
+        router: *id029
+        expiry: *id030
+        warning: *id031
+        notes: *id032
+        dust_threshold: *id033
+        recommended_min_amount_in: *id034
+        recommended_gas_rate: *id035
+        gas_rate_units: *id036
         memo:
           type: string
           description: generated memo for the loan close
