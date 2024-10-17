@@ -388,6 +388,9 @@ class CryptoAmount(NamedTuple):
     def __repr__(self):
         return f'CryptoAmount({self!s})'
 
+    def __int__(self):
+        return int(self.amount)
+
     def change_amount(self, new_amount: Union[int, float, Decimal]) -> 'CryptoAmount':
         """
         Change the amount only of this CryptoAmount. The asset remains the same.
