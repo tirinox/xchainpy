@@ -93,3 +93,11 @@ def test_arithmetic():
 
     with pytest.raises(ValueError):
         amt + bmt
+
+
+def test_conv():
+    amt = CryptoAmount(Amount(100, 8), AssetRUNE)
+    assert int(amt) == 100
+
+    amt = amt.change_amount(0)
+    assert int(amt) == 0
