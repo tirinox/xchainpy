@@ -1,17 +1,8 @@
-import asyncio
 from enum import Enum
 from typing import NamedTuple, Optional
 
-from xchainpy2_midgard.rest import ApiException
 from xchainpy2_thorchain import ActionType, THORMemo
 from xchainpy2_thornode import TxStatusResponse, TxSignersResponse
-from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, remove_0x_prefix
-from .cache import THORChainCache
-
-DEFAULT_POLL_INTERVAL = 5  # sec
-"""
-Default poll interval in seconds for polling transaction status
-"""
 
 
 class TxStatus(Enum):
@@ -26,6 +17,13 @@ class TxStatus(Enum):
     INCOMPLETE = 'incomplete'
     BELOW_DUST = 'dust'
 
+    Unknown = UNKNOWN
+    Observed = OBSERVED
+    Done = DONE
+    Refunded = REFUNDED
+    Incomplete = INCOMPLETE
+    BelowDust = BELOW_DUST
+
     @classmethod
     def finished(cls):
         """
@@ -39,13 +37,33 @@ class TxStage(Enum):
     """
     Transaction stage enum.
     """
+
     Unknown = 'Unknown'
+    """Unknown stage"""
+
+    InboundSubmitted = 'InboundSubmitted'
+    """Transaction is submitted on the inbound chain, but not observed yet by THORChain"""
+
     InboundObserved = 'InboundObserved'
+    """Transaction is observed by THORChain"""
+
     InboundConfirmationCounted = 'InboundConfirmationCounted'
+    """Transaction is observed and has enough confirmations"""
+
     InboundFinalised = 'InboundFinalised'
+    """Transaction is finalised on the inbound chain"""
+
     SwapFinalised = 'SwapFinalised'
+    """Swap transaction is finalised"""
+
     OutboundDelayWait = 'OutboundDelayWait'
+    """Outbound transaction is waiting for delay"""
+
     OutboundSigned = 'OutboundSigned'
+    """Outbound transaction is signed by THORChain"""
+
+    OutboundConfirmed = 'OutboundConfirmed'
+    """Outbound transaction is confirmed in the outbound chain"""
 
 
 class TxDetails(NamedTuple):
@@ -167,94 +185,3 @@ class TxDetails(NamedTuple):
             TxStage.Unknown,
             None, None
         )
-
-
-class TransactionTracker:
-    def __init__(self, cache: THORChainCache, chain_attributes=DEFAULT_CHAIN_ATTRS):
-        self.cache = cache
-        self.chain_attributes = chain_attributes
-
-    async def check_tx_progress(self, inbound_tx_hash: str) -> TxDetails:
-        if not isinstance(inbound_tx_hash, str):
-            raise ValueError('inbound_tx_hash should be a string')
-
-        if 'dry-run' in inbound_tx_hash.lower():
-            return TxDetails.dry_run_success(inbound_tx_hash)
-
-        if len(inbound_tx_hash) <= 10:
-            raise ValueError('inbound_tx_hash is too short')
-        try:
-            tx_details: TxSignersResponse = await self.cache.tx_api.tx_signers(inbound_tx_hash)
-        except ApiException as e:
-            if e.status == 404:
-                return TxDetails.create(None, None, inbound_tx_hash)
-            raise
-
-        try:
-            tx_status: TxStatusResponse = await self.cache.tx_api.tx_status(inbound_tx_hash)
-        except ApiException as e:
-            if e.status == 404:
-                return TxDetails.create(tx_details, None)
-            raise
-
-        return TxDetails.create(tx_details, tx_status)
-
-    def poll(self, txid: str, interval=DEFAULT_POLL_INTERVAL, stage=True, status=True):
-        """
-        Poll TX status.
-        Usages:
-
-        async for details in tracker.poll(txid):
-            if not details.pending:
-                print(f'Finished: {details}')
-                break
-            else:
-                print('Still pending...')
-
-        :param txid: inbound TX hash
-        :param interval: Interval between requests in seconds
-        :return: async generator
-        """
-        return TransactionTrackerAsyncGenerator(self, interval, txid, stage, status)
-
-
-class TransactionTrackerAsyncGenerator:
-    def __init__(self, tracker: TransactionTracker, interval, tx_hash, stage=True, status=True):
-        self.tracker = tracker
-        self.interval = interval
-        self.tx_hash = remove_0x_prefix(tx_hash)
-        self.stage = stage
-        self.status = status
-        if not self.stage and not self.status:
-            raise ValueError('At least one of stage or status should be True')
-
-        self._previous_status = TxStatus.UNKNOWN
-        self._previous_stage = TxStage.Unknown
-        self._finished = False
-
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self) -> TxDetails:
-        if self._finished:
-            raise StopAsyncIteration
-
-        while True:
-            details = await self.tracker.check_tx_progress(self.tx_hash)
-
-            something_changed = False
-            if self.stage and details.stage != self._previous_stage:
-                self._previous_stage = details.stage
-                something_changed = True
-            if self.status and details.status != self._previous_status:
-                self._previous_status = details.status
-                something_changed = True
-
-            if not details.pending:
-                self._finished = True
-                return details
-
-            if not something_changed:
-                await asyncio.sleep(self.interval)
-            else:
-                return details
