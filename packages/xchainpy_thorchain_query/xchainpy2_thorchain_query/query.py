@@ -164,19 +164,19 @@ class THORChainQuery:
             )
         except ValueError:
             try:
-                response = self.cache._thornode_client.last_response
+                response = self.cache.thornode_client.last_response
                 data = response.data
                 if isinstance(data, str):
                     data = json.loads(data)
                 error = data.get('error', 'unknown error')
                 errors.append(str(error))
-            except Exception:
-                errors.append('Could not pass error info.')
+            except Exception as e:
+                errors.append(f'Could not pass error info. {e!r}')
                 response = None
 
             zero = CryptoAmount(Amount.zero(), AssetRUNE)
             return SwapEstimate(
-                TotalFees(destination_asset, zero, zero),
+                TotalFees.zero(destination_asset),
                 0,
                 zero,
                 0, 0,
@@ -194,13 +194,15 @@ class THORChainQuery:
 
         fee_asset = Asset.from_string_exc(swap_quote.fees.asset)
 
+        fees: QuoteFees = swap_quote.fees
         return SwapEstimate(
             TotalFees(
-                from_asset,
-                affiliate_fee=CryptoAmount(Amount.from_base(swap_quote.fees.affiliate), fee_asset),
-                outbound_fee=CryptoAmount(Amount.from_base(swap_quote.fees.outbound), fee_asset)
+                fee_asset,
+                fees.total_bps, int(fees.total), fees.slippage_bps, int(fees.affiliate), int(fees.liquidity),
+                int(fees.outbound),
             ),
-            slip_bps=int(swap_quote.slippage_bps),
+            # todo: add other fees
+            slip_bps=int(swap_quote.fees.slippage_bps),
             net_output=CryptoAmount(Amount(int(swap_quote.expected_amount_out)), destination_asset),
             outbound_delay_seconds=swap_quote.outbound_delay_seconds,
             inbound_confirmation_seconds=swap_quote.inbound_confirmation_seconds,
@@ -271,11 +273,21 @@ class THORChainQuery:
         :param asset: Asset - the asset you want the fees converted to
         :return: TotalFees in asset
         """
-        outbound_fee, affiliate_fee = await asyncio.gather(
-            self.cache.convert(fees.outbound_fee, asset),
-            self.cache.convert(fees.affiliate_fee, asset)
+        outbound_fee, affiliate_fee, total_fee, liq_fee = await asyncio.gather(
+            self.cache.convert(fees.outbound_fee_amount, asset),
+            self.cache.convert(fees.affiliate_fee_amount, asset),
+            self.cache.convert(fees.total_fee_amount, asset),
+            self.cache.convert(fees.liquidity_fee_amount, asset),
         )
-        return TotalFees(asset, outbound_fee, affiliate_fee)
+        return TotalFees(
+            asset,
+            total_bps=fees.total_bps,
+            total_fee=int(total_fee),
+            slippage_bps=fees.slippage_bps,
+            affiliate_fee=int(affiliate_fee),
+            liquidity_fee=int(liq_fee),
+            outbound_fee=int(outbound_fee)
+        )
 
     async def get_confirmation_counting(self, input_coin: CryptoAmount):
         """
@@ -308,7 +320,7 @@ class THORChainQuery:
 
     async def estimate_add_lp(self, param: LPAmount) -> EstimateAddLP:
         """
-        Estimates a liquidity position for given crypto amount value, both asymmetrical and symetrical
+        Estimates a liquidity position for given crypto amount value, both asymmetrical and symmetrical
         :param param: LPAmount - parameters needed for a estimated liquidity position
         :return: EstimateAddLP
         """
@@ -401,8 +413,6 @@ class THORChainQuery:
             liquidity_units=int(liquidity_provider.units),
             total_units=int(pool_asset.thornode_details.pool_units),
         )
-
-        network_values = await self.cache.get_network_values()
 
         current_lp = LPAmount(
             asset=Amount.from_base(liquidity_provider.asset_deposit_value),
@@ -529,7 +539,7 @@ class THORChainQuery:
             self.cache.convert(asset_outbound, self.cache.native_asset),
         )
 
-        memo = THORMemo.withdraw().build()  # todo
+        memo = THORMemo.withdraw('').build()  # todo
 
         deposit_amount = CryptoAmount.zero(asset)  # todo!
 
@@ -640,7 +650,7 @@ class THORChainQuery:
             memo=deposit_quote.memo,
             estimated_wait_time=estimated_wait,
             can_add_saver=(not errors),
-            slip_basis_points=int(deposit_quote.slippage_bps),
+            slip_basis_points=int(deposit_quote.fees.slippage_bps),
             saver_cap_filled_percent=saver_cap_filled_percent,
             errors=errors,
             recommended_min_amount_in=int(deposit_quote.recommended_min_amount_in),

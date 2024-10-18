@@ -25,10 +25,50 @@ class TotalFees(NamedTuple):
 
     asset: Asset
     """Destination asset"""
-    outbound_fee: CryptoAmount
-    """Outbound transaction fee"""
-    affiliate_fee: CryptoAmount
-    """Fee for the affiliate, if any"""
+
+    total_bps: int
+    """Total basis points for the fees"""
+
+    total_fee: int
+    """Total fee in the destination asset"""
+
+    slippage_bps: int
+    """Slippage in basis points (0-10000)"""
+
+    affiliate_fee: int
+    """Affiliate fee in the destination asset"""
+
+    liquidity_fee: int
+    """Liquidity fee in the destination asset"""
+
+    outbound_fee: int
+    """Outbound fee in the destination asset"""
+
+    @property
+    def total_fee_amount(self) -> CryptoAmount:
+        return CryptoAmount(Amount.from_base(self.total_fee), self.asset)
+
+    @property
+    def affiliate_fee_amount(self) -> CryptoAmount:
+        return CryptoAmount(Amount.from_base(self.affiliate_fee), self.asset)
+
+    @property
+    def liquidity_fee_amount(self) -> CryptoAmount:
+        return CryptoAmount(Amount.from_base(self.liquidity_fee), self.asset)
+
+    @property
+    def outbound_fee_amount(self) -> CryptoAmount:
+        return CryptoAmount(Amount.from_base(self.outbound_fee), self.asset)
+
+    @classmethod
+    def zero(cls, asset: Asset) -> 'TotalFees':
+        """
+        Create a zero TotalFees instance.
+
+        :param asset: Destination asset
+        :return: TotalFees instance
+        """
+        return cls(asset, 0, 0, 0, 0, 0, 0)
 
 
 class SwapEstimate(NamedTuple):
