@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 from contextlib import suppress
-from typing import Optional, Set, Union
+from typing import Optional, Set, Union, List, Tuple
 
 from xchainpy2_client import NoClient, XChainClient
 from xchainpy2_thorchain_query import THORChainQuery, THORChainCache
@@ -12,6 +12,8 @@ from .detect_clients import THORChainClient, CosmosGaiaClient, BinanceSmartChain
     ArbitrumClient
 from .evm_helper import EVMHelper
 from .models import AllBalances, ChainBalances, ALL
+
+ChainCollection = Union[Set[Chain], List[Chain], Tuple[Chain]]
 
 
 class Wallet:
@@ -42,7 +44,7 @@ class Wallet:
 
     def __init__(self, phrase: str,
                  query_api: Optional[THORChainQuery] = None,
-                 enabled_chains: Set[Chain] = ALL,
+                 enabled_chains: ChainCollection = ALL,
                  concurrency: int = 5,
                  default_chain: Chain = Chain.THORChain):
         """
