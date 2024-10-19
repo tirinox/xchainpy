@@ -22,8 +22,8 @@ async def try_thornode():
     r = await mimir.mimir()
     print(f"{type(r)}: {r}")
 
-    pol = thor.POLApi(api_client)
-    r = await pol.pol()
+    pol = thor.RUNEPoolApi(api_client)
+    r = await pol.rune_pool()
     print(f"{type(r)}: {r}")
 
     await api_client.rest_client.pool_manager.close()
