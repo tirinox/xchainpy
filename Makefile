@@ -1,24 +1,32 @@
-.PHONY: dev_tools test tc_env build publish_test publish gen_thornode gen_mayanode gen_midgard gen_binance_proto help upver
-.DEFAULT_GOAL := help
+default: help
 
-dev_tools:
-	pip install -U pytest pytest-asyncio requests-mock aioresponses sphinx sphinx-rtd-theme
+.PHONY: help
+help: # Show help for each of the Makefile recipes.
+	@grep -E '^[a-zA-Z0-9 -_]+:.*#'  Makefile | sort | while read -r l; do printf "\033[1;32m$$(echo $$l | cut -f 1 -d':')\033[00m:$$(echo $$l | cut -f 2- -d'#')\n"; done
 
-gen_thornode:
+.PHONY: dev_tools
+dev_tools: # Install dev tools
+	#pip install -U pytest pytest-asyncio requests-mock aioresponses sphinx sphinx-rtd-theme
+	pip install -r requirements.txt
+
+.PHONY: gen_thornode
+gen_thornode: # Generate thornode client from OpenAPI spec
 	cd scripts && ./gen_thornode_client.sh
 
-gen_mayanode:
+.PHONY: gen_mayanode
+gen_mayanode: # Generate mayanode client from OpenAPI spec
 	cd scripts && ./gen_mayanode_client.sh
 
-gen_midgard:
+.PHONY: gen_midgard
+gen_midgard: # Generate midgard client from OpenAPI spec
 	cd scripts && ./gen_midgard_client.sh
 
-
-gen_binance_proto:
+.PHONY: gen_binance_proto
+gen_binance_proto: # Generate Binance chain proto files
 	cd scripts && ./gen_proto_binance_chain.sh
 
-
-test:
+.PHONY: test
+test: # Run tests
 	pytest \
 		packages/xchainpy_client \
 		packages/xchainpy_cosmos \
@@ -34,10 +42,11 @@ test:
 		packages/xchainpy_mayachain \
 		packages/xchainpy_bsc \
 		packages/xchainpy_avalanche \
-		packages/xchainpy_arbitrum
+		packages/xchainpy_arbitrum \
+		packages/xchainpy_wallet
 
-
-tc_env:
+.PHONY: tc_env
+tc_env: # Install XChainPy2 packages in editable mode
 	python3 -m pip install --editable packages/xchainpy_crypto
 	python3 -m pip install --editable packages/xchainpy_utils
 	python3 -m pip install --editable packages/xchainpy_client
@@ -52,33 +61,24 @@ tc_env:
 	python3 -m pip install --editable packages/xchainpy_bsc
 	python3 -m pip install --editable packages/xchainpy_avalanche
 	python3 -m pip install --editable packages/xchainpy_arbitrum
+	python3 -m pip install --editable packages/xchainpy_wallet
 
-
-build:
+.PHONY: build
+build: # Build packages (without publishing)
 	cd scripts && ./publish.sh build
 
-publish_test:
+.PHONY: publish_test
+publish_test: # Publish packages to test pypi. You will be asked which package to publish
 	cd scripts && ./publish.sh publish_test
 
-publish:
+.PHONY: publish
+publish: # Publish packages to pypi. You will be asked which package to publish
 	cd scripts && ./publish.sh publish
 
-doc:
+.PHONY: doc
+doc: # Build documentation
 	cd docs && make html && open _build/html/index.html
 
-upver:
+.PHONY: upver
+upver: # Helper script to raise package version number, you will be asked which package to update
 	cd scripts && ./upver.sh
-
-help:
-	@echo "dev_tools: Install dev tools"
-	@echo "test: Run tests"
-	@echo "tc_env: Install xchainpy packages in editable mode"
-	@echo "build: Build packages"
-	@echo "publish_test: Publish packages to test pypi"
-	@echo "publish: Publish packages to pypi"
-	@echo "doc: Build documentation"
-	@echo "help: Show this help message"
-	@echo "gen_thornode: Generate thornode client"
-	@echo "gen_mayanode: Generate mayanode client"
-	@echo "gen_midgard: Generate midgard client"
-	@echo "upver: Helper script to raise package version number"
