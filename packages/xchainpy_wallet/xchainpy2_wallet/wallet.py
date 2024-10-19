@@ -10,7 +10,7 @@ from xchainpy2_utils import Chain, EVM_CHAINS, Asset
 from .detect_clients import THORChainClient, CosmosGaiaClient, BinanceSmartChainClient, BinanceChainClient, \
     MayaChainClient, BitcoinClient, EthereumClient, AvalancheClient, LitecoinClient, DogecoinClient, BitcoinCashClient, \
     ArbitrumClient
-from .evm_helper import EVMHelper
+# from .evm_helper import EVMHelper
 from .models import AllBalances, ChainBalances, ALL
 
 ChainCollection = Union[Set[Chain], List[Chain], Tuple[Chain]]

@@ -7,11 +7,11 @@ from xchainpy2_ethereum import EthereumClient, GasOptions
 from xchainpy2_thorchain import THORChainClient, THORMemo
 from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode
 from xchainpy2_utils import CryptoAmount, Asset, Chain, AssetRUNE, remove_0x_prefix
+from xchainpy2_wallet import Wallet
 from .consts import THOR_BASIS_POINT_MAX, DEFAULT_TOLERANCE_BPS, THOR_SWAP_TRACKER_URL, DEFAULT_EXPIRY
 from .evm_helper import EVMHelper
 from .models import AMMException, THORNameException
 from .utils import is_erc20_asset
-from .wallet import Wallet
 
 
 class THORChainAMM:

@@ -3,15 +3,15 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "xchainpy2_thorchain_amm"
-version = "0.0.25"
+name = "xchainpy2_wallet"
+version = "0.0.1"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
-description = "XChainPy2 THORChain Automated Market Maker (AMM) interface"
+description = "XChainPy 2 Wallet"
 readme = "README.md"
 requires-python = ">=3.7"
-keywords = ["Crypto", "THORChain", "Blockchain", "XChain", "AMM", "Swap", "DEX"]
+keywords = ["Crypto", "Wallet", "Blockchain", "XChain"]
 license = { text = "MIT" }
 urls = {source = "https://github.com/tirinox/xchainpy"}
 classifiers = [
@@ -29,14 +29,10 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
 ]
 dependencies = [
-    "bip-utils>=2.7.0,<3.0.0",
-    "pycryptodome>=3.17,<4.0",
-    "xchainpy2_utils>=0.0.4",
-    "xchainpy2_crypto>=0.0.4",
-    "xchainpy2_client>=0.0.4",
-    "xchainpy2_thorchain>=0.0.4",
-    "xchainpy2_cosmos>=0.0.4",
-    "xchainpy2_thorchain_query>=0.0.4",
 ]
+
 [project.optional-dependencies]
 test = ["pytest"]
+
+[tool.setuptools]
+packages = ["xchainpy2_wallet"]

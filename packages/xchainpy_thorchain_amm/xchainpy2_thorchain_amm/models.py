@@ -4,28 +4,6 @@ from typing import NamedTuple, Optional, List, Dict
 from xchainpy2_client import FeeOption
 from xchainpy2_utils import Chain, CryptoAmount, Asset
 
-ALL = None
-
-
-class ChainBalances(NamedTuple):
-    chain: Chain
-    address: str
-    balances: List[CryptoAmount]
-
-
-class AllBalances(NamedTuple):
-    date: datetime
-    balances: Dict[Chain, ChainBalances]
-
-    @property
-    def flat(self) -> List[CryptoAmount]:
-        return [
-            balance
-            for chain_balances in self.balances.values()
-            for balance in chain_balances.balances
-        ]
-
-
 class ExecuteSwap(NamedTuple):
     input: CryptoAmount
     destination_asset: Asset
