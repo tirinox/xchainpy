@@ -1,5 +1,7 @@
 import asyncio
+from typing import Optional
 
+from xchainpy2_client import XChainClient
 from xchainpy2_midgard.rest import ApiException
 from xchainpy2_thornode import TxStatusResponse, TxSignersResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, remove_0x_prefix
@@ -13,19 +15,64 @@ Default poll interval in seconds for polling transaction status
 
 
 class TransactionTracker:
-    def __init__(self, cache: THORChainCache, chain_attributes=DEFAULT_CHAIN_ATTRS):
+    def __init__(self, cache: THORChainCache, chain_attributes=DEFAULT_CHAIN_ATTRS,
+                 inbound_chain_client: Optional[XChainClient] = None,
+                 outbound_chain_client: Optional[XChainClient] = None
+                 ):
+        """
+        Transaction tracker.
+
+        :param cache: THORChain cache provides access to THORChain API
+        :param chain_attributes: chain attributes, don't change unless you know what you are doing
+        :param inbound_chain_client: Optional, provide if you want to check tx status before it's observed by THORChain
+        :param outbound_chain_client: Optional, provide if you want to check tx status after it's singed by THORChain
+        """
+
         self.cache = cache
         self.chain_attributes = chain_attributes
+        self.inbound_chain_client = inbound_chain_client
+        self.outbound_chain_client = outbound_chain_client
+
+    @staticmethod
+    def _validate_tx_hash(tx_hash: str):
+        if not isinstance(tx_hash, str):
+            raise ValueError('tx_hash should be a string')
+
+        if len(tx_hash) <= 10:
+            raise ValueError('tx_hash is too short')
+
+    async def check_tx_outside_thorchain(self, tx_hash: str, is_inbound: bool):
+        """
+        Check transaction status outside THORChain, namely in the inbound or outbound chain.
+        :param tx_hash: Transaction hash (tx_id)
+        :param is_inbound: If True, check transaction status before it's observed by THORChain, otherwise after it's signed by THORChain
+        :return:
+        """
+        self._validate_tx_hash(tx_hash)
+
+        if is_inbound:
+            if not self.inbound_chain_client:
+                raise ValueError('inbound_chain_client is not set')
+            tx_details = await self.inbound_chain_client.get_transaction_data(tx_hash)
+        else:
+            if not self.outbound_chain_client:
+                raise ValueError('outbound_chain_client is not set')
+            tx_details = await self.outbound_chain_client.get_transaction_data(tx_hash)
+
+        return TxDetails.create(tx_details, None, tx_hash)
 
     async def check_tx_progress(self, inbound_tx_hash: str) -> TxDetails:
-        if not isinstance(inbound_tx_hash, str):
-            raise ValueError('inbound_tx_hash should be a string')
+        """
+        Check transaction progress.
+
+        :param inbound_tx_hash: Transaction hash (tx_id)
+        :return: Transaction details
+        """
+        self._validate_tx_hash(inbound_tx_hash)
 
         if 'dry-run' in inbound_tx_hash.lower():
             return TxDetails.dry_run_success(inbound_tx_hash)
 
-        if len(inbound_tx_hash) <= 10:
-            raise ValueError('inbound_tx_hash is too short')
         try:
             tx_details: TxSignersResponse = await self.cache.tx_api.tx_signers(inbound_tx_hash)
         except ApiException as e:
