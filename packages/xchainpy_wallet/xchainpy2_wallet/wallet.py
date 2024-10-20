@@ -4,12 +4,9 @@ from contextlib import suppress
 from typing import Optional, Set, Union, List, Tuple
 
 from xchainpy2_client import NoClient, XChainClient
-from xchainpy2_thorchain_query import THORChainQuery, THORChainCache
-from xchainpy2_thorchain_query.models import InboundDetail
+from xchainpy2_thorchain_query import THORChainQuery, THORChainCache, InboundDetail
 from xchainpy2_utils import Chain, Asset
-from .detect_clients import THORChainClient, CosmosGaiaClient, BinanceSmartChainClient, BinanceChainClient, \
-    MayaChainClient, BitcoinClient, EthereumClient, AvalancheClient, LitecoinClient, DogecoinClient, BitcoinCashClient, \
-    ArbitrumClient
+from .detect_clients import THORChainClient, CLIENT_CLASSES
 # from .evm_helper import EVMHelper
 from .models import AllBalances, ChainBalances, ALL
 
@@ -21,25 +18,6 @@ class Wallet:
     Wallet class is a high-level interface to your multi-chain wallet.
     It allows you to get balances, transaction data, send transactions.
     You can enable or disable chains according to your needs.
-    """
-
-    CLIENT_CLASSES = {
-        Chain.THORChain: THORChainClient,
-        Chain.Cosmos: CosmosGaiaClient,
-        Chain.Binance: BinanceChainClient,
-        Chain.Maya: MayaChainClient,
-        Chain.Bitcoin: BitcoinClient,
-        Chain.BitcoinCash: BitcoinCashClient,
-        Chain.Litecoin: LitecoinClient,
-        Chain.Doge: DogecoinClient,
-        Chain.Ethereum: EthereumClient,
-        Chain.BinanceSmartChain: BinanceSmartChainClient,
-        Chain.Avalanche: AvalancheClient,
-        Chain.Arbitrum: ArbitrumClient,
-        # to be continued
-    }
-    """
-    A dictionary that maps Chain to its client class.
     """
 
     def __init__(self, phrase: str,
@@ -64,7 +42,7 @@ class Wallet:
 
         self.query_api = query_api or THORChainQuery()
 
-        self._enabled_chains = set(self.CLIENT_CLASSES.keys()) if enabled_chains is ALL else set(enabled_chains)
+        self._enabled_chains = set(CLIENT_CLASSES.keys()) if enabled_chains is ALL else set(enabled_chains)
 
         self.network = self.cache.network
 
@@ -122,7 +100,7 @@ class Wallet:
 
     def _create_clients(self, phrase):
         for chain in self._enabled_chains:
-            chain_class = self.CLIENT_CLASSES.get(chain)
+            chain_class = CLIENT_CLASSES.get(chain)
             if not chain_class or issubclass(chain_class, NoClient):
                 raise ImportError(f"{chain} client is not found. Try to install it by running"
                                   f" 'pip install xchainpy2_{chain.value.lower()}' "

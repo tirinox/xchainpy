@@ -1,4 +1,5 @@
 from xchainpy2_client import NoClient
+from xchainpy2_utils import Chain
 
 # You don't have to install absolutely all clients. You can install only the ones you need.
 # We will try to import all clients and if they are not found, we will use NoClient instead.
@@ -62,3 +63,24 @@ try:
     from xchainpy2_arbitrum import ArbitrumClient
 except ImportError:
     ArbitrumClient = NoClient
+
+# You add more clients here...
+
+CLIENT_CLASSES = {
+    Chain.THORChain: THORChainClient,
+    Chain.Cosmos: CosmosGaiaClient,
+    Chain.Binance: BinanceChainClient,
+    Chain.Maya: MayaChainClient,
+    Chain.Bitcoin: BitcoinClient,
+    Chain.BitcoinCash: BitcoinCashClient,
+    Chain.Litecoin: LitecoinClient,
+    Chain.Doge: DogecoinClient,
+    Chain.Ethereum: EthereumClient,
+    Chain.BinanceSmartChain: BinanceSmartChainClient,
+    Chain.Avalanche: AvalancheClient,
+    Chain.Arbitrum: ArbitrumClient,
+    # to be continued
+}
+"""
+A dictionary that maps Chain to its client class.
+"""

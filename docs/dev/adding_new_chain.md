@@ -17,7 +17,7 @@ If you want to add a new chain to the XChainPy2 library, follow the steps below:
 8. Go to `docs/index.md` and add mention of the new chain client (you will easily find where to add it)
 9. Go to `docs/conf.py` and add the newly added package to the list of `packages`
 10. At the end, run `make publish` to publish the package.
-11. Go to `packages/xchainpy_wallet/xchainpy2_wallet/detect_clients.py` and add a piece of code like this 
+11. Go to `packages/xchainpy_wallet/xchainpy2_wallet/detect_clients.py` and add a piece of code like this
  
 ```python
 try:
@@ -25,3 +25,6 @@ try:
 except ImportError:
     YourChainClient = NoClient
 ```
+
+12. Go to `packages/xchainpy_wallet/xchainpy2_wallet/wallet.py` and add it to `CLIENT_CLASSES`
+
