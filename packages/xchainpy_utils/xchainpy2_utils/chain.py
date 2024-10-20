@@ -3,7 +3,7 @@ from enum import Enum
 
 class Chain(Enum):
     """
-    Enum representing the different chains supported by THORChain.
+    Enum representing the different chains supported by this library.
     These values must correspond to the chain names in THORChain; do not change them without a good reason.
     """
 

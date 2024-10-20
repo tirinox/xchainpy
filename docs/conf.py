@@ -67,12 +67,12 @@ packages = [
     "xchainpy_thorchain",
     "xchainpy_mayachain",
 
+    "xchainpy_wallet",
     "xchainpy_thorchain_query",
     "xchainpy_thorchain_amm",
 
     # obsolete and other
     "xchainpy_binance",
-    "xchainpy_utxo_providers",
 ]
 
 for pack in packages:
