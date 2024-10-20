@@ -149,6 +149,15 @@ class Wallet:
                     await client.close()
             client.purge_client()
 
+    def purge_client(self, chain: Chain):
+        """
+        Purge keys from the client for the given chain.
+        :param chain: Chain
+        """
+        client = self.get_client(chain)
+        if client:
+            client.purge_client()
+
     def explorer_url_tx(self, tx_id: str):
         """
         Get the explorer URL for the given transaction ID.
