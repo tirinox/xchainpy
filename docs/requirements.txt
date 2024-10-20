@@ -2,6 +2,7 @@ sphinx
 sphinx_rtd_theme
 sphinx-copybutton
 pydantic
+myst_parser
 
 packages/xchainpy_utils
 packages/xchainpy_client
