@@ -6,7 +6,7 @@ from typing import Optional, Set, Union, List, Tuple
 from xchainpy2_client import NoClient, XChainClient
 from xchainpy2_thorchain_query import THORChainQuery, THORChainCache
 from xchainpy2_thorchain_query.models import InboundDetail
-from xchainpy2_utils import Chain, EVM_CHAINS, Asset
+from xchainpy2_utils import Chain, Asset
 from .detect_clients import THORChainClient, CosmosGaiaClient, BinanceSmartChainClient, BinanceChainClient, \
     MayaChainClient, BitcoinClient, EthereumClient, AvalancheClient, LitecoinClient, DogecoinClient, BitcoinCashClient, \
     ArbitrumClient
@@ -114,10 +114,11 @@ class Wallet:
         return chain in self._enabled_chains
 
     def _init_evm_helpers(self):
-        for chain in EVM_CHAINS:
-            if self.is_chain_enabled(chain):
-                # noinspection PyTypeChecker
-                self._evm_helpers[chain] = EVMHelper(self.get_client(chain), self.cache)
+        pass  # todo
+        # for chain in EVM_CHAINS:
+        #     if self.is_chain_enabled(chain):
+        #         # noinspection PyTypeChecker
+        #         self._evm_helpers[chain] = EVMHelper(self.get_client(chain), self.cache)
 
     def _create_clients(self, phrase):
         for chain in self._enabled_chains:
