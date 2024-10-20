@@ -52,7 +52,7 @@ except ImportError:
 try:
     from xchainpy2_avalanche import AvalancheClient
 except:
-    AvalancheChainClient = NoClient
+    AvalancheClient = NoClient
 
 try:
     from xchainpy2_binance import BinanceChainClient
