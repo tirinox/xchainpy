@@ -15,7 +15,7 @@ Default poll interval in seconds for polling transaction status
 
 
 class TransactionTracker:
-    def __init__(self, cache: THORChainCache, chain_attributes=DEFAULT_CHAIN_ATTRS,
+    def __init__(self, cache: THORChainCache, chain_attributes=None,
                  inbound_chain_client: Optional[XChainClient] = None,
                  outbound_chain_client: Optional[XChainClient] = None
                  ):
@@ -29,7 +29,7 @@ class TransactionTracker:
         """
 
         self.cache = cache
-        self.chain_attributes = chain_attributes
+        self.chain_attributes = chain_attributes or DEFAULT_CHAIN_ATTRS
         self.inbound_chain_client = inbound_chain_client
         self.outbound_chain_client = outbound_chain_client
 

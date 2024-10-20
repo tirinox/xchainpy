@@ -28,7 +28,7 @@ class THORChainQuery:
 
     def __init__(self,
                  cache: THORChainCache = None,
-                 chain_attributes=DEFAULT_CHAIN_ATTRS,
+                 chain_attributes=None,
                  interface_id=DEFAULT_INTERFACE_ID,
                  native_decimal=RUNE_DECIMAL):
         """
@@ -45,7 +45,7 @@ class THORChainQuery:
             cache = THORChainCache()
 
         self.cache = cache
-        self.chain_attributes = chain_attributes
+        self.chain_attributes = chain_attributes or DEFAULT_CHAIN_ATTRS
         self.interface_id = interface_id
         self.native_decimal = native_decimal
 
