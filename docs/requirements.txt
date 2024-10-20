@@ -23,8 +23,7 @@ packages/xchainpy_ethereum
 packages/xchainpy_litecoin
 packages/xchainpy_mayachain
 packages/xchainpy_thorchain
-
-packages/xchainpy_utxo_providers
+packages/xchainpy_wallet
 
 packages/xchainpy_thorchain_amm
 packages/xchainpy_thorchain_query
