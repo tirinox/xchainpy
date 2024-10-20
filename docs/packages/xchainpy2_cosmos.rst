@@ -1,5 +1,5 @@
-XChainPy2 Cosmos client
-=======================
+Cosmos client
+=============
 
 Cosmos client
 -------------

@@ -1,5 +1,5 @@
-XChainPy2 THORChain client
-==========================
+THORChain client
+================
 
 THORChain client
 ----------------

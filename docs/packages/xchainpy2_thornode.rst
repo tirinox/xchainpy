@@ -1,5 +1,5 @@
-XChainPy2 THORNode API connector
-================================
+THORNode API connector
+======================
 
 .. note::
 

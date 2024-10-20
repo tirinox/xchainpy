@@ -1,5 +1,5 @@
-XChainPy2 Binance Smart Chain client
-====================================
+Binance Smart Chain client
+==========================
 
 Binance Smart Chain client
 --------------------------

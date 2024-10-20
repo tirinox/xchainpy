@@ -1,5 +1,5 @@
-XChainPy2 Binance Beacon chain client
-=====================================
+Binance Beacon chain client
+===========================
 
 This is a Binance Beacon chain client for the XChainPy2 library.
 

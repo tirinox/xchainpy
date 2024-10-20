@@ -1,5 +1,5 @@
-XChainPy2 Arbitrum client
-=========================
+Arbitrum client
+===============
 
 Arbitrum client
 ---------------

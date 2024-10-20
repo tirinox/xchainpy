@@ -1,5 +1,5 @@
-XChainPy2 THORChain AMM
-=======================
+THORChain AMM
+=============
 
 This is a package for interacting with THORChain protocol's AMM (Automated Market Maker).
 
@@ -27,10 +27,3 @@ EVM Helper (THORChain router)
 -----------------------------
 
 .. automodule:: xchainpy2_thorchain_amm.evm_helper
-
-Client detection
-----------------
-
-It checks the installed clients in the environment.
-
-.. automodule:: xchainpy2_thorchain_amm.detect_clients

@@ -1,5 +1,5 @@
-XChainPy2 Bitcoin Cash client
-=============================
+Bitcoin Cash client
+===================
 
 Bitcoin Cash client
 -------------------

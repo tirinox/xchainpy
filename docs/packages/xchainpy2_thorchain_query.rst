@@ -1,5 +1,5 @@
-XChainPy2 THORChain query
-=========================
+THORChain query
+===============
 
 XChainPy2 THORChain query is a Python library for querying swap quotes, pools, and other data from THORChain.
 
@@ -16,7 +16,11 @@ Cache for frequently used data
 Transaction Status Checker
 --------------------------
 
-.. automodule:: xchainpy2_thorchain_query.check_tx
+.. automodule:: xchainpy2_thorchain_query.track.tracker
+
+Uses the following data types.
+
+.. automodule:: xchainpy2_thorchain_query.track.dtypes
 
 Constants
 ---------

@@ -1,5 +1,5 @@
-XChainPy2 MayaChain client
-==========================
+MayaChain client
+================
 
 MayaChain client
 ----------------

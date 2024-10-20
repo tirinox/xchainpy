@@ -1,5 +1,5 @@
-XChainPy2 Utils, Amount, Asset
-==============================
+Utils, Amount, Asset
+====================
 
 Chains
 ------

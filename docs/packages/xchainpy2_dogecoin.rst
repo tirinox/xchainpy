@@ -1,5 +1,5 @@
-XChainPy2 Dogecoin client
-=========================
+Dogecoin client
+===============
 
 Dogecoin client
 ---------------

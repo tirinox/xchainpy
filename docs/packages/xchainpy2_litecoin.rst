@@ -1,5 +1,5 @@
-XChainPy2 Litecoin client
-=========================
+Litecoin client
+===============
 
 Litecoin client
 ---------------

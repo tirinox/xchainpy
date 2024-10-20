@@ -1,5 +1,5 @@
-XChainPy2 Bitcoin client
-========================
+Bitcoin client
+==============
 
 This package provides a client to interact with Bitcoin blockchain.
 It supports the following features:

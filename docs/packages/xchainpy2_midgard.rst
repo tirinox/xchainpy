@@ -1,5 +1,5 @@
-XChainPy2 Midgard API connector package
-=======================================
+Midgard API connector package
+=============================
 
 Midgard API documentation can be found at https://midgard.mayachain.info/v2/doc
 

@@ -1,5 +1,5 @@
-XChainPy2 Avalanche client
-==========================
+Avalanche client
+================
 
 Avalanche client
 ----------------

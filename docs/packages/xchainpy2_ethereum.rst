@@ -1,5 +1,5 @@
-XChainPy2 Ethereum client
-=========================
+Ethereum client
+===============
 
 Ethereum client
 ---------------
