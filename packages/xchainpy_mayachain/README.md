@@ -1,3 +1,7 @@
-# `@xchainpy/xchain-mayachain`
+# XChainPy2 MayaProtocol chain Client
 
-MayaChain client package of `xchainpy` lib.
+See: https://www.mayaprotocol.com/
+
+### Documentation
+
+👉 https://xchainpy2.readthedocs.io/en/latest/packages/xchainpy2_mayachain.html

@@ -1,4 +1,10 @@
-# `xchainpy2_thorchain-query
+# XChainPy2 THORChain Query
 
-Thorchain-query module to query thorchain for estimation of swaps/ add and remove Liquidity and checking a transaction stage. 
-Returns a TxDetail object with all the information needed to conduct a swap, or add liquidity. This includes estimateAddSavers()
+This module performs the following functions:
+- Get the estimated quote for a swap / LP add / Savers
+- Check the status of a transaction
+
+### Documentation
+
+👉 https://xchainpy2.readthedocs.io/en/latest/packages/xchainpy2_thorchain_query.html
+
