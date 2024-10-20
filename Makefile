@@ -63,6 +63,10 @@ tc_env: # Install XChainPy2 packages in editable mode
 	python3 -m pip install --editable packages/xchainpy_arbitrum
 	python3 -m pip install --editable packages/xchainpy_wallet
 
+.PHONY: install_editable
+install_editable: # Install XChainPy2's any single package in editable mode
+	cd scripts && ./install_editable.sh
+
 .PHONY: build
 build: # Build packages (without publishing)
 	cd scripts && ./publish.sh build
