@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xchainpy2_thorchain_amm"
-version = "0.0.25"
+version = "0.0.26"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
@@ -37,6 +37,7 @@ dependencies = [
     "xchainpy2_thorchain>=0.0.4",
     "xchainpy2_cosmos>=0.0.4",
     "xchainpy2_thorchain_query>=0.0.4",
+    "xchainpy2_wallet>=0.0.1",
 ]
 [project.optional-dependencies]
 test = ["pytest"]

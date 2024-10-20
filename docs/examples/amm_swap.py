@@ -1,6 +1,7 @@
 import asyncio
 
-from xchainpy2_thorchain_amm import THORChainAMM, Wallet, NO_SWAP_LIMIT, FeeOption, GasOptions
+from xchainpy2_thorchain_amm import THORChainAMM, NO_SWAP_LIMIT, FeeOption, GasOptions
+from xchainpy2_wallet import Wallet
 from xchainpy2_thorchain_query import TxDetails
 from xchainpy2_utils import Chain, AssetAVAX
 

@@ -8,11 +8,6 @@ Automatic Market Maker API
 
 .. automodule:: xchainpy2_thorchain_amm.amm
 
-Wallet class
-------------
-
-.. automodule:: xchainpy2_thorchain_amm.wallet
-
 AMM Models
 ----------
 
