@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xchainpy2_thorchain_query"
-version = "0.0.21"
+version = "0.0.23"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
@@ -36,7 +36,7 @@ dependencies = [
     'xchainpy2_midgard',
     'xchainpy2_thornode',
     # Later, in mayachain_query
-    #    'xchainpy2_mayanode',
+    'xchainpy2_mayanode'
 ]
 
 [project.optional-dependencies]
