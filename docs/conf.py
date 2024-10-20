@@ -21,7 +21,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
     'sphinx_copybutton',
-    'sphinx.ext.autodoc'
+    'sphinx.ext.autodoc',
+    'myst_parser',
 ]
 
 # Configuration for autodoc
