@@ -423,3 +423,11 @@ def test_memo_runepool():
     assert m.withdraw_portion_bp == 10000
     assert m.affiliate_address == ''
     assert m.affiliate_fee_bp == 0
+    assert m.build() == 'POOL-:10000'
+
+    m = THORMemo.runepool_withdraw(3344)
+    assert m.action == ActionType.RUNEPOOL_WITHDRAW
+    assert m.withdraw_portion_bp == 3344
+    assert m.affiliate_address == ''
+    assert m.affiliate_fee_bp == 0
+    assert m.build() == 'POOL-:3344'

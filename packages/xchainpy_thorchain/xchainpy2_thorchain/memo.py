@@ -3,11 +3,10 @@ See: https://dev.thorchain.org/thorchain-dev/concepts/memos
 """
 from dataclasses import dataclass
 from enum import Enum
-from typing import Union
+from typing import Union, NamedTuple, Optional, List
 
-from xchainpy2_thorchain import RUNE_TICKER
 from xchainpy2_utils import Chain
-from .const import THOR_BASIS_POINT_MAX
+from .const import THOR_BASIS_POINT_MAX, RUNE_TICKER
 
 
 class ActionType(Enum):
@@ -94,6 +93,11 @@ def nothing_if_0(x):
 AUTO_OPTIMIZED = 0
 
 
+class Affiliate(NamedTuple):
+    address: str
+    fee_bp: int
+
+
 @dataclass
 class THORMemo:
     action: ActionType
@@ -102,8 +106,7 @@ class THORMemo:
     limit: int = 0
     s_swap_interval: int = 0
     s_swap_quantity: int = 0  # 0 = optimized, 1 = single, >1 = streaming, None = don't care
-    affiliate_address: str = ''
-    affiliate_fee_bp: int = 0  # (0..10000) range, may be "node fee" as well in case of "Bond"
+    affiliates: list[Affiliate] = None
     dex_aggregator_address: str = ''
     final_asset_address: str = ''
     min_amount_out: int = 0
@@ -127,8 +130,38 @@ class THORMemo:
         return self.build()
 
     @property
+    def affiliate_address(self) -> str:
+        """
+        Returns affiliate address/THORName when there is only one affiliate
+        Returns '' if no affiliates
+        Raises ValueError if multiple affiliates
+        :return: Affiliate address/name
+        """
+        if not self.affiliates:
+            return ''
+        elif len(self.affiliates) == 1:
+            return self.affiliates[0].address
+        else:
+            raise ValueError(f"Multiple affiliates: {self.affiliates}")
+
+    @property
+    def affiliate_fee_bp(self) -> int:
+        """
+        Returns affiliate fee in basis points (0...1000) when there is only one affiliate
+        Returns 0 if no affiliates
+        Raises ValueError if multiple affiliates
+        :return: Affiliate fee in basis points
+        """
+        if not self.affiliates:
+            return 0
+        elif len(self.affiliates) == 1:
+            return self.affiliates[0].fee_bp
+        else:
+            raise ValueError(f"Multiple affiliates: {self.affiliates}")
+
+    @property
     def has_affiliate_part(self):
-        return self.affiliate_address and self.affiliate_fee_bp > 0
+        return bool(self.affiliates)
 
     @property
     def is_streaming(self):
@@ -160,11 +193,14 @@ class THORMemo:
         if tx_type == ActionType.ADD_LIQUIDITY:
             # ADD:POOL:PAIRED_ADDR:AFFILIATE:FEE
             # 0   1    2           3         4
+            affiliates = cls._parse_affiliates(
+                ith(components, 3, ''),
+                ith(components, 4, ''),
+            )
             return cls.add_liquidity(
                 pool=ith(components, 1, ''),
                 paired_address=ith(components, 2, ''),
-                affiliate_address=ith(components, 3, ''),
-                affiliate_fee_bp=ith(components, 4, 0, is_number=True),
+                affiliates=affiliates,
             )
 
         elif tx_type == ActionType.SWAP:
@@ -173,12 +209,15 @@ class THORMemo:
             limit_and_s_swap = ith(components, 3, '')
             limit, s_swap_interval, s_swap_quantity = cls._parse_streaming_params(limit_and_s_swap)
             dest_address, refund_address = cls.parse_dest_address(ith(components, 2, ''))
+            affiliates = cls._parse_affiliates(
+                ith(components, 4, ''),
+                ith(components, 5, ''),
+            )
             return cls.swap(
                 ith(components, 1),
                 dest_address,  # 2
                 limit, s_swap_interval, s_swap_quantity,  # 3
-                affiliate_address=ith(components, 4, ''),
-                affiliate_fee_bp=ith(components, 5, 0, is_number=True),
+                affiliates=affiliates,
                 dex_aggregator_address=ith(components, 6, ''),
                 dex_final_asset_address=ith(components, 7, ''),
                 dex_min_amount_out=ith(components, 8, 0, is_number=True),
@@ -214,12 +253,15 @@ class THORMemo:
         elif tx_type == ActionType.LOAN_OPEN:
             # LOAN+:BTC.BTC:bc1234567:minBTC:affAddr:affPts:dexAgg:dexTarAddr:DexTargetLimit
             # 0     1       2         3      4       5      6      7          8
+            affiliates = cls._parse_affiliates(
+                ith(components, 4, ''),
+                ith(components, 5, ''),
+            )
             return cls.loan_open(
                 asset=ith(components, 1),
                 dest_address=ith(components, 2),
                 limit=ith(components, 3, 0, is_number=True),
-                affiliate_address=ith(components, 4, ''),
-                affiliate_fee_bp=ith(components, 5, 0, is_number=True),
+                affiliates=affiliates,
                 # dex_aggregator_address=ith(components, 6, ''),
                 # dex_final_asset_address=ith(components, 7, ''),
                 # dex_min_amount_out=ith(components, 8, 0, is_number=True)
@@ -281,10 +323,11 @@ class THORMemo:
             return cls.runepool_add()
 
         elif tx_type == ActionType.RUNEPOOL_WITHDRAW:
+            affiliate = ith(components, 2, '')
+            affiliate_fee_bp = ith(components, 3, 0)
             return cls.runepool_withdraw(
                 bp=ith(components, 1, THOR_BASIS_POINT_MAX, is_number=True),
-                affiliate=ith(components, 2, ''),
-                affiliate_fee_bp=ith(components, 3, 0, is_number=True)
+                affiliates=cls._parse_affiliates(affiliate, affiliate_fee_bp)
             )
 
         else:
@@ -301,7 +344,7 @@ class THORMemo:
     def build(self):
         if self.action == ActionType.ADD_LIQUIDITY:
             # ADD:POOL:PAIRED_ADDR:AFFILIATE:FEE
-            memo = f'+:{self.pool}:{self.dest_address}:{self.affiliate_address}:{nothing_if_0(self.affiliate_fee_bp)}'
+            memo = f'+:{self.pool}:{self.dest_address}:{self._affiliate_part}'
 
         elif self.action == ActionType.SWAP:
             # 0    1     2         3   4         5   6                   7                8
@@ -318,7 +361,7 @@ class THORMemo:
 
             memo = (
                 f'=:{self.asset}:{dest_addr}:{limit_or_ss}'
-                f':{self.affiliate_address}:{nothing_if_0(self.affiliate_fee_bp)}'
+                f':{self._affiliate_part}'
                 f':{self.dex_aggregator_address}:{self.final_asset_address}:{nothing_if_0(self.min_amount_out)}'
             )
 
@@ -343,7 +386,7 @@ class THORMemo:
             # LOAN+:ASSET:DESTADDR:MINOUT:AFFILIATE:FEE
             memo = (
                 f'$+:{self.asset}:{self.dest_address}:{self.limit}'
-                f':{self.affiliate_address}:{nothing_if_0(self.affiliate_fee_bp)}'
+                f':{self._affiliate_part}'
             )
 
         elif self.action == ActionType.LOAN_CLOSE:
@@ -352,11 +395,17 @@ class THORMemo:
 
         elif self.action == ActionType.BOND:
             # # BOND:NODEADDR:PROVIDER:FEE
-            memo = f'BOND:{self.node_address}:{self.provider_address}:{self._fee_or_empty}'
+            if self.provider_address:
+                memo = f'BOND:{self.node_address}:{self.provider_address}:{self._fee_or_empty}'
+            else:
+                memo = f'BOND:{self.node_address}'
 
         elif self.action == ActionType.UNBOND:
             # UNBOND:NODEADDR:AMOUNT:PROVIDER
-            memo = f'UNBOND:{self.node_address}:{self.amount}:{self.provider_address}'
+            if self.provider_address:
+                memo = f'UNBOND:{self.node_address}:{self.amount}:{self.provider_address}'
+            else:
+                memo = f'UNBOND:{self.node_address}:{self.amount}'
 
         elif self.action == ActionType.LEAVE:
             memo = f"LEAVE:{self.node_address}"
@@ -383,7 +432,7 @@ class THORMemo:
             memo = 'POOL+'
 
         elif self.action == ActionType.RUNEPOOL_WITHDRAW:
-            memo = f'POOL-:{self.withdraw_portion_bp}:{self.affiliate_address}:{self.affiliate_fee_bp}'
+            memo = f'POOL-:{self.withdraw_portion_bp}:{self._affiliate_part}'
 
         else:
             raise NotImplementedError(f"Can not build memo for {self.action}")
@@ -392,22 +441,28 @@ class THORMemo:
 
     @classmethod
     def add_liquidity(cls, pool: str, paired_address: str = '',
-                      affiliate_address: str = '', affiliate_fee_bp: int = 0):
+                      affiliate_address: str = '', affiliate_fee_bp: int = 0,
+                      affiliates: Optional[List[Affiliate]] = None):
         return cls(
             ActionType.ADD_LIQUIDITY, asset=pool, pool=pool,
             dest_address=paired_address,
-            affiliate_address=affiliate_address, affiliate_fee_bp=affiliate_fee_bp
+            affiliates=affiliates or ([Affiliate(affiliate_address, affiliate_fee_bp)] if affiliate_address else [])
         )
 
     @classmethod
-    def add_savers(cls, pool: str, affiliate_address: str = '', affiliate_fee_bp: int = 0):
+    def add_savers(cls, pool: str, affiliate_address: str = '', affiliate_fee_bp: int = 0,
+                   affiliates: Optional[List[Affiliate]] = None, ):
         assert '/' in pool, "Pool must be synth"
-        return cls.add_liquidity(pool, affiliate_address=affiliate_address, affiliate_fee_bp=affiliate_fee_bp)
+        return cls.add_liquidity(pool, '',
+                                 affiliate_address=affiliate_address,
+                                 affiliate_fee_bp=affiliate_fee_bp,
+                                 affiliates=affiliates)
 
     @classmethod
     def swap(cls, asset: str, dest_address: str, limit: int = 0, s_swap_interval: int = 0,
              s_swap_quantity: int = None,
              affiliate_address: str = '', affiliate_fee_bp: int = 0,
+             affiliates: Optional[List[Affiliate]] = None,
              dex_aggregator_address: str = '', dex_final_asset_address: str = '', dex_min_amount_out: int = 0,
              refund_address: str = ''):
         return cls(
@@ -415,8 +470,7 @@ class THORMemo:
             asset, dest_address, limit,
             s_swap_interval, s_swap_quantity,
             pool=asset,
-            affiliate_address=affiliate_address,
-            affiliate_fee_bp=affiliate_fee_bp,
+            affiliates=affiliates or ([Affiliate(affiliate_address, affiliate_fee_bp)] if affiliate_address else []),
             dex_aggregator_address=dex_aggregator_address,
             final_asset_address=dex_final_asset_address,
             min_amount_out=dex_min_amount_out,
@@ -471,16 +525,18 @@ class THORMemo:
 
     @classmethod
     def loan_open(cls, asset: str, dest_address: str, limit: int = 0,
-                  affiliate_address: str = '', affiliate_fee_bp: int = 0):
+                  affiliate_address: str = '', affiliate_fee_bp: int = 0,
+                  affiliates: Optional[List[Affiliate]] = None
+                  ):
         # LOAN+:BTC.BTC:bc1234567:minBTC:affAddr:affPts:dexAgg:dexTarAddr:DexTargetLimit
         # 0     1       2         3      4       5      6      7          8
+        affiliates = affiliates or ([Affiliate(affiliate_address, affiliate_fee_bp)] if affiliate_address else [])
         return cls(
             ActionType.LOAN_OPEN,
             asset=asset,
             dest_address=dest_address,
             limit=limit,
-            affiliate_address=affiliate_address,
-            affiliate_fee_bp=affiliate_fee_bp,
+            affiliates=affiliates,
             pool=asset,
         )
 
@@ -503,7 +559,7 @@ class THORMemo:
             ActionType.BOND,
             node_address=node_address,
             provider_address=provider_address,
-            affiliate_fee_bp=fee_bp
+            affiliates=[Affiliate(node_address, fee_bp)] if fee_bp else []
         )
 
     @classmethod
@@ -560,12 +616,13 @@ class THORMemo:
         return cls(ActionType.RUNEPOOL_ADD)
 
     @classmethod
-    def runepool_withdraw(cls, bp: int, affiliate: str = '', affiliate_fee_bp: int = 0):
+    def runepool_withdraw(cls, bp: int,
+                          affiliate_address: str = '', affiliate_fee_bp: int = 0,
+                          affiliates: Optional[List[Affiliate]] = None):
         return cls(
             ActionType.RUNEPOOL_WITHDRAW,
             withdraw_portion_bp=bp,
-            affiliate_address=affiliate,
-            affiliate_fee_bp=affiliate_fee_bp,
+            affiliates=affiliates or ([Affiliate(affiliate_address, affiliate_fee_bp)] if affiliate_address else [])
         )
 
     # Utils:
@@ -593,6 +650,36 @@ class THORMemo:
         # 0 = optimized, 1 = single, >1 = streaming, None = don't care
         s_swap_quantity = ith(s_swap_components, 2, is_number=True)
         return limit, s_swap_interval, s_swap_quantity
+
+    @classmethod
+    def _parse_affiliates(cls, names_part, fees_part):
+        names = names_part.split('/')
+        fees = fees_part.split('/') if fees_part.strip() else [0]
+        n_fees, n_names = len(fees), len(names)
+        if n_names != len(fees) or n_fees != 1:
+            raise ValueError(f"Affiliates and fees mismatch: {names_part} vs {fees_part}")
+
+        if n_fees == 1:
+            fees = [int(fees[0])] * n_names
+            n_fees = n_names
+
+        if n_names > 5 or n_fees > 5:
+            raise ValueError(f"Too many affiliates: {names_part}:{fees_part}")
+
+        return [Affiliate(name.strip(), int(fee)) for name, fee in zip(names, fees) if name.strip()]
+
+    @property
+    def _affiliate_part(self):
+        if not self.affiliates:
+            return ':'
+        if len(self.affiliates) > 5:
+            raise ValueError(f"Too many affiliates: {self.affiliates}. 5 max.")
+
+        name_part = '/'.join(af.address.strip() for af in self.affiliates)
+
+        fee_equal = all(af.fee_bp == self.affiliates[0].fee_bp for af in self.affiliates)
+        fee_part = self.affiliates[0].fee_bp if fee_equal else '/'.join(str(af.fee_bp) for af in self.affiliates)
+        return f'{name_part}:{fee_part}'
 
     @classmethod
     def _int_read(cls, x):
