@@ -35,6 +35,9 @@ DEFAULT_EXPLORER_URL = 'https://runescan.io{path}{network_tag}'
 THOR_BASIS_POINT_MAX = 10_000
 """Maximum basis point value for THORChain."""
 
+THOR_AFFILIATE_BASIS_POINT_MAX = 1_000
+"""Affiliate cannot receive more than 10% of the trade value."""
+
 
 def make_explorer_object(network_tag: str):
     """

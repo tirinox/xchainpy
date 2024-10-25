@@ -1,6 +1,6 @@
 import pytest
 
-from xchainpy2_thorchain.memo import THORMemo, AUTO_OPTIMIZED, ActionType
+from xchainpy2_thorchain.memo import THORMemo, AUTO_OPTIMIZED, ActionType, Affiliate
 
 
 def test_invalid_memo():
@@ -187,6 +187,23 @@ def test_loan_open():
 
     assert THORMemo.parse_memo(f'Loan+:ETH.ETH:{ETH_ADDR}:404204059:t:30') == m
     assert THORMemo.parse_memo(f'$+:ETH.ETH:{ETH_ADDR}:404204059:t:30') == m
+
+    m = THORMemo.loan_open('BTC.BTC', BTC_ADDR, 334343434, affiliates=[
+        Affiliate('t', 30), Affiliate('dx', 40), Affiliate(THOR_ADDR_1, 15)
+    ])
+    assert m.action == ActionType.LOAN_OPEN
+    assert m.asset == 'BTC.BTC'
+    assert m.dest_address == BTC_ADDR
+    assert m.limit == 334343434
+    with pytest.raises(ValueError):
+        assert m.affiliate_fee_bp
+    with pytest.raises(ValueError):
+        assert m.affiliate_address
+
+    assert m.affiliates == [
+        Affiliate('t', 30), Affiliate('dx', 40), Affiliate(THOR_ADDR_1, 15)
+    ]
+    assert m.build() == f'$+:BTC.BTC:{BTC_ADDR}:334343434:t/dx/{THOR_ADDR_1}:30/40/15'
 
 
 FINAL_ETH_ASSET = '0xA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48'
@@ -384,6 +401,16 @@ def test_add_liquidity():
     assert m.build() == f'+:ETH/ETH::t:100'
     assert THORMemo.parse_memo(f'+:ETH/ETH::t:100') == m
 
+    m = THORMemo.add_liquidity('ETH.ETH', ETH_ADDR, affiliates=[
+        Affiliate('t', 30), Affiliate('dx', 40), Affiliate(THOR_ADDR_1, 15)
+    ])
+    assert m.action == ActionType.ADD_LIQUIDITY
+    assert m.pool == 'ETH.ETH'
+    assert m.dest_address == ETH_ADDR
+    assert m.affiliates == [
+        Affiliate('t', 30), Affiliate('dx', 40), Affiliate(THOR_ADDR_1, 15)
+    ]
+
 
 def test_trade_asset():
     m = THORMemo.deposit_trade_account(THOR_ADDR_1)
@@ -431,3 +458,51 @@ def test_memo_runepool():
     assert m.affiliate_address == ''
     assert m.affiliate_fee_bp == 0
     assert m.build() == 'POOL-:3344'
+
+
+def test_multi_affiliates():
+    aff3 = [
+        Affiliate('t', 30), Affiliate('dx', 40), Affiliate(THOR_ADDR_1, 15)
+    ]
+    m = THORMemo.swap('ETH.ETH', ETH_ADDR, affiliates=aff3)
+    assert m.action == ActionType.SWAP
+    assert m.affiliates == aff3
+    assert m.build() == f'=:ETH.ETH:{ETH_ADDR}::t/dx/{THOR_ADDR_1}:30/40/15'
+
+    with pytest.raises(ValueError):
+        # 6 is too much
+        THORMemo.parse_memo(f'=:ETH.ETH:{ETH_ADDR}::a/b/c/d/e/f:1/2/3/4/5/6')
+
+    with pytest.raises(ValueError):
+        # 6 is too much
+        THORMemo.swap('ETH.ETH', ETH_ADDR, affiliates=[
+            Affiliate('a', 1), Affiliate('b', 2), Affiliate('c', 3),
+            Affiliate('d', 4), Affiliate('e', 5), Affiliate('f', 6)
+        ])
+
+    # same fee for all
+    assert THORMemo.parse_memo(f'=:ETH.ETH:{ETH_ADDR}::a/b/c/d:12').affiliates == [
+        Affiliate('a', 12), Affiliate('b', 12), Affiliate('c', 12), Affiliate('d', 12)
+    ]
+
+    with pytest.raises(ValueError):
+        # mismatch of fee collectors and fee bp number
+        THORMemo.parse_memo(f'=:ETH.ETH:{ETH_ADDR}::a/b/c/d:14/15')
+
+    with pytest.raises(ValueError):
+        # 1234 is too much (1000 is max)
+        THORMemo.parse_memo(f'=:ETH.ETH:{ETH_ADDR}::a/b/c/d:14/0/1234/32')
+
+    assert THORMemo.parse_memo(f'=:ETH.ETH:{ETH_ADDR}::a/b/c/d:14///32').affiliates == [
+        Affiliate('a', 14), Affiliate('b', 0), Affiliate('c', 0), Affiliate('d', 32)
+    ]
+
+    assert THORMemo.parse_memo(f'=:ETH.ETH:{ETH_ADDR}::a/b/c/d:/3//5').affiliates == [
+        Affiliate('a', 0), Affiliate('b', 3), Affiliate('c', 0), Affiliate('d', 5)
+    ]
+
+    assert THORMemo.swap('ETH.ETH', ETH_ADDR,
+                         affiliates=[('a', 1), ('b', 2), ('c', 3), ('d', 4), ('e', 5)]).affiliates == [
+               Affiliate('a', 1), Affiliate('b', 2), Affiliate('c', 3),
+               Affiliate('d', 4), Affiliate('e', 5)
+           ]

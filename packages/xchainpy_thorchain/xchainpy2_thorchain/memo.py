@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Union, NamedTuple, Optional, List
 
 from xchainpy2_utils import Chain
-from .const import THOR_BASIS_POINT_MAX, RUNE_TICKER
+from .const import THOR_BASIS_POINT_MAX, RUNE_TICKER, THOR_AFFILIATE_BASIS_POINT_MAX
 
 
 class ActionType(Enum):
@@ -446,7 +446,7 @@ class THORMemo:
         return cls(
             ActionType.ADD_LIQUIDITY, asset=pool, pool=pool,
             dest_address=paired_address,
-            affiliates=affiliates or ([Affiliate(affiliate_address, affiliate_fee_bp)] if affiliate_address else [])
+            affiliates=cls._form_affiliates(affiliate_address, affiliate_fee_bp, affiliates)
         )
 
     @classmethod
@@ -470,7 +470,7 @@ class THORMemo:
             asset, dest_address, limit,
             s_swap_interval, s_swap_quantity,
             pool=asset,
-            affiliates=affiliates or ([Affiliate(affiliate_address, affiliate_fee_bp)] if affiliate_address else []),
+            affiliates=cls._form_affiliates(affiliate_address, affiliate_fee_bp, affiliates),
             dex_aggregator_address=dex_aggregator_address,
             final_asset_address=dex_final_asset_address,
             min_amount_out=dex_min_amount_out,
@@ -622,7 +622,7 @@ class THORMemo:
         return cls(
             ActionType.RUNEPOOL_WITHDRAW,
             withdraw_portion_bp=bp,
-            affiliates=affiliates or ([Affiliate(affiliate_address, affiliate_fee_bp)] if affiliate_address else [])
+            affiliates=cls._form_affiliates(affiliate_address, affiliate_fee_bp, affiliates),
         )
 
     # Utils:
@@ -656,17 +656,21 @@ class THORMemo:
         names = names_part.split('/')
         fees = fees_part.split('/') if fees_part.strip() else [0]
         n_fees, n_names = len(fees), len(names)
-        if n_names != len(fees) or n_fees != 1:
+        if n_names != len(fees) and n_fees != 1:
             raise ValueError(f"Affiliates and fees mismatch: {names_part} vs {fees_part}")
 
         if n_fees == 1:
             fees = [int(fees[0])] * n_names
             n_fees = n_names
 
+        fees = [(int(fee) if fee else 0) for fee in fees]
+        for fee in fees:
+            cls._guard_affiliate_bp(fee)
+
         if n_names > 5 or n_fees > 5:
             raise ValueError(f"Too many affiliates: {names_part}:{fees_part}")
 
-        return [Affiliate(name.strip(), int(fee)) for name, fee in zip(names, fees) if name.strip()]
+        return [Affiliate(name.strip(), fee) for name, fee in zip(names, fees) if name.strip()]
 
     @property
     def _affiliate_part(self):
@@ -690,3 +694,31 @@ class THORMemo:
         else:
             # just int
             return int(x)
+
+    @classmethod
+    def _guard_affiliate_bp(cls, affiliate_fee_bp):
+        if affiliate_fee_bp < 0 or affiliate_fee_bp > THOR_AFFILIATE_BASIS_POINT_MAX:
+            raise ValueError(
+                f"Invalid affiliate fee: {affiliate_fee_bp}, must be in [0, {THOR_AFFILIATE_BASIS_POINT_MAX}]")
+
+    @classmethod
+    def _form_affiliates(cls,
+                         affiliate_address: str = '', affiliate_fee_bp: int = 0,
+                         affiliates: Optional[List[Affiliate]] = None) -> List[Affiliate]:
+        if affiliates and (affiliate_address or affiliate_fee_bp):
+            raise ValueError("Can not have both affiliates and affiliate_address/fee")
+
+        if affiliates:
+            if len(affiliates) > 5:
+                raise ValueError("Too many affiliates, max 5")
+
+            results = []
+            for aff in affiliates:
+                cls._guard_affiliate_bp(int(aff[1]))
+                # we use indices to allow not only NamedTuple but also normal tuples
+                results.append(Affiliate(aff[0].strip(), int(aff[1])))
+            return results
+        else:
+            affiliate_fee_bp = int(affiliate_fee_bp)
+            cls._guard_affiliate_bp(affiliate_fee_bp)
+            return [Affiliate(affiliate_address, affiliate_fee_bp)] if affiliate_address else []
