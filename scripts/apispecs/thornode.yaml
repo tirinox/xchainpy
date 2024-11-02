@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Thornode API
-  version: 2.135.0
+  version: 2.137.1
   contact:
     email: devs@thorchain.org
   description: Thornode REST API.
@@ -614,6 +614,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VersionResponse'
+  /thorchain/upgrade_proposals:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns the current upgrade proposals.
+      operationId: upgradeProposals
+      tags:
+      - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: &id018
+                  $ref: '#/components/schemas/UpgradeProposal'
+  /thorchain/upgrade_proposal/{name}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/name'
+    get:
+      description: Returns the upgrade proposal for the provided name.
+      operationId: upgradeProposal
+      tags:
+      - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpgradeProposal'
+  /thorchain/upgrade_votes/{name}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/name'
+    get:
+      description: Returns the upgrade votes for the provided name.
+      operationId: upgradeVotes
+      tags:
+      - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: &id019
+                  $ref: '#/components/schemas/UpgradeVote'
   /thorchain/constants:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -741,7 +792,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id022
+                items: &id024
                   $ref: '#/components/schemas/TradeUnitResponse'
   /thorchain/trade/account/{address}:
     parameters:
@@ -808,7 +859,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id018
+                items: &id020
                   $ref: '#/components/schemas/MsgSwap'
   /thorchain/queue/scheduled:
     parameters:
@@ -825,7 +876,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id020
+                items: &id022
                   $ref: '#/components/schemas/TxOutItem'
   /thorchain/queue/outbound:
     parameters:
@@ -842,7 +893,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id019
+                items: &id021
                   $ref: '#/components/schemas/TxOutItem'
   /thorchain/keysign/{height}:
     parameters:
@@ -921,7 +972,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id021
+                items: &id023
                   $ref: '#/components/schemas/KeygenMetric'
   /thorchain/thorname/{name}:
     parameters:
@@ -1333,6 +1384,13 @@ components:
         type: integer
         format: int64
         minimum: 0
+    name:
+      name: name
+      in: path
+      required: true
+      schema:
+        type: string
+        example: v3.137.0
     pathHeight:
       name: height
       in: path
@@ -2026,7 +2084,6 @@ components:
       type: object
       required:
       - coins
-      - gas
       properties:
         id:
           type: string
@@ -2643,6 +2700,60 @@ components:
             codespace:
               type: string
               example: ibc
+    UpgradeProposal:
+      type: object
+      required:
+      - name
+      - height
+      - info
+      properties:
+        name:
+          type: string
+          example: scheduled upgrade 1
+          description: the name of the upgrade
+        height:
+          type: integer
+          format: int64
+          example: 1234
+          description: the block height at which the upgrade will occur
+        info:
+          type: string
+          example: '{"binaries":{"linux/amd64":"https://link.to.binary.amd64","linux/arm64":"https://link.to.binary.arm64"}}'
+          description: the description of the upgrade, typically json with URLs to
+            binaries for use with automation tools
+        approved:
+          type: boolean
+          example: true
+          description: whether the upgrade has been approved by the active validators
+        approved_percent:
+          type: string
+          example: '0.8'
+          description: the percentage of active validators that have approved the
+            upgrade
+        validators_to_quorum:
+          type: integer
+          format: int64
+          example: 20
+          description: the amount of additional active validators required to reach
+            quorum for the upgrade
+    UpgradeVote:
+      type: object
+      required:
+      - height
+      - node_address
+      - vote
+      properties:
+        node_address:
+          type: string
+          example: thor1f3s7q037eancht7sg0aj995dht25rwrnu4ats5
+          description: the node address of the voter
+        vote:
+          type: string
+          enum:
+          - approve
+          - reject
+          example: approve
+          description: the vote cast by the node
     PoolResponse:
       $ref: '#/components/schemas/Pool'
     PoolsResponse:
@@ -2773,11 +2884,7 @@ components:
           $ref: '#/components/schemas/TssKeysignMetric'
     TxDetailsResponse: &id012
       type: object
-      required:
-      - tx
-      - txs
-      - actions
-      - out_txs
+      required: []
       properties:
         tx_id:
           type: string
@@ -3173,6 +3280,14 @@ components:
           type: string
           example: 0.16.0
           description: querier version
+    UpgradeProposalsResponse:
+      type: array
+      items: *id018
+    UpgradeProposalResponse:
+      $ref: '#/components/schemas/UpgradeProposal'
+    UpgradeVotesResponse:
+      type: array
+      items: *id019
     ConstantsResponse:
       type: object
       properties:
@@ -3238,13 +3353,13 @@ components:
           description: scheduled outbound clout in RUNE
     SwapQueueResponse:
       type: array
-      items: *id018
+      items: *id020
     OutboundResponse:
       type: array
-      items: *id019
+      items: *id021
     ScheduledResponse:
       type: array
-      items: *id020
+      items: *id022
     KeysignResponse:
       type: object
       required:
@@ -3304,7 +3419,7 @@ components:
           type: string
     KeygenMetricsResponse:
       type: array
-      items: *id021
+      items: *id023
     MetricsResponse:
       type: object
       properties:
@@ -3368,7 +3483,7 @@ components:
           description: total depth of trade asset
     TradeUnitsResponse:
       type: array
-      items: *id022
+      items: *id024
     TradeAccountResponse:
       type: object
       required:
@@ -3590,67 +3705,67 @@ components:
             $ref: '#/components/schemas/BlockTx'
     baseQuoteResponse:
       properties:
-        inbound_address: &id023
+        inbound_address: &id025
           type: string
           description: the inbound address for the transaction on the source chain
           example: bc1qjk3xzu5slu7mtmc8jc9yed3zqvkhkttm700g9a
-        inbound_confirmation_blocks: &id024
+        inbound_confirmation_blocks: &id026
           type: integer
           format: int64
           description: the approximate number of source chain blocks required before
             processing
-        inbound_confirmation_seconds: &id025
+        inbound_confirmation_seconds: &id027
           type: integer
           format: int64
           description: the approximate seconds for block confirmations required before
             processing
-        outbound_delay_blocks: &id026
+        outbound_delay_blocks: &id028
           type: integer
           format: int64
           description: the number of thorchain blocks the outbound will be delayed
-        outbound_delay_seconds: &id027
+        outbound_delay_seconds: &id029
           type: integer
           format: int64
           description: the approximate seconds for the outbound delay before it will
             be sent
-        fees: &id028
+        fees: &id030
           $ref: '#/components/schemas/QuoteFees'
-        router: &id029
+        router: &id031
           type: string
           description: the EVM chain router contract address
           example: '0x3624525075b88B24ecc29CE226b0CEc1fFcB6976'
-        expiry: &id030
+        expiry: &id032
           type: integer
           format: int64
           description: expiration timestamp in unix seconds
           example: 1671660285
-        warning: &id031
+        warning: &id033
           type: string
           description: static warning message
           example: Do not cache this response. Do not send funds after the expiry.
-        notes: &id032
+        notes: &id034
           type: string
           description: chain specific quote notes
           example: Transfer the inbound_address the asset with the memo. Do not use
             multi-in, multi-out transactions.
-        dust_threshold: &id033
+        dust_threshold: &id035
           type: string
           example: '10000'
           description: Defines the minimum transaction size for the chain in base
             units (sats, wei, uatom). Transactions with asset amounts lower than the
             dust_threshold are ignored.
-        recommended_min_amount_in: &id034
+        recommended_min_amount_in: &id036
           type: string
           description: The recommended minimum inbound amount for this transaction
             type & inbound asset. Sending less than this amount could result in failed
             refunds.
           example: '15000'
-        recommended_gas_rate: &id035
+        recommended_gas_rate: &id037
           type: string
           example: '10'
           description: the recommended gas rate to use for the inbound to ensure timely
             confirmation
-        gas_rate_units: &id036
+        gas_rate_units: &id038
           type: string
           example: gwei
           description: the units of the recommended gas rate
@@ -3665,20 +3780,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id023
-        inbound_confirmation_blocks: *id024
-        inbound_confirmation_seconds: *id025
-        outbound_delay_blocks: *id026
-        outbound_delay_seconds: *id027
-        fees: *id028
-        router: *id029
-        expiry: *id030
-        warning: *id031
-        notes: *id032
-        dust_threshold: *id033
-        recommended_min_amount_in: *id034
-        recommended_gas_rate: *id035
-        gas_rate_units: *id036
+        inbound_address: *id025
+        inbound_confirmation_blocks: *id026
+        inbound_confirmation_seconds: *id027
+        outbound_delay_blocks: *id028
+        outbound_delay_seconds: *id029
+        fees: *id030
+        router: *id031
+        expiry: *id032
+        warning: *id033
+        notes: *id034
+        dust_threshold: *id035
+        recommended_min_amount_in: *id036
+        recommended_gas_rate: *id037
+        gas_rate_units: *id038
         memo:
           type: string
           description: generated memo for the swap
@@ -3725,20 +3840,20 @@ components:
       - recommended_gas_rate
       - gas_rate_units
       properties:
-        inbound_address: *id023
-        inbound_confirmation_blocks: *id024
-        inbound_confirmation_seconds: *id025
-        outbound_delay_blocks: *id026
-        outbound_delay_seconds: *id027
-        fees: *id028
-        router: *id029
-        expiry: *id030
-        warning: *id031
-        notes: *id032
-        dust_threshold: *id033
-        recommended_min_amount_in: *id034
-        recommended_gas_rate: *id035
-        gas_rate_units: *id036
+        inbound_address: *id025
+        inbound_confirmation_blocks: *id026
+        inbound_confirmation_seconds: *id027
+        outbound_delay_blocks: *id028
+        outbound_delay_seconds: *id029
+        fees: *id030
+        router: *id031
+        expiry: *id032
+        warning: *id033
+        notes: *id034
+        dust_threshold: *id035
+        recommended_min_amount_in: *id036
+        recommended_gas_rate: *id037
+        gas_rate_units: *id038
         memo:
           type: string
           description: generated memo for the deposit
@@ -3770,20 +3885,20 @@ components:
       - recommended_gas_rate
       - gas_rate_units
       properties:
-        inbound_address: *id023
-        inbound_confirmation_blocks: *id024
-        inbound_confirmation_seconds: *id025
-        outbound_delay_blocks: *id026
-        outbound_delay_seconds: *id027
-        fees: *id028
-        router: *id029
-        expiry: *id030
-        warning: *id031
-        notes: *id032
-        dust_threshold: *id033
-        recommended_min_amount_in: *id034
-        recommended_gas_rate: *id035
-        gas_rate_units: *id036
+        inbound_address: *id025
+        inbound_confirmation_blocks: *id026
+        inbound_confirmation_seconds: *id027
+        outbound_delay_blocks: *id028
+        outbound_delay_seconds: *id029
+        fees: *id030
+        router: *id031
+        expiry: *id032
+        warning: *id033
+        notes: *id034
+        dust_threshold: *id035
+        recommended_min_amount_in: *id036
+        recommended_gas_rate: *id037
+        gas_rate_units: *id038
         memo:
           type: string
           description: generated memo for the withdraw, the client can use this OR
@@ -3818,20 +3933,20 @@ components:
       - recommended_gas_rate
       - gas_rate_units
       properties:
-        inbound_address: *id023
-        inbound_confirmation_blocks: *id024
-        inbound_confirmation_seconds: *id025
-        outbound_delay_blocks: *id026
-        outbound_delay_seconds: *id027
-        fees: *id028
-        router: *id029
-        expiry: *id030
-        warning: *id031
-        notes: *id032
-        dust_threshold: *id033
-        recommended_min_amount_in: *id034
-        recommended_gas_rate: *id035
-        gas_rate_units: *id036
+        inbound_address: *id025
+        inbound_confirmation_blocks: *id026
+        inbound_confirmation_seconds: *id027
+        outbound_delay_blocks: *id028
+        outbound_delay_seconds: *id029
+        fees: *id030
+        router: *id031
+        expiry: *id032
+        warning: *id033
+        notes: *id034
+        dust_threshold: *id035
+        recommended_min_amount_in: *id036
+        recommended_gas_rate: *id037
+        gas_rate_units: *id038
         memo:
           type: string
           description: generated memo for the loan open
@@ -3890,20 +4005,20 @@ components:
       - streaming_swap_seconds
       - total_repay_seconds
       properties:
-        inbound_address: *id023
-        inbound_confirmation_blocks: *id024
-        inbound_confirmation_seconds: *id025
-        outbound_delay_blocks: *id026
-        outbound_delay_seconds: *id027
-        fees: *id028
-        router: *id029
-        expiry: *id030
-        warning: *id031
-        notes: *id032
-        dust_threshold: *id033
-        recommended_min_amount_in: *id034
-        recommended_gas_rate: *id035
-        gas_rate_units: *id036
+        inbound_address: *id025
+        inbound_confirmation_blocks: *id026
+        inbound_confirmation_seconds: *id027
+        outbound_delay_blocks: *id028
+        outbound_delay_seconds: *id029
+        fees: *id030
+        router: *id031
+        expiry: *id032
+        warning: *id033
+        notes: *id034
+        dust_threshold: *id035
+        recommended_min_amount_in: *id036
+        recommended_gas_rate: *id037
+        gas_rate_units: *id038
         memo:
           type: string
           description: generated memo for the loan close

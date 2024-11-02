@@ -163,6 +163,25 @@ def fix_thor_trade_account_array(spec):
     return spec
 
 
+def fix_thor_tx_gas_nullable(spec):
+    # nullable: true
+    place = drill(spec, ['components', 'schemas', 'Tx', 'required'])
+    prev = list(place)
+    place: list
+    place.pop(place.index('gas'))
+    print(f'Removed "gas" from required: {prev} -> {place}')
+    return spec
+
+
+def fix_thor_TxDetailsResponse_required(spec):
+    # nullable: true
+    place = drill(spec, ['components', 'schemas', 'TxDetailsResponse', 'required'])
+    print(f'Cleared TxDetailsResponse required list: {place} -> []')
+    place.clear()
+
+    return spec
+
+
 def add_readme(spec):
     spec['x-readme-file'] = 'README.md'
     return spec
@@ -185,6 +204,8 @@ async def main():
     elif args.mode.upper() == 'THOR':
         spec = fix_thor_tx_details_nullable(spec)
         spec = fix_thor_trade_account_array(spec)
+        spec = fix_thor_tx_gas_nullable(spec)
+        spec = fix_thor_TxDetailsResponse_required(spec)
     elif args.mode.upper() == 'MIDGARD':
         pass  # no specific fixes for Midgard yet
 
