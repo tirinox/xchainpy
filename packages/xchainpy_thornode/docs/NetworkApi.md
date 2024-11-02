@@ -13,6 +13,9 @@ Method | HTTP request | Description
 [**outbound_fee_asset**](NetworkApi.md#outbound_fee_asset) | **GET** /thorchain/outbound_fee/{asset} | 
 [**outbound_fees**](NetworkApi.md#outbound_fees) | **GET** /thorchain/outbound_fees | 
 [**ragnarok**](NetworkApi.md#ragnarok) | **GET** /thorchain/ragnarok | 
+[**upgrade_proposal**](NetworkApi.md#upgrade_proposal) | **GET** /thorchain/upgrade_proposal/{name} | 
+[**upgrade_proposals**](NetworkApi.md#upgrade_proposals) | **GET** /thorchain/upgrade_proposals | 
+[**upgrade_votes**](NetworkApi.md#upgrade_votes) | **GET** /thorchain/upgrade_votes/{name} | 
 [**version**](NetworkApi.md#version) | **GET** /thorchain/version | 
 
 # **ban**
@@ -432,6 +435,151 @@ Name | Type | Description  | Notes
 ### Return type
 
 **bool**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **upgrade_proposal**
+> UpgradeProposal upgrade_proposal(name, height=height)
+
+
+
+Returns the upgrade proposal for the provided name.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_thornode.NetworkApi()
+name = 'name_example' # str | 
+height = 789 # int | optional block height, defaults to current tip (optional)
+
+try:
+    api_response = api_instance.upgrade_proposal(name, height=height)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling NetworkApi->upgrade_proposal: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **name** | **str**|  | 
+ **height** | **int**| optional block height, defaults to current tip | [optional] 
+
+### Return type
+
+[**UpgradeProposal**](UpgradeProposal.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **upgrade_proposals**
+> list[UpgradeProposal] upgrade_proposals(height=height)
+
+
+
+Returns the current upgrade proposals.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_thornode.NetworkApi()
+height = 789 # int | optional block height, defaults to current tip (optional)
+
+try:
+    api_response = api_instance.upgrade_proposals(height=height)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling NetworkApi->upgrade_proposals: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **height** | **int**| optional block height, defaults to current tip | [optional] 
+
+### Return type
+
+[**list[UpgradeProposal]**](UpgradeProposal.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **upgrade_votes**
+> list[UpgradeVote] upgrade_votes(name, height=height)
+
+
+
+Returns the upgrade votes for the provided name.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_thornode
+from xchainpy2_thornode.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_thornode.NetworkApi()
+name = 'name_example' # str | 
+height = 789 # int | optional block height, defaults to current tip (optional)
+
+try:
+    api_response = api_instance.upgrade_votes(name, height=height)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling NetworkApi->upgrade_votes: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **name** | **str**|  | 
+ **height** | **int**| optional block height, defaults to current tip | [optional] 
+
+### Return type
+
+[**list[UpgradeVote]**](UpgradeVote.md)
 
 ### Authorization
 
