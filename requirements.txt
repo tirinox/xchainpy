@@ -1,5 +1,5 @@
 # Development requirements
-aiohttp~=3.9.2
+aiohttp>=3.10.2
 pytest~=7.4.0
 pydantic>=2.4.2
 PyYAML~=6.0.0
@@ -9,3 +9,4 @@ twine
 aioresponses==0.7.6
 requests-mock==1.11.0
 myst-parser
+aiofiles>=0.7.0
