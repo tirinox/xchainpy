@@ -68,10 +68,14 @@ class TxSignersResponse(object):
         self.discriminator = None
         if tx_id is not None:
             self.tx_id = tx_id
-        self.tx = tx
-        self.txs = txs
-        self.actions = actions
-        self.out_txs = out_txs
+        if tx is not None:
+            self.tx = tx
+        if txs is not None:
+            self.txs = txs
+        if actions is not None:
+            self.actions = actions
+        if out_txs is not None:
+            self.out_txs = out_txs
         if consensus_height is not None:
             self.consensus_height = consensus_height
         if finalised_height is not None:
@@ -122,8 +126,6 @@ class TxSignersResponse(object):
         :param tx: The tx of this TxSignersResponse.  # noqa: E501
         :type: ObservedTx
         """
-        if tx is None:
-            raise ValueError("Invalid value for `tx`, must not be `None`")  # noqa: E501
 
         self._tx = tx
 
@@ -145,8 +147,6 @@ class TxSignersResponse(object):
         :param txs: The txs of this TxSignersResponse.  # noqa: E501
         :type: list[ObservedTx]
         """
-        if txs is None:
-            raise ValueError("Invalid value for `txs`, must not be `None`")  # noqa: E501
 
         self._txs = txs
 
@@ -168,8 +168,6 @@ class TxSignersResponse(object):
         :param actions: The actions of this TxSignersResponse.  # noqa: E501
         :type: list[TxOutItem]
         """
-        if actions is None:
-            raise ValueError("Invalid value for `actions`, must not be `None`")  # noqa: E501
 
         self._actions = actions
 
@@ -191,8 +189,6 @@ class TxSignersResponse(object):
         :param out_txs: The out_txs of this TxSignersResponse.  # noqa: E501
         :type: list[Tx]
         """
-        if out_txs is None:
-            raise ValueError("Invalid value for `out_txs`, must not be `None`")  # noqa: E501
 
         self._out_txs = out_txs
 
