@@ -4,11 +4,13 @@ import math
 from datetime import datetime, timedelta
 from typing import Union, List, Optional
 
+from xchainpy2_client import XChainClient
 from xchainpy2_thorchain import THORMemo, THOR_BASIS_POINT_MAX
 from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, Saver, QuoteFees, \
     TxStatusResponse, TxSignersResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \
     DEFAULT_ASSET_DECIMAL, YEAR
+from .track.tracker import TransactionTracker
 from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES, THORNAME_BLOCKS_ONE_YEAR
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity
@@ -1055,3 +1057,38 @@ class THORChainQuery:
         :return: InboundDetail
         """
         return await self.cache.get_details_for_chain(chain)
+
+    def tracker(self,
+                wallet=None, inbound_chain: Optional[Chain] = None, outbound_chain: Optional[Chain] = None,
+                inbound_client: Optional[XChainClient] = None,
+                outbound_client: Optional[XChainClient] = None) -> TransactionTracker:
+        """
+        Create a transaction tracker for a given wallet or chain/client combination.
+        Provide either a wallet with inbound/outbound chain idents or clients combination, not both.
+
+        :param wallet: Optional[Wallet] - the wallet to get the client from
+        :param inbound_chain: Optional[Chain] - the inbound Chain enum item
+        :param outbound_chain: Optional[Chain] - the outbound Chain enum item
+        :param inbound_client: Optional[XChainClient] - directly provide the inbound client
+        :param outbound_client: Optional[XChainClient] - directly provide the outbound client
+        :return: TransactionTracker object
+        """
+
+        if (inbound_client or outbound_client) and (wallet and (inbound_chain or outbound_chain)):
+            raise ValueError("Cannot provide both wallet and chain/client")
+
+        if not inbound_client and wallet:
+            inbound_client = wallet.get_client(inbound_chain)
+            if not inbound_client:
+                raise ValueError(
+                    f"You provided a wallet but no client for inbound chain {inbound_chain} could be found")
+
+        if not outbound_chain and wallet:
+            outbound_client = wallet.get_client(outbound_chain)
+            if not outbound_client:
+                raise ValueError(
+                    f"You provided a wallet but no client for outbound chain {outbound_chain} could be found")
+
+        return TransactionTracker(self.cache, self.chain_attributes,
+                                  inbound_chain_client=inbound_client,
+                                  outbound_chain_client=outbound_client)
