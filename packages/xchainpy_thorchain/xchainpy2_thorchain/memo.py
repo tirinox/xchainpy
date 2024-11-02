@@ -8,6 +8,8 @@ from typing import Union, NamedTuple, Optional, List
 from xchainpy2_utils import Chain
 from .const import THOR_BASIS_POINT_MAX, RUNE_TICKER, THOR_AFFILIATE_BASIS_POINT_MAX
 
+MAX_AFF_LEVELS = 5
+
 
 class ActionType(Enum):
     # Standard
@@ -653,6 +655,12 @@ class THORMemo:
 
     @classmethod
     def _parse_affiliates(cls, names_part, fees_part):
+        """
+        Parses affiliate names and fees.
+        :param names_part: A string like "10/20/0/40"
+        :param fees_part: A string like "1/thor1/thor2/xyz"
+        :return:
+        """
         names = names_part.split('/')
         fees = fees_part.split('/') if fees_part.strip() else [0]
         n_fees, n_names = len(fees), len(names)
@@ -660,6 +668,7 @@ class THORMemo:
             raise ValueError(f"Affiliates and fees mismatch: {names_part} vs {fees_part}")
 
         if n_fees == 1:
+            # if there is only one fee, apply it to all affiliates
             fees = [int(fees[0])] * n_names
             n_fees = n_names
 
@@ -667,8 +676,8 @@ class THORMemo:
         for fee in fees:
             cls._guard_affiliate_bp(fee)
 
-        if n_names > 5 or n_fees > 5:
-            raise ValueError(f"Too many affiliates: {names_part}:{fees_part}")
+        if n_names > MAX_AFF_LEVELS or n_fees > MAX_AFF_LEVELS:
+            raise ValueError(f"Too many affiliates: {names_part}:{fees_part}. Max {MAX_AFF_LEVELS}")
 
         return [Affiliate(name.strip(), fee) for name, fee in zip(names, fees) if name.strip()]
 
@@ -676,8 +685,8 @@ class THORMemo:
     def _affiliate_part(self):
         if not self.affiliates:
             return ':'
-        if len(self.affiliates) > 5:
-            raise ValueError(f"Too many affiliates: {self.affiliates}. 5 max.")
+        if len(self.affiliates) > MAX_AFF_LEVELS:
+            raise ValueError(f"Too many affiliates: {self.affiliates}. {MAX_AFF_LEVELS} max.")
 
         name_part = '/'.join(af.address.strip() for af in self.affiliates)
 
@@ -709,8 +718,8 @@ class THORMemo:
             raise ValueError("Can not have both affiliates and affiliate_address/fee")
 
         if affiliates:
-            if len(affiliates) > 5:
-                raise ValueError("Too many affiliates, max 5")
+            if len(affiliates) > MAX_AFF_LEVELS:
+                raise ValueError(f"Too many affiliates, max {MAX_AFF_LEVELS}")
 
             results = []
             for aff in affiliates:
