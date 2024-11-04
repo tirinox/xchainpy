@@ -65,7 +65,8 @@ class Tx(object):
             self.from_address = from_address
         if to_address is not None:
             self.to_address = to_address
-        self.coins = coins
+        if coins is not None:
+            self.coins = coins
         if gas is not None:
             self.gas = gas
         if memo is not None:
@@ -173,8 +174,6 @@ class Tx(object):
         :param coins: The coins of this Tx.  # noqa: E501
         :type: list[Coin]
         """
-        if coins is None:
-            raise ValueError("Invalid value for `coins`, must not be `None`")  # noqa: E501
 
         self._coins = coins
 

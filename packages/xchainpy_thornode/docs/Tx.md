@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 **chain** | **str** |  | [optional] 
 **from_address** | **str** |  | [optional] 
 **to_address** | **str** |  | [optional] 
-**coins** | [**list[Coin]**](Coin.md) |  | 
+**coins** | [**list[Coin]**](Coin.md) |  | [optional] 
 **gas** | [**list[Coin]**](Coin.md) |  | [optional] 
 **memo** | **str** |  | [optional] 
 

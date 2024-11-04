@@ -163,12 +163,11 @@ def fix_thor_trade_account_array(spec):
     return spec
 
 
-def fix_thor_tx_gas_nullable(spec):
+def fix_thor_tx_required_gas_and_coins(spec):
     # nullable: true
     place = drill(spec, ['components', 'schemas', 'Tx', 'required'])
     prev = list(place)
-    place: list
-    place.pop(place.index('gas'))
+    place.clear()
     print(f'Removed "gas" from required: {prev} -> {place}')
     return spec
 
@@ -204,7 +203,7 @@ async def main():
     elif args.mode.upper() == 'THOR':
         spec = fix_thor_tx_details_nullable(spec)
         spec = fix_thor_trade_account_array(spec)
-        spec = fix_thor_tx_gas_nullable(spec)
+        spec = fix_thor_tx_required_gas_and_coins(spec)
         spec = fix_thor_TxDetailsResponse_required(spec)
     elif args.mode.upper() == 'MIDGARD':
         pass  # no specific fixes for Midgard yet

@@ -2082,8 +2082,7 @@ components:
             type: string
     Tx:
       type: object
-      required:
-      - coins
+      required: []
       properties:
         id:
           type: string
