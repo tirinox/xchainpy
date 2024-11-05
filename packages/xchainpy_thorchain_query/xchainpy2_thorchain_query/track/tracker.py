@@ -59,7 +59,45 @@ class TransactionTracker:
                 raise ValueError('outbound_chain_client is not set')
             tx_details = await self.outbound_chain_client.get_transaction_data(tx_hash)
 
-        return TxDetails.create(tx_details, None, tx_hash)
+        return TxDetails(tx_details, )
+
+    async def tc_get_tx_details(self, inbound_tx_hash: str, height=0) -> Optional[TxSignersResponse]:
+        try:
+            tx_details: TxSignersResponse = await self.cache.tx_api.tx_signers(inbound_tx_hash, height=height)
+            return tx_details
+        except ApiException as e:
+            if e.status == 404:
+                return
+            raise
+
+    async def tc_get_tx_status(self, inbound_tx_hash: str, height=0) -> Optional[TxStatusResponse]:
+        """
+        Get transaction status from THORChain.
+        https://thornode.ninerealms.com/thorchain/tx/status/inbound_tx_hash
+        According to the current implementation, if the transaction is not found, it doesn't return "None"
+         but something like that
+
+        {
+          "stages": {
+            "inbound_observed": {
+              "started": false,
+              "final_count": 0,
+              "completed": false
+            }
+          }
+        }
+
+        :param inbound_tx_hash: Tx hash without 0x prefix
+        :param height: Block height, if not provided, the latest block height is used
+        :return: Optional[TxStatusResponse]
+        """
+        try:
+            tx_status: TxStatusResponse = await self.cache.tx_api.tx_status(inbound_tx_hash, height=height)
+            return tx_status
+        except ApiException as e:
+            if e.status == 404:
+                return
+            raise
 
     async def check_tx_progress(self, inbound_tx_hash: str) -> TxDetails:
         """
@@ -73,21 +111,15 @@ class TransactionTracker:
         if 'dry-run' in inbound_tx_hash.lower():
             return TxDetails.dry_run_success(inbound_tx_hash)
 
-        try:
-            tx_details: TxSignersResponse = await self.cache.tx_api.tx_signers(inbound_tx_hash)
-        except ApiException as e:
-            if e.status == 404:
-                return TxDetails.create(None, None, inbound_tx_hash)
-            raise
+        tx_details = await self.tc_get_tx_details(inbound_tx_hash)
+        tx_status = await self.tc_get_tx_status(inbound_tx_hash)
 
-        try:
-            tx_status: TxStatusResponse = await self.cache.tx_api.tx_status(inbound_tx_hash)
-        except ApiException as e:
-            if e.status == 404:
-                return TxDetails.create(tx_details, None)
-            raise
+        if tx_details is None or tx_status is None:
+            return TxDetails.create_from_thorchain(tx_details, tx_status, inbound_tx_hash)
 
-        return TxDetails.create(tx_details, tx_status)
+        # todo: if there is scheduled outbound tx, check its status in its own chain
+
+        return TxDetails.create_from_thorchain(tx_details, tx_status)
 
     def poll(self, txid: str, interval=DEFAULT_POLL_INTERVAL, stage=True, status=True):
         """
@@ -101,6 +133,8 @@ class TransactionTracker:
             else:
                 print('Still pending...')
 
+        :param status: Flag to check status of TX
+        :param stage: Flag to check stage of TX
         :param txid: inbound TX hash
         :param interval: Interval between requests in seconds
         :return: async generator

@@ -7,18 +7,22 @@ from xchainpy2_thornode import TxStatusResponse, TxSignersResponse
 
 class TxStatus(Enum):
     """
-    Transaction status enum
+    Transaction status enum.
+    If it is pending, it means that transaction is not finished yet. But you can check its stage. See TxStage enum.
+    If transaction is done, it means that it is finished successfully.
+    Incomplete means that you need to submit another transaction to complete this one (usually add liquidity for
+    other side).
     """
 
     UNKNOWN = 'unknown'
-    OBSERVED = 'observed'
+    PENDING = 'pending'
     DONE = 'done'
     REFUNDED = 'refunded'
     INCOMPLETE = 'incomplete'
     BELOW_DUST = 'dust'
 
     Unknown = UNKNOWN
-    Observed = OBSERVED
+    Pending = PENDING
     Done = DONE
     Refunded = REFUNDED
     Incomplete = INCOMPLETE
@@ -32,6 +36,18 @@ class TxStatus(Enum):
         """
         return cls.DONE, cls.REFUNDED, cls.BELOW_DUST
 
+    @property
+    def is_successful(self):
+        return self == self.DONE
+
+    @property
+    def is_pending(self):
+        return self == self.PENDING
+
+    @property
+    def is_finished(self):
+        return self in self.finished()
+
 
 class TxStage(Enum):
     """
@@ -39,7 +55,7 @@ class TxStage(Enum):
     """
 
     Unknown = 'Unknown'
-    """Unknown stage"""
+    """Unknown stage. Transaction is not observed yet even by the source blockchain client."""
 
     InboundSubmitted = 'InboundSubmitted'
     """Transaction is submitted on the inbound chain, but not observed yet by THORChain"""
@@ -91,8 +107,8 @@ class TxDetails(NamedTuple):
         return not self.failed and not self.successful
 
     @classmethod
-    def create(cls, signers: Optional[TxSignersResponse], status_details: Optional[TxStatusResponse],
-               tx_hash=''):
+    def create_from_thorchain(cls, signers: Optional[TxSignersResponse], status_details: Optional[TxStatusResponse],
+                              tx_hash=''):
         if not signers or not status_details:
             return cls(
                 tx_hash, ActionType.UNKNOWN, TxStatus.UNKNOWN, TxStage.Unknown, signers, status_details
@@ -107,10 +123,10 @@ class TxDetails(NamedTuple):
             stage = TxStage.InboundObserved
         if cls.get_stage(status_details, 'inbound_confirmation_counted'):
             stage = TxStage.InboundConfirmationCounted
-            status = TxStatus.OBSERVED
+            status = TxStatus.Pending
         if cls.get_stage(status_details, 'inbound_finalised'):
             stage = TxStage.InboundFinalised
-            status = TxStatus.OBSERVED
+            status = TxStatus.Pending
         if cls.get_stage(status_details, 'swap_finalised'):
             stage = TxStage.SwapFinalised
         if cls.get_stage(status_details, 'outbound_delay'):
@@ -121,19 +137,19 @@ class TxDetails(NamedTuple):
         if stage == TxStage.OutboundSigned:
             if memo.action in (ActionType.SWAP, ActionType.WITHDRAW, ActionType.LOAN_OPEN,
                                ActionType.UNBOND):
-                status = TxStatus.DONE
+                status = TxStatus.Done
         elif stage == TxStage.SwapFinalised and status_details.out_txs:
             # outbound inside THORChain blockchain
             status = TxStatus.DONE
         elif stage == TxStage.InboundFinalised:
             if memo.action in (ActionType.ADD_LIQUIDITY, ActionType.BOND, ActionType.DONATE):
-                status = TxStatus.DONE
+                status = TxStatus.Done
         elif stage == TxStage.InboundObserved or stage == TxStage.InboundFinalised:
-            status = TxStatus.OBSERVED
+            status = TxStatus.Pending
 
         refunds = cls.find_refunds(status_details)
         if refunds:
-            status = TxStatus.REFUNDED
+            status = TxStatus.Refunded
 
         # todo: handle other cases and set appropriate TxStatus
 

@@ -16,12 +16,13 @@ async def run_tracker(tx_hash, in_chain: Chain, out_chain: Chain, start_block, e
                     ])
 
     rec = TxStatusRecorder(tx_hash, query.tracker(wallet, in_chain, out_chain))
+    await rec.load_db()
 
     await rec.scan(start_block, end_block)
 
-    sep('Pool')
-    async for status in rec.tracker.poll(tx_hash, interval=0.1):
-        print(status)
+    # sep('Poll')
+    # async for status in rec.tracker.poll(tx_hash, interval=0.1):
+    #     print(status)
 
 
 async def case_swap_out_2_out():
