@@ -5,9 +5,9 @@ from bitcoinlib.services.litecoind import LitecoindClient
 from xchainpy2_bitcoin import BitcoinClient
 from xchainpy2_client import FeeBounds, RootDerivationPaths
 from xchainpy2_utils import NetworkType, AssetLTC, Asset, Chain
-from . import get_ltc_address_prefix
 from .const import ROOT_DERIVATION_PATHS, AssetTestLTC, LTC_DECIMAL, DEFAULT_PROVIDER_NAMES, DEFAULT_LTC_EXPLORERS, \
     LTC_DEFAULT_FEE_BOUNDS
+from .utils import get_ltc_address_prefix
 
 
 class LitecoinClient(BitcoinClient):
