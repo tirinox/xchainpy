@@ -73,3 +73,9 @@ AVAX_NORMAL_FEE = 30  # nAvax
     Avalanche Sure Fee in nAvax
 """
 AVAX_SURE_FEE = 50  # nAvax
+
+AVAX_TOKEN_LIST = 'abi/avax_mainnet_latest.json'
+"""
+    Avalanche ERC20 token list (Popular and verified tokens)
+    Source: Trader Joe Default
+"""

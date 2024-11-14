@@ -7,7 +7,7 @@ from xchainpy2_client import FeeBounds, RootDerivationPaths
 from xchainpy2_ethereum import EthereumClient
 from xchainpy2_ethereum.utils import select_random_free_provider
 from xchainpy2_utils import NetworkType, Chain, AssetAVAX
-from .const import DEFAULT_AVAX_EXPLORER_PROVIDERS, AVAX_DECIMALS, AVAX_CHAIN_ID, FREE_AVAX_PROVIDERS
+from .const import DEFAULT_AVAX_EXPLORER_PROVIDERS, AVAX_DECIMALS, AVAX_CHAIN_ID, FREE_AVAX_PROVIDERS, AVAX_TOKEN_LIST
 
 
 class AvalancheClient(EthereumClient):
@@ -26,6 +26,8 @@ class AvalancheClient(EthereumClient):
         self._gas_asset = AssetAVAX
         self._decimal = AVAX_DECIMALS
         self._chain_ids = AVAX_CHAIN_ID
+
+        self.token_list_file = AVAX_TOKEN_LIST
 
     def _get_default_provider(self):
         return select_random_free_provider(self.network, FREE_AVAX_PROVIDERS)
