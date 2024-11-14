@@ -1,17 +1,12 @@
 import json
 import logging
-import os
 import re
 
 import web3
 from web3.main import BaseWeb3
 
 from xchainpy2_utils import NetworkType
-
-SELF_DIR = os.path.dirname(os.path.abspath(__file__))
-
-MAX_APPROVAL = 2 ** 256 - 1
-"""Maximum approval value for ERC20 tokens"""
+from .const import ROUTER_ABI_FILE, ERC20_ABI_FILE
 
 
 def get_erc20_abi():
@@ -21,7 +16,7 @@ def get_erc20_abi():
 
     :return: dict
     """
-    with open(f'{SELF_DIR}/abi/erc20.json', 'r') as f:
+    with open(ERC20_ABI_FILE, 'r') as f:
         return json.load(f)
 
 
@@ -32,7 +27,7 @@ def get_router_abi():
 
     :return: dict
     """
-    with open(f'{SELF_DIR}/abi/router.json', 'r') as f:
+    with open(ROUTER_ABI_FILE, 'r') as f:
         return json.load(f)
 
 
