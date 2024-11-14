@@ -288,7 +288,7 @@ class XChainClient(abc.ABC):
 
         while poll_period < timeout:
             tx = await self.get_transaction_data(tx_id)
-            if tx.is_success:
+            if tx and tx.is_success:
                 return tx
             await asyncio.sleep(poll_period)
             timeout -= poll_period
