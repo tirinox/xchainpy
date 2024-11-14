@@ -76,3 +76,9 @@ BSC_NORMAL_FEE = 1  # gwei
     Binance Smart Chain Sure Fee in gwei
 """
 BSC_SURE_FEE = 30  # gwei
+
+BSC_TOKEN_LIST = 'data/bsc_mainnet_latest.json'
+"""
+    Binance Smart Chain ERC20 Token List
+    Source: PancakeSwap Extended
+"""

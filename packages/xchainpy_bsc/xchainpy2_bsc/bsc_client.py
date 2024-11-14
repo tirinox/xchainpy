@@ -4,7 +4,7 @@ from web3.middleware import geth_poa_middleware
 from web3.providers import BaseProvider
 
 from xchainpy2_bsc.const import FREE_BSC_PROVIDERS, BSC_CHAIN_ID, DEFAULT_BSC_EXPLORER_PROVIDERS, BSC_NORMAL_FEE, \
-    BSC_SURE_FEE
+    BSC_SURE_FEE, BSC_TOKEN_LIST
 from xchainpy2_client import FeeBounds, RootDerivationPaths, FeeOption
 from xchainpy2_ethereum import EthereumClient, GasOptions
 from xchainpy2_ethereum.utils import select_random_free_provider
@@ -27,6 +27,8 @@ class BinanceSmartChainClient(EthereumClient):
         self._gas_asset = AssetBSC
         self._decimal = BSC_DECIMALS
         self._chain_ids = BSC_CHAIN_ID
+
+        self.token_list_file = BSC_TOKEN_LIST
 
     def _get_default_provider(self):
         return select_random_free_provider(self.network, FREE_BSC_PROVIDERS)
