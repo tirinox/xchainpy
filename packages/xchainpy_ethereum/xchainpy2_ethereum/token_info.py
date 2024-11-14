@@ -52,7 +52,7 @@ class TokenInfo(NamedTuple):
             name=data['name'],
             symbol=data['symbol'],
             decimals=data['decimals'],
-            logo_uri=data['logoURI']
+            logo_uri=data.get('logoURI')
         )
 
 

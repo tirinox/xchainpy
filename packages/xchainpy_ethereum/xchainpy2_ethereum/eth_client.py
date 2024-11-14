@@ -92,6 +92,7 @@ class EthereumClient(XChainClient):
         self.web3 = Web3(provider)
         self._log_decoder = Web3LogDecoder(self.web3, self.gas_asset)
         self._token_list = TokenInfoList(self.chain, self.web3, self.token_list_file)
+        self._token_list.load()
 
     def _get_default_provider(self):
         return select_random_free_provider(self.network, FREE_ETH_PROVIDERS)
