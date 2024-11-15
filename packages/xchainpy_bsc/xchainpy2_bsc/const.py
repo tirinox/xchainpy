@@ -1,5 +1,5 @@
 from xchainpy2_client import ExplorerProvider, FeeBounds
-from xchainpy2_utils import NetworkType
+from xchainpy2_utils import NetworkType, Asset
 
 """
     Binance Smart Chain Mainnet explorer URLS
@@ -81,4 +81,14 @@ BSC_TOKEN_LIST = 'data/bsc_mainnet_latest.json'
 """
     Binance Smart Chain ERC20 Token List
     Source: PancakeSwap Extended
+"""
+
+AssetBSC_USDT = Asset.from_string('BSC.USDT-0X55D398326F99059FF775485246999027B3197955')
+"""
+    Binance Smart Chain USDT Asset (Tether)
+"""
+
+AssetBSC_USDC = Asset.from_string('BSC.USDC-0X8AC76A51CC950D9822D68B83FE1AD97B32CD580D')
+"""
+    Binance Smart Chain USDC Asset (Circle)
 """
