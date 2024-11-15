@@ -51,8 +51,9 @@ class THORChainQuery:
         self.interface_id = interface_id
         self.native_decimal = native_decimal
 
-        # todo
-        # self.cache.midgard_api.patch_client(self.interface_id)
+        # todo: write some tests
+        self.cache.thornode_client.patch_client(self.interface_id, self.interface_id)
+        self.cache.midgard_client.patch_client(self.interface_id, self.interface_id)
 
     @property
     def native_chain_attributes(self):
