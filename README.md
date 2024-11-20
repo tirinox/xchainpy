@@ -75,31 +75,27 @@ Bitcoin client.
 
 Ethereum client.
 
-#### 14. xchainpy_binance
-
-Binance Chain client. Deprecated. See: https://www.bnbchain.org/en/blog/bep2-bep8-asset-sunset-announcement
-
-#### 15. xchainpy_litecoin
+#### 14. xchainpy_litecoin
 
 Litecoin client.
 
-#### 16. xchainpy_dogecoin
+#### 15. xchainpy_dogecoin
 
 Dogecoin client.
 
-#### 17. xchainpy_bitcoincash
+#### 16. xchainpy_bitcoincash
 
 Bitcoin Cash client.
 
-#### 18. xchainpy_arbitrum
+#### 17. xchainpy_arbitrum
 
 Arbitrum client. Based on the *xchainpy_ethereum*.
 
-#### 19. xchainpy_avalanche
+#### 18. xchainpy_avalanche
 
 Avalanche client. Based on the *xchainpy_ethereum*.
 
-#### 20. xchainpy_bsc
+#### 19. xchainpy_bsc
 
 Binance Smart Chain client. Based on the *xchainpy_ethereum*.
 

@@ -14,7 +14,7 @@ packages/xchainpy_thornode
 
 packages/xchainpy_arbitrum
 packages/xchainpy_avalanche
-packages/xchainpy_binance
+
 packages/xchainpy_bitcoin
 packages/xchainpy_bitcoincash
 packages/xchainpy_bsc
