@@ -72,7 +72,7 @@ packages = [
     "xchainpy_thorchain_amm",
 
     # obsolete and other
-    "xchainpy_binance",
+    # ...
 ]
 
 for pack in packages:

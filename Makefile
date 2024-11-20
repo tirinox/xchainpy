@@ -56,7 +56,6 @@ tc_env: # Install XChainPy2 packages in editable mode
 	python3 -m pip install --editable packages/xchainpy_litecoin
 	python3 -m pip install --editable packages/xchainpy_dogecoin
 	python3 -m pip install --editable packages/xchainpy_bitcoincash
-	python3 -m pip install --editable packages/xchainpy_binance
 	python3 -m pip install --editable packages/xchainpy_ethereum
 	python3 -m pip install --editable packages/xchainpy_bsc
 	python3 -m pip install --editable packages/xchainpy_avalanche
