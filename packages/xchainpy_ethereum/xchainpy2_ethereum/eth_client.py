@@ -41,7 +41,7 @@ class EthereumClient(XChainClient):
                  private_key: Union[str, bytes, callable, None] = None,
                  fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
-                 explorer_providers=DEFAULT_ETH_EXPLORER_PROVIDERS.copy(),
+                 explorer_providers=None,
                  wallet_index=0,
                  provider: Optional[BaseProvider] = None,
                  extra_data_provider: Optional[EVMDataProvider] = None,
@@ -65,7 +65,7 @@ class EthereumClient(XChainClient):
 
         super().__init__(self._CHAIN, network, phrase, private_key, fee_bound, root_derivation_paths, wallet_index)
 
-        self.explorers = explorer_providers
+        self.explorers = explorer_providers or self._EXPLORERS
         self._gas_asset = self._GAS_ASSET
         self._decimal = self._DECIMAL
 
@@ -379,6 +379,7 @@ class EthereumClient(XChainClient):
         acc = self.get_account()
         signed_tx = acc.sign_transaction(tx)
         tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
+        tx_hash = self._normalize_tx_id(tx_hash)
         return tx_hash
 
     async def _transfer_erc20_token(self, what: CryptoAmount, recipient: str, gas: GasOptions,
@@ -422,6 +423,8 @@ class EthereumClient(XChainClient):
         tx = method_pointer.build_transaction(tx_params)
         signed_tx = self.get_account().sign_transaction(tx)
         tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
+        # convert bytes to hex
+        tx_hash = self._normalize_tx_id(tx_hash)
         return tx_hash
 
     async def get_block_timestamp(self, block_number: int) -> int:
@@ -528,6 +531,8 @@ class EthereumClient(XChainClient):
     @staticmethod
     def _normalize_tx_id(tx_id: Union[str, HexBytes, bytes]) -> str:
         if isinstance(tx_id, HexBytes):
+            tx_id = tx_id.hex()
+        elif isinstance(tx_id, bytes):
             tx_id = tx_id.hex()
         if not tx_id.startswith('0x'):
             tx_id = '0x' + tx_id
