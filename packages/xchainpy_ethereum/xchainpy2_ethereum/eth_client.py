@@ -128,10 +128,13 @@ class EthereumClient(XChainClient):
     def get_address(self) -> str:
         """
         Get the address for the given wallet index.
+        The address returned is checksummed.
         :return: string address
         """
         account = self.get_account()
-        return account.address
+        if not account:
+            raise LookupError("Failed to get the account")
+        return self.web3.to_checksum_address(account.address)
 
     async def get_balance(self, address: str = '', with_erc20=False) -> List[CryptoAmount]:
         """
@@ -190,6 +193,7 @@ class EthereumClient(XChainClient):
         """
         if not address:
             address = self.get_address()
+            address = self.web3.to_checksum_address(address)
 
         return await self._token_list.get_erc20_allowance(contract_address, spender, address)
 
