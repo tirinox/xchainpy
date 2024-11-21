@@ -156,40 +156,48 @@ function invalid_number() {
 function ask_for_package() {
   # Use the default value (all packages)
   PACKS=(../packages/xchainpy_*)
+  N=3 # Set the number of columns
+  COLUMN_WIDTH=40 # Adjust column width as needed
+
   echo "Available packages:"
+
   counter=1
   column=1
+
   for i in "${PACKS[@]}"; do
-    if (( column == 1 )); then
-      printf "%-40s" "$counter) $(basename $i)"
-      column=2
-    else
-      printf "%-40s\n" "$counter) $(basename $i)"
+    # Print the current package in the column format
+    printf "%-$((COLUMN_WIDTH - 1))s" "$counter) $(basename "$i")"
+
+    # Check if we reached the last column or the last package
+    if (( column == N )); then
+      echo # Move to the next row
       column=1
+    else
+      ((column++))
     fi
     ((counter++))
   done
 
-  # Print a newline if the last line has only one column
-  if (( column == 2 )); then
+  # Print a newline if the last row is incomplete
+  if (( column > 1 && column <= N )); then
     echo
   fi
 
   echo "Which package do you want to select (enter the number)?"
 
-  # ask for the number
+  # Ask for the number
   read -r number
 
-  # check if the number is not a number
+  # Check if the number is not valid
   if ! [[ "$number" =~ ^[0-9]+$ ]]; then
-    invalid_number
-  elif [ "$number" -gt "${#PACKS[@]}" ]; then
-    invalid_number
-  elif [ "$number" -lt 1 ]; then  # check if the number is less than 1
-    invalid_number
+    echo "Invalid input: not a number."
+    return
+  elif (( number < 1 || number > ${#PACKS[@]} )); then
+    echo "Invalid input: number out of range."
+    return
   fi
 
-  # get the package name
-  PACKS=${PACKS[$number - 1]}
-  echo "Selected package: $PACKS"
+  # Get the package name
+  SELECTED_PACKAGE=${PACKS[$number - 1]}
+  echo "Selected package: $SELECTED_PACKAGE"
 }
