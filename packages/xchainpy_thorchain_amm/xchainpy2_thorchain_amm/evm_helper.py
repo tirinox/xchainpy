@@ -12,6 +12,11 @@ DEFAULT_EVM_DEPOSIT_GAS_LIMIT = 160_000
 
 
 class EVMHelper:
+    """
+    EVMHelper is a helper class for EVM clients (e.g. EthereumClient, BinanceSmartChainClient) that
+    provides methods to interact with THORChain router contract and manage ERC20 token allowance.
+    """
+
     # todo: make BaseEVMClient
     def __init__(self, evm_client: EthereumClient, tc_cache: THORChainCache):
         self.evm_client = evm_client
@@ -19,13 +24,15 @@ class EVMHelper:
         self._router_abi = get_router_abi()
         self.deposit_gas_limit = DEFAULT_EVM_DEPOSIT_GAS_LIMIT
 
-    async def deposit(self, amount: CryptoAmount, memo: str, gas: GasOptions, expiration_sec: int = -1) -> str:
+    async def deposit(self, amount: CryptoAmount, memo: str, gas: GasOptions, expiration_sec: int = -1,
+                      check_allowance: bool = True) -> str:
         """
         Send deposit to THORChain router
         :param amount: amount and asset you want to deposit
         :param memo: memo contains the request details (e.g. swap details)
         :param gas: gas options
         :param expiration_sec: expiration time in seconds
+        :param check_allowance: check if the router is approved to spend the asset
         :return: str (submitted transaction hash)
         """
         router = await self.get_router()
@@ -42,7 +49,7 @@ class EVMHelper:
             raise AMMException(f'Failed to get vault address for chain {chain.value}')
         vault = self.evm_client.validated_checksum_address(vault.upper())
 
-        if not await self.is_tc_router_approved_to_spend(amount):
+        if check_allowance and not await self.is_tc_router_approved_to_spend(amount):
             raise AMMException(f'Router has not been approved yet for ERC20 token or allowance is insufficient'
                                f' {amount}')
 
@@ -61,7 +68,7 @@ class EVMHelper:
           { "internalType": "uint256", "name": "expiration", "type": "uint256" }
         ],
         """
-        expiration_sec = int(datetime.datetime.now().timestamp()) + expiration_sec
+        expiration_ts = int(datetime.datetime.now().timestamp()) + expiration_sec
         raw_amount = int(amount.amount)
 
         if self.evm_client.gas_asset == amount.asset:
@@ -69,10 +76,27 @@ class EVMHelper:
         else:
             value = 0
 
-        deposit_method = router.functions.depositWithExpiry(vault, asset, raw_amount, memo, expiration_sec)
+        return await self.deposit_unsafe(asset, expiration_ts, gas, memo, raw_amount, router, value, vault)
 
+    async def deposit_unsafe(self, asset_contract, expiration_ts, gas: GasOptions, memo, raw_amount, router, value,
+                             vault, nonce=-1):
+        """
+        Deposit amount to THORChain router without any checks
+        :param asset_contract: Asset contract address
+        :param expiration_ts: Expiration timestamp, the transaction will be rejected if it is mined after this time
+        :param gas: Gas options
+        :param memo: Transaction memo that contains the request details (e.g. swap details)
+        :param raw_amount: Amount of ERC20 token to deposit
+        :param router: THORChain router contract address
+        :param value: Eth Value to send with the transaction
+        :param vault: THORChain vault address
+        :param nonce: Transaction nonce, -1 means automatic
+        :return:
+        """
+        deposit_method = router.functions.depositWithExpiry(vault, asset_contract, raw_amount, memo, expiration_ts)
         gas_limit = self.deposit_gas_limit
-        tx_hash = await self.evm_client.make_contract_call(deposit_method, value, gas, gas_limit=gas_limit)
+        tx_hash = await self.evm_client.make_contract_call(deposit_method, value, gas, gas_limit=gas_limit,
+                                                           nonce=nonce)
         return tx_hash
 
     async def is_tc_router_approved_to_spend(self, amount: CryptoAmount) -> bool:
@@ -109,10 +133,20 @@ class EVMHelper:
         return await self.evm_client.approve_erc20_token(router, amount, gas)
 
     @property
-    def chain(self):
+    def chain(self) -> Chain:
+        """
+        Get the chain of the EVM client
+
+        :return: Chain
+        """
         return self.evm_client.chain
 
     async def get_router_address(self) -> str:
+        """
+        Get THORChain router contract address from TC API (inbound_details request)
+
+        :return: str (router contract address)
+        """
         inbound = await self._tc_cache.get_inbound_details()
         if not inbound:
             raise ValueError('Failed to get inbound details')
@@ -123,8 +157,16 @@ class EVMHelper:
 
         return chain_info.router
 
-    async def get_router(self) -> Contract:
-        router_address = await self.get_router_address()
+    async def get_router(self, router_address='') -> Contract:
+        """
+        Get THORChain router contract instance
+
+        :param router_address: Router contract address, if not provided it will be fetched from the TC API
+        :return: Contract of web3 library
+        """
+        if not router_address:
+            router_address = await self.get_router_address()
+
         if router_address and router_address.startswith('0x'):
             router_address = router_address.upper()  # so it will easily pass the following line
         router_address = self.evm_client.validated_checksum_address(router_address)
