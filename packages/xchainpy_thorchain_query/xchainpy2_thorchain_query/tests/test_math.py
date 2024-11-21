@@ -20,6 +20,9 @@ BUSD_POOL = Pool(
     loan_collateral='',
     loan_cr='',
     loan_collateral_remaining=1,
+    asset_tor_price=1.0,
+    savers_fill_bps=3323,
+    savers_capacity_remaining=3323232,
 )
 
 def test_pool_ownership():

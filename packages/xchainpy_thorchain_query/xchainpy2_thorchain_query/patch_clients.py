@@ -33,6 +33,7 @@ class ConfigurationEx(Configuration):
     backup_hosts: list of backup hosts to try if the main host fails
 
     """
+
     def __init__(self):
         super().__init__()
         self.timeout = DEFAULT_TIMEOUT
@@ -183,6 +184,7 @@ class HeadersPatch:
     This is a trait class to patch REST clients with additional headers. Such as User-Agent and X-Chain-Client header.
     You probably don't need to use it directly.
     """
+
     def __init__(self):
         self.default_headers = None
 
