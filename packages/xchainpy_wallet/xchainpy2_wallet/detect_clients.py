@@ -55,11 +55,6 @@ except:
     AvalancheClient = NoClient
 
 try:
-    from xchainpy2_binance import BinanceChainClient
-except ImportError:
-    BinanceChainClient = NoClient
-
-try:
     from xchainpy2_arbitrum import ArbitrumClient
 except ImportError:
     ArbitrumClient = NoClient
@@ -69,7 +64,6 @@ except ImportError:
 CLIENT_CLASSES = {
     Chain.THORChain: THORChainClient,
     Chain.Cosmos: CosmosGaiaClient,
-    Chain.Binance: BinanceChainClient,
     Chain.Maya: MayaChainClient,
     Chain.Bitcoin: BitcoinClient,
     Chain.BitcoinCash: BitcoinCashClient,
