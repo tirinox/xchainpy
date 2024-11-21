@@ -156,15 +156,31 @@ class THORChainQuery:
         input_amount_int = int(input_amount_int)
 
         try:
+
+            kwargs = {
+                key: value for key, value in {
+                    "height": height,
+                    "from_asset": from_asset,
+                    "to_asset": destination_asset,
+                    "amount": input_amount_int,
+                    "destination": destination_address,
+                    "tolerance_bps": tolerance_bps,
+                    "affiliate_bps": affiliate_bps,
+                    "affiliate": affiliate_address,
+                    "streaming_interval": streaming_interval,
+                    "streaming_quantity": streaming_quantity,
+                }.items() if value
+            }
+
+            if not affiliate_address and affiliate_bps:
+                raise ValueError('Affiliate address is required if affiliate basis points are set')
+
+            if affiliate_address and affiliate_bps == 0:
+                kwargs['affiliate_bps'] = 0  # explicitly set to keep track of affiliate address
+
             swap_quote: QuoteSwapResponse
-            swap_quote = await self.cache.quote_api.quoteswap(
-                height=height, from_asset=from_asset, to_asset=destination_asset, amount=input_amount_int,
-                destination=destination_address,
-                tolerance_bps=tolerance_bps,
-                affiliate_bps=affiliate_bps, affiliate=affiliate_address,
-                streaming_interval=streaming_interval,
-                streaming_quantity=streaming_quantity,
-            )
+            swap_quote = await self.cache.quote_api.quoteswap(**kwargs)
+
         except ValueError:
             try:
                 response = self.cache.thornode_client.last_response

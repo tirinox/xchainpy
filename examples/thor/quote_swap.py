@@ -2,12 +2,24 @@ import asyncio
 
 from examples.common import sep
 from xchainpy2_bitcoin import BTC_DECIMAL
+from xchainpy2_bsc import AssetBSC_USDT
 from xchainpy2_thorchain_query import THORChainQuery
 from xchainpy2_utils import Amount, AssetRUNE, AssetBTC, AssetETH, CryptoAmount
 
 
 async def main():
     query = THORChainQuery()
+
+    q_swap = await query.quote_swap(
+        CryptoAmount(Amount.from_asset(20.0), AssetBSC_USDT),
+        '0x1c7b17362c84287bd1184447e6dfeaf920c31bbe',
+        'AVAX.AVAX',
+        1000,
+    )
+    print("Swap USDT to AVAX without affiliate fee:")
+    print(q_swap)
+
+    sep()  # ------------------------------------
 
     q_swap = await query.quote_swap(
         CryptoAmount(Amount.from_asset(10000.0), AssetRUNE),
