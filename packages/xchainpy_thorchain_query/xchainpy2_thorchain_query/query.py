@@ -123,6 +123,22 @@ class THORChainQuery:
         """
         return await self.cache.tx_api.tx_status(tx_id)
 
+    @staticmethod
+    def _prepare_args_of_quote_call(**kwargs):
+        # filter out empty values from kwargs
+        kwargs = {key: value for key, value in kwargs.items() if value}
+
+        affiliate_address = kwargs.get('affiliate')
+        affiliate_bps = kwargs.get('affiliate_bps')
+
+        if not affiliate_address and affiliate_bps:
+            raise ValueError('Affiliate address is required if affiliate basis points are set')
+
+        if affiliate_address and not affiliate_bps:
+            kwargs['affiliate_bps'] = 0  # explicitly set to keep track of affiliate address
+
+        return kwargs
+
     async def quote_swap(self,
                          input_amount: CryptoAmount,
                          destination_address: str,
@@ -156,27 +172,18 @@ class THORChainQuery:
         input_amount_int = int(input_amount_int)
 
         try:
-
-            kwargs = {
-                key: value for key, value in {
-                    "height": height,
-                    "from_asset": from_asset,
-                    "to_asset": destination_asset,
-                    "amount": input_amount_int,
-                    "destination": destination_address,
-                    "tolerance_bps": tolerance_bps,
-                    "affiliate_bps": affiliate_bps,
-                    "affiliate": affiliate_address,
-                    "streaming_interval": streaming_interval,
-                    "streaming_quantity": streaming_quantity,
-                }.items() if value
-            }
-
-            if not affiliate_address and affiliate_bps:
-                raise ValueError('Affiliate address is required if affiliate basis points are set')
-
-            if affiliate_address and affiliate_bps == 0:
-                kwargs['affiliate_bps'] = 0  # explicitly set to keep track of affiliate address
+            kwargs = self._prepare_args_of_quote_call(
+                height=height,
+                from_asset=from_asset,
+                to_asset=destination_asset,
+                amount=input_amount_int,
+                destination=destination_address,
+                tolerance_bps=tolerance_bps,
+                affiliate_bps=affiliate_bps,
+                affiliate=affiliate_address,
+                streaming_interval=streaming_interval,
+                streaming_quantity=streaming_quantity,
+            )
 
             swap_quote: QuoteSwapResponse
             swap_quote = await self.cache.quote_api.quoteswap(**kwargs)
@@ -187,7 +194,11 @@ class THORChainQuery:
                 data = response.data
                 if isinstance(data, str):
                     data = json.loads(data)
-                error = data.get('error', 'unknown error')
+                error = data.get('error')
+                if not error:
+                    # if no error message, this means the error has not occurred in the API, but in our code
+                    raise 
+
                 errors.append(str(error))
             except Exception as e:
                 errors.append(f'Could not pass error info. {e!r}')
