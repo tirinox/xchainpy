@@ -50,8 +50,8 @@ class EVMHelper:
         vault = self.evm_client.validated_checksum_address(vault.upper())
 
         if check_allowance and not await self.is_tc_router_approved_to_spend(amount):
-            raise AMMException(f'Router has not been approved yet for ERC20 token or allowance is insufficient'
-                               f' {amount}')
+            raise AMMException(f'Router has not been approved yet for ERC20 token or allowance is insufficient:'
+                               f' {amount} more is required')
 
         asset = amount.asset.contract or EVM_NULL_ADDRESS
         memo = memo or ''
@@ -119,7 +119,13 @@ class EVMHelper:
             return True
 
         router = await self.get_router_address()
-        approved = await self.evm_client.get_erc20_allowance(amount.asset, router, self.evm_client.get_address())
+        router = self.evm_client.web3.to_checksum_address(router)  # we trust the router address from the TC API
+
+        spend_from = self.evm_client.get_address()
+        if not spend_from:
+            raise ValueError('Failed to get the address of the client')
+
+        approved = await self.evm_client.get_erc20_allowance(amount.asset, router, spend_from)
         return approved.amount >= amount.amount
 
     async def approve_tc_router(self, amount: CryptoAmount, gas: GasOptions) -> str:
@@ -155,7 +161,13 @@ class EVMHelper:
         if not chain_info:
             raise ValueError(f'Failed to get inbound details for chain {self.chain.value}')
 
-        return chain_info.router
+        router = chain_info.router
+        if not router:
+            raise ValueError(f'Failed to get router address for chain {self.chain.value}')
+
+        router = self.evm_client.web3.to_checksum_address(router)  # we trust the router address from the TC API
+
+        return router
 
     async def get_router(self, router_address='') -> Contract:
         """

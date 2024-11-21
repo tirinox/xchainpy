@@ -736,6 +736,43 @@ class THORChainAMM:
             expiry_block=1242  # define a block in the past to unregister
         )
 
+    # ---------------------------- ERC20 ALLOWANCE ----------------------------
+
+    async def is_tc_router_approved_to_spend(self, amount: CryptoAmount):
+        """
+        Check if the TC Router is approved to spend the amount of the asset.
+
+        :param amount: CryptoAmount to check
+        :return: True if the TC Router is approved to spend the amount
+        """
+        if not amount or not amount.asset or amount.amount.internal_amount <= 0:
+            raise ValueError(f'Invalid amount: {amount}')
+
+        if not self.is_erc20_asset(amount.asset):
+            raise ValueError(f'Asset {amount.asset} is not an ERC20 asset')
+
+        helper = self._get_evm_helper(amount.asset)
+        return await helper.is_tc_router_approved_to_spend(amount)
+
+    async def approve_tc_router_to_spend(self, amount: CryptoAmount, gas_options: Optional[GasOptions] = None):
+        """
+        Approve the TC Router to spend the amount of the asset.
+
+        :param amount: CryptoAmount to approve
+        :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
+        :return: str TX hash submitted to the network
+        """
+        if not amount or not amount.asset or amount.amount.internal_amount <= 0:
+            raise ValueError(f'Invalid amount: {amount}')
+
+        if not self.is_erc20_asset(amount.asset):
+            raise ValueError(f'Asset {amount.asset} is not an ERC20 asset')
+
+        helper = self._get_evm_helper(amount.asset)
+        return await helper.approve_tc_router(amount, gas_options)
+
+    # ---------------------------- GENERAL ----------------------------
+
     async def general_thorname_call(self, payment: CryptoAmount, thorname: str,
                                     chain: Chain = Chain.THORChain, chain_address: str = '',
                                     owner: str = '',
@@ -813,8 +850,6 @@ class THORChainAMM:
         with suppress(Exception):
             await self.query.cache.close()
 
-    # -----------------------------------------
-
     @property
     def default_thor_address(self) -> str:
         """
@@ -844,6 +879,8 @@ class THORChainAMM:
         :return: bool True if the asset is a THORChain asset
         """
         return asset.chain.upper() == Chain.THORChain.value or asset.is_synth or asset.is_trade
+
+    # ---------------------------- PRIVATE ----------------------------
 
     def _get_thorchain_client(self) -> THORChainClient:
         client = self.wallet.get_client(Chain.THORChain)
@@ -894,8 +931,7 @@ class THORChainAMM:
             return
 
         if self.is_erc20_asset(input_amount.asset):
-            helper = self._get_evm_helper(input_amount.asset)
-            if not await helper.is_tc_router_approved_to_spend(input_amount):
+            if not await self.is_tc_router_approved_to_spend(input_amount):
                 return f'TC Router is not allowed to spend {input_amount}'
 
     async def _validate_affiliate_address(self, affiliate_address: str) -> bool:
