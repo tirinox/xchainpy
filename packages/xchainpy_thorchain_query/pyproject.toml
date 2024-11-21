@@ -8,7 +8,7 @@ version = "0.0.24"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
-description = "XChainpy THORChain Query: Thorchain-query module to query thorchain for estimation of swaps/add and remove Liquidity and checking a transaction stage. Returns a TxDetail object with all the information needed to conduct a swap, or add liquidity."
+description = "XChainPy2 THORChain Query: this package is used to query THORChain for estimation of swaps/add and remove Liquidity and checking a transaction stage."
 readme = "README.md"
 requires-python = ">=3.7"
 keywords = ["Crypto", "THORChain", "THORNode", "Midgard", "Swagger", "API"]

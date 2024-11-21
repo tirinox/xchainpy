@@ -330,33 +330,9 @@ class THORChainCache:
 
     async def refresh_inbound_cache(self) -> InboundDetails:
         """
-        Refreshes
-        the
-        Inbound
-        Details
-        Cache
-        which
-        includes
-        inbound
-        address
-        for each chain,
-            current
-        fee
-        rate, halt
-        state and more.
-        It
-        might
-        be
-        a
-        better
-        idea
-        to
-        call
-        get_inbound_details()
-        method
-        that
-        provides
-        caching.
+        Refreshes the Inbound Details Cache which includes inbound address for each chain,
+        current fee rate, halt state and more.
+        It might be a better idea to call get_inbound_details() method that provides caching.
 
         :return InboundDetails
         """
@@ -434,11 +410,7 @@ class THORChainCache:
 
     async def refresh_network_values(self) -> Dict[str, int]:
         """
-        Refreshes
-        the
-        NetworkValues
-        Cache(Mimir and Constants
-        combined).
+        Refreshes the NetworkValues Cache (Mimir and Constants combined).
 
         :return: Dict[str, int]
         """
@@ -463,15 +435,9 @@ class THORChainCache:
 
     async def get_network_values(self, forced=False) -> Dict[str, int]:
         """
-        Loads, caches and returns
-        the
-        Network
-        values(Mimir and Constants
-        combined).
+        Loads, caches and returns the Network values (Mimir and Constants combined).
 
-        :param
-        forced: force
-        refresh
+        :param forced: force refresh
         :return:
         """
         sec_since_last_refresh = time.monotonic() - self._network_cache.last_refreshed
@@ -485,46 +451,13 @@ class THORChainCache:
 
     async def get_expected_swap_output(self, input_amount: CryptoAmount, dest_asset: Asset) -> SwapOutput:
         """
-        This
-        method
-        does
-        an
-        approximate
-        calculation
-        of
-        the
-        swap
-        output
-        using
-        known
-        pool
-        ratios and math.
-        It
-        takes
-        into
-        account
-        only
-        slippage
-        but
-        not the
-        network
-        fees.
-        For
-        a
-        more
-        accurate
-        simulation, use
-        THORChainQuery.quote_swap.
+        This method does an approximate calculation of the swap output using known pool ratios and math.
+        It takes into account only slippage but not the network fees.
+        For a more accurate simulation, use THORChainQuery.quote_swap.
 
-        :param
-        input_amount: amount / asset
-        to
-        swap
-        :param
-        dest_asset: destination
-        asset
-        :return: SwapOutput
-        structure
+        :param input_amount: amount/asset to swap
+        :param dest_asset: destination asset
+        :return: SwapOutput structure
         """
         swap_output: SwapOutput
         if self.is_native_asset(input_amount.asset):
@@ -577,36 +510,11 @@ class THORChainCache:
 
     async def convert(self, input_amount: CryptoAmount, out_asset: Asset) -> CryptoAmount:
         """
-        Returns
-        the
-        exchange
-        of
-        a
-        CryptoAmount
-        to
-        a
-        different
-        Asset
-        Ex.convert(input: 100
-        BUSD, outAsset: BTC) -> 0.0001234
-        BTC
-        :param
-        input_amount: amount / asset
-        to
-        convert
-        to
-        outAsset
-        :param
-        out_asset: the
-        Asset
-        you
-        want
-        to
-        convert
-        to
-        :return: CryptoAmount
-        of
-        input
+        Returns the exchange of a CryptoAmount to a different Asset
+        Ex. convert(input:100 BUSD, outAsset: BTC) -> 0.0001234 BTC
+        :param input_amount: amount/asset to convert to outAsset
+        :param out_asset: the Asset you want to convert to
+        :return: CryptoAmount of input
         """
         if input_amount.asset == out_asset:
             return input_amount
@@ -623,14 +531,9 @@ class THORChainCache:
 
     async def get_details_for_chain(self, chain: Union[str, Chain]) -> InboundDetail:
         """
-        Returns
-        the
-        inbound
-        details
-        for a given chain.Results are cached.
+        Returns the inbound details for a given chain. Results are cached.
 
-        :param
-        chain: Chain(enum or str)
+        :param chain: Chain (enum or str)
         :return:
         """
 
@@ -646,23 +549,10 @@ class THORChainCache:
 
     async def get_inbound_details(self, forced=False) -> InboundDetails:
         """
-        Returns
-        the
-        inbound
-        details
-        such as inbound
-        vault
-        address, fee
-        rate and so
-        on.Results
-        are
-        cached.
+        Returns the inbound details such as inbound vault address, fee rate and so on. Results are cached.
 
-        :param
-        forced: force
-        refresh
-        :return: inbound
-        details(dict)
+        :param forced: force refresh
+        :return: inbound details (dict)
         """
         time_elapsed = time.monotonic() - self._inbound_cache.last_refreshed
         if forced or time_elapsed > self.expire_inbound:
@@ -688,10 +578,7 @@ class THORChainCache:
     @property
     def is_thorchain(self):
         """
-        Returns
-        True if this
-
-        class is configured for THORChain protocol.
+        Returns True if this class is configured for THORChain protocol.
 
         :return:
         """
@@ -700,10 +587,7 @@ class THORChainCache:
     @property
     def is_maya(self):
         """
-        Returns
-        True if this
-
-        class is configured for Maya protocol.
+        Returns True if this class is configured for Maya protocol.
 
         :return:
         """
@@ -711,67 +595,27 @@ class THORChainCache:
 
     def pluck_native_block_height(self, data: LastBlock) -> int:
         """
-        Extracts
-        the
-        native
-        block
-        height
-        from the LastBlock
-        object.
+        Extracts the native block height from the LastBlock object.
 
-        :param
-        data: LastBlock
-        object
-        :return: int
-        block
-        height
+        :param data: LastBlock object
+        :return: int block height
         """
         key = 'thorchain' if self.is_thorchain else 'mayachain'
         return getattr(data, key)
 
     async def get_native_block_height(self) -> int:
         """
-        Loads
-        the
-        native
-        block
-        height
-        from the THORNode / MayaNode
-        API.
+        Loads the native block height from the THORNode/MayaNode API.
 
-        :return: int
-        block
-        height
+        :return: int block height
         """
         data = await self.get_last_block()
         return self.pluck_native_block_height(data[0])
 
     async def get_last_block(self) -> List[LastBlock]:
         """
-        Loads
-        the
-        last
-        block
-        information
-        from the THORNode / MayaNode
-        API.
-        From
-        LastBlock
-        you
-        can
-        get
-        the
-        block
-        height
-        of
-        the
-        protocol and last
-        observed
-        height
-        of
-        the
-        connected
-        chains.
+        Loads the last block information from the THORNode/MayaNode API.
+        From LastBlock you can get the block height of the protocol and last observed height of the connected chains.
 
         :return: List[LastBlock]
         """
@@ -788,22 +632,10 @@ class THORChainCache:
 
     def get_rune_address(self, lp: LiquidityProviderSummary) -> str:
         """
-        Plucks
-        the
-        RUNE
-        address
-        from the LiquidityProviderSummary
-        object
-        depending
-        on
-        the
-        protocol.
-        It is either
-        'rune_address'
-        for THORChain or 'cacao_address' for MayaChain.
+        Plucks the RUNE address from the LiquidityProviderSummary object depending on the protocol.
+        It is either 'rune_address' for THORChain or 'cacao_address' for MayaChain.
 
-        :param
-        lp: LiquidityProviderSummary
+        :param lp: LiquidityProviderSummary
         :return: str
         """
         key = 'rune_address' if self.is_thorchain else 'cacao_address'
@@ -812,41 +644,12 @@ class THORChainCache:
     async def get_liquidity_provider(self, asset: Union[str, Asset], address: str,
                                      height: int = 0) -> LiquidityProviderSummary:
         """
-        Get
-        the
-        liquidity
-        provider
-        details
-        for a given asset and address.Results are not cached.
-        If
-        height is not provided, the
-        latest
-        block
-        height
-        will
-        be
-        used.
+        Get the liquidity provider details for a given asset and address. Results are not cached.
+        If height is not provided, the latest block height will be used.
 
-        :param
-        asset: Asset or str
-        name
-        of
-        the
-        pool
-        :param
-        address: Address
-        of
-        the
-        liquidity
-        provider
-        :param
-        height: Height
-        of
-        the
-        block
-        to
-        query,
-        if 0 then the latest block height will be used
+        :param asset: Asset or str name of the pool
+        :param address: Address of the liquidity provider
+        :param height: Height of the block to query, if 0 then the latest block height will be used
         :return: LiquidityProviderSummary
         """
 
@@ -861,18 +664,10 @@ class THORChainCache:
 
     async def get_fee_rate(self, chain: Union[str, Chain]) -> int:
         """
-        Returns
-        the
-        fee
-        rate
-        for a given chain from the inbound details.Results are cached.
+        Returns the fee rate for a given chain from the inbound details. Results are cached.
 
-        :param
-        chain: Chain
-        :return: Typical
-        fee
-        rate
-        for the chain.sat / byte for Bitcoin, gas for Ethereum, etc.
+        :param chain: Chain
+        :return: Typical fee rate for the chain. sat/byte for Bitcoin, gas for Ethereum, etc.
         """
 
         inbound = await self.get_details_for_chain(chain)
@@ -880,29 +675,11 @@ class THORChainCache:
 
     async def get_names_by_address(self, address: str) -> Set[str]:
         """
-        Look
-        up
-        THORNames
-        that
-        are
-        associated
-        with a wallet address.Names are cached.
+        Look up THORNames that are associated with a wallet address. Names are cached.
 
-        :raises
-        ValueError:
-        if address is not provided
-            :param
-        address: Address
-        to
-        look
-        up
-        :return: Set[str] - just
-        the
-        set
-        of
-        names
-        without
-        details(see: load_names_by_address)
+        :raises ValueError: if address is not provided
+        :param address: Address to look up
+        :return: Set[str] - just the set of names without details (see: load_names_by_address)
         """
 
         if not address:
@@ -927,21 +704,10 @@ class THORChainCache:
 
     async def get_names_with_details(self, address: str) -> List[THORNameDetails]:
         """
-        Look
-        up
-        THORNames
-        with their details by a wallet address.Names are cached.
-        But
-        details
-        are
-        not cached
-        yet.
+        Look up THORNames with their details by a wallet address. Names are cached.
+        But details are not cached yet.
 
-        :param
-        address: Address
-        to
-        look
-        up
+        :param address: Address to look up
         :return: List[THORNameDetails]
         """
 
@@ -953,21 +719,9 @@ class THORChainCache:
 
     async def get_name_details(self, name: str) -> Optional[THORNameDetails]:
         """
-        Look
-        up
-        THORName
-        details
-        by
-        a
-        THORName.Details
-        are
-        cached.
+        Look up THORName details by a THORName. Details are cached.
 
-        :param
-        name: THORName
-        to
-        look
-        up
+        :param name: THORName to look up
         :return: Optional[THORNameDetails]
         """
         if not name:
