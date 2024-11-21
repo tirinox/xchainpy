@@ -47,6 +47,7 @@ test: # Run tests
 
 .PHONY: tc_env
 tc_env: # Install XChainPy2 packages in editable mode
+	pip install -r requirements.txt
 	python3 -m pip install --editable packages/xchainpy_crypto
 	python3 -m pip install --editable packages/xchainpy_utils
 	python3 -m pip install --editable packages/xchainpy_client
