@@ -33,7 +33,7 @@ class UTXOClient(XChainClient, abc.ABC):
     async def calc_fee(self, fee_type: FeeOption, fee_rate: FeeRate, memo: str = '') -> Fee:
         pass
 
-    async def get_transactions(self, address: str,
+    async def get_transactions(self, address: str = '',
                                offset: int = 0,
                                limit: int = 0,
                                start_time: Optional[datetime] = None,
@@ -50,6 +50,7 @@ class UTXOClient(XChainClient, abc.ABC):
         :param asset: The asset to get the transaction history. (optional)
         :return: The transaction history.
         """
+        address = address or self.get_address()
 
         return await self._round_robin('get_transactions', address, offset, limit, start_time, end_time, asset)
 

@@ -149,7 +149,7 @@ class OnlineDataProvider(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_transactions(self, address: str,
+    async def get_transactions(self, address: str = '',
                                offset: int = 0,
                                limit: int = 0,
                                start_time: Optional[datetime] = None,

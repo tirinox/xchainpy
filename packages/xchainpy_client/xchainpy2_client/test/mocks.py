@@ -18,7 +18,7 @@ class MockChainClient(XChainClient):
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
         pass
 
-    async def get_transactions(self, address: str, offset: int = 0, limit: int = 0,
+    async def get_transactions(self, address: str = '', offset: int = 0, limit: int = 0,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None) -> TxPage:
         pass
