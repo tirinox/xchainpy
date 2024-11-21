@@ -19,6 +19,7 @@ from .const import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMALS, DEFAULT_ETH_EXPLORER
 from .decode_logs import Web3LogDecoder
 from .extra.base import EVMDataProvider
 from .extra.etherscan import EtherscanDataProvider
+from .extra.moralis_provider import MoralisDataProvider
 from .gas import GasOptions, GasEstimator
 from .token_info import TokenInfoList, TokenInfo
 from .utils import is_valid_eth_address, select_random_free_provider, validated_checksum_address
@@ -27,6 +28,13 @@ logger = logging.getLogger(__name__)
 
 
 class EthereumClient(XChainClient):
+    _CHAIN = Chain.Ethereum
+    _TOKEN_LIST = ETH_TOKEN_LIST
+    _GAS_ASSET = AssetETH
+    _DECIMAL = ETH_DECIMALS
+    _CHAIN_ID_DICT = ETH_CHAIN_ID
+    _EXPLORERS = DEFAULT_ETH_EXPLORER_PROVIDERS.copy()
+
     def __init__(self,
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
@@ -40,9 +48,9 @@ class EthereumClient(XChainClient):
                  **kwargs
                  ):
         """
-        Initialize Ethereum
+        Initialize Ethereum client
         :param network: Network type. Default is `NetworkType.MAINNET`
-        :param phrase: Mnemonic phrase
+        :param phrase: Mnemonic phrase (if you want to use a mnemonic phrase)
         :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
         :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
@@ -50,28 +58,40 @@ class EthereumClient(XChainClient):
         :param wallet_index: int (default 0)
         :param provider: EVM Web3 RPC provider. Default is `None` (will use a random free provider)
         :param extra_data_provider: EVMDataProvider object for fetching extra data from the blockchain
+            (owned ERC20 balance, TXs history, etc.)
         """
         root_derivation_paths = root_derivation_paths.copy() \
             if root_derivation_paths else ETH_ROOT_DERIVATION_PATHS.copy()
 
-        super().__init__(Chain.Ethereum, network, phrase, private_key, fee_bound, root_derivation_paths, wallet_index)
+        super().__init__(self._CHAIN, network, phrase, private_key, fee_bound, root_derivation_paths, wallet_index)
 
         self.explorers = explorer_providers
-        self._gas_asset = AssetETH
-        self._decimal = ETH_DECIMALS
+        self._gas_asset = self._GAS_ASSET
+        self._decimal = self._DECIMAL
 
         self.tx_responses = {}
         self.gas_limits = GAS_LIMITS
-        self._chain_ids = ETH_CHAIN_ID
+        self._chain_ids = self._CHAIN_ID_DICT
 
-        self.token_list_file = ETH_TOKEN_LIST
+        self.token_list_file = self._TOKEN_LIST
 
         self._remake_provider(provider)
-        self._ex_provider = extra_data_provider or EtherscanDataProvider(
-            self.chain, self.network, os.environ.get('ETHERSCAN_API_KEY', '')
-        )
+
+        self._ex_provider = None
+        self._init_extra_data_provider(extra_data_provider)
+
         self.fee_estimation_percentiles = (20, 50, 80)
         self.fee_estimation_block_history = 20
+
+    def _init_extra_data_provider(self, extra_data_provider):
+        if extra_data_provider:
+            self._ex_provider = extra_data_provider
+        elif etherscan_key := os.environ.get('ETHERSCAN_API_KEY'):
+            self._ex_provider = EtherscanDataProvider(self.chain, self.network, etherscan_key)
+        elif moralis_key := os.environ.get('MORALIS_API_KEY'):
+            self._ex_provider = MoralisDataProvider(self.chain, self.network, moralis_key)
+        else:
+            self._ex_provider = None
 
     @property
     def get_chain_id(self):
@@ -117,7 +137,7 @@ class EthereumClient(XChainClient):
         """
         Get the balance of a given address.
         :param address: By default, it will return the balance of the current wallet. (optional)
-        :param with_erc20: If True, it will return the balance of all ERC20 tokens as well. (optional)
+        :param with_erc20: If True, it will return the balance of all ERC20 tokens as well. (optional). Experimental!
         :return:
         """
         address = address or self.get_address()
@@ -148,12 +168,15 @@ class EthereumClient(XChainClient):
             address = self.get_address()
         return await self._token_list.get_erc20_token_balance(contract_address, address)
 
-    async def get_erc20_token_info(self, contract) -> TokenInfo:
+    async def get_erc20_token_info(self, contract: Union[str, Asset, Contract]) -> TokenInfo:
         """
         Returns zero balance and token symbol for a given contract address.
         The balance is zero because we are only interested in the token symbol and decimals.
-        :param contract: Contract object
+        :param contract: Contract object or contract address or Asset object
         """
+        if isinstance(contract, Asset):
+            contract = contract.contract
+
         return await self._token_list.load_erc20_token_info(contract)
 
     async def get_erc20_allowance(self, contract_address: Union[Asset, str],
