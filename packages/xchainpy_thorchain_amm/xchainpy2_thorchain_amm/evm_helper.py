@@ -53,7 +53,12 @@ class EVMHelper:
             raise AMMException(f'Router has not been approved yet for ERC20 token or allowance is insufficient:'
                                f' {amount} more is required')
 
-        asset = amount.asset.contract or EVM_NULL_ADDRESS
+        if amount.asset.contract:
+            asset = amount.asset.contract
+            asset = self._to_checksum_address(asset)
+        else:
+            asset = EVM_NULL_ADDRESS
+
         memo = memo or ''
 
         if expiration_sec < 0:
@@ -119,7 +124,7 @@ class EVMHelper:
             return True
 
         router = await self.get_router_address()
-        router = self.evm_client.web3.to_checksum_address(router)  # we trust the router address from the TC API
+        router = self._to_checksum_address(router)  # we trust the router address from the TC API
 
         spend_from = self.evm_client.get_address()
         if not spend_from:
@@ -165,7 +170,7 @@ class EVMHelper:
         if not router:
             raise ValueError(f'Failed to get router address for chain {self.chain.value}')
 
-        router = self.evm_client.web3.to_checksum_address(router)  # we trust the router address from the TC API
+        router = self._to_checksum_address(router)  # we trust the router address from the TC API
 
         return router
 
@@ -184,3 +189,6 @@ class EVMHelper:
         router_address = self.evm_client.validated_checksum_address(router_address)
         # noinspection PyTypeChecker
         return self.evm_client.web3.eth.contract(address=router_address, abi=self._router_abi)
+
+    def _to_checksum_address(self, address: str) -> str:
+        return self.evm_client.web3.to_checksum_address(address)
