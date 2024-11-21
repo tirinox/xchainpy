@@ -7,10 +7,9 @@ echo "---------------"
 echo "This script will update the version of the Python package"
 
 ask_for_package
+PACKAGE_DIR=$SELECTED_PACKAGE
 
 echo "---------------"
-
-PACKAGE_DIR=$PACKS
 
 # make sure that "pyproject.toml" exists
 if [ ! -f $PACKAGE_DIR/pyproject.toml ]; then

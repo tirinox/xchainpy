@@ -42,14 +42,14 @@ fi
 case "$1" in
 
 build)
-  build "$PACKS"
+  build "$SELECTED_PACKAGE"
   ;;
 publish)
-  publish "$PACKS"
+  publish "$SELECTED_PACKAGE"
   ;;
 
 publish_test)
-  publish_test "$PACKS"
+  publish_test "$SELECTED_PACKAGE"
   ;;
 
 *)
