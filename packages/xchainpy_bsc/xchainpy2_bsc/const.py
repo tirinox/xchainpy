@@ -1,3 +1,5 @@
+import os
+
 from xchainpy2_client import ExplorerProvider, FeeBounds
 from xchainpy2_utils import NetworkType, Asset
 
@@ -77,7 +79,9 @@ BSC_NORMAL_FEE = 1  # gwei
 """
 BSC_SURE_FEE = 30  # gwei
 
-BSC_TOKEN_LIST = 'data/bsc_mainnet_latest.json'
+SELF_DIR = os.path.dirname(os.path.abspath(__file__))
+
+BSC_TOKEN_LIST = f'{SELF_DIR}/data/bsc_mainnet_latest.json'
 """
     Binance Smart Chain ERC20 Token List
     Source: PancakeSwap Extended
