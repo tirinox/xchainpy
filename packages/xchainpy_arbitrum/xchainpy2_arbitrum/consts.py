@@ -1,3 +1,5 @@
+import os
+
 from xchainpy2_client import ExplorerProvider, FeeBounds
 from xchainpy2_utils import NetworkType, Asset
 
@@ -77,3 +79,11 @@ ARB_SURE_FEE = 50
     This is ETH asset on Arbitrum network. It is the gas asset.
 """
 AssetAETH = Asset.from_string("ARB.ETH")
+
+SELF_DIR = os.path.dirname(os.path.abspath(__file__))
+
+ARB_TOKEN_LIST = f"{SELF_DIR}/data/arb_mainnet_latest.json"
+"""
+    Arbitrum ERC20 Token List
+    Source: CoinGecko
+"""
