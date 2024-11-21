@@ -1,3 +1,5 @@
+import os
+
 from xchainpy2_client import ExplorerProvider, FeeBounds
 from xchainpy2_utils import NetworkType
 
@@ -74,7 +76,9 @@ AVAX_NORMAL_FEE = 30  # nAvax
 """
 AVAX_SURE_FEE = 50  # nAvax
 
-AVAX_TOKEN_LIST = 'abi/avax_mainnet_latest.json'
+SELF_DIR = os.path.dirname(os.path.abspath(__file__))
+
+AVAX_TOKEN_LIST = f'{SELF_DIR}/data/avax_mainnet_latest.json'
 """
     Avalanche ERC20 token list (Popular and verified tokens)
     Source: Trader Joe Default
