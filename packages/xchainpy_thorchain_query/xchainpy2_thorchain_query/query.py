@@ -192,8 +192,10 @@ class THORChainQuery:
 
         if (int(swap_quote.recommended_min_amount_in) and
                 int(input_amount_int) < int(swap_quote.recommended_min_amount_in)):
-            errors.append(f'Input amount {input_amount.amount} is less than recommended min amount in '
-                          f'{swap_quote.recommended_min_amount_in}')
+            recommended_in = CryptoAmount.automatic(int(swap_quote.recommended_min_amount_in), input_amount.asset,
+                                                    decimals=self.native_decimal)
+            errors.append(f'Input amount {input_amount} is less than recommended min amount in '
+                          f'{recommended_in}')
 
         fee_asset = Asset.from_string_exc(swap_quote.fees.asset)
 
@@ -204,12 +206,11 @@ class THORChainQuery:
                 fees.total_bps, int(fees.total), fees.slippage_bps, int(fees.affiliate), int(fees.liquidity),
                 int(fees.outbound),
             ),
-            # todo: add other fees
             slip_bps=int(swap_quote.fees.slippage_bps),
             net_output=CryptoAmount(Amount(int(swap_quote.expected_amount_out)), destination_asset),
             outbound_delay_seconds=swap_quote.outbound_delay_seconds,
             inbound_confirmation_seconds=swap_quote.inbound_confirmation_seconds,
-            can_swap=True,
+            can_swap=not bool(errors),
             errors=errors,
             recommended_min_amount_in=int(swap_quote.recommended_min_amount_in),
             streaming_swap_interval=streaming_interval,
@@ -612,8 +613,10 @@ class THORChainQuery:
         # Sending less than this amount could result in failed refunds
         if int(deposit_quote.recommended_min_amount_in) and \
                 int(new_add_amount.amount) < int(deposit_quote.recommended_min_amount_in):
-            errors.append(f"Amount {new_add_amount.amount} is less than recommended min amount in "
-                          f"{deposit_quote.recommended_min_amount_in}")
+            recommended_in = CryptoAmount.automatic(int(deposit_quote.recommended_min_amount_in), new_add_amount.asset,
+                                                    decimals=self.native_decimal)
+
+            errors.append(f"Amount {new_add_amount.amount} is less than recommended min amount {recommended_in}")
 
         # Error handling
         if errors:
