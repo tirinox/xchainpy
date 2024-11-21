@@ -114,12 +114,15 @@ class TokenInfoList:
             a.amount.changed_decimals(token_info.decimals), token_info.as_asset
         )
 
-    def get_erc20_as_contract(self, contract_address: str):
+    def get_erc20_as_contract(self, contract_address: Union[str, Asset]) -> Contract:
         """
         Get the ERC20 contract object for a given contract address.
-        :param contract_address: Contract address
+        :param contract_address: Contract address or Asset object
         :return: Contract object
         """
+        if isinstance(contract_address, Asset):
+            contract_address = contract_address.contract
+        
         contract_address = validated_checksum_address(self.web3, contract_address)
         # noinspection PyTypeChecker
         return self.web3.eth.contract(address=contract_address, abi=self._erc20_abi)
