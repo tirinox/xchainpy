@@ -33,7 +33,7 @@ class BitcoinClient(XChainClient):
         result = await self.call_service(self.service.getbalance, address)
         return [self.gas_base_amount(result)]
 
-    async def get_transactions(self, address: str, offset: int = 0, limit: int = 10,
+    async def get_transactions(self, address: str = '', offset: int = 0, limit: int = 10,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None,
                                height=None, detailed=False, after_tx_id='') -> TxPage:
@@ -51,6 +51,7 @@ class BitcoinClient(XChainClient):
         :param after_tx_id: Transaction ID to start listing from
         :return: TxPage object
         """
+        address = address or self.get_address()
 
         if asset:
             raise UTXOException(f'asset parameter is not supported')

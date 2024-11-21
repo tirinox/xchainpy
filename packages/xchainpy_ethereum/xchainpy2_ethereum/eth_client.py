@@ -209,22 +209,22 @@ class EthereumClient(XChainClient):
         """
         return Account.from_key(self.get_private_key())
 
-    async def get_transactions(self, address: str, offset: int = 0, limit: int = 0,
+    async def get_transactions(self, address: str = '', offset: int = 0, limit: int = 0,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None) -> TxPage:
         """
         Get transactions of a given address.
-        Works only if you have PRO subscription for EtherScan API!
-        # todo: find the other way to get transactions
-        :param address: Address
+        Works only if you have provided an extra data provider. Etherscan Pro and Moralis are supported.
+        :param address: Address of wallet to inspect its history
         :param offset: (not supported)
-        :param limit: (not supported)
+        :param limit: Maximum number of transactions to return
         :param start_time: (not supported)
         :param end_time: (not supported)
         :param asset: (not supported)
         :return:
         """
-        txs = await self._ex_provider.get_address_transactions(address)
+        address = address or self.get_address()
+        txs = await self._ex_provider.get_address_transactions(address, limit)
         return TxPage(len(txs), txs)
 
     async def get_transaction_data(self, tx_id: str, with_timestamp=False) -> Optional[XcTx]:

@@ -130,8 +130,8 @@ class BitcoinCashClient(XChainClient):
         :param asset: The asset (ignored)
         :return: The transaction page
         """
-        if not address:
-            address = self.get_address()
+        address = address or self.get_address()
+
         data = await self._call_service(self.api.get_transactions, address, self._underlying_network)
         hashes = data[offset:limit]
 

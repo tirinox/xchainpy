@@ -5,18 +5,22 @@ from examples.common import sep
 from xchainpy2_thorchain import THORChainClient
 from xchainpy2_utils import AssetRUNE, AssetBTC, AssetETH
 
+
 # >> Default Client (9R provider), the public nodes are severely rate-limited
 # client = THORChainClient()
 
 
-# >> In case you have own full-node:
-ip = os.environ.get('THORNODE_IP_ADDRESS') or '1.2.3.4'
-client = THORChainClient.from_node_ip(ip)
+def make_client():
+    # >> In case you have own full-node:
+    ip = os.environ.get('THORNODE_IP_ADDRESS') or '1.2.3.4'
+    client = THORChainClient.from_node_ip(ip)
+    return client
 
 
 async def demo_read_external_tx_in_out():
     sep('Inbound TX')
     tx_id = '31605D8C2287482EFCDE76D07B1B641C4A1955C8977D1430A7BC80A7667951EA'  # BTC
+    client = make_client()
     print(client.get_explorer_tx_url(tx_id))
     tx = await client.get_transaction_data(tx_id)
     print(tx)
@@ -45,6 +49,7 @@ async def demo_read_external_tx_in_out():
 async def demo_read_tx_internal_transfer():
     # this is a swap in Maya, but from TC's viewpoint, it is a regular native transfer
     tx_id = '03F2F2C29F2F1E6FE318065F775BC6E3E47053BD7AE2910A406FF22351792CEA'
+    client = make_client()
     print(client.get_explorer_tx_url(tx_id))
     tx = await client.get_transaction_data(tx_id)
     print(tx)
@@ -72,6 +77,7 @@ async def demo_read_tx_internal_transfer():
 
 
 async def read_txs_of_address():
+    client = make_client()
     txs = await client.get_transactions('thor1cghgr0dneyymxx6fjq3e72q83z0qz7c3yttadx')
     print(txs)
     assert txs.total >= 85

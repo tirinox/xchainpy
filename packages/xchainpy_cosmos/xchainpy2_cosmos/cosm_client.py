@@ -282,7 +282,7 @@ class CosmosGaiaClient(XChainClient):
                 return
             raise e
 
-    async def get_transactions(self, address: str = None,
+    async def get_transactions(self, address: str = '',
                                offset: int = 0,
                                limit: int = 10,
                                start_time: Optional[datetime] = None,
@@ -291,8 +291,8 @@ class CosmosGaiaClient(XChainClient):
                                filter_function: TxFilterFunc = None,
                                batch_size=10,
                                batch_delay_sec=2) -> TxPage:
-        if not address:
-            address = self.get_address()
+
+        address = address or self.get_address()
 
         message_action = None
 

@@ -53,10 +53,12 @@ class BinanceChainClient(XChainClient):
             private_key=b''
         )
 
-    async def get_transactions(self, address: str, offset: int = 0, limit: int = 10,
+    async def get_transactions(self, address: str = '', offset: int = 0, limit: int = 10,
                                start_time: Optional[datetime] = None, end_time: Optional[datetime] = None,
                                asset: Optional[Asset] = None,
                                height=None, detailed=False) -> TxPage:
+        address = address or self.get_address()
+
         raw = await self._cli.get_transactions(
             address,
             offset=offset, limit=limit,
