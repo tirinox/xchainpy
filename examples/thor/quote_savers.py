@@ -32,6 +32,25 @@ async def main():
     print("Add Saver should fail:")
     print(quote)
 
+    sep()  # ------------------------------------
+
+    quote = await query.estimate_withdraw_saver(
+        # fixme: intentionally using wrong address to get an error
+        AssetBTC, 'bc1p5d7rjq7g6rdk2yhzks9smlaqtedr4dekq08ge8ztwac72sfr9rusxg3297', 5000
+    )
+    print("Withdraw Saver:")
+    print(quote)
+
+    sep()  # ------------------------------------
+
+    quote = await query.estimate_withdraw_saver(
+        AssetBTC, 'bc1q7wath0z82x9yxzztv04qndu803uc74ysru6xvz', 5000
+    )
+    print("Withdraw Saver:")
+    print(quote)
+
+    sep()  # ------------------------------------
+
     await query.close()
 
 

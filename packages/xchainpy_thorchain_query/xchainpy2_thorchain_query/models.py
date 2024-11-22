@@ -583,7 +583,7 @@ class EstimateWithdrawSaver(NamedTuple):
         return not self.errors
 
     @classmethod
-    def make_error(cls, errors, asset: Asset):
+    def make_error(cls, errors, asset: Asset, details=None):
         """
         Create an EstimateWithdrawSaver instance with errors list.
 
@@ -596,7 +596,8 @@ class EstimateWithdrawSaver(NamedTuple):
             SaverFees(CryptoAmount.zero(asset), asset, CryptoAmount.zero(asset)),
             datetime.now(), '', '', 0, 0,
             CryptoAmount.zero(asset),
-            errors
+            errors,
+            details=details,
         )
 
 

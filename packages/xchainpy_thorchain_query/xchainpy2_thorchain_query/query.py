@@ -759,7 +759,7 @@ class THORChainQuery:
                 withdraw_bps=withdraw_bps
             )
         except ValueError:
-            error, response = self._get_error_and_response_from_last_thor_response()
+            error, withdraw_quote = self._get_error_and_response_from_last_thor_response()
             if error:
                 errors.append(error)
 
@@ -775,7 +775,7 @@ class THORChainQuery:
                 slip_basis_points=0,
                 dust_amount=zero,
                 errors=errors,
-                details=response,
+                details=withdraw_quote,
             )
 
         if not withdraw_quote:
@@ -783,8 +783,11 @@ class THORChainQuery:
         elif hasattr(withdraw_quote, 'error'):
             errors.append(f"Thornode request quote failed: {withdraw_quote.error}")
 
+        if not withdraw_quote.fees.asset or withdraw_quote.expected_amount_out == '':
+            errors.append(f"This address is not found in the savers list of {asset}")
+
         if errors:
-            return EstimateWithdrawSaver.make_error(errors, asset)
+            return EstimateWithdrawSaver.make_error(errors, asset, withdraw_quote)
 
         # Calculate transaction expiry time of the vault address
         current_date_time = datetime.now()
