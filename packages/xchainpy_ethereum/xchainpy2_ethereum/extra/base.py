@@ -16,5 +16,5 @@ class EVMDataProvider(ABC):
         ...
 
     @abstractmethod
-    async def get_address_transactions(self, address: str) -> List[XcTx]:
+    async def get_address_transactions(self, address: str, offset=0, limit=10) -> List[XcTx]:
         ...

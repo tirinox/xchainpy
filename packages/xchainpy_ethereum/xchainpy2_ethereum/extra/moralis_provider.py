@@ -25,13 +25,13 @@ class MoralisDataProvider(EVMDataProvider):
         ]
 
     @async_wrap
-    def get_address_transactions(self, address: str, limit: int = 10) -> List[XcTx]:
+    def get_address_transactions(self, address: str, offset=0, limit=10) -> List[XcTx]:
         result = evm_api.transaction.get_wallet_transactions(
             self.api_key,
             params={
                 "address": address,
                 "chain": self._chain_id_for_moralis,
-                "limit": 2
+                "limit": limit,
             },
         )
 

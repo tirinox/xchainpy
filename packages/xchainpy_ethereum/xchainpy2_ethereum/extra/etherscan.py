@@ -60,7 +60,7 @@ class EtherscanDataProvider(EVMDataProvider):
         holdings = await self.client.token.token_holding_erc20(address=address, **kwargs)
         return holdings
 
-    async def get_address_transactions(self, address: str) -> List[XcTx]:
+    async def get_address_transactions(self, address: str, offset=0, limit=10) -> List[XcTx]:
         self._check_access()
-        txs = await self.client.account.get_transactions(address=address)
+        txs = await self.client.account.get_transactions(address=address, offset=offset)
         return txs
