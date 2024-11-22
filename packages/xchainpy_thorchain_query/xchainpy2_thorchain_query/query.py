@@ -9,8 +9,7 @@ from xchainpy2_thorchain import THORMemo, THOR_BASIS_POINT_MAX
 from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, Saver, QuoteFees, \
     TxStatusResponse, TxSignersResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \
-    DEFAULT_ASSET_DECIMAL, YEAR
-from .track.tracker import TransactionTracker
+    YEAR
 from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES, THORNAME_BLOCKS_ONE_YEAR
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity
@@ -20,6 +19,7 @@ from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, 
     BlockInformation, LoanCloseQuote, THORNameEstimate, WithdrawMode, InboundDetail
 from .swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
     get_chain_gas_asset
+from .track.tracker import TransactionTracker
 
 
 class THORChainQuery:
@@ -168,7 +168,7 @@ class THORChainQuery:
         errors = []
         from_asset = str(input_amount.asset) if isinstance(input_amount.asset, Asset) else input_amount.asset
         destination_asset = str(destination_asset) if isinstance(destination_asset, Asset) else destination_asset
-        input_amount_int = get_base_amount_with_diff_decimals(input_amount.amount, DEFAULT_ASSET_DECIMAL)
+        input_amount_int = get_base_amount_with_diff_decimals(input_amount.amount, self.native_decimal)
         input_amount_int = int(input_amount_int)
 
         try:
@@ -197,7 +197,7 @@ class THORChainQuery:
                 error = data.get('error')
                 if not error:
                     # if no error message, this means the error has not occurred in the API, but in our code
-                    raise 
+                    raise
 
                 errors.append(str(error))
             except Exception as e:
@@ -621,14 +621,15 @@ class THORChainQuery:
             return EstimateAddSaver.make_error(errors, add_amount.asset)
 
         # request param amount should always be in 1e8 which is why we pass in adjusted decimals if chain decimals != 8
-        if add_amount.amount.decimals != DEFAULT_ASSET_DECIMAL:
-            new_add_amount = get_base_amount_with_diff_decimals(add_amount, DEFAULT_ASSET_DECIMAL)
+        if add_amount.amount.decimals != self.native_decimal:
+            new_add_amount = get_base_amount_with_diff_decimals(add_amount, self.native_decimal)
         else:
             new_add_amount = add_amount.amount.as_base
 
+        new_add_amount_raw = int(new_add_amount)
         deposit_quote: QuoteSaverDepositResponse = await self.cache.quote_api.quotesaverdeposit(
-            asset=new_add_amount,
-            amount=''
+            asset=str(add_amount.asset),
+            amount=new_add_amount_raw,
         )
 
         if not deposit_quote:
@@ -638,8 +639,8 @@ class THORChainQuery:
 
         # The recommended minimum inbound amount for this transaction type & inbound asset.
         # Sending less than this amount could result in failed refunds
-        if int(deposit_quote.recommended_min_amount_in) and \
-                int(new_add_amount.amount) < int(deposit_quote.recommended_min_amount_in):
+        recommended_min_amount_in = int(deposit_quote.recommended_min_amount_in or 0)
+        if recommended_min_amount_in and new_add_amount_raw < int(recommended_min_amount_in):
             recommended_in = CryptoAmount.automatic(int(deposit_quote.recommended_min_amount_in), new_add_amount.asset,
                                                     decimals=self.native_decimal)
 
@@ -686,7 +687,7 @@ class THORChainQuery:
             slip_basis_points=int(deposit_quote.fees.slippage_bps),
             saver_cap_filled_percent=saver_cap_filled_percent,
             errors=errors,
-            recommended_min_amount_in=int(deposit_quote.recommended_min_amount_in),
+            recommended_min_amount_in=recommended_min_amount_in,
         )
 
     async def get_add_savers_estimate_errors(self, add_amount: CryptoAmount) -> List[str]:
@@ -718,9 +719,10 @@ class THORChainQuery:
         if pool.pool.status.lower() != pool.AVAILABLE:
             errors.append(f"Pool is not available for this asset {add_amount.asset}")
 
-        inbound_fee = calc_network_fee(add_amount.asset, inbound)
-        if add_amount < inbound_fee:
-            errors.append(f"Add amount does not cover fees")
+        # "Quote"-call will check it!
+        # inbound_fee = calc_network_fee(add_amount.asset, inbound)
+        # if add_amount < inbound_fee:
+        #     errors.append(f"Add amount does not cover fees")
         return errors
 
     async def estimate_withdraw_saver(self,
@@ -830,7 +832,7 @@ class THORChainQuery:
             errors.append(f"Could not find position for {address}")
 
         outbound_fee = calc_outbound_fee(asset, inbound_details[asset.chain])
-        outbound_fee_8 = get_base_amount_with_diff_decimals(outbound_fee, DEFAULT_ASSET_DECIMAL)
+        outbound_fee_8 = get_base_amount_with_diff_decimals(outbound_fee, self.native_decimal)
 
         # For comparison use 1e8 since asset_redeem_value is returned in 1e8
         if int(this_saver.asset_redeem_value) < int(outbound_fee_8):
