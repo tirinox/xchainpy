@@ -2,7 +2,7 @@ import asyncio
 import json
 import math
 from datetime import datetime, timedelta
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Tuple
 
 from xchainpy2_client import XChainClient
 from xchainpy2_thorchain import THORMemo, THOR_BASIS_POINT_MAX
@@ -189,22 +189,12 @@ class THORChainQuery:
             swap_quote = await self.cache.quote_api.quoteswap(**kwargs)
 
         except ValueError:
-            try:
-                response = self.cache.thornode_client.last_response
-                data = response.data
-                if isinstance(data, str):
-                    data = json.loads(data)
-                error = data.get('error')
-                if not error:
-                    # if no error message, this means the error has not occurred in the API, but in our code
-                    raise
-
-                errors.append(str(error))
-            except Exception as e:
-                errors.append(f'Could not pass error info. {e!r}')
-                response = None
+            error, response = self._get_error_and_response_from_last_thor_response()
+            if error:
+                errors.append(error)
 
             zero = CryptoAmount(Amount.zero(), AssetRUNE)
+            # noinspection PyTypeChecker
             return SwapEstimate(
                 TotalFees.zero(destination_asset),
                 0,
@@ -244,10 +234,17 @@ class THORChainQuery:
             details=swap_quote,
         )
 
+    # alias for quote_swap
+    estimate_swap = quote_swap
+    estimate_swap.__doc__ = quote_swap.__doc__
+
     async def outbound_delay(self, outbound_amount: CryptoAmount) -> float:
         """
         Works out how long an outbound Tx will be held by THORChain before sending.
         See https://gitlab.com/thorchain/thornode/-/blob/develop/x/thorchain/manager_txout_current.go#L548
+        This function does not guarantee the exact delay.
+        Please use quote_swap for a more accurate estimate.
+
         :param outbound_amount: CryptoAmount  being sent.
         :return: required delay in seconds
         """
@@ -294,7 +291,7 @@ class THORChainQuery:
         min_blocks = min(max_tx_out_offset, min_blocks)
         return avg_block_time * min_blocks
 
-    async def get_fees_in(self, fees: TotalFees, asset: Asset) -> TotalFees:
+    async def _get_fees_in(self, fees: TotalFees, asset: Asset) -> TotalFees:
         """
         Convenience method to convert TotalFees to a different CryptoAmount
 
@@ -320,7 +317,7 @@ class THORChainQuery:
             outbound_fee=int(outbound_fee)
         )
 
-    async def get_confirmation_counting(self, input_coin: CryptoAmount):
+    async def _get_confirmation_counting(self, input_coin: CryptoAmount):
         """
         Finds the required confCount required for an inbound or outbound Tx to THORChain.
         Estimate based on Midgard data only.
@@ -373,8 +370,8 @@ class THORChainQuery:
 
         pool_share = get_pool_share(unit_data, asset_pool)
 
-        asset_wait_time_sec = await self.get_confirmation_counting(param.asset)
-        rune_wait_time_sec = await self.get_confirmation_counting(param.rune)
+        asset_wait_time_sec = await self._get_confirmation_counting(param.asset)
+        rune_wait_time_sec = await self._get_confirmation_counting(param.rune)
 
         wait_time_sec = max(asset_wait_time_sec, rune_wait_time_sec)
 
@@ -543,8 +540,8 @@ class THORChainQuery:
         # TODO make sure we compare wait times for withdrawing both rune and asset OR just rune OR just asset
         withdraw_part = withdraw_bps / THOR_BASIS_POINT_MAX
         wait_time_sec_for_asset, wait_time_sec_for_rune = await asyncio.gather(
-            self.get_confirmation_counting(pool_share.asset / withdraw_part),
-            self.get_confirmation_counting(pool_share.rune / withdraw_part)
+            self._get_confirmation_counting(pool_share.asset / withdraw_part),
+            self._get_confirmation_counting(pool_share.rune / withdraw_part)
         )
 
         # todo: is it cacao for maya?
@@ -659,7 +656,7 @@ class THORChainQuery:
         if deposit_quote.inbound_confirmation_seconds:
             estimated_wait = deposit_quote.inbound_confirmation_seconds
         else:
-            estimated_wait = await self.get_confirmation_counting(add_amount)
+            estimated_wait = await self._get_confirmation_counting(add_amount)
 
         pool_details = await self.cache.get_pool_for_asset(add_amount.asset)
         pool = pool_details.pool
@@ -753,20 +750,33 @@ class THORChainQuery:
         if errors:
             return EstimateWithdrawSaver.make_error(errors, asset)
 
-        # Check to see if there is a position before calling withdraw quote
-        check_position = await self.get_saver_position(asset, address)
+        try:
+            # Request withdraw quote
+            withdraw_quote = await self.cache.quote_api.quotesaverwithdraw(
+                height=height,
+                asset=str(asset),
+                address=address,
+                withdraw_bps=withdraw_bps
+            )
+        except ValueError:
+            error, response = self._get_error_and_response_from_last_thor_response()
+            if error:
+                errors.append(error)
 
-        if check_position.errors:
-            errors.extend(check_position.errors)
-            return EstimateWithdrawSaver.make_error(errors, asset)
-
-        # Request withdraw quote
-        withdraw_quote = await self.cache.quote_api.quotesaverwithdraw(
-            height=height,
-            asset=str(asset),
-            address=address,
-            withdraw_bps=withdraw_bps
-        )
+            zero = CryptoAmount(Amount.zero(), asset)
+            # noinspection PyTypeChecker
+            return EstimateWithdrawSaver(
+                expected_asset_amount=zero,
+                fee=SaverFees(zero, asset, zero),
+                expiry=datetime.now(),
+                to_address='',
+                memo='',
+                estimated_wait_time=0,
+                slip_basis_points=0,
+                dust_amount=zero,
+                errors=errors,
+                details=response,
+            )
 
         if not withdraw_quote:
             errors.append(f"Thornode request quote failed")
@@ -784,7 +794,7 @@ class THORChainQuery:
         withdraw_asset = Asset.from_string_exc(withdraw_quote.fees.asset)
 
         return EstimateWithdrawSaver(
-            CryptoAmount.from_base(withdraw_quote.expected_amount_out, asset),
+            expected_asset_amount=CryptoAmount.from_base(withdraw_quote.expected_amount_out, asset),
             fee=SaverFees(
                 CryptoAmount.from_base(withdraw_quote.fees.affiliate, withdraw_asset),
                 withdraw_asset,
@@ -794,20 +804,39 @@ class THORChainQuery:
             to_address=withdraw_quote.inbound_address,
             memo=withdraw_quote.memo,
             estimated_wait_time=estimated_wait,
-            slip_basis_points=int(withdraw_quote.slippage_bps),
+            slip_basis_points=int(withdraw_quote.fees.slippage_bps),
             dust_amount=CryptoAmount.from_base(withdraw_quote.dust_amount, withdraw_asset),
-            errors=errors
+            errors=errors,
+            details=withdraw_quote,
         )
 
-    async def get_saver_position(self, asset: Asset, address: str,
+    def _get_error_and_response_from_last_thor_response(self) -> Tuple[str, object]:
+        try:
+            response = self.cache.thornode_client.last_response
+            data = response.data
+            if isinstance(data, str):
+                data = json.loads(data)
+            error = data.get('error')
+            if not error:
+                # if no error message, this means the error has not occurred in the API, but in our code
+                raise
+
+            return str(error), response
+        except Exception as e:
+            return f'Could not pass error info. {e!r}', None
+
+    async def get_saver_position(self, asset: Union[str, Asset], address: str,
                                  inbound_details: Optional[InboundDetails] = None
                                  ) -> Optional[SaversPosition]:
         """
         Get the position of a saver
         :param inbound_details: Inbound details
         :param asset: asset (pool) to check
+        :type asset: Union[str, Asset]
         :param address: saver's address
-        :return:
+        :type address: str
+        :return: SaversPosition or None if not found
+        :rtype: Optional[SaversPosition]
         """
         errors = []
         if not inbound_details:
@@ -877,44 +906,29 @@ class THORChainQuery:
         """
         errors = []
 
-        resp = await self.cache.quote_api.quoteloanopen(
-            asset=str(amount.asset),
-            amount=amount.amount.as_base.amount,
-            target_asset=str(target_asset),
-            destination=destination,
-            min_out=min_out.as_base.amount,
-            affiliate_bps=int(affiliate_bps),
-            affiliate=affiliate,
-            height=height
-        )
-        if hasattr(resp, 'error'):
-            errors.append(f"Thornode request quote failed: {resp.error}")
+        try:
+            resp = await self.cache.quote_api.quoteloanopen(
+                asset=str(amount.asset),
+                amount=amount.amount.as_base.amount,
+                target_asset=str(target_asset),
+                destination=destination,
+                min_out=min_out.as_base.amount,
+                affiliate_bps=int(affiliate_bps),
+                affiliate=affiliate,
+                height=height
+            )
+        except ValueError:
+            error, _ = self._get_error_and_response_from_last_thor_response()
+            if error:
+                errors.append(error)
+            return LoanOpenQuote.empty_with_errors(errors)
 
         if resp.recommended_min_amount_in and amount.amount.as_base.amount < resp.recommended_min_amount_in:
             errors.append(f"Amount is less than recommended minimum amount in: {resp.recommended_min_amount_in}")
 
         if errors:
-            # Todo: convenience type conversion
-            return LoanOpenQuote(
-                inbound_address='',
-                expected_wait_time=BlockInformation(),
-                fees=QuoteFees(),
-                slippage_bps=-1,
-                router='',
-                expiry=-1,
-                warning='',
-                notes='',
-                dust_threshold=0,
-                memo='',
-                expected_amount_out=0,
-                expected_debt_up=0,
-                expected_collateral_up=0,
-                expected_collateralization_ratio=0,
-                errors=errors,
-                recommended_min_amount_in=0,
-            )
+            return LoanOpenQuote.empty_with_errors(errors)
 
-        # Todo: convenience type conversion
         return LoanOpenQuote(
             inbound_address=resp.inbound_address,
             expected_wait_time=BlockInformation(
@@ -967,37 +981,24 @@ class THORChainQuery:
         """
         errors = []
 
-        resp = await self.cache.quote_api.quoteloanclose(
-            height=height,
-            asset=str(amount.asset),
-            amount=amount.amount.as_base.amount,
-            from_address=from_address,
-            loan_asset=str(loan_asset),
-            loan_owner=loan_owner,
-            min_out=min_out.as_base.amount
-        )
-
-        if hasattr(resp, 'error'):
-            errors.append(f"THORNode request quote failed: {resp.error}")
+        try:
+            resp = await self.cache.quote_api.quoteloanclose(
+                height=height,
+                asset=str(amount.asset),
+                amount=amount.amount.as_base.amount,
+                from_address=from_address,
+                loan_asset=str(loan_asset),
+                loan_owner=loan_owner,
+                min_out=min_out.as_base.amount
+            )
+        except ValueError:
+            error, _ = self._get_error_and_response_from_last_thor_response()
+            if error:
+                errors.append(error)
+            return LoanCloseQuote.empty_with_errors(errors)
 
         if errors:
-            return LoanCloseQuote(
-                inbound_address='',
-                expected_wait_time=BlockInformation(),
-                fees=QuoteFees(),
-                slippage_bps=-1,
-                router='',
-                expiry=-1,
-                warning='',
-                notes='',
-                dust_threshold=0,
-                memo='',
-                expected_amount_out=0,
-                expected_collateral_down=0,
-                expected_debt_down=0,
-                errors=errors,
-                recommended_min_amount_in=0,
-            )
+            return LoanCloseQuote.empty_with_errors(errors)
 
         return LoanCloseQuote(
             inbound_address=resp.inbound_address,
