@@ -18,6 +18,7 @@ class THORChainAMM:
     def __init__(self, wallet: Wallet, query: Optional[THORChainQuery] = None,
                  dry_run: bool = False,
                  check_balance: bool = True,
+                 check_allowance: bool = True,
                  fee_option: FeeOption = FeeOption.FAST):
         """
         THORChain Automated Market Maker (AMM) interface.
@@ -27,6 +28,7 @@ class THORChainAMM:
         :param query: THORChainQuery instance (optional)
         :param dry_run: If True, the transaction will not be submitted to the network, default is False
         :param check_balance: This flag is used to check the balance before submitting a transaction, default is True
+        :param check_allowance: This flag is used to check the allowance before submitting a ERC20 transaction, default is True
         :param fee_option: Default fee option to use for transactions, default is FeeOption.FAST
         """
 
@@ -34,6 +36,7 @@ class THORChainAMM:
         self.wallet = wallet
         self.dry_run = dry_run
         self.check_balance = check_balance
+        self.check_allowance = check_allowance
         self.fee_option = fee_option
         self.swap_tracker_url = THOR_SWAP_TRACKER_URL
         self.evm_expiration_sec = DEFAULT_EXPIRY
@@ -114,8 +117,7 @@ class THORChainAMM:
         if not estimate.can_swap:
             raise AMMException(f'Swap is not possible: {estimate.errors}', estimate.errors)
 
-        return await self.general_deposit(input_amount, estimate.details.inbound_address, estimate.memo, gas_options,
-                                          check_allowance=allowance_check)
+        return await self.general_deposit(input_amount, estimate.details.inbound_address, estimate.memo, gas_options)
 
     # ---------------------------- LIQUIDITY ----------------------------
 
@@ -528,8 +530,7 @@ class THORChainAMM:
                               input_amount: CryptoAmount,
                               to_address: str,
                               memo: Union[str, THORMemo],
-                              gas_options: Optional[GasOptions] = None,
-                              check_allowance=True) -> str:
+                              gas_options: Optional[GasOptions] = None) -> str:
         """
         General deposit function to deposit assets to a specific inbound address with a memo.
         In case of Rune, it will invoke a MsgDeposit in the THORChain.
@@ -543,8 +544,6 @@ class THORChainAMM:
         :type memo: str or THORMemo
         :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :type gas_options: Optional[GasOptions]
-        :param check_allowance: Check allowance before depositing ERC20 token, default is True
-        :type check_allowance: bool
         :return: str TX hash submitted to the network
         """
 
@@ -576,7 +575,7 @@ class THORChainAMM:
             # invoke a THORChain's MsgDeposit call
             return await client.deposit(input_amount, memo, check_balance=self.check_balance)
         elif chain.is_evm:
-            return await self._deposit_evm(input_amount, memo, gas_options, check_allowance=check_allowance)
+            return await self._deposit_evm(input_amount, memo, gas_options)
         else:
             if chain.is_utxo:
                 fees = await client.get_fees()
@@ -594,16 +593,17 @@ class THORChainAMM:
                                          memo=memo, fee_rate=fee_rate,
                                          check_balance=self.check_balance)
 
-    async def _deposit_evm(self, input_amount: CryptoAmount, memo: str, gas_options: Optional[GasOptions] = None,
-                           check_allowance=True):
+    async def _deposit_evm(self, input_amount: CryptoAmount, memo: str, gas_options: Optional[GasOptions] = None):
         if self.dry_run:
             return f'Dry-run: EVM deposit {input_amount} with memo {memo!r}; expiration: {self.evm_expiration_sec}'
+
+        # todo: add check_balance
 
         # noinspection PyTypeChecker
         helper = self._get_evm_helper(input_amount.asset)
         gas_options = gas_options or GasOptions.automatic(self.fee_option)
         tx_hash = await helper.deposit(input_amount, memo, gas_options, self.evm_expiration_sec,
-                                       check_allowance=check_allowance)
+                                       check_allowance=self.check_allowance)
         return tx_hash
 
     # ---------------------------- THORNAME ----------------------------
