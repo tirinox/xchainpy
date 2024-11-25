@@ -644,14 +644,24 @@ class EstimateAddSaver(NamedTuple):
 
 
 class SaversPosition(NamedTuple):
+    """
+    A named tuple representing the position of a saver in the savers vault.
+    """
+
     deposit_value: CryptoAmount
+    """Deposit value"""
+
     redeemable_value: CryptoAmount
+    """Current redeemable value"""
+
     last_add_height: int
-    percentage_growth: float
-    age_in_years: float
-    age_in_days: float
+    """Last add height (THORChain blocks)"""
+
+    saver_growth: float
+    """Saver growth (percentage)"""
+
     errors: List[str]
-    outbound_fee: CryptoAmount
+    """List of errors, if any"""
 
 
 class SwapOutput(NamedTuple):

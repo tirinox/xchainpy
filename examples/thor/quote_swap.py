@@ -11,7 +11,7 @@ async def main():
     query = THORChainQuery()
 
     q_swap = await query.quote_swap(
-        CryptoAmount(Amount.from_asset(20.0), AssetBSC_USDT),
+        CryptoAmount(Amount.from_asset(15.7), AssetBSC_USDT),
         '0x1c7b17362c84287bd1184447e6dfeaf920c31bbe',
         'AVAX.AVAX',
         1000,

@@ -6,16 +6,15 @@ from typing import Union, List, Optional, Tuple
 
 from xchainpy2_client import XChainClient
 from xchainpy2_thorchain import THORMemo, THOR_BASIS_POINT_MAX
-from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, Saver, QuoteFees, \
+from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, QuoteFees, \
     TxStatusResponse, TxSignersResponse
-from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \
-    YEAR
+from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE
 from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES, THORNAME_BLOCKS_ONE_YEAR
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity
 from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
     LiquidityPosition, PoolRatios, EstimateWithdrawLP, \
-    EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, InboundDetails, LoanOpenQuote, \
+    EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, LoanOpenQuote, \
     BlockInformation, LoanCloseQuote, THORNameEstimate, WithdrawMode, InboundDetail
 from .swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
     get_chain_gas_asset
@@ -828,12 +827,9 @@ class THORChainQuery:
         except Exception as e:
             return f'Could not pass error info. {e!r}', None
 
-    async def get_saver_position(self, asset: Union[str, Asset], address: str,
-                                 inbound_details: Optional[InboundDetails] = None
-                                 ) -> Optional[SaversPosition]:
+    async def get_saver_position(self, asset: Union[str, Asset], address: str) -> Optional[SaversPosition]:
         """
         Get the position of a saver
-        :param inbound_details: Inbound details
         :param asset: asset (pool) to check
         :type asset: Union[str, Asset]
         :param address: saver's address
@@ -842,55 +838,36 @@ class THORChainQuery:
         :rtype: Optional[SaversPosition]
         """
         errors = []
-        if not inbound_details:
-            inbound_details = await self.cache.get_inbound_details()
-
-        block_data = await self.cache.get_last_block()
-        block = next((item for item in block_data if item.chain == asset.chain), None)
-        native_block = self.cache.pluck_native_block_height(block)
 
         pool_details = await self.cache.get_pool_for_asset(asset)
 
-        all_savers: List[Saver] = self.cache.saver_api.savers(str(asset))  # todo: check if this is correct
-        this_saver = next((item for item in all_savers if item.asset_address == address), None)
+        saver = await self.cache.saver_api.saver(str(asset), address)
 
         if not pool_details or not pool_details.pool:
             errors.append(f"Could not get pool details for {asset}")
 
-        if not block or not native_block:
-            errors.append(f"Could not get thorchain block height for {asset.chain}")
-
-        if not this_saver or not this_saver.last_add_height:
+        if not saver or not saver.last_add_height:
             errors.append(f"Could not find position for {address}")
 
-        outbound_fee = calc_outbound_fee(asset, inbound_details[asset.chain])
-        outbound_fee_8 = get_base_amount_with_diff_decimals(outbound_fee, self.native_decimal)
-
-        # For comparison use 1e8 since asset_redeem_value is returned in 1e8
-        if int(this_saver.asset_redeem_value) < int(outbound_fee_8):
-            errors.append(f"Unlikely to withdraw balance as outbound fee is greater than redeemable amount"
-                          f"{this_saver.asset_redeem_value} < {outbound_fee_8}")
-
-        owner_units = int(this_saver.units)
-        last_added = int(this_saver.last_add_height)
+        owner_units = int(saver.units)
+        last_added = int(saver.last_add_height)
         saver_units = int(pool_details.thornode_details.savers_units)
         asset_depth = int(pool_details.thornode_details.savers_depth)
         redeemable_value = (owner_units / saver_units) * asset_depth
-        deposit_amount = CryptoAmount.from_base(this_saver.asset_deposit_value, asset)
+        deposit_amount = CryptoAmount.from_base(saver.asset_deposit_value, asset)
         redeemable_asset_amount = CryptoAmount.from_base(redeemable_value, asset)
 
-        savers_age = (int(native_block) - last_added) / (YEAR / self.native_block_time)
-        saver_growth = (redeemable_asset_amount - deposit_amount) / deposit_amount * 100.0
+        if saver.asset_deposit_value:
+            saver_growth = (redeemable_value - saver.asset_deposit_value) / saver.asset_deposit_value * 100.0
+        else:
+            saver_growth = 0.0
 
         return SaversPosition(
             deposit_amount,
             redeemable_asset_amount,
-            int(this_saver.last_add_height),
-            float(saver_growth.amount.as_asset.amount),
-            float(savers_age),
-            float(savers_age * 365),
+            last_added,
+            saver_growth,
             errors,
-            outbound_fee
         )
 
     async def get_loan_quote_open(self, amount: CryptoAmount, target_asset: Asset,
