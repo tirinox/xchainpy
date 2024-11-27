@@ -1,12 +1,10 @@
-# NodeBondProvider
+# MayanameSubaffiliate
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**bond_address** | **str** |  | 
-**bonded** | **bool** |  | 
-**reward** | **str** |  | 
-**pools** | **dict(str, str)** | Pools the Bond Provider is bonded from to that Node Address | 
+**name** | **str** |  | [optional] 
+**bps** | [**Int64**](Int64.md) |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

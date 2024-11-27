@@ -15,12 +15,12 @@ from __future__ import absolute_import
 import unittest
 
 import xchainpy2_mayanode
-from xchainpy2_mayanode.models.node_keygen_metric import NodeKeygenMetric  # noqa: E501
+from xchainpy2_mayanode.models.mayaname_subaffiliate import MayanameSubaffiliate  # noqa: E501
 from xchainpy2_mayanode.rest import ApiException
 
 
-class TestNodeKeygenMetric(unittest.TestCase):
-    """NodeKeygenMetric unit test stubs"""
+class TestMayanameSubaffiliate(unittest.TestCase):
+    """MayanameSubaffiliate unit test stubs"""
 
     def setUp(self):
         pass
@@ -28,10 +28,10 @@ class TestNodeKeygenMetric(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def testNodeKeygenMetric(self):
-        """Test NodeKeygenMetric"""
+    def testMayanameSubaffiliate(self):
+        """Test MayanameSubaffiliate"""
         # FIXME: construct object with mandatory attributes with example values
-        # model = xchainpy2_mayanode.models.node_keygen_metric.NodeKeygenMetric()  # noqa: E501
+        # model = xchainpy2_mayanode.models.mayaname_subaffiliate.MayanameSubaffiliate()  # noqa: E501
         pass
 
 

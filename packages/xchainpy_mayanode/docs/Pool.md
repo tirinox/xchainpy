@@ -17,6 +17,7 @@ Name | Type | Description | Notes
 **savers_depth** | **object** | the balance of L1 asset deposited into the Savers Vault | 
 **savers_units** | **str** | the number of units owned by Savers | 
 **synth_mint_paused** | **bool** | whether additional synths cannot be minted | 
+**bondable** | **bool** | whether LPs can bond liquidity in the pool to a node | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

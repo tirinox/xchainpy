@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Mayanode API
-  version: 1.111.0
+  version: 1.112.0
   contact:
     email: devs@mayachain.org
   description: Mayanode REST API.
@@ -1068,6 +1068,7 @@ components:
       - savers_depth
       - savers_units
       - synth_mint_paused
+      - bondable
       properties:
         balance_cacao:
           type: string
@@ -1118,6 +1119,10 @@ components:
           type: boolean
           example: true
           description: whether additional synths cannot be minted
+        bondable:
+          type: boolean
+          example: true
+          description: whether LPs can bond liquidity in the pool to a node
     LiquidityProviderSummary:
       type: object
       required:
@@ -1734,6 +1739,17 @@ components:
         out_hash:
           type: string
           example: 0D0B2FDB6DAD6E5FD3C5E46D39128F9DA15E96F0B2CC054CE059EA3532B150FB
+        aggregator:
+          type: string
+          description: the contract address if an aggregator is specified for a non-mayachain
+            SwapOut
+        aggregator_target_asset:
+          type: string
+          description: the desired output asset of the aggregator SwapOut
+        aggregator_target_limit:
+          type: string
+          description: the minimum amount of SwapOut asset to receive (else cancelling
+            the SwapOut and receiving mayachain's output)
         height:
           type: integer
           format: int64
@@ -1929,19 +1945,30 @@ components:
             providers:
               type: array
               items:
-                type: object
-                required:
-                - bond_address
-                - bonded
-                - reward
-                title: NodeBondProvider
-                properties:
-                  bond_address:
-                    type: string
-                  bonded:
-                    type: boolean
-                  reward:
-                    type: string
+                $ref: '#/components/schemas/NodeBondProvider'
+    NodeBondProvider:
+      type: object
+      required:
+      - bond_address
+      - bonded
+      - reward
+      - pools
+      title: NodeBondProvider
+      properties:
+        bond_address:
+          type: string
+        bonded:
+          type: boolean
+        reward:
+          type: string
+        pools:
+          type: object
+          description: Pools the Bond Provider is bonded from to that Node Address
+          additionalProperties:
+            type: string
+          example:
+            BTC.BTC: '1000000000'
+            ETH.ETH: '1000000000'
     KeygenMetric:
       type: object
       required:
@@ -1959,6 +1986,15 @@ components:
                 type: string
               tss_time:
                 type: string
+    MayanameSubaffiliate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: xyz
+        bps:
+          type: int64
+          example: 200
     MayanameAlias:
       type: object
       properties:
@@ -1987,10 +2023,35 @@ components:
         preferred_asset:
           type: string
           example: BTC.BTC
+        preferred_asset_swap_threshold_cacao:
+          type: string
+          example: '1000'
+          description: Amount of CACAO currently required to swap to preferred asset
+            (this is variable based on outbound fee of the asset).
+        affiliate_collector_cacao:
+          type: string
+          example: '100'
+          description: Amount of CACAO currently accrued by this thorname in affiliate
+            fees waiting to be swapped to preferred asset.
         aliases:
           type: array
           items:
             $ref: '#/components/schemas/MayanameAlias'
+        affiliate_bps:
+          type: integer
+          format: int64
+          example: 2000
+          description: Affiliate basis points for calculating affiliate fees, which
+            are applied as the default basis points when the MAYAName is listed as
+            an affiliate in swap memo.
+        subaffiliates:
+          type: array
+          items:
+            $ref: '#/components/schemas/MayanameSubaffiliate'
+          description: List of subaffiliates and the corresponding affiliate basis
+            points. If a MAYAName is specified as an affiliate in a swap memo, the
+            shares of the affiliate fee are distributed among the listed subaffiliates
+            based on the basis points assigned to each subaffiliate.
     BlockTx:
       type: object
       required:
@@ -2382,12 +2443,17 @@ components:
       required:
       - asgard
       - yggdrasil
+      - inactive
       properties:
         asgard:
           type: array
           items:
             $ref: '#/components/schemas/VaultInfo'
         yggdrasil:
+          type: array
+          items:
+            $ref: '#/components/schemas/VaultInfo'
+        inactive:
           type: array
           items:
             $ref: '#/components/schemas/VaultInfo'

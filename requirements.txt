@@ -11,3 +11,4 @@ requests-mock==1.11.0
 myst-parser
 aiofiles>=0.7.0
 tox
+setuptools
