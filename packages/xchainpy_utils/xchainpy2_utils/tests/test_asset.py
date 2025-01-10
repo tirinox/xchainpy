@@ -112,6 +112,7 @@ def test_equality():
     ('c', AssetBCH),
     ('a', AssetAVAX),
     ('s', AssetBSC),
+    ('f', AssetBaseETH),
     ('BTC.BTC', AssetBTC),
     ('THOR.RUNE', AssetRUNE),
     ('ETH/ETH', AssetETH.as_synth),
@@ -121,6 +122,7 @@ def test_equality():
     (AssetBNB, AssetBNB),
     (AssetBCH, AssetBCH),
     (AssetLTC, AssetLTC),
+    (AssetBaseETH, AssetBaseETH),
 ])
 def test_automatic_creating(source, expected):
     assert Asset.automatic(source) == expected
@@ -163,3 +165,14 @@ def test_derived_asset():
     assert a.symbol == 'AVAX'
     assert a.kind == AssetKind.DERIVED and a.is_derived
     assert str(a) == 'THOR.AVAX'
+
+
+@pytest.mark.parametrize('source, expected', [
+    ('BTC', 'b'),
+    (AssetBTC, 'b'),
+    (AssetLTC, 'l'),
+    ('BASE.ETH', 'f'),
+    (AssetBaseETH, 'f'),
+])
+def test_get_short_code(source, expected):
+    assert get_short_code(source) == expected

@@ -337,6 +337,7 @@ AssetATOM = Asset.from_string('GAIA.ATOM')
 AssetCACAO = Asset.from_string('MAYA.CACAO')
 AssetDASH = Asset.from_string('DASH.DASH')
 AssetKUJI = Asset.from_string('KUJI.KUJI')
+AssetBaseETH = Asset.from_string('BASE.ETH')
 
 
 def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
@@ -373,6 +374,10 @@ def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
         return AssetCACAO
     elif chain == Chain.Kujira:
         return AssetKUJI
+    elif chain == Chain.Arbitrum:
+        return AssetAEth
+    elif chain == Chain.Base:
+        return AssetBaseETH
 
     else:
         raise ValueError(f"Could not get gas asset for {chain} chain")
@@ -434,6 +439,9 @@ class CommonAssets:
     KUJI = AssetKUJI
     """Kujira asset"""
 
+    BASE_ETH = AssetBaseETH
+    """Base Ethereum asset"""
+
     SHORT_CODES = {
         'a': AssetAVAX,
         'b': AssetBTC,
@@ -445,15 +453,17 @@ class CommonAssets:
         'n': AssetBNB,
         's': AssetBSC,
         'r': AssetRUNE,
+        'f': AssetBaseETH,
     }
 
     INVERTED_SHORT_CODES = {v: k for k, v in SHORT_CODES.items()}
 
 
-def get_short_code(asset: Asset) -> str:
+def get_short_code(asset: Union[Asset, str]) -> str:
     """
     Get the short code for the specified asset.
     :param asset: The asset to get the short code for
     :return: The short code for the asset
     """
+    asset = Asset.from_string(asset)
     return CommonAssets.INVERTED_SHORT_CODES.get(asset, '')

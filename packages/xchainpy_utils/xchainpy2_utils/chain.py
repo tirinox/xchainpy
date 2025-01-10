@@ -21,6 +21,7 @@ class Chain(Enum):
     Dash = "DASH"
     Kujira = "KUJI"
     Arbitrum = "ARB"
+    Base = "BASE"
 
     UNKNOWN = 'Unknown'
 
@@ -50,5 +51,5 @@ class Chain(Enum):
 
 
 UTXO_CHAINS = {Chain.Bitcoin, Chain.Litecoin, Chain.BitcoinCash, Chain.Doge, Chain.Dash}
-EVM_CHAINS = {Chain.Ethereum, Chain.BinanceSmartChain, Chain.Avalanche}
+EVM_CHAINS = {Chain.Ethereum, Chain.BinanceSmartChain, Chain.Avalanche, Chain.Base}
 COSMOS_CHAINS = {Chain.Cosmos, Chain.THORChain, Chain.Maya, Chain.Binance}
