@@ -88,3 +88,7 @@ doc: # Build documentation
 .PHONY: upver
 upver: # Helper script to raise package version number, you will be asked which package to update
 	cd scripts && ./upver.sh
+
+.PHONY: versions
+versions: # Show versions of all packages
+	cd scripts && ./print_versions.sh
