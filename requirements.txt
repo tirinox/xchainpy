@@ -12,3 +12,9 @@ myst-parser
 aiofiles>=0.7.0
 tox
 setuptools
+
+sphinx
+sphinx_rtd_theme
+sphinx-copybutton
+pydantic
+myst_parser

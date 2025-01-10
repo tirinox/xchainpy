@@ -59,20 +59,19 @@ AMM and data providers:
 
 Chain clients:
 
-.. _Binance sunset: https://www.bnbchain.org/en/bnb-chain-fusion
-
 #. :mod:`xchainpy2_thorchain` (:doc:`./packages/xchainpy2_thorchain`) - THORChain client package. Rune/synth transfer, deposit, etc.
 #. :mod:`xchainpy2_mayachain` (:doc:`./packages/xchainpy2_mayachain`) - MayaChain client package. It has also basic support for MRC-20 and M-NFT tokens.
 #. :mod:`xchainpy2_ethereum` (:doc:`./packages/xchainpy2_ethereum`) - Ethereum client package. It allows you to interact with Ethereum and ERC20 tokens.
 #. :mod:`xchainpy2_arbitrum` (:doc:`./packages/xchainpy2_arbitrum`) - Arbitrum client package.
 #. :mod:`xchainpy2_avalanche` (:doc:`./packages/xchainpy2_avalanche`) - Avalanche client package.
 #. :mod:`xchainpy2_bsc` (:doc:`./packages/xchainpy2_bsc`) - Binance Smart Chain client package.
+#. :mod:`xchainpy2_base` (:doc:`./packages/xchainpy2_base`) - Base client package.
 #. :mod:`xchainpy2_bitcoin` (:doc:`./packages/xchainpy2_bitcoin`) - Bitcoin client package.
 #. :mod:`xchainpy2_litecoin` (:doc:`./packages/xchainpy2_litecoin`) - Litecoin client package.
 #. :mod:`xchainpy2_dogecoin` (:doc:`./packages/xchainpy2_dogecoin`) - Dogecoin client package.
 #. :mod:`xchainpy2_bitcoincash` (:doc:`./packages/xchainpy2_bitcoincash`) - Bitcoin Cash client package.
 #. :mod:`xchainpy2_cosmos` (:doc:`./packages/xchainpy2_cosmos`) - Cosmos client package.
-#. :mod:`xchainpy2_binance` (:doc:`./packages/xchainpy2_binance`) - Binance client package. Depreciated! (See: `Binance sunset`_)
+
 
 Wallet:
 
@@ -98,11 +97,11 @@ Wallet:
    packages/xchainpy2_arbitrum.rst
    packages/xchainpy2_avalanche.rst
    packages/xchainpy2_bsc.rst
+   packages/xchainpy2_base.rst
    packages/xchainpy2_bitcoin.rst
    packages/xchainpy2_litecoin.rst
    packages/xchainpy2_dogecoin.rst
    packages/xchainpy2_bitcoincash.rst
    packages/xchainpy2_cosmos.rst
-   packages/xchainpy2_binance.rst
    packages/xchainpy2_midgard.rst
    dev/index.rst
