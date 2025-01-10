@@ -43,6 +43,7 @@ test: # Run tests
 		packages/xchainpy_bsc \
 		packages/xchainpy_avalanche \
 		packages/xchainpy_arbitrum \
+		packages/xchainpy_base \
 		packages/xchainpy_wallet
 
 .PHONY: tc_env
@@ -61,6 +62,7 @@ tc_env: # Install XChainPy2 packages in editable mode
 	python3 -m pip install --editable packages/xchainpy_bsc
 	python3 -m pip install --editable packages/xchainpy_avalanche
 	python3 -m pip install --editable packages/xchainpy_arbitrum
+	python3 -m pip install --editable packages/xchainpy_base
 	python3 -m pip install --editable packages/xchainpy_wallet
 
 .PHONY: install_editable

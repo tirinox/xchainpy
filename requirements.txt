@@ -1,6 +1,6 @@
 # Development requirements
 aiohttp>=3.10.2
-pytest~=7.4.0
+pytest~=8.3.4
 pydantic>=2.4.2
 PyYAML~=6.0.0
 pytest-aiohttp
