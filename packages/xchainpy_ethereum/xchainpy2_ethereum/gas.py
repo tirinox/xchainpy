@@ -103,7 +103,7 @@ def wei_to_gwei(wei):
 
 class GasEstimator:
     def __init__(self, w3: web3.Web3, percentiles=(20, 50, 80), block_count=10,
-                 base_fee_multiplier=2.0):
+                 base_fee_multiplier=1.0):
         """
         :param w3: web3 instance
         :param percentiles: A monotonically increasing list of percentile values to sample from each block's
@@ -162,7 +162,7 @@ class GasEstimator:
             FeeType.PER_BYTE,
             fees={
                 FeeOption._ETH_PRIORITY_FEE: max_priority_fee,
-                FeeOption._ETH_BASE_FEE: base_fee,
+                FeeOption._ETH_BASE_FEE: base_fee_with_margin,
                 FeeOption.FASTEST: hi + base_fee_with_margin,
                 FeeOption.FAST: mi + base_fee_with_margin,
                 FeeOption.AVERAGE: lo + base_fee_with_margin

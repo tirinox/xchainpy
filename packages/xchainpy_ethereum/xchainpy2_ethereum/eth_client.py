@@ -276,13 +276,18 @@ class EthereumClient(XChainClient):
             type=TxType.TRANSFER,
         )
 
-    async def get_fees(self) -> Fees:
+    async def get_fees(self, fee_multiplier=1.0) -> Fees:
         """
         Get EVM gas rates for the current network.
         Fees are estimated based on the last 20 blocks.
         All FeeRate are in Gwei!
+
+        :param fee_multiplier: Fee multiplier. Default is 1.0
+        :return: Fees object
         """
-        estimator = GasEstimator(self.web3, self.fee_estimation_percentiles, self.fee_estimation_block_history)
+        estimator = GasEstimator(self.web3, self.fee_estimation_percentiles,
+                                 self.fee_estimation_block_history,
+                                 base_fee_multiplier=fee_multiplier)
         return await estimator.estimate()
 
     async def get_last_fee(self) -> FeeRate:
