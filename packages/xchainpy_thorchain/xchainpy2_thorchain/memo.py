@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Union, NamedTuple, Optional, List
 
 from xchainpy2_utils import Chain
-from .const import THOR_BASIS_POINT_MAX, RUNE_TICKER, THOR_AFFILIATE_BASIS_POINT_MAX
+from .const import THOR_BASIS_POINT_MAX, THOR_AFFILIATE_BASIS_POINT_MAX
 
 MAX_AFF_LEVELS = 5
 
@@ -136,7 +136,7 @@ class THORMemo:
         """
         Returns affiliate address/THORName when there is only one affiliate
         Returns '' if no affiliates
-        Raises ValueError if multiple affiliates
+        Returns concatenated addresses when multiple affiliates, glued by '/'
         :return: Affiliate address/name
         """
         if not self.affiliates:
@@ -144,14 +144,14 @@ class THORMemo:
         elif len(self.affiliates) == 1:
             return self.affiliates[0].address
         else:
-            raise ValueError(f"Multiple affiliates: {self.affiliates}")
+            raise '/'.join(af.address for af in self.affiliates)
 
     @property
     def affiliate_fee_bp(self) -> int:
         """
         Returns affiliate fee in basis points (0...1000) when there is only one affiliate
         Returns 0 if no affiliates
-        Raises ValueError if multiple affiliates
+        Returns sum of all affiliates' fees if multiple affiliates
         :return: Affiliate fee in basis points
         """
         if not self.affiliates:
@@ -159,10 +159,21 @@ class THORMemo:
         elif len(self.affiliates) == 1:
             return self.affiliates[0].fee_bp
         else:
-            raise ValueError(f"Multiple affiliates: {self.affiliates}")
+            raise sum(af.fee_bp for af in self.affiliates)
+
+    @property
+    def affiliate_fee_0_1(self) -> float:
+        """
+        Returns affiliate fee in 0...1 range when there is only one affiliate
+        """
+        return self.affiliate_fee_bp / THOR_BASIS_POINT_MAX
 
     @property
     def has_affiliate_part(self):
+        """
+        Returns True if there are any affiliates
+        :return:
+        """
         return bool(self.affiliates)
 
     @property
@@ -498,7 +509,7 @@ class THORMemo:
 
     @classmethod
     def withdraw_rune(cls, pool: str, withdraw_portion_bp=THOR_BASIS_POINT_MAX):
-        return cls.withdraw(pool, withdraw_portion_bp, asset=RUNE_TICKER)
+        return cls.withdraw(pool, withdraw_portion_bp, asset='r')
 
     @classmethod
     def withdraw_asset(cls, pool: str, withdraw_portion_bp=THOR_BASIS_POINT_MAX):
