@@ -141,8 +141,6 @@ class THORMemo:
         """
         if not self.affiliates:
             return ''
-        elif len(self.affiliates) == 1:
-            return self.affiliates[0].address
         else:
             raise '/'.join(af.address for af in self.affiliates)
 
@@ -156,10 +154,8 @@ class THORMemo:
         """
         if not self.affiliates:
             return 0
-        elif len(self.affiliates) == 1:
-            return self.affiliates[0].fee_bp
         else:
-            raise sum(af.fee_bp for af in self.affiliates)
+            return sum(af.fee_bp for af in self.affiliates)
 
     @property
     def affiliate_fee_0_1(self) -> float:
@@ -178,7 +174,7 @@ class THORMemo:
 
     @property
     def is_streaming(self):
-        return self.s_swap_quantity > 1
+        return self.s_swap_quantity is not None and self.s_swap_quantity > 1
 
     @property
     def uses_aggregator_out(self):
