@@ -21,10 +21,6 @@ gen_mayanode: # Generate mayanode client from OpenAPI spec
 gen_midgard: # Generate midgard client from OpenAPI spec
 	cd scripts && ./gen_midgard_client.sh
 
-.PHONY: gen_binance_proto
-gen_binance_proto: # Generate Binance chain proto files
-	cd scripts && ./gen_proto_binance_chain.sh
-
 .PHONY: test
 test: # Run tests
 	pytest \

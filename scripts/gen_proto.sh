@@ -2,8 +2,6 @@
 
 # 1. Make sure, that grpcio and grpcio-tools are installed
 # python3 -m pip install grpcio grpcio-tools
-# 2. Download somewhere THORNode source code
-# And set TC_PATH env variable to the path of the downloaded source code of THORNode
 
 set -e
 
