@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 # import apis into api package
 from xchainpy2_mayanode.api.block_api import BlockApi
+from xchainpy2_mayanode.api.cacao_pool_api import CACAOPoolApi
 from xchainpy2_mayanode.api.health_api import HealthApi
 from xchainpy2_mayanode.api.invariants_api import InvariantsApi
 from xchainpy2_mayanode.api.liquidity_providers_api import LiquidityProvidersApi

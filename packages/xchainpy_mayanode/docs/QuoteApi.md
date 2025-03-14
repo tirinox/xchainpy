@@ -113,7 +113,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **quoteswap**
-> QuoteSwapResponse quoteswap(height=height, from_asset=from_asset, to_asset=to_asset, amount=amount, destination=destination, streaming_interval=streaming_interval, streaming_quantity=streaming_quantity, tolerance_bps=tolerance_bps, affiliate_bps=affiliate_bps, affiliate=affiliate)
+> QuoteSwapResponse quoteswap(height=height, from_asset=from_asset, to_asset=to_asset, amount=amount, destination=destination, streaming_interval=streaming_interval, streaming_quantity=streaming_quantity, tolerance_bps=tolerance_bps, liquidity_tolerance_bps=liquidity_tolerance_bps, affiliate_bps=affiliate_bps, affiliate=affiliate)
 
 
 
@@ -137,11 +137,12 @@ destination = 'destination_example' # str | the destination address, required to
 streaming_interval = 789 # int | the interval in which streaming swaps are swapped (optional)
 streaming_quantity = 789 # int | the quantity of swaps within a streaming swap (optional)
 tolerance_bps = 789 # int | the maximum basis points from the current feeless swap price to set the limit in the generated memo (optional)
-affiliate_bps = 789 # int | the affiliate fee in basis points (optional)
-affiliate = 'affiliate_example' # str | the affiliate (address or mayaname) (optional)
+liquidity_tolerance_bps = 789 # int | the maximum basis points of tolerance for pool price movements to set the limit in the generated memo (optional)
+affiliate_bps = 'affiliate_bps_example' # str | the affiliate fee in basis points; use \"/\" to separate multiple values (optional)
+affiliate = 'affiliate_example' # str | the affiliate (address or mayaname); use \"/\" to separate multiple values (optional)
 
 try:
-    api_response = api_instance.quoteswap(height=height, from_asset=from_asset, to_asset=to_asset, amount=amount, destination=destination, streaming_interval=streaming_interval, streaming_quantity=streaming_quantity, tolerance_bps=tolerance_bps, affiliate_bps=affiliate_bps, affiliate=affiliate)
+    api_response = api_instance.quoteswap(height=height, from_asset=from_asset, to_asset=to_asset, amount=amount, destination=destination, streaming_interval=streaming_interval, streaming_quantity=streaming_quantity, tolerance_bps=tolerance_bps, liquidity_tolerance_bps=liquidity_tolerance_bps, affiliate_bps=affiliate_bps, affiliate=affiliate)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling QuoteApi->quoteswap: %s\n" % e)
@@ -159,8 +160,9 @@ Name | Type | Description  | Notes
  **streaming_interval** | **int**| the interval in which streaming swaps are swapped | [optional] 
  **streaming_quantity** | **int**| the quantity of swaps within a streaming swap | [optional] 
  **tolerance_bps** | **int**| the maximum basis points from the current feeless swap price to set the limit in the generated memo | [optional] 
- **affiliate_bps** | **int**| the affiliate fee in basis points | [optional] 
- **affiliate** | **str**| the affiliate (address or mayaname) | [optional] 
+ **liquidity_tolerance_bps** | **int**| the maximum basis points of tolerance for pool price movements to set the limit in the generated memo | [optional] 
+ **affiliate_bps** | **str**| the affiliate fee in basis points; use \&quot;/\&quot; to separate multiple values | [optional] 
+ **affiliate** | **str**| the affiliate (address or mayaname); use \&quot;/\&quot; to separate multiple values | [optional] 
 
 ### Return type
 

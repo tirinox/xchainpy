@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Mayanode API
-  version: 1.112.0
+  version: 1.118.0
   contact:
     email: devs@mayachain.org
   description: Mayanode REST API.
@@ -89,8 +89,56 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id005
+                items: &id006
                   $ref: '#/components/schemas/LiquidityProviderSummary'
+  /mayachain/cacaopool:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns the pool information for the CACAO pool.
+      operationId: cacaoPool
+      tags:
+      - CACAO Pool
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CACAOPoolResponse'
+  /mayachain/cacao_provider/{address}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/address'
+    get:
+      description: Returns the CACAO Provider information for an address.
+      operationId: cacaoProvider
+      tags:
+      - CACAO Pool
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CACAOProvider'
+  /mayachain/cacao_providers:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns all CACAO Providers.
+      operationId: cacaoProviders
+      tags:
+      - CACAO Pool
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: &id005
+                  $ref: '#/components/schemas/CACAOProvider'
   /mayachain/pool/{asset}/saver/{address}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -124,7 +172,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id006
+                items: &id007
                   $ref: '#/components/schemas/Saver'
   /mayachain/tx/{hash}:
     parameters:
@@ -238,7 +286,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id008
+                items: &id009
                   $ref: '#/components/schemas/Node'
   /mayachain/vaults/asgard:
     parameters:
@@ -273,7 +321,7 @@ paths:
               schema:
                 type: array
                 items: *id001
-  /mayachain/vaults/{pubkey}:
+  /mayachain/vault/{pubkey}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
     - $ref: '#/components/parameters/pubkey'
@@ -350,7 +398,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id010
+                items: &id011
                   type: object
                   title: InboundAddress
                   required:
@@ -538,7 +586,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id009
+                items: &id010
                   $ref: '#/components/schemas/StreamingSwap'
   /mayachain/queue:
     parameters:
@@ -570,7 +618,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id011
+                items: &id012
                   $ref: '#/components/schemas/MsgSwap'
   /mayachain/queue/scheduled:
     parameters:
@@ -587,7 +635,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id013
+                items: &id014
                   $ref: '#/components/schemas/TxOutItem'
   /mayachain/queue/outbound:
     parameters:
@@ -604,7 +652,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id012
+                items: &id013
                   $ref: '#/components/schemas/TxOutItem'
   /mayachain/keysign/{height}:
     parameters:
@@ -683,7 +731,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id014
+                items: &id015
                   $ref: '#/components/schemas/KeygenMetric'
   /mayachain/mayaname/{name}:
     parameters:
@@ -706,7 +754,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id015
+                items: &id016
                   type: object
                   title: Mayaname
                   properties:
@@ -857,19 +905,28 @@ paths:
         type: integer
         format: int64
         example: 100
-    - name: affiliate_bps
+    - name: liquidity_tolerance_bps
       in: query
-      description: the affiliate fee in basis points
+      description: the maximum basis points of tolerance for pool price movements
+        to set the limit in the generated memo
       schema:
         type: integer
         format: int64
         example: 100
-    - name: affiliate
+    - name: affiliate_bps
       in: query
-      description: the affiliate (address or mayaname)
+      description: the affiliate fee in basis points; use "/" to separate multiple
+        values
       schema:
         type: string
-        example: t
+        example: 100/50
+    - name: affiliate
+      in: query
+      description: the affiliate (address or mayaname); use "/" to separate multiple
+        values
+      schema:
+        type: string
+        example: t/dx
     get:
       description: Provide a quote estimate for the provided swap.
       operationId: quoteswap
@@ -1123,6 +1180,73 @@ components:
           type: boolean
           example: true
           description: whether LPs can bond liquidity in the pool to a node
+    POL:
+      type: object
+      required:
+      - cacao_deposited
+      - cacao_withdrawn
+      - value
+      - pnl
+      - current_deposit
+      properties:
+        cacao_deposited:
+          type: string
+          example: '857134475040'
+          description: total amount of CACAO deposited into the pools
+        cacao_withdrawn:
+          type: string
+          example: '0'
+          description: total amount of CACAO withdrawn from the pools
+        value:
+          type: string
+          example: '21999180112172346'
+          description: total value of protocol's LP position in CACAO value
+        pnl:
+          type: string
+          example: '21999180112172346'
+          description: profit and loss of protocol owned liquidity
+        current_deposit:
+          type: string
+          example: '21999180112172346'
+          description: current amount of cacao deposited
+    CACAOProvider:
+      type: object
+      required:
+      - cacao_address
+      - units
+      - value
+      - pnl
+      - deposit_amount
+      - withdraw_amount
+      - last_deposit_height
+      - last_withdraw_height
+      properties:
+        cacao_address:
+          type: string
+          example: MAYA.CACAO
+        units:
+          type: string
+          example: '1234'
+        value:
+          type: string
+          example: '123456'
+        pnl:
+          type: string
+          example: '123456'
+        deposit_amount:
+          type: string
+          example: '6677'
+        withdraw_amount:
+          type: string
+          example: '5443'
+        last_deposit_height:
+          type: integer
+          format: int64
+          example: 82745
+        last_withdraw_height:
+          type: integer
+          format: int64
+          example: 82745
     LiquidityProviderSummary:
       type: object
       required:
@@ -1993,7 +2117,8 @@ components:
           type: string
           example: xyz
         bps:
-          type: int64
+          type: integer
+          format: int64
           example: 200
     MayanameAlias:
       type: object
@@ -2031,7 +2156,7 @@ components:
         affiliate_collector_cacao:
           type: string
           example: '100'
-          description: Amount of CACAO currently accrued by this thorname in affiliate
+          description: Amount of CACAO currently accrued by this mayaname in affiliate
             fees waiting to be swapped to preferred asset.
         aliases:
           type: array
@@ -2139,16 +2264,93 @@ components:
     PoolsResponse:
       type: array
       items: *id004
-    LiquidityProvidersResponse:
+    CACAOPoolResponse:
+      type: object
+      required:
+      - pol
+      - providers
+      - reserve
+      properties:
+        pol:
+          $ref: '#/components/schemas/POL'
+        providers:
+          type: object
+          required:
+          - units
+          - pending_units
+          - pending_cacao
+          - value
+          - pnl
+          - cacao_deposited
+          - cacao_withdrawn
+          - current_deposit
+          properties:
+            units:
+              type: string
+              example: '123456'
+              description: the units of CACAOPool owned by providers (including pending)
+            pending_units:
+              type: string
+              example: '123456'
+              description: the units of CACAOPool owned by providers that remain pending
+            pending_cacao:
+              type: string
+              example: '123456'
+              description: the amount of CACAO pending
+            value:
+              type: string
+              example: '123456'
+              description: the value of the provider share of the CACAOPool (includes
+                pending CACAO)
+            pnl:
+              type: string
+              example: '123456'
+              description: the profit and loss of the provider share of the CACAOPool
+            current_deposit:
+              type: string
+              example: '123456'
+              description: the current CACAO deposited by providers
+        reserve:
+          type: object
+          required:
+          - units
+          - value
+          - pnl
+          - cacao_deposited
+          - cacao_withdrawn
+          - current_deposit
+          properties:
+            units:
+              type: string
+              example: '123456'
+              description: the units of CACAOPool owned by the reserve
+            value:
+              type: string
+              example: '123456'
+              description: the value of the reserve share of the CACAOPool
+            pnl:
+              type: string
+              example: '123456'
+              description: the profit and loss of the reserve share of the CACAOPool
+            current_deposit:
+              type: string
+              example: '123456'
+              description: the current CACAO deposited by the reserve
+    CACAOProviderResponse:
+      $ref: '#/components/schemas/CACAOProvider'
+    CACAOProvidersResponse:
       type: array
       items: *id005
+    LiquidityProvidersResponse:
+      type: array
+      items: *id006
     LiquidityProviderResponse:
       $ref: '#/components/schemas/LiquidityProvider'
     SaverResponse:
       $ref: '#/components/schemas/Saver'
     SaversResponse:
       type: array
-      items: *id006
+      items: *id007
     TxResponse:
       type: object
       properties:
@@ -2171,7 +2373,7 @@ components:
           description: the mayachain height for which the outbound was scheduled
         keysign_metric:
           $ref: '#/components/schemas/TssKeysignMetric'
-    TxDetailsResponse: &id007
+    TxDetailsResponse: &id008
       type: object
       required:
       - tx
@@ -2217,7 +2419,7 @@ components:
           format: int64
           example: 1234
           description: the mayachain height for which the outbound was scheduled
-    TxSignersResponse: *id007
+    TxSignersResponse: *id008
     TxStagesResponse:
       type: object
       required:
@@ -2427,10 +2629,10 @@ components:
       $ref: '#/components/schemas/Node'
     NodesResponse:
       type: array
-      items: *id008
+      items: *id009
     StreamingSwapsResponse:
       type: array
-      items: *id009
+      items: *id010
     StreamingSwapResponse:
       $ref: '#/components/schemas/StreamingSwap'
     VaultsResponse:
@@ -2526,7 +2728,7 @@ components:
           description: current amount of cacao deposited
     InboundAddressesResponse:
       type: array
-      items: *id010
+      items: *id011
     LastBlockResponse:
       type: array
       items: *id002
@@ -2611,13 +2813,13 @@ components:
           description: scheduled outbound value in CACAO
     SwapQueueResponse:
       type: array
-      items: *id011
+      items: *id012
     OutboundResponse:
       type: array
-      items: *id012
+      items: *id013
     ScheduledResponse:
       type: array
-      items: *id013
+      items: *id014
     KeysignResponse:
       type: object
       required:
@@ -2677,7 +2879,7 @@ components:
           type: string
     KeygenMetricsResponse:
       type: array
-      items: *id014
+      items: *id015
     MetricsResponse:
       type: object
       properties:
@@ -2695,7 +2897,7 @@ components:
                 $ref: '#/components/schemas/TssMetric'
     MayanameResponse:
       type: array
-      items: *id015
+      items: *id016
     MimirResponse:
       type: object
       additionalProperties:
@@ -2888,67 +3090,67 @@ components:
             $ref: '#/components/schemas/BlockTx'
     baseQuoteResponse:
       properties:
-        inbound_address: &id016
+        inbound_address: &id017
           type: string
           description: the inbound address for the transaction on the source chain
           example: bc1qjk3xzu5slu7mtmc8jc9yed3zqvkhkttm700g9a
-        inbound_confirmation_blocks: &id017
+        inbound_confirmation_blocks: &id018
           type: integer
           format: int64
           description: the approximate number of source chain blocks required before
             processing
-        inbound_confirmation_seconds: &id018
+        inbound_confirmation_seconds: &id019
           type: integer
           format: int64
           description: the approximate seconds for block confirmations required before
             processing
-        outbound_delay_blocks: &id019
+        outbound_delay_blocks: &id020
           type: integer
           format: int64
           description: the number of mayachain blocks the outbound will be delayed
-        outbound_delay_seconds: &id020
+        outbound_delay_seconds: &id021
           type: integer
           format: int64
           description: the approximate seconds for the outbound delay before it will
             be sent
-        fees: &id021
+        fees: &id022
           $ref: '#/components/schemas/QuoteFees'
-        router: &id022
+        router: &id023
           type: string
           description: the EVM chain router contract address
           example: '0x3624525075b88B24ecc29CE226b0CEc1fFcB6976'
-        expiry: &id023
+        expiry: &id024
           type: integer
           format: int64
           description: expiration timestamp in unix seconds
           example: 1671660285
-        warning: &id024
+        warning: &id025
           type: string
           description: static warning message
           example: Do not cache this response. Do not send funds after the expiry.
-        notes: &id025
+        notes: &id026
           type: string
           description: chain specific quote notes
           example: Transfer the inbound_address the asset with the memo. Do not use
             multi-in, multi-out transactions.
-        dust_threshold: &id026
+        dust_threshold: &id027
           type: string
           example: '10000'
           description: Defines the minimum transaction size for the chain in base
             units (sats, wei, uatom). Transactions with asset amounts lower than the
             dust_threshold are ignored.
-        recommended_min_amount_in: &id027
+        recommended_min_amount_in: &id028
           type: string
           description: The recommended minimum inbound amount for this transaction
             type & inbound asset. Sending less than this amount could result in failed
             refunds.
           example: '15000'
-        recommended_gas_rate: &id028
+        recommended_gas_rate: &id029
           type: string
           example: '10'
           description: the recommended gas rate to use for the inbound to ensure timely
             confirmation
-        gas_rate_units: &id029
+        gas_rate_units: &id030
           type: string
           example: gwei
           description: the units of the recommended gas rate
@@ -2963,20 +3165,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id016
-        inbound_confirmation_blocks: *id017
-        inbound_confirmation_seconds: *id018
-        outbound_delay_blocks: *id019
-        outbound_delay_seconds: *id020
-        fees: *id021
-        router: *id022
-        expiry: *id023
-        warning: *id024
-        notes: *id025
-        dust_threshold: *id026
-        recommended_min_amount_in: *id027
-        recommended_gas_rate: *id028
-        gas_rate_units: *id029
+        inbound_address: *id017
+        inbound_confirmation_blocks: *id018
+        inbound_confirmation_seconds: *id019
+        outbound_delay_blocks: *id020
+        outbound_delay_seconds: *id021
+        fees: *id022
+        router: *id023
+        expiry: *id024
+        warning: *id025
+        notes: *id026
+        dust_threshold: *id027
+        recommended_min_amount_in: *id028
+        recommended_gas_rate: *id029
+        gas_rate_units: *id030
         memo:
           type: string
           description: generated memo for the swap
@@ -3023,20 +3225,20 @@ components:
       - recommended_gas_rate
       - gas_rate_units
       properties:
-        inbound_address: *id016
-        inbound_confirmation_blocks: *id017
-        inbound_confirmation_seconds: *id018
-        outbound_delay_blocks: *id019
-        outbound_delay_seconds: *id020
-        fees: *id021
-        router: *id022
-        expiry: *id023
-        warning: *id024
-        notes: *id025
-        dust_threshold: *id026
-        recommended_min_amount_in: *id027
-        recommended_gas_rate: *id028
-        gas_rate_units: *id029
+        inbound_address: *id017
+        inbound_confirmation_blocks: *id018
+        inbound_confirmation_seconds: *id019
+        outbound_delay_blocks: *id020
+        outbound_delay_seconds: *id021
+        fees: *id022
+        router: *id023
+        expiry: *id024
+        warning: *id025
+        notes: *id026
+        dust_threshold: *id027
+        recommended_min_amount_in: *id028
+        recommended_gas_rate: *id029
+        gas_rate_units: *id030
         memo:
           type: string
           description: generated memo for the deposit
@@ -3068,20 +3270,20 @@ components:
       - recommended_gas_rate
       - gas_rate_units
       properties:
-        inbound_address: *id016
-        inbound_confirmation_blocks: *id017
-        inbound_confirmation_seconds: *id018
-        outbound_delay_blocks: *id019
-        outbound_delay_seconds: *id020
-        fees: *id021
-        router: *id022
-        expiry: *id023
-        warning: *id024
-        notes: *id025
-        dust_threshold: *id026
-        recommended_min_amount_in: *id027
-        recommended_gas_rate: *id028
-        gas_rate_units: *id029
+        inbound_address: *id017
+        inbound_confirmation_blocks: *id018
+        inbound_confirmation_seconds: *id019
+        outbound_delay_blocks: *id020
+        outbound_delay_seconds: *id021
+        fees: *id022
+        router: *id023
+        expiry: *id024
+        warning: *id025
+        notes: *id026
+        dust_threshold: *id027
+        recommended_min_amount_in: *id028
+        recommended_gas_rate: *id029
+        gas_rate_units: *id030
         memo:
           type: string
           description: generated memo for the withdraw, the client can use this OR

@@ -5,7 +5,7 @@ All URIs are relative to */*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**asgard**](VaultsApi.md#asgard) | **GET** /mayachain/vaults/asgard | 
-[**vault**](VaultsApi.md#vault) | **GET** /mayachain/vaults/{pubkey} | 
+[**vault**](VaultsApi.md#vault) | **GET** /mayachain/vault/{pubkey} | 
 [**vault_pubkeys**](VaultsApi.md#vault_pubkeys) | **GET** /mayachain/vaults/pubkeys | 
 [**yggdrasil**](VaultsApi.md#yggdrasil) | **GET** /mayachain/vaults/yggdrasil | 
 
