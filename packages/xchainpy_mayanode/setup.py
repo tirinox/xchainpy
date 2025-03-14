@@ -37,8 +37,8 @@ def load_description():
     long_description = (this_directory / "README.md").read_text()
     return long_description
 
-
 setup(
+
     name=NAME,
     version=VERSION,
     description="Mayanode API",
