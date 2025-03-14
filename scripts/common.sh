@@ -4,22 +4,50 @@ SWAGGER_LOCAL="./swagger-codegen-cli.jar"
 SWAGGER_VERSION=3.0.52
 SWAGGER_CODEGEN="https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/${SWAGGER_VERSION}/swagger-codegen-cli-${SWAGGER_VERSION}.jar"
 
+ask_yes_no() {
+  local prompt="$1"
+  local default="$2"  # "yes" or "no"
+  local answer
+
+  while true; do
+    if [[ "$default" == "yes" ]]; then
+      read -p "$prompt [Y/n] " answer
+    elif [[ "$default" == "no" ]]; then
+      read -p "$prompt [y/N] " answer
+    else
+      read -p "$prompt [y/n] " answer
+    fi
+
+    # If no answer is given, use the default.
+    answer=${answer:-$default}
+
+    # Convert answer to lowercase using tr.
+    local answer_lower
+    answer_lower=$(echo "$answer" | tr '[:upper:]' '[:lower:]')
+
+    case "$answer_lower" in
+      y|yes)
+        return 0  # Yes: return success.
+        ;;
+      n|no)
+        return 1  # No: return failure.
+        ;;
+      *)
+        echo "Please answer yes or no."
+        ;;
+    esac
+  done
+}
+
 function check_output_dir() {
-  read -p "Do you want to clear ${OUTPUT_DIR}? (y/n) " yn
-  case $yn in
-  [yY])
+  if ask_yes_no "Do you want to clear ${OUTPUT_DIR}?" "yes"; then
     rm -rf "${OUTPUT_DIR}"
-    return
-    ;;
-  [nN])
+  else
     if [ -n "$(ls -A ${OUTPUT_DIR})" ]; then
       echo "Output directory ${OUTPUT_DIR} is not empty. Aborting."
       exit 1
     fi
-    ;;
-  *) echo invalid response ;;
-  esac
-
+  fi
 }
 
 function codegen_client() {
@@ -33,21 +61,11 @@ function codegen_client() {
 }
 
 function install_develop() {
-  read -p "Do you want install the package? (y/n) " yn
-  case $yn in
-  [yY])
+  if ask_yes_no "Do you want to install the package for development?" "no"; then
     # python3 -m pip install --editable "${OUTPUT_DIR}"
     cd ${OUTPUT_DIR} || exit 3
     python3 setup.py develop
-
-    return
-    ;;
-  [nN])
-    return
-    ;;
-  *) echo invalid response ;;
-  esac
-
+  fi
 }
 
 function download_swagger_codegen() {
@@ -64,9 +82,7 @@ function add_license() {
 }
 
 function fix_swagger_spec() {
-  read -p "Do you want fix swagger spec to generate complete Python models? (y/n) " yn
-  case $yn in
-  [yY])
+  if ask_yes_no "Do you want to fix swagger spec to generate complete Python models?" "yes"; then
     # if package is xchainpy2_thornode then set mode = thor
     if [ "$PACKAGE_NAME" == "xchainpy2_thornode" ]; then
       SWAGGER_FIX_MODE="thor"
@@ -84,13 +100,7 @@ function fix_swagger_spec() {
 
     python3 fix_swagger_spec.py -i ${SWAGGER_FILE} -o ${SWAGGER_FIXED_FILE} -m ${SWAGGER_FIX_MODE}
     export SWAGGER_FILE=${SWAGGER_FIXED_FILE}
-    return
-    ;;
-  [nN])
-    return
-    ;;
-  *) echo invalid response ;;
-  esac
+  fi
 }
 
 function check_java_runtime() {
@@ -122,21 +132,28 @@ function run_codegen() {
   codegen_client "$OUTPUT_DIR" "$PACKAGE_NAME" "$SWAGGER_FILE"
   add_license
 
+  # Fix setup.py file
+  fix_setup_py
+
   # Ask to install the package for development
   install_develop
 }
 
 function ask_dev_virtual_env() {
-  read -p "Do you want to create new virtual environment and install dev tools? (y/n) " yn
-  case $yn in
-  [yY])
+  # check if exists
+  if [ ! -d "../temp/venv" ]; then
+    echo "Virtual environment does not exist."
+    DEFAULT="yes"
+  else
+    DEFAULT="no"
+  fi
+
+  if ask_yes_no "Do you want to create new virtual environment and install dev tools?" $DEFAULT; then
     python3 -m venv "../temp/venv"
     source "../temp/venv/bin/activate"
     pip install "betterproto[compiler]" betterproto
     pip install grpcio grpcio-tools
-    ;;
-  *) ;;
-  esac
+  fi
 }
 
 function touch_inits() {
@@ -200,4 +217,11 @@ function ask_for_package() {
   # Get the package name
   SELECTED_PACKAGE=${PACKS[$number - 1]}
   echo "Selected package: $SELECTED_PACKAGE"
+}
+
+
+function fix_setup_py() {
+  if ask_yes_no "Do you want to fix setup.py?" "yes"; then
+    python3 modify_setup.py "${OUTPUT_DIR}/setup.py"
+  fi
 }
