@@ -5,6 +5,8 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **bond_reward_rune** | **str** | total amount of RUNE awarded to node operators | 
 **total_bond_units** | **str** | total bonded RUNE | 
+**available_pools_rune** | **str** | RUNE in Available pools (equal in value to the Assets in those pools) | 
+**vaults_liquidity_rune** | **str** | RUNE value of Layer 1 Assets in vaults | 
 **effective_security_bond** | **str** | effective security bond used to determine maximum pooled RUNE | 
 **total_reserve** | **str** | total reserve RUNE | 
 **vaults_migrating** | **bool** | Returns true if there exist RetiringVaults which have not finished migrating funds to new ActiveVaults | 

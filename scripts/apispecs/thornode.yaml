@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Thornode API
-  version: 3.0.0
+  version: 3.3.0
   contact:
     email: devs@thorchain.org
   description: Thornode REST API.
@@ -1196,6 +1196,14 @@ paths:
       in: query
       description: the maximum basis points from the current feeless swap price to
         set the limit in the generated memo
+      schema:
+        type: integer
+        format: int64
+        example: 100
+    - name: liquidity_tolerance_bps
+      in: query
+      description: the maximum basis points of tolerance for pool price movements
+        to set the limit in the generated memo
       schema:
         type: integer
         format: int64
@@ -2686,6 +2694,11 @@ components:
         preferred_asset:
           type: string
           example: BTC.BTC
+        preferred_asset_swap_threshold_rune:
+          type: string
+          example: '500'
+          description: Amount of RUNE currently needed to trigger a preferred asset
+            swap.
         affiliate_collector_rune:
           type: string
           example: '100'
@@ -3295,6 +3308,8 @@ components:
       required:
       - bond_reward_rune
       - total_bond_units
+      - available_pools_rune
+      - vaults_liquidity_rune
       - effective_security_bond
       - total_reserve
       - vaults_migrating
@@ -3315,6 +3330,15 @@ components:
           type: string
           example: '0'
           description: total bonded RUNE
+        available_pools_rune:
+          type: string
+          example: '4785723312627752'
+          description: RUNE in Available pools (equal in value to the Assets in those
+            pools)
+        vaults_liquidity_rune:
+          type: string
+          example: '5792105087034476'
+          description: RUNE value of Layer 1 Assets in vaults
         effective_security_bond:
           type: string
           example: '0'

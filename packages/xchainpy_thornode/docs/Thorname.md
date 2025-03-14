@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **expire_block_height** | **int** |  | [optional] 
 **owner** | **str** |  | [optional] 
 **preferred_asset** | **str** |  | 
+**preferred_asset_swap_threshold_rune** | **str** | Amount of RUNE currently needed to trigger a preferred asset swap. | [optional] 
 **affiliate_collector_rune** | **str** | Amount of RUNE currently accrued by this thorname in affiliate fees waiting to be swapped to preferred asset. | [optional] 
 **aliases** | [**list[ThornameAlias]**](ThornameAlias.md) |  | 
 
