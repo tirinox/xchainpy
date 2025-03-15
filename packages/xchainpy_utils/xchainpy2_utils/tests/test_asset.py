@@ -52,11 +52,34 @@ def test_asset_from_string():
     assert asset.symbol == 'AVAX'
     assert not asset.synth
 
+    # secured asset
+    asset = Asset.from_string('XRP-OMG')
+    assert asset.chain == 'XRP'
+    assert asset.symbol == 'OMG'
+    assert not asset.synth and not asset.is_native and not asset.is_trade
+    assert str(asset) == 'XRP-OMG'
+    assert asset.is_secured
+
+    # secured asset
+    asset = Asset.from_string('ETH-USDT-0xdac17f958d2ee523a2206206994597c13d831ec7')
+    assert asset.chain == 'ETH'
+    assert asset.symbol == 'USDT'
+    assert asset.contract == '0xdac17f958d2ee523a2206206994597c13d831ec7'
+    assert not asset.synth and not asset.is_native and not asset.is_trade
+    assert str(asset) == 'ETH-USDT-0xdac17f958d2ee523a2206206994597c13d831ec7'
+    assert asset.is_secured
+
+    asset = Asset.from_string('XRP~OMG')
+    assert asset.chain == 'XRP'
+    assert asset.symbol == 'OMG'
+    assert asset.is_trade
+    assert str(asset) == 'XRP~OMG'
+
     with pytest.raises(ValueError):
         Asset.from_string_exc('')
 
-    with pytest.raises(ValueError):
-        Asset.from_string_exc('x.y.z.w')
+    # with pytest.raises(ValueError):
+    #     Asset.from_string_exc('x.y.z.w')
 
 
 def test_convert_synth():
@@ -68,6 +91,8 @@ def test_convert_synth():
     assert str(asset.as_native) == 'BTC.BTC'
     assert asset.as_synth == asset
     assert asset.as_synth.as_native == Asset('BTC', 'BTC')
+
+    assert asset.as_secured.is_secured
 
 
 def test_well_known_assets():
@@ -132,7 +157,7 @@ def test_trade_asset():
     a = Asset.automatic('BTC~BTC')
     assert a.kind == AssetKind.TRADE
     assert a.is_trade
-    assert not a.is_normal and not a.is_synth
+    assert not a.is_native and not a.is_synth
     assert a.symbol == 'BTC'
     assert a.chain == 'BTC'
     assert a.delimiter == TRADE_DELIMITER

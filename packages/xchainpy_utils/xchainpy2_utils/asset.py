@@ -2,7 +2,6 @@ from enum import Enum
 from typing import NamedTuple, Optional, Union
 
 from .chain import Chain
-from .util import XChainProtocol
 
 SYNTH_DELIMITER = '/'
 """Synth assets use '/' as delimiter (BTC/BTC)"""
@@ -10,15 +9,58 @@ SYNTH_DELIMITER = '/'
 TRADE_DELIMITER = '~'
 """Trade assets use '~' as delimiter (BTC~BTC)"""
 
-NON_SYNTH_DELIMITER = '.'
+NATIVE_DELIMITER = '.'
 """Native assets use '.' as delimiter (THOR.RUNE, BTC.BTC)"""
+
+SECURED_DELIMITER = '-'
+"""
+    Secured assets use '-' as delimiter (ETH-ETH).
+    See: https://docs.thorchain.org/thorchain-finance/secured-assets
+"""
+
+ALL_DELIMITERS = {SYNTH_DELIMITER, TRADE_DELIMITER, NATIVE_DELIMITER, SECURED_DELIMITER}
 
 
 class AssetKind(Enum):
-    NORMAL = 'normal'
+    NATIVE = 'native'
+    """Native Assets are L1 assets (eg BTC) available on its native L1 (eg Bitcoin Network)."""
+
     SYNTH = 'synth'
+    """
+    THORChain synthetics are fully collateralized while they exist and switch to a 1:1 peg upon redemption.
+    See: https://docs.thorchain.org/frequently-asked-questions/asset-types#synthetic-assets
+    Attention! Synthetic assets are now suspended on the network due to THORFi being on pause.
+    Please use trade and secured assets instead.
+    """
+    # todo: fill in the details for derived assets
+
     TRADE = 'trade'
+    """
+    Trade Assets, a new class of primitives on THORChain, offer double the capital efficiency of synthetic assets, 
+    enhancing arbitrage and high-frequency trading. They settle with THORChain’s block speed and cost, enabling 
+    6-second finality swaps without high fees. Redeemable anytime with no slippage, Trade Assets emulate centralized 
+    exchange trading but maintain on-chain transparency and security. Custodied by THORChain outside of liquidity pools, 
+    they provide user credits while holding funds 1:1 as L1 assets until withdrawal, making THORChain more user-friendly 
+    for active traders.
+    See: https://docs.thorchain.org/frequently-asked-questions/asset-types#trade-assets
+    """
+
     DERIVED = 'derived'
+    """
+    THORChain derived assets.
+    See: https://docs.thorchain.org/frequently-asked-questions/asset-types#derived-assets
+    """
+
+    SECURED = 'secured'
+    """
+    Secure Assets allow L1 tokens to be deposited to THORChain, creating a new native asset, which can be transferred 
+    between accounts, over IBC and integrated with CosmWasm smart contracts using standard Cosmos SDK messages. 
+    They also replace Trade Assets. 
+    See: https://docs.thorchain.org/thorchain-finance/secured-assets
+    """
+
+    UNKNOWN = 'unknown'
+    """Unknown asset type."""
 
     @property
     def delimiter(self):
@@ -29,17 +71,31 @@ class AssetKind(Enum):
             return SYNTH_DELIMITER
         elif self == AssetKind.TRADE:
             return TRADE_DELIMITER
+        elif self == AssetKind.SECURED:
+            return SECURED_DELIMITER
         else:
-            return NON_SYNTH_DELIMITER
+            return NATIVE_DELIMITER
 
     @classmethod
     def recognize(cls, asset_str: str):
-        if SYNTH_DELIMITER in asset_str:
-            return cls.SYNTH
-        elif TRADE_DELIMITER in asset_str:
-            return cls.TRADE
-        else:
-            return cls.NORMAL
+        """
+            Detects the asset type based on the first delimiter in the asset string.
+
+            :param asset_str: The asset string (e.g., "ETH.ETH", "BTC-BTC", "XRP~XRP").
+            :return: The asset type: "trade" for "~", "secured" for "-", "native" for ".", or "unknown" if no valid delimiter is found.
+        """
+        for char in asset_str:
+            if char in ALL_DELIMITERS:
+                return _DELIMITER_TABLE[char]
+        return cls.UNKNOWN
+
+
+_DELIMITER_TABLE = {
+    TRADE_DELIMITER: AssetKind.TRADE,
+    SECURED_DELIMITER: AssetKind.SECURED,
+    NATIVE_DELIMITER: AssetKind.NATIVE,
+    SYNTH_DELIMITER: AssetKind.SYNTH,
+}
 
 
 class Asset(NamedTuple):
@@ -59,15 +115,15 @@ class Asset(NamedTuple):
     """The asset symbol. E.g. 'RUNE', 'BTC', 'ETH', etc."""
     contract: str = ''
     """The contract address of the asset. E.g. '0x1234...5678'. Default is empty."""
-    kind: AssetKind = AssetKind.NORMAL
-    """Asset kind. Default is normal (L1 asset). Possible values: normal, synth, trade, derived."""
+    kind: AssetKind = AssetKind.NATIVE
+    """Asset kind. Default is native (L1 asset). Possible values: native, synth, trade, derived, secured."""
 
     @property
-    def is_normal(self):
+    def is_native(self):
         """
-        Check if the asset is a normal (L1) asset.
+        Check if the asset is a native (L1) asset.
         """
-        return self.kind == AssetKind.NORMAL
+        return self.kind == AssetKind.NATIVE
 
     @property
     def chain_enum(self) -> Chain:
@@ -98,6 +154,13 @@ class Asset(NamedTuple):
         Check if the asset is a trade asset.
         """
         return self.kind == AssetKind.TRADE
+
+    @property
+    def is_secured(self):
+        """
+        Check if the asset is a secured asset.
+        """
+        return self.kind == AssetKind.SECURED
 
     @property
     def is_derived(self):
@@ -132,8 +195,10 @@ class Asset(NamedTuple):
             return SYNTH_DELIMITER
         elif self.is_trade:
             return TRADE_DELIMITER
+        elif self.is_secured:
+            return SECURED_DELIMITER
         else:
-            return NON_SYNTH_DELIMITER  # normal and derived assets
+            return NATIVE_DELIMITER
 
     def __str__(self):
         """
@@ -154,11 +219,13 @@ class Asset(NamedTuple):
         :param input_str: The input string to parse
         :return: A tuple containing the name and contract
         """
-        components = input_str.split('-', maxsplit=2)
+        components = input_str.split('-', maxsplit=1)
         if len(components) == 2:
             return components
-        else:
+        elif len(components) == 1:
             return input_str, ''
+        else:
+            raise Exception(f'Invalid input string: {input_str}')
 
     @classmethod
     def from_string(cls, s) -> Optional['Asset']:
@@ -184,16 +251,20 @@ class Asset(NamedTuple):
 
         kind = AssetKind.recognize(s)
 
-        data = s.split(kind.delimiter)
+        data = s.split(kind.delimiter, 1)
         n = len(data)
         if n == 1:
             if symbol := data[0]:
                 return cls(symbol, symbol)
         elif n == 2:
-            name, tag = cls.get_name_and_contract(data[1])
+            try:
+                name, tag = cls.get_name_and_contract(data[1])
+            except ValueError:
+                return None
             chain = data[0]
 
-            if kind is AssetKind.NORMAL and chain.upper() == Chain.THORChain.value:
+            if kind is AssetKind.NATIVE and chain.upper() == Chain.THORChain.value:
+                # Looks like THOR.BTC
                 kind = AssetKind.DERIVED
 
             return cls(chain, name, tag, kind)
@@ -232,7 +303,7 @@ class Asset(NamedTuple):
         :return: A native version of the asset.
         """
         # noinspection PyArgumentEqualDefault
-        return self._replace(kind=AssetKind.NORMAL)
+        return self._replace(kind=AssetKind.NATIVE)
 
     @property
     def as_synth(self):
@@ -251,6 +322,14 @@ class Asset(NamedTuple):
         return self._replace(kind=AssetKind.TRADE)
 
     @property
+    def as_secured(self):
+        """
+        Get a secured copy of the asset object. Secured assets use '-' as delimiter (ETH-ETH).
+        :return: A secured version of the asset.
+        """
+        return self._replace(kind=AssetKind.SECURED)
+
+    @property
     def as_derived(self):
         return self._replace(kind=AssetKind.DERIVED, chain=Chain.THORChain.value)
 
@@ -261,18 +340,6 @@ class Asset(NamedTuple):
         :return:
         """
         return self.chain == Chain.THORChain.value and self.symbol == 'RUNE'
-
-    def is_native(self, p: XChainProtocol = XChainProtocol.THORCHAIN):
-        """
-        Check if the asset is a native asset for the specified protocol.
-        :param p: Protocol to check
-        :type p: XChainProtocol
-        :return: bool
-        """
-        if p == XChainProtocol.THORCHAIN:
-            return self == AssetRUNE
-        elif p == XChainProtocol.MAYA:
-            return self == AssetCACAO
 
     @property
     def ticker(self):
@@ -455,6 +522,10 @@ class CommonAssets:
         'r': AssetRUNE,
         'f': AssetBaseETH,
     }
+    """
+    THORChain short codes for common assets.
+    todo: move them to the THORChain package
+    """
 
     INVERTED_SHORT_CODES = {v: k for k, v in SHORT_CODES.items()}
 
