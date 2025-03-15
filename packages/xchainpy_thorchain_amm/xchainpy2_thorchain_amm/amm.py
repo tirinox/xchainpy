@@ -134,7 +134,7 @@ class THORChainAMM:
         """
         self._validate_crypto_amount(amount)
 
-        if not amount.asset.is_normal:
+        if not amount.asset.is_native:
             raise AMMException(f'Donating "{amount.asset.kind}" assets is not allowed')
 
         if self.is_thorchain_asset(amount.asset) and not pool:
@@ -362,7 +362,7 @@ class THORChainAMM:
         if not what:
             raise AMMException('Invalid amount to deposit')
 
-        if not what.asset.is_normal:
+        if not what.asset.is_native:
             raise AMMException(f'Invalid asset: {what.asset}! It must be a normal asset.')
 
         if not target_thor_address:
@@ -927,7 +927,7 @@ class THORChainAMM:
         if input_amount.amount.internal_amount <= 0:
             return f'Invalid input amount: {input_amount.amount}; must be greater than 0'
 
-        if input_amount.asset.is_normal:
+        if input_amount.asset.is_native:
             return
 
         if self.is_erc20_asset(input_amount.asset):
