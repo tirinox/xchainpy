@@ -21,6 +21,9 @@ class ArbitrumClient(EthereumClient):
     async def _deduct_gas(self, fee_option: FeeOption, gas_limit=23000) -> GasOptions:
         # todo: make sure
         if fee_option == FeeOption.FASTEST:
-            return GasOptions.legacy(ARB_SURE_FEE, gas_limit)
+            fee = ARB_SURE_FEE
         else:
-            return GasOptions.legacy(ARB_NORMAL_FEE, gas_limit)
+            fee = ARB_NORMAL_FEE
+        # convert gwei to wei
+        fee = fee * 1e9
+        return GasOptions.legacy(fee, gas_limit)
