@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xchainpy2_arbitrum"
-version = "0.0.5"
+version = "0.0.6"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
@@ -12,14 +12,13 @@ description = "XChainPy2 Arbitrum Client"
 readme = "README.md"
 requires-python = ">=3.7"
 keywords = ["Crypto", "Arbitrum", "Arb", "Blockchain", "XChain"]
-license = { text = "MIT" }
+license = "MIT"
 urls = { source = "https://github.com/tirinox/xchainpy" }
 classifiers = [
     'Development Status :: 3 - Alpha',
     # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
     'Intended Audience :: Developers', # Define that your audience are developers
     'Topic :: Software Development :: Build Tools',
-    'License :: OSI Approved :: MIT License',
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
