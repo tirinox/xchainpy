@@ -8,13 +8,14 @@ Name | Type | Description | Notes
 **address** | **str** |  | [optional] 
 **router** | **str** |  | [optional] 
 **halted** | **bool** | Returns true if trading is unavailable for this chain, either because trading is halted globally or specifically for this chain | 
-**global_trading_paused** | **bool** | Returns true if trading is paused globally | [optional] 
-**chain_trading_paused** | **bool** | Returns true if trading is paused for this chain | [optional] 
-**chain_lp_actions_paused** | **bool** | Returns true if LP actions are paused for this chain | [optional] 
+**global_trading_paused** | **bool** | Returns true if trading is paused globally | 
+**chain_trading_paused** | **bool** | Returns true if trading is paused for this chain | 
+**chain_lp_actions_paused** | **bool** | Returns true if LP actions are paused for this chain | 
+**observed_fee_rate** | **str** | The chain&#x27;s observed fee rate in 1e8 format, before the 1.5x that makes an outbound more likely to have a sufficient gas rate.  Used by validators to check whether they need to report a fee change. | [optional] 
 **gas_rate** | **str** | The minimum fee rate used by vaults to send outbound TXs. The actual fee rate may be higher. For EVM chains this is returned in gwei (1e9). | [optional] 
 **gas_rate_units** | **str** | Units of the gas_rate. | [optional] 
 **outbound_tx_size** | **str** | Avg size of outbound TXs on each chain. For UTXO chains it may be larger than average, as it takes into account vault consolidation txs, which can have many vouts | [optional] 
-**outbound_fee** | **str** | The total outbound fee charged to the user for outbound txs in the gas asset of the chain. | [optional] 
+**outbound_fee** | **str** | The total outbound fee charged to the user for outbound txs in the gas asset of the chain.  Can be observed_fee_rate * 1.5 * outbound_tx_size or else kept to an equivalent of Mimir key MinimumL1OutboundFeeUSD. | [optional] 
 **dust_threshold** | **str** | Defines the minimum transaction size for the chain in base units (sats, wei, uatom). Transactions with asset amounts lower than the dust_threshold are ignored. | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

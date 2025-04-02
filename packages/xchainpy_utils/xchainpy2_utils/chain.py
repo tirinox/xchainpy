@@ -22,6 +22,7 @@ class Chain(Enum):
     Kujira = "KUJI"
     Arbitrum = "ARB"
     Base = "BASE"
+    # todo: add XRP, SOL, etc.
 
     UNKNOWN = 'Unknown'
 
