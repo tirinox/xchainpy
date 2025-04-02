@@ -28,6 +28,12 @@ components:
             - meta
             type: object
       description: Returns an array of actions for the given filters.
+    AffiliateHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AffiliateHistory'
+      description: Affiliate count and volume history
     BalanceResponse:
       content:
         application/json:
@@ -136,12 +142,24 @@ components:
           schema:
             $ref: '#/components/schemas/RUNEPoolHistory'
       description: Members and Units history of RUNEPool
+    ReserveHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReserveHistory'
+      description: Reserve
     ReverseTHORNameResponse:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ReverseTHORNames'
       description: object containing a list of THORName names for a specific address
+    RunePriceHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RunePriceHistory'
+      description: Returns rune price history in USD based on the time bucket given
     SaverDetailsResponse:
       content:
         application/json:
@@ -210,12 +228,13 @@ components:
           description: 'Indicates if the action is completed or if related outbound
             transactions are still
 
-            pending.
+            pending, failed to be processed.
 
             '
           enum:
           - success
           - pending
+          - failed
           type: string
         type:
           description: Type of action
@@ -262,6 +281,12 @@ components:
       type: object
     AddLiquidityMetadata:
       properties:
+        affiliateAddress:
+          description: Affiliate fee address of the addLiquidity
+          type: string
+        affiliateFee:
+          description: Int64 (Basis points, 0-1000, where 1000=10%)
+          type: string
         liquidityUnits:
           description: 'Int64, amount of liquidity units assigned to the member as
             result of the liquidity
@@ -270,8 +295,99 @@ components:
 
             '
           type: string
+        memo:
+          description: Transaction memo of the addLiquidity action
+          type: string
       required:
       - liquidityUnits
+      - memo
+      - affiliateAddress
+      - affiliateFee
+      type: object
+    AffiliateHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/AffiliateHistoryIntervals'
+        meta:
+          $ref: '#/components/schemas/AffiliateHistoryMeta'
+      required:
+      - meta
+      - intervals
+      type: object
+    AffiliateHistoryIntervals:
+      items:
+        $ref: '#/components/schemas/AffiliateHistoryItem'
+      type: array
+    AffiliateHistoryItem:
+      properties:
+        count:
+          description: 'Int64, The count of affiliates during the time interval
+
+            '
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+        thornames:
+          items:
+            $ref: '#/components/schemas/ItemThorname'
+          type: array
+        volume:
+          description: 'Int64(e8), The total volume of the affiliates detonated in
+            RUNE
+
+            '
+          type: string
+        volumeUSD:
+          description: 'Int64(e2), The total volume of the affiliates
+
+            denoted in USD price of the rune in each swap
+
+            '
+          type: string
+      required:
+      - startTime
+      - endTime
+      - count
+      - thornames
+      - volume
+      - volumeUSD
+      type: object
+    AffiliateHistoryMeta:
+      properties:
+        count:
+          description: 'Int64, The count of affiliates during the time interval
+
+            '
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+        volume:
+          description: 'Int64(e8), The total volume of the affiliates detonated in
+            RUNE
+
+            '
+          type: string
+        volumeUSD:
+          description: 'Int64(e2), The total volume of the affiliates
+
+            denoted in USD price of the rune in each swap
+
+            '
+          type: string
+      required:
+      - startTime
+      - endTime
+      - count
+      - volume
+      - volumeUSD
       type: object
     Balance:
       properties:
@@ -304,6 +420,24 @@ components:
       - blockReward
       - bondReward
       - poolReward
+      type: object
+    BondMetadata:
+      properties:
+        fee:
+          description: node operator fee
+          type: string
+        memo:
+          description: Transaction memo of bond event
+          type: string
+        nodeAddress:
+          description: node address
+          type: string
+        provider:
+          description: bond provider address
+          type: string
+      required:
+      - memo
+      - nodeAddress
       type: object
     BondMetrics:
       properties:
@@ -448,6 +582,18 @@ components:
       items:
         $ref: '#/components/schemas/Coin'
       type: array
+    ContractMetadata:
+      properties:
+        attributes:
+          description: contract attributes emitted from its event
+          type: object
+        contractType:
+          description: contract type defined by cosmwasm
+          type: string
+      required:
+      - contractType
+      - attributes
+      type: object
     DepthHistory:
       properties:
         intervals:
@@ -749,6 +895,22 @@ components:
       - rewards
       - earnings
       type: object
+    FailedMetadata:
+      properties:
+        code:
+          description: failed transaction code
+          type: string
+        memo:
+          description: failed transaction memo
+          type: string
+        reason:
+          description: failed transaction code
+          type: string
+      required:
+      - memo
+      - reason
+      - code
+      type: object
     GenesisInf:
       properties:
         hash:
@@ -803,6 +965,36 @@ components:
       required:
       - height
       - timestamp
+      type: object
+    ItemThorname:
+      properties:
+        count:
+          description: 'Int64, The count of affiliates with the same thorname during
+            the time interval
+
+            '
+          type: string
+        thorname:
+          description: thorname of the affiliate
+          type: string
+        volume:
+          description: 'Int64(e8), The volume of affiliates with the same thorname
+            detonated in RUNE
+
+            '
+          type: string
+        volumeUSD:
+          description: 'Int64(e2), The volume of affiliates with the same thorname
+
+            denoted in USD price of the rune in each swap
+
+            '
+          type: string
+      required:
+      - thorname
+      - count
+      - volume
+      - volumeUSD
       type: object
     KnownPools:
       additionalProperties:
@@ -999,6 +1191,12 @@ components:
       properties:
         addLiquidity:
           $ref: '#/components/schemas/AddLiquidityMetadata'
+        bond:
+          $ref: '#/components/schemas/BondMetadata'
+        contract:
+          $ref: '#/components/schemas/ContractMetadata'
+        failed:
+          $ref: '#/components/schemas/FailedMetadata'
         refund:
           $ref: '#/components/schemas/RefundMetadata'
         runePoolDeposit:
@@ -1612,6 +1810,77 @@ components:
       - affiliateAddress
       - txType
       type: object
+    ReserveHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/ReserveIntervals'
+        meta:
+          $ref: '#/components/schemas/ReserveMeta'
+      required:
+      - meta
+      - intervals
+      type: object
+    ReserveIntervals:
+      items:
+        $ref: '#/components/schemas/ReserveItem'
+      type: array
+    ReserveItem:
+      properties:
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        gasFeeOutbound:
+          description: Int64(e8), fee made from outbound
+          type: string
+        gasReimbursement:
+          description: Int64(e8), RUNE paid to the pool for compensating the gas fees
+          type: string
+        networkFee:
+          description: 'Int64(e8), RUNE paid to the system on deposit, send messages
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+      required:
+      - startTime
+      - endTime
+      - gasFeeOutbound
+      - gasReimbursement
+      - networkFee
+      type: object
+    ReserveMeta:
+      properties:
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        gasFeeOutbound:
+          description: 'Int64(e8), fee made from outbound
+
+            '
+          type: string
+        gasReimbursement:
+          description: 'Int64(e8), RUNE paid to the pool for compensating the gas
+            fees
+
+            '
+          type: string
+        networkFee:
+          description: 'Int64(e8), RUNE paid to the system on deposit, send messages
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+      required:
+      - startTime
+      - endTime
+      - gasFeeOutbound
+      - gasReimbursement
+      - networkFee
+      type: object
     ReverseTHORNames:
       items: &id007
         description: THORName name
@@ -1658,6 +1927,65 @@ components:
       - affiliateAmount
       - affiliateAddress
       - affiliateBasisPoint
+      type: object
+    RunePriceHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/RunePriceIntervals'
+        meta:
+          $ref: '#/components/schemas/RunePriceMeta'
+      required:
+      - meta
+      - intervals
+      type: object
+    RunePriceIntervals:
+      items:
+        $ref: '#/components/schemas/RunePriceItem'
+      type: array
+    RunePriceItem:
+      properties:
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        runePriceUSD:
+          description: 'Int64(e8), The price of Rune based on the USD pools at the
+            the interval
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+      required:
+      - startTime
+      - endTime
+      - runePriceUSD
+      type: object
+    RunePriceMeta:
+      properties:
+        endRunePriceUSD:
+          description: 'Int64(e8), The price of Rune based on the USD pools at the
+            end of the interval
+
+            '
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        startRunePriceUSD:
+          description: 'Int64(e8), The price of Rune based on the USD pools at the
+            start of the interval
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+      required:
+      - startTime
+      - endTime
+      - startRunePriceUSD
+      - endRunePriceUSD
       type: object
     SaverDetails:
       properties:
@@ -1811,14 +2139,22 @@ components:
       type: object
     SendMetadata:
       properties:
+        code:
+          description: failed transaction code
+          type: string
         memo:
           description: Transaction memo of the send action
           type: string
         networkFees:
           $ref: '#/components/schemas/NetworkFees'
+        reason:
+          description: failed transaction code
+          type: string
       required:
       - networkFees
       - memo
+      - reason
+      - code
       type: object
     StatsData:
       properties:
@@ -1939,6 +2275,14 @@ components:
           type: string
         outCoin:
           $ref: '#/components/schemas/Coin'
+        outEstimation:
+          description: 'Int64, The estimated output based on the first swap block
+            * quantity.
+
+            This is the current method quote calculate the estimation.
+
+            '
+          type: string
         quantity:
           description: 'Int64,  Number of swaps which thorchain is planning to execute.
             Total count at the end might be less.
@@ -1953,6 +2297,7 @@ components:
       - inCoin
       - outCoin
       - depositedCoin
+      - outEstimation
       type: object
     SwapHistory:
       properties:
@@ -1982,6 +2327,31 @@ components:
           type: string
         endTime:
           description: Int64, The end time of bucket in unix timestamp
+          type: string
+        fromSecuredAverageSlip:
+          description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
+            slip for swaps
+
+            from asset to secured asset.
+
+            Big swaps have the same weight as small swaps
+
+            '
+          type: string
+        fromSecuredCount:
+          description: Int64, count of swaps from secured asset to rune
+          type: string
+        fromSecuredFees:
+          description: Int64(e8), the fees collected from swaps from rune to secured
+            asset (in rune)
+          type: string
+        fromSecuredVolume:
+          description: Int64(e8), volume of swaps from rune to secured asset denoted
+            in rune
+          type: string
+        fromSecuredVolumeUSD:
+          description: Int64(e2), volume of swaps from secured asset to rune denoted
+            in USD price of the rune in each swap
           type: string
         fromTradeAverageSlip:
           description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
@@ -2119,6 +2489,31 @@ components:
           description: Int64(e2), volume of swaps from asset to rune denoted in USD
             price of the rune in each swap
           type: string
+        toSecuredAverageSlip:
+          description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
+            slip for swaps
+
+            from rune to secured asset.
+
+            Big swaps have the same weight as small swaps
+
+            '
+          type: string
+        toSecuredCount:
+          description: Int64, count of swaps from rune to secured asset
+          type: string
+        toSecuredFees:
+          description: Int64(e8), the fees collected from swaps from rune to secured
+            asset (in rune)
+          type: string
+        toSecuredVolume:
+          description: Int64(e8), volume of swaps from secured asset to rune denoted
+            in rune
+          type: string
+        toSecuredVolumeUSD:
+          description: Int64(e2), volume of swaps from rune to secured asset denoted
+            in USD price of the rune in each swap
+          type: string
         toTradeAverageSlip:
           description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
             slip for swaps
@@ -2173,6 +2568,8 @@ components:
       - toRuneCount
       - toTradeCount
       - fromTradeCount
+      - toSecuredCount
+      - fromSecuredCount
       - synthMintCount
       - synthRedeemCount
       - totalCount
@@ -2180,6 +2577,8 @@ components:
       - toRuneVolume
       - toTradeVolume
       - fromTradeVolume
+      - toSecuredVolume
+      - fromSecuredVolume
       - synthMintVolume
       - synthRedeemVolume
       - totalVolume
@@ -2187,6 +2586,8 @@ components:
       - toRuneVolumeUSD
       - toTradeVolumeUSD
       - fromTradeVolumeUSD
+      - toSecuredVolumeUSD
+      - fromSecuredVolumeUSD
       - synthMintVolumeUSD
       - synthRedeemVolumeUSD
       - totalVolumeUSD
@@ -2194,6 +2595,8 @@ components:
       - toRuneFees
       - toTradeFees
       - fromTradeFees
+      - toSecuredFees
+      - fromSecuredFees
       - synthMintFees
       - synthRedeemFees
       - totalFees
@@ -2202,6 +2605,8 @@ components:
       - synthMintAverageSlip
       - toTradeAverageSlip
       - fromTradeAverageSlip
+      - toSecuredAverageSlip
+      - fromSecuredAverageSlip
       - synthRedeemAverageSlip
       - averageSlip
       - runePriceUSD
@@ -2213,6 +2618,9 @@ components:
           type: string
         affiliateFee:
           description: Int64 (Basis points, 0-1000, where 1000=10%)
+          type: string
+        inPriceUSD:
+          description: in asset price usd at the first interval
           type: string
         isStreamingSwap:
           description: indicate whether this action was streaming
@@ -2226,6 +2634,9 @@ components:
           type: string
         networkFees:
           $ref: '#/components/schemas/NetworkFees'
+        outPriceUSD:
+          description: out asset price usd at the first interval
+          type: string
         streamingSwapMeta:
           $ref: '#/components/schemas/StreamingSwapMeta'
         swapSlip:
@@ -2254,6 +2665,8 @@ components:
       - memo
       - isStreamingSwap
       - txType
+      - inPriceUSD
+      - outPriceUSD
       type: object
     THORNameDetails:
       properties:
@@ -2401,6 +2814,9 @@ components:
         address:
           description: Sender address
           type: string
+        affiliate:
+          description: if transactions flaged as affiliate
+          type: boolean
         coins:
           $ref: '#/components/schemas/Coins'
         height:
@@ -2472,7 +2888,7 @@ info:
     \ does not hold critical information. To interact with THORChain protocol, users\
     \ should query THORNode directly."
   title: Midgard Public API
-  version: 2.24.3
+  version: 2.30.1
 openapi: 3.0.0
 paths:
   /v2/actions:
@@ -2772,6 +3188,77 @@ paths:
               schema:
                 $ref: '#/components/schemas/Health'
       summary: Health Info
+  /v2/history/affiliate:
+    get:
+      description: "Returns affiliate count, volume in specified interval.\nIf thorname\
+        \ is not specified returns all thornames\n\nHistory endpoint has two modes:\n\
+        * With Interval parameter it returns a series of time buckets. From and To\
+        \ dates will\n  be rounded to the Interval boundaries.\n* Without Interval\
+        \ parameter a single From..To search is performed with exact timestamps.\n\
+        \n\n* Interval: possible values: 5min, hour, day, week, month, quarter, year.\n\
+        * count: [1..400]. Defines number of intervals. Don't provide if Interval\
+        \ is missing.\n* from/to: optional int, unix second.\n\nPossible usages with\
+        \ interval.\n* last 10 days: `?interval=day&count=10`\n* last 10 days before\
+        \ to: `?interval=day&count=10&to=1608825600`\n* next 10 days after from: `?interval=day&count=10&from=1606780800`\n\
+        * Days between from and to. From defaults to start of chain, to defaults to\
+        \ now.\n  Only the first 400 intervals are returned:\n  `interval=day&from=1606780800&to=1608825600`\n\
+        \nPagination is possible with from&count and then using the returned meta.endTime\
+        \ as the\nFrom parameter of the next query.\n\nPossible configurations without\
+        \ interval:\n* exact search for one time frame: `?from=1606780899&to=1608825600`\n\
+        * one time frame until now: `?from=1606780899`\n* from chain start until now:\
+        \ no query parameters\n"
+      operationId: GetAffiliateHistory
+      parameters:
+      - description: Return history given thorname. Returns sum of all thornames if
+          missing.
+        in: query
+        name: thorname
+        schema:
+          type: string
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400].
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now.
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffiliateHistory'
+      summary: Affiliate History
   /v2/history/depths/{pool}:
     get:
       description: "Returns the asset and rune depths and price.\nThe values report\
@@ -2977,6 +3464,111 @@ paths:
               schema:
                 $ref: '#/components/schemas/LiquidityHistory'
       summary: Liquidity Changes History
+  /v2/history/reserve:
+    get:
+      description: 'Returns reserve module network fee, outbound fee, and gas reimbursement
+        flow in
+
+        bucketed history
+
+        '
+      operationId: GetReserveHistory
+      parameters:
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400].
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now.
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReserveHistory'
+      summary: Reserve income and expenses over bucketed history
+  /v2/history/rune:
+    get:
+      description: 'Returns rune price history in USD based on the time bucket given
+
+        '
+      operationId: GetRunePriceHistory
+      parameters:
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400].
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now.
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunePriceHistory'
+      summary: Rune price history in USD
   /v2/history/runepool:
     get:
       description: "Returns RUNEPool members and units.\nThe values report the state\

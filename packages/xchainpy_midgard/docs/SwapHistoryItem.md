@@ -5,6 +5,11 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **average_slip** | **str** | Float64 (Basis points, 0-10000, where 10000&#x3D;100%), the weighted average (by count) of toAssetAverageSlip, toRuneAverageSlip, synthMintAverageSlip, synthRedeemAverageSlip. Big swaps have the same weight as small swaps.  | 
 **end_time** | **str** | Int64, The end time of bucket in unix timestamp | 
+**from_secured_average_slip** | **str** | Float64 (Basis points, 0-10000, where 10000&#x3D;100%), the average slip for swaps from asset to secured asset. Big swaps have the same weight as small swaps  | 
+**from_secured_count** | **str** | Int64, count of swaps from secured asset to rune | 
+**from_secured_fees** | **str** | Int64(e8), the fees collected from swaps from rune to secured asset (in rune) | 
+**from_secured_volume** | **str** | Int64(e8), volume of swaps from rune to secured asset denoted in rune | 
+**from_secured_volume_usd** | **str** | Int64(e2), volume of swaps from secured asset to rune denoted in USD price of the rune in each swap | 
 **from_trade_average_slip** | **str** | Float64 (Basis points, 0-10000, where 10000&#x3D;100%), the average slip for swaps from asset to trade asset. Big swaps have the same weight as small swaps  | 
 **from_trade_count** | **str** | Int64, count of swaps from trade asset to rune | 
 **from_trade_fees** | **str** | Int64(e8), the fees collected from swaps from rune to trade asset (in rune) | 
@@ -32,6 +37,11 @@ Name | Type | Description | Notes
 **to_rune_fees** | **str** | Int64(e8), the fees collected from swaps from asset to rune (in rune) | 
 **to_rune_volume** | **str** | Int64(e8), volume of swaps from asset to rune denoted in rune | 
 **to_rune_volume_usd** | **str** | Int64(e2), volume of swaps from asset to rune denoted in USD price of the rune in each swap | 
+**to_secured_average_slip** | **str** | Float64 (Basis points, 0-10000, where 10000&#x3D;100%), the average slip for swaps from rune to secured asset. Big swaps have the same weight as small swaps  | 
+**to_secured_count** | **str** | Int64, count of swaps from rune to secured asset | 
+**to_secured_fees** | **str** | Int64(e8), the fees collected from swaps from rune to secured asset (in rune) | 
+**to_secured_volume** | **str** | Int64(e8), volume of swaps from secured asset to rune denoted in rune | 
+**to_secured_volume_usd** | **str** | Int64(e2), volume of swaps from rune to secured asset denoted in USD price of the rune in each swap | 
 **to_trade_average_slip** | **str** | Float64 (Basis points, 0-10000, where 10000&#x3D;100%), the average slip for swaps from rune to trade asset. Big swaps have the same weight as small swaps  | 
 **to_trade_count** | **str** | Int64, count of swaps from rune to trade asset | 
 **to_trade_fees** | **str** | Int64(e8), the fees collected from swaps from rune to trade asset (in rune) | 

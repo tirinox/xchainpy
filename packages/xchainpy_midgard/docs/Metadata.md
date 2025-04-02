@@ -4,6 +4,9 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **add_liquidity** | [**AddLiquidityMetadata**](AddLiquidityMetadata.md) |  | [optional] 
+**bond** | [**BondMetadata**](BondMetadata.md) |  | [optional] 
+**contract** | [**ContractMetadata**](ContractMetadata.md) |  | [optional] 
+**failed** | [**FailedMetadata**](FailedMetadata.md) |  | [optional] 
 **refund** | [**RefundMetadata**](RefundMetadata.md) |  | [optional] 
 **rune_pool_deposit** | [**RunePoolDepositMetadata**](RunePoolDepositMetadata.md) |  | [optional] 
 **rune_pool_withdraw** | [**RunePoolWithdrawMetadata**](RunePoolWithdrawMetadata.md) |  | [optional] 
