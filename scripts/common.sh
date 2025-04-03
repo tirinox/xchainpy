@@ -92,6 +92,8 @@ function fix_swagger_spec() {
     # midgard
     elif [ "$PACKAGE_NAME" == "xchainpy2_midgard" ]; then
       SWAGGER_FIX_MODE="midgard"
+    elif [ "$PACKAGE_NAME" == "xchainpy2_midgard_maya" ]; then
+      SWAGGER_FIX_MODE="midgard"
     else
       # raise error
       echo "Invalid package name ($PACKAGE_NAME). Cannot set SWAGGER_FIX_MODE! Aborting."

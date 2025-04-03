@@ -18,8 +18,12 @@ gen_mayanode: # Generate mayanode client from OpenAPI spec
 	cd scripts && ./gen_mayanode_client.sh
 
 .PHONY: gen_midgard
-gen_midgard: # Generate midgard client from OpenAPI spec
+gen_midgard: # Generate midgard client of THORChain protocol from OpenAPI spec
 	cd scripts && ./gen_midgard_client.sh
+
+.PHONY: gen_midgard_maya
+gen_midgard_maya: # Generate Midgard client of MayaProtocol from OpenAPI spec
+	cd scripts && ./gen_midgard_client_maya.sh
 
 .PHONY: test
 test: # Run tests
