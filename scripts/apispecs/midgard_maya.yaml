@@ -1,0 +1,3767 @@
+components:
+  responses:
+    ActionsResponse:
+      content:
+        application/json:
+          schema:
+            properties:
+              actions:
+                items:
+                  $ref: '#/components/schemas/Action'
+                type: array
+              count:
+                description: 'Int64, number of results matching the given filters.
+                  It may be -1 if
+
+                  Midgard is having trouble counting the results and has to cancel
+                  the count query
+
+                  (temporary fix). Also, if new action parameters is used it won''t
+                  be returned.
+
+                  '
+                type: string
+              meta:
+                $ref: '#/components/schemas/ActionMeta'
+            required:
+            - actions
+            - meta
+            type: object
+      description: Returns an array of actions for the given filters.
+    BalanceResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Balance'
+      description: object containing balance details for a given address
+    BorrowerDetailsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BorrowerDetails'
+      description: object containing loan data for a specific borrower
+    BorrowersResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Borrowers'
+      description: array of all the borrowers
+    CACAOPoolDetailsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CACAOPoolDetails'
+      description: object containing CACAOPool data for specific members
+    CACAOPoolHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CACAOPoolHistory'
+      description: Members and Units history of CACAOPool
+    CacaoPriceHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CacaoPriceHistory'
+      description: Returns cacao price history in USD based on the time bucket given
+    ChurnsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Churns'
+      description: Array containing the last occurred churns in block height and timestamp
+    DepthHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DepthHistory'
+      description: Depth and price history
+    EarningsHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EarningsHistory'
+      description: earnings history
+    HealthResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Health'
+      description: Returns health status for Midgard
+    KnownPoolsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KnownPools'
+      description: Object containing known pools to status mapping
+    LiquidityHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LiquidityHistory'
+      description: Withdrawals and deposits history
+    MemberDetailsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MemberDetails'
+      description: object containing liquidity provider data for a specific member
+    MembersResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Members'
+      description: array of all the members
+    NetworkResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Network'
+      description: Returns an object containing Network data
+    NodesResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Nodes'
+      description: Returns an object containing Node public key data
+    PoolResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PoolDetail'
+      description: Object containing details for one pool
+    PoolStatsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PoolStatsDetail'
+      description: Stats for one pool.
+    PoolsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PoolDetails'
+      description: Array of pool details
+    ReverseTHORNameResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReverseTHORNames'
+      description: object containing a list of THORName names for a specific address
+    SaverDetailsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SaverDetails'
+      description: object containing saver data for a specific member
+    SaversHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SaversHistory'
+      description: Depth and Units history of savers
+    StatsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/StatsData'
+      description: object containing global MAYAChain data
+    SwapHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SwapHistory'
+      description: Swap count, volume, fee and slip history
+    THORNameDetailsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/THORNameDetails'
+      description: object containing THORName data for a specific name
+    TVLHistoryResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TVLHistory'
+      description: Total pool depths, total bonds, and total value locked history
+  schemas:
+    Action:
+      description: action details among with related transactions
+      properties:
+        date:
+          description: Int64, nano timestamp of the block at which the action was
+            registered
+          type: string
+        height:
+          description: Int64, height of the block at which the action was registered
+          type: string
+        in:
+          description: Inbound transactions related to the action
+          items:
+            $ref: '#/components/schemas/Transaction'
+          type: array
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        out:
+          description: Outbound transactions related to the action
+          items:
+            $ref: '#/components/schemas/Transaction'
+          type: array
+        pools:
+          description: Pools involved in the action
+          items:
+            type: string
+          type: array
+        status:
+          description: 'Indicates if the action is completed or if related outbound
+            transactions are still
+
+            pending.
+
+            '
+          enum:
+          - success
+          - pending
+          type: string
+        type:
+          description: Type of action
+          enum:
+          - swap
+          - addLiquidity
+          - withdraw
+          - donate
+          - refund
+          - switch
+          - thorname
+          - send
+          - cacaoPoolDeposit
+          - cacaoPoolWithdraw
+          type: string
+      required:
+      - pools
+      - type
+      - status
+      - in
+      - out
+      - date
+      - height
+      - metadata
+      type: object
+    ActionMeta:
+      description: action query metadata
+      properties:
+        nextPageToken:
+          description: "Int64, The last action event_id that can be used for pagination.\
+            \ \nThis token is needed to be given for next page.\n"
+          type: string
+        prevPageToken:
+          description: 'Int64, The first action event_id that can be used for previous
+            pagination.
+
+            This token is needed to be given for previous page.
+
+            '
+          type: string
+      required:
+      - nextPageToken
+      - prevPageToken
+      type: object
+    AddLiquidityMetadata:
+      properties:
+        affiliateAddress:
+          description: Affiliate fee address of the addLiquidity
+          type: string
+        affiliateFee:
+          description: Int64 (Basis points, 0-1000, where 1000=10%)
+          type: string
+        liquidityUnits:
+          description: 'Int64, amount of liquidity units assigned to the member as
+            result of the liquidity
+
+            deposit
+
+            '
+          type: string
+        memo:
+          description: Transaction memo of the addLiquidity action
+          type: string
+      required:
+      - liquidityUnits
+      - memo
+      - affiliateAddress
+      - affiliateFee
+      type: object
+    Balance:
+      properties:
+        coins:
+          $ref: '#/components/schemas/Coins'
+        date:
+          description: full timestamp (nanoseconds since 1970) of the block at which
+            the returned balance snapshot was valid
+          example: '946684801000000000'
+          type: string
+        height:
+          description: height of the block at which the returned balance snapshot
+            was valid
+          example: '2000000'
+          type: string
+      required:
+      - height
+      - date
+      - coins
+      type: object
+    BlockRewards:
+      properties:
+        blockReward:
+          type: string
+        bondReward:
+          type: string
+        poolReward:
+          type: string
+      required:
+      - blockReward
+      - bondReward
+      - poolReward
+      type: object
+    BondMetadata:
+      properties:
+        fee:
+          description: node operator fee
+          type: string
+        memo:
+          description: Transaction memo of bond event
+          type: string
+        nodeAddress:
+          description: node address
+          type: string
+        provider:
+          description: bond provider address
+          type: string
+      required:
+      - memo
+      - nodeAddress
+      type: object
+    BondMetrics:
+      properties:
+        averageActiveBond:
+          description: Int64(e8), Average bond of active nodes
+          type: string
+        averageStandbyBond:
+          description: Int64(e8), Average bond of standby nodes
+          type: string
+        bondHardCap:
+          description: Int64(e8), Highest effective bond for nodes
+          type: string
+        maximumActiveBond:
+          description: Int64(e8), Maxinum bond of active nodes
+          type: string
+        maximumStandbyBond:
+          description: Int64(e8), Maximum bond of standby nodes
+          type: string
+        medianActiveBond:
+          description: Int64(e8), Median bond of active nodes
+          type: string
+        medianStandbyBond:
+          description: Int64(e8), Median bond of standby nodes
+          type: string
+        minimumActiveBond:
+          description: Int64(e8), Minumum bond of active nodes
+          type: string
+        minimumStandbyBond:
+          description: Int64(e8), Minumum bond of standby nodes
+          type: string
+        totalActiveBond:
+          description: Int64(e8), Total bond of active nodes
+          type: string
+        totalStandbyBond:
+          description: Int64(e8), Total bond of standby nodes
+          type: string
+      required:
+      - totalActiveBond
+      - averageActiveBond
+      - medianActiveBond
+      - minimumActiveBond
+      - maximumActiveBond
+      - bondHardCap
+      - totalStandbyBond
+      - averageStandbyBond
+      - medianStandbyBond
+      - minimumStandbyBond
+      - maximumStandbyBond
+      type: object
+    BorrowerDetails:
+      properties:
+        pools:
+          description: List details of all the loans identified with the given address
+          items:
+            $ref: '#/components/schemas/BorrowerPool'
+          type: array
+      required:
+      - pools
+      type: object
+    BorrowerPool:
+      properties:
+        collateral_asset:
+          description: The asset that the borrower used as collateral
+          type: string
+        collateral_deposited:
+          description: Int64(e8), The total amount of collateral that user deposited
+          type: string
+        collateral_withdrawn:
+          description: Int64(e8), The total amount of collateral the system paid back
+            to the user
+          type: string
+        debt_issued_tor:
+          description: Int64(e8), The total amount of debt issued as debt for user.
+            denominated in TOR.
+          type: string
+        debt_repaid_tor:
+          description: Int64(e8), The total amount of debt that the user paid back.
+            denominated in TOR.
+          type: string
+        last_open_loan_timestamp:
+          description: Int64, Unix timestamp for the last time borrower opened a loan
+          type: string
+        last_repay_loan_timestamp:
+          description: Int64, Unix timestamp for the last time borrower repayment
+            occurred
+          type: string
+        target_assets:
+          items:
+            description: All target assets that the user used as debt target
+            example: ETH.ETH
+            type: string
+          type: array
+      required:
+      - collateral_asset
+      - target_assets
+      - debt_issued_tor
+      - debt_repaid_tor
+      - collateral_deposited
+      - collateral_withdrawn
+      - last_open_loan_timestamp
+      - last_repay_loan_timestamp
+      type: object
+    Borrowers:
+      items: &id001
+        description: Borrower address
+        example: tbnb1fj2lqj8dvr5pumfchc7ntlfqd2v6zdxqwjewf5
+        type: string
+      type: array
+    CACAOPoolDetails:
+      description: List details of all the CACAOPoolPools identified with the given
+        addresses
+      items: &id002
+        $ref: '#/components/schemas/CACAOPoolProvider'
+      type: array
+    CACAOPoolHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/CACAOPoolHistoryIntervals'
+        meta:
+          $ref: '#/components/schemas/CACAOPoolHistoryMeta'
+      required:
+      - meta
+      - intervals
+      type: object
+    CACAOPoolHistoryIntervals:
+      items:
+        $ref: '#/components/schemas/CACAOPoolHistoryItem'
+      type: array
+    CACAOPoolHistoryItem:
+      properties:
+        count:
+          description: Int64, Number of CACAOPool members in the pool at the end of
+            the interval
+          type: string
+        depth:
+          description: Int64(e8), The depth in the CACAOPool vault at the end of the
+            interval
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+        units:
+          description: 'Int64, Units in the CACAOPool vault at the end of the interval
+
+            '
+          type: string
+      required:
+      - startTime
+      - endTime
+      - count
+      - units
+      type: object
+    CACAOPoolHistoryMeta:
+      properties:
+        endCount:
+          description: Int64, Number of CACAOPool member in the CACAOPool vault at
+            the end of the interval at time endTime
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        endUnits:
+          description: Int64,  Units in the CACAOPool vault at the end of the interval
+            at time endTime
+          type: string
+        startCount:
+          description: 'Int64, Number of CACAOPool member in the CACAOPool vault at
+            the start of the interval at time startTime
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+        startUnits:
+          description: 'Int64,  Units in the CACAOPool vault at the start of the interval
+            at time startTime
+
+            '
+          type: string
+      required:
+      - startTime
+      - endTime
+      - startUnits
+      - startCount
+      - endUnits
+      - endCount
+      type: object
+    CACAOPoolProvider:
+      properties:
+        cacaoAdded:
+          description: Int64(e8), total asset added in the CACAOPool by member
+          type: string
+        cacaoAddress:
+          description: address used by the member
+          type: string
+        cacaoDeposit:
+          description: Int64(e8), total asset that is currently deposited by the member
+          type: string
+        cacaoWithdrawn:
+          description: Int64(e8), total asset withdrawn from the CACAOPool by the
+            member
+          type: string
+        dateFirstAdded:
+          description: Int64, Unix timestamp for the first time member deposited into
+            the CACAOPool
+          type: string
+        dateLastAdded:
+          description: Int64, Unix timestamp for the last time member deposited into
+            the CACAOPool
+          type: string
+        units:
+          description: Int64, units that belong the the member
+          type: string
+      required:
+      - cacaoAddress
+      - units
+      - cacaoAdded
+      - cacaoWithdrawn
+      - cacaoDeposit
+      - dateFirstAdded
+      - dateLastAdded
+      type: object
+    CacaoPoolDepositMetadata:
+      properties:
+        units:
+          description: "Int64, amount of units assigned to the member as result of\
+            \ the \ndeposit\n"
+          type: string
+      required:
+      - units
+      type: object
+    CacaoPoolWithdrawMetadata:
+      properties:
+        affiliateAddress:
+          description: Transaction affiliate address
+          type: string
+        affiliateAmount:
+          description: Int64, Transaction affiliate amount in rune
+          type: string
+        affiliateBasisPoint:
+          description: Transaction affiliate basis point
+          type: string
+        basisPoints:
+          description: 'Int64 (Basis points, 0-10000, where 10000=100%), percentage
+            of total ownership
+
+            withdrawn
+
+            '
+          type: string
+        units:
+          description: 'Int64, amount of units removed from the member as result of
+            the withdrawal
+
+            '
+          type: string
+      required:
+      - units
+      - basisPoints
+      - affiliateAmount
+      - affiliateAddress
+      - affiliateBasisPoint
+      type: object
+    CacaoPriceHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/CacaoPriceIntervals'
+        meta:
+          $ref: '#/components/schemas/CacaoPriceMeta'
+      required:
+      - meta
+      - intervals
+      type: object
+    CacaoPriceIntervals:
+      items:
+        $ref: '#/components/schemas/CacaoPriceItem'
+      type: array
+    CacaoPriceItem:
+      properties:
+        cacaoPriceUSD:
+          description: 'Int64(e8), The price of Cacao based on the USD pools at the
+            the interval
+
+            '
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+      required:
+      - startTime
+      - endTime
+      - cacaoPriceUSD
+      type: object
+    CacaoPriceMeta:
+      properties:
+        endCacaoPriceUSD:
+          description: 'Int64(e8), The price of Cacao based on the USD pools at the
+            end of the interval
+
+            '
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        startCacaoPriceUSD:
+          description: 'Int64(e8), The price of Cacao based on the USD pools at the
+            start of the interval
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+      required:
+      - startTime
+      - endTime
+      - startCacaoPriceUSD
+      - endCacaoPriceUSD
+      type: object
+    ChurnItem:
+      properties:
+        date:
+          description: full timestamp (nanoseconds since 1970) of the block at which
+            the churn occurred
+          example: '946684801000000000'
+          type: string
+        height:
+          description: height of the block at which the churn occurred
+          example: '2000000'
+          type: string
+      required:
+      - height
+      - date
+      type: object
+    Churns:
+      items: &id003
+        $ref: '#/components/schemas/ChurnItem'
+      type: array
+    Coin:
+      description: Represents a digital currency amount
+      properties:
+        amount:
+          description: Int64(e8), asset Amount.
+          type: string
+        asset:
+          description: Asset in CHAIN.SYMBOL format
+          type: string
+      required:
+      - asset
+      - amount
+      type: object
+    Coins:
+      items:
+        $ref: '#/components/schemas/Coin'
+      type: array
+    DepthHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/DepthHistoryIntervals'
+        meta:
+          $ref: '#/components/schemas/DepthHistoryMeta'
+      required:
+      - meta
+      - intervals
+      type: object
+    DepthHistoryIntervals:
+      items:
+        $ref: '#/components/schemas/DepthHistoryItem'
+      type: array
+    DepthHistoryItem:
+      properties:
+        assetDepth:
+          description: Int64(e8), the amount of Asset in the pool at the end of the
+            interval
+          type: string
+        assetPrice:
+          description: Float, price of asset in rune. I.e. rune amount / asset amount
+          type: string
+        assetPriceUSD:
+          description: Float, the price of asset in USD (based on the deepest USD
+            pool).
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        liquidityUnits:
+          description: Int64, Liquidity Units in the pool at the end of the interval
+          type: string
+        luvi:
+          description: 'Float, The liquidity unit value index. Sqrt(assetDepth * runeDepth)/liquidity
+            units
+
+            '
+          type: string
+        membersCount:
+          description: Int64, Number of liquidity members in the pool at the end of
+            the interval
+          type: string
+        runeDepth:
+          description: Int64(e8), the amount of Rune in the pool at the end of the
+            interval
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+        synthSupply:
+          description: Int64, Synth supply in the pool at the end of the interval
+          type: string
+        synthUnits:
+          description: Int64, Synth Units in the pool at the end of the interval
+          type: string
+        units:
+          description: 'Int64, Total Units (synthUnits + liquidityUnits) in the pool
+            at the end of the interval
+
+            '
+          type: string
+      required:
+      - startTime
+      - endTime
+      - assetDepth
+      - runeDepth
+      - assetPrice
+      - assetPriceUSD
+      - liquidityUnits
+      - membersCount
+      - synthUnits
+      - synthSupply
+      - units
+      - luvi
+      type: object
+    DepthHistoryItemPool:
+      properties:
+        pool:
+          description: asset for the given pool
+          type: string
+        totalDepth:
+          description: 'Int64(e8) in rune, the total value in the pool (both assets
+            and rune) at the end of the interval.
+
+            Note: this is twice of the pool''s Rune depth. (as pools are symmetrically
+            balance)
+
+            '
+          type: string
+      required:
+      - pool
+      - totalDepth
+      type: object
+    DepthHistoryMeta:
+      properties:
+        endAssetDepth:
+          description: 'Int64(e8), the amount of Asset in the pool at the end of the
+            interval at time endTime
+
+            '
+          type: string
+        endLPUnits:
+          description: Int64, Liquidity Units in the pool at the end of the interval
+            at time endTime
+          type: string
+        endMemberCount:
+          description: Int64, Number of liquidity members in the pool at the end of
+            the interval at time endTime
+          type: string
+        endRuneDepth:
+          description: 'Int64(e8), the amount of Rune in the pool at the end of the
+            interval at time endTime
+
+            '
+          type: string
+        endSynthUnits:
+          description: Int64, Synth Units in the pool at the end of the interval at
+            time endTime
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        luviIncrease:
+          description: 'Float, The liquidity unit value index increase between startTime
+            and endTime
+
+            '
+          type: string
+        priceShiftLoss:
+          description: Float, The impermanent loss between the first and last depth
+            item
+          type: string
+        startAssetDepth:
+          description: 'Int64(e8), the amount of Asset in the pool at the start of
+            the interval at time
+
+            startTime
+
+            '
+          type: string
+        startLPUnits:
+          description: 'Int64, Liquidity Units in the pool at the start of the interval
+            at time startTime
+
+            '
+          type: string
+        startMemberCount:
+          description: 'Int64, Number of liquidity member in the pool at the start
+            of the interval at time startTime
+
+            '
+          type: string
+        startRuneDepth:
+          description: 'Int64(e8), the amount of Rune in the pool at the start of
+            the interval at time startTime
+
+            '
+          type: string
+        startSynthUnits:
+          description: 'Int64, Synth Units in the pool at the start of the interval
+            at time startTime
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+      required:
+      - startTime
+      - endTime
+      - priceShiftLoss
+      - luviIncrease
+      - startAssetDepth
+      - startRuneDepth
+      - startLPUnits
+      - startMemberCount
+      - startSynthUnits
+      - endAssetDepth
+      - endRuneDepth
+      - endLPUnits
+      - endMemberCount
+      - endSynthUnits
+      type: object
+    EarningsHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/EarningsHistoryIntervals'
+        meta:
+          $ref: '#/components/schemas/EarningsHistoryItem'
+      required:
+      - meta
+      - intervals
+      type: object
+    EarningsHistoryIntervals:
+      items:
+        $ref: '#/components/schemas/EarningsHistoryItem'
+      type: array
+    EarningsHistoryItem:
+      properties:
+        avgNodeCount:
+          description: float64, Average amount of active nodes during the time interval
+          type: string
+        blockRewards:
+          description: Int64(e8), Total block rewards emitted during the time interval
+          type: string
+        bondingEarnings:
+          description: Int64(e8), Share of earnings sent to nodes during the time
+            interval
+          type: string
+        cacaoPriceUSD:
+          description: 'Float, the price of Cacao based on the deepest USD pool at
+            the end of the interval.
+
+            '
+          type: string
+        earnings:
+          description: 'Int64(e8), System income generated during the time interval.
+            It is the sum of
+
+            liquidity fees and block rewards
+
+            '
+          type: string
+        endTime:
+          description: Int64, The end time of interval in unix timestamp
+          type: string
+        liquidityEarnings:
+          description: Int64(e8), Share of earnings sent to pools during the time
+            interval
+          type: string
+        liquidityFees:
+          description: 'Int64(e8), Total liquidity fees, converted to RUNE, collected
+            during the time interval
+
+            '
+          type: string
+        pools:
+          description: Earnings data for each pool for the time interval
+          items:
+            $ref: '#/components/schemas/EarningsHistoryItemPool'
+          type: array
+        runePriceUSD:
+          description: 'Float, the price of Cacao based on the deepest USD pool at
+            the end of the interval.
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of interval in unix timestamp
+          type: string
+      required:
+      - startTime
+      - endTime
+      - liquidityFees
+      - blockRewards
+      - earnings
+      - bondingEarnings
+      - liquidityEarnings
+      - avgNodeCount
+      - cacaoPriceUSD
+      - runePriceUSD
+      - pools
+      type: object
+    EarningsHistoryItemPool:
+      description: pool earnings data during the time interval
+      properties:
+        assetLiquidityFees:
+          description: Int64(e8), liquidity fees collected in the pool's asset
+          type: string
+        earnings:
+          description: Int64(e8), total earnings in RUNE (totalLiquidityFees + rewards)
+          type: string
+        pool:
+          description: asset for the given pool
+          type: string
+        rewards:
+          description: 'Int64(e8), RUNE amount sent to (positive) or taken from (negative)
+            the pool as
+
+            a result of balancing it''s share of system income each block
+
+            '
+          type: string
+        runeLiquidityFees:
+          description: Int64(e8), liquidity fees collected in RUNE
+          type: string
+        saverEarning:
+          description: 'Int64(e8), total saver reward collected by the pool, shown
+            in pool''s ASSET
+
+            '
+          type: string
+        totalLiquidityFeesRune:
+          description: 'Int64(e8), total liquidity fees (assetFees + runeFees) collected,
+            shown in RUNE
+
+            '
+          type: string
+      required:
+      - pool
+      - assetLiquidityFees
+      - runeLiquidityFees
+      - totalLiquidityFeesRune
+      - saverEarning
+      - rewards
+      - earnings
+      type: object
+    FailedMetadata:
+      properties:
+        code:
+          description: failed transaction code
+          type: string
+        memo:
+          description: failed transaction memo
+          type: string
+        reason:
+          description: failed transaction code
+          type: string
+      required:
+      - memo
+      - reason
+      - code
+      type: object
+    GenesisInf:
+      properties:
+        hash:
+          description: Genesis Block hash
+          type: string
+        height:
+          description: Genesis Block height
+          type: integer
+      required:
+      - height
+      - hash
+      type: object
+    Health:
+      properties:
+        database:
+          description: True means healthy, connected to database
+          type: boolean
+        genesisInfo:
+          $ref: '#/components/schemas/GenesisInf'
+        inSync:
+          description: True means healthy. False means Midgard is still catching up
+            to the chain
+          type: boolean
+        lastAggregated:
+          $ref: '#/components/schemas/HeightTS'
+        lastCommitted:
+          $ref: '#/components/schemas/HeightTS'
+        lastFetched:
+          $ref: '#/components/schemas/HeightTS'
+        lastThorNode:
+          $ref: '#/components/schemas/HeightTS'
+        scannerHeight:
+          description: Int64, the current block count
+          type: string
+      required:
+      - database
+      - scannerHeight
+      - inSync
+      - lastThorNode
+      - lastFetched
+      - lastCommitted
+      - lastAggregated
+      type: object
+    HeightTS:
+      properties:
+        height:
+          description: Block height
+          type: integer
+        timestamp:
+          description: Block timestamp (seconds since epoch)
+          type: integer
+      required:
+      - height
+      - timestamp
+      type: object
+    KnownPools:
+      additionalProperties:
+        type: string
+      example:
+        BTC.BTC: available
+      type: object
+    LiquidityHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/LiquidityHistoryIntervals'
+        meta:
+          $ref: '#/components/schemas/LiquidityHistoryItem'
+      required:
+      - meta
+      - intervals
+      type: object
+    LiquidityHistoryIntervals:
+      items:
+        $ref: '#/components/schemas/LiquidityHistoryItem'
+      type: array
+    LiquidityHistoryItem:
+      properties:
+        addAssetLiquidityVolume:
+          description: 'Int64(e8), total assets deposited during the time interval.
+
+            Denoted in Rune using the price at deposit time.
+
+            '
+          type: string
+        addLiquidityCount:
+          description: 'Int64, number of deposits during the time interval.
+
+            '
+          type: string
+        addLiquidityVolume:
+          description: 'Int64(e8), total of rune and asset deposits.
+
+            Denoted in Rune (using the price at deposit time).
+
+            '
+          type: string
+        addRuneLiquidityVolume:
+          description: 'Int64(e8), total Rune deposited during the time interval.
+
+            '
+          type: string
+        cacaoPriceUSD:
+          description: 'Float, the price of Cacao based on the deepest USD pool at
+            the end of the interval.
+
+            '
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        impermanentLossProtectionPaid:
+          description: 'Int64(e8), part of the withdrawRuneVolume which was payed
+            because of impermanent loss
+
+            protection.
+
+            '
+          type: string
+        net:
+          description: 'Int64(e8), net liquidity changes (withdrawals - deposits)
+            during the time interval
+
+            '
+          type: string
+        runePriceUSD:
+          description: 'Float, the price of Rune based on the deepest USD pool at
+            the end of the interval.
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+        withdrawAssetVolume:
+          description: 'Int64(e8), total assets withdrawn during the time interval.
+
+            Denoted in Rune using the price at withdraw time.
+
+            '
+          type: string
+        withdrawCount:
+          description: 'Int64, number of withdraw during the time interval.
+
+            '
+          type: string
+        withdrawRuneVolume:
+          description: 'Int64(e8), total Rune withdrawn during the time interval.
+
+            '
+          type: string
+        withdrawVolume:
+          description: 'Int64(e8), total of rune and asset withdrawals.
+
+            Denoted in Rune (using the price at withdraw time).
+
+            '
+          type: string
+      required:
+      - startTime
+      - endTime
+      - addAssetLiquidityVolume
+      - addRuneLiquidityVolume
+      - addLiquidityVolume
+      - addLiquidityCount
+      - withdrawAssetVolume
+      - withdrawRuneVolume
+      - impermanentLossProtectionPaid
+      - withdrawVolume
+      - withdrawCount
+      - net
+      - cacaoPriceUSD
+      - runePriceUSD
+      type: object
+    MemberDetails:
+      properties:
+        pools:
+          description: List details of all the liquidity providers identified with
+            the given address
+          items:
+            $ref: '#/components/schemas/MemberPool'
+          type: array
+      required:
+      - pools
+      type: object
+    MemberPool:
+      properties:
+        assetAdded:
+          description: Int64(e8), total asset added to the pool by member
+          type: string
+        assetAddress:
+          description: asset address used by the member
+          type: string
+        assetDeposit:
+          description: "Int64(e8), total asset that is currently deposited to the\
+            \ pool by member.\nThis field is same as the `asset_deposit_value` field\
+            \ in thornode. Mainly can be used \nfor tracking, mainly Growth Percentage\n"
+          type: string
+        assetPending:
+          description: 'Int64(e8), asset sent but not added yet, it will be added
+            when the rune pair arrives
+
+            '
+          type: string
+        assetSlashed:
+          description: Int64(e8), total asset slashed from the member
+          type: string
+        assetWithdrawn:
+          description: Int64(e8), total asset withdrawn from the pool by member
+          type: string
+        cacaoDeposit:
+          description: "Int64(e8), total Cacao that is currently deposited to the\
+            \ pool by member.\nThis field is same as the `rune_deposit_value` field\
+            \ in thornode. Mainly can be used \nfor tracking, mainly Growth Percentage\n"
+          type: string
+        cacaoSlashed:
+          description: Int64(e10), total Cacao slashed from the member
+          type: string
+        dateFirstAdded:
+          description: Int64, Unix timestamp for the first time member deposited into
+            the pool
+          type: string
+        dateLastAdded:
+          description: Int64, Unix timestamp for the last time member deposited into
+            the pool
+          type: string
+        liquidityUnits:
+          description: Int64, pool liquidity units that belong the the member
+          type: string
+        pool:
+          description: Pool rest of the data refers to
+          type: string
+        runeAdded:
+          description: Int64(e8), total Rune added to the pool by member
+          type: string
+        runeAddress:
+          description: Rune address used by the member
+          type: string
+        runePending:
+          description: 'Int64(e8), Rune sent but not added yet, it will be added when
+            the asset pair arrives
+
+            '
+          type: string
+        runeWithdrawn:
+          description: Int64(e8), total Rune withdrawn from the pool by member
+          type: string
+      required:
+      - pool
+      - runeAddress
+      - assetAddress
+      - liquidityUnits
+      - cacaoDeposit
+      - assetDeposit
+      - runeAdded
+      - assetAdded
+      - runePending
+      - assetPending
+      - runeWithdrawn
+      - assetWithdrawn
+      - cacaoSlashed
+      - assetSlashed
+      - dateFirstAdded
+      - dateLastAdded
+      type: object
+    Members:
+      items: &id005
+        description: Member address
+        example: tbnb1fj2lqj8dvr5pumfchc7ntlfqd2v6zdxqwjewf5
+        type: string
+      type: array
+    Metadata:
+      properties:
+        addLiquidity:
+          $ref: '#/components/schemas/AddLiquidityMetadata'
+        bond:
+          $ref: '#/components/schemas/BondMetadata'
+        cacaoPoolDeposit:
+          $ref: '#/components/schemas/CacaoPoolDepositMetadata'
+        cacaoPoolWithdraw:
+          $ref: '#/components/schemas/CacaoPoolWithdrawMetadata'
+        failed:
+          $ref: '#/components/schemas/FailedMetadata'
+        refund:
+          $ref: '#/components/schemas/RefundMetadata'
+        send:
+          $ref: '#/components/schemas/SendMetadata'
+        swap:
+          $ref: '#/components/schemas/SwapMetadata'
+        thorname:
+          $ref: '#/components/schemas/ThornameMetadata'
+        withdraw:
+          $ref: '#/components/schemas/WithdrawMetadata'
+      type: object
+    Network:
+      properties:
+        activeBonds:
+          description: 'Array of rune amounts (e8) bonded by each active node.
+
+            '
+          items:
+            type: string
+          type: array
+        activeNodeCount:
+          description: Int64, Number of active nodes
+          type: string
+        blockRewards:
+          $ref: '#/components/schemas/BlockRewards'
+        bondMetrics:
+          $ref: '#/components/schemas/BondMetrics'
+        bondingAPY:
+          description: 'Float, E.g. 0.01 = 1%. Estimate of the compounded bonding
+            earnings based on the current
+
+            reserve size, emmission curve, blocks per year and pool share factor =
+
+            (WeeklyBondIncome/BondAmount + 1)^52 - 1
+
+            '
+          type: string
+        liquidityAPY:
+          description: 'Float, E.g. 0.01 = 1%. Estimate of the compounded  liquidity
+            provider earnings based
+
+            on the current reserve size, emmission curve, blocks per year and pool
+            share factor =
+
+            (WeeklyLiquidityIncome/(totalPooledRune*2) + 1)^52 - 1
+
+            '
+          type: string
+        nextChurnHeight:
+          description: Int64, height (block number) of the next churn.
+          type: string
+        poolActivationCountdown:
+          description: Int64, the remaining time of pool activation (in blocks)
+          type: string
+        poolShareFactor:
+          description: 'Float [0..1], the ratio which is used to split earnings between
+            liquidity provider and
+
+            nodes.
+
+            LPIncome = rewards * poolShareFactor ;
+
+            BondIncome :=  rewards * (1 - poolShareFactor)
+
+            '
+          type: string
+        standbyBonds:
+          description: 'Array of rune amounts (e8) bonded by each standby node.
+
+            '
+          items:
+            type: string
+          type: array
+        standbyNodeCount:
+          description: 'Int64, Number of standby nodes, some of them might become
+            active at the next churn.
+
+            '
+          type: string
+        totalPooledRune:
+          description: 'Int64(e8), total Rune in all pools. Because asset and Rune
+            value is the same amount in
+
+            every pool (by definition), the total amount pooled is totalPooledRune*2.
+
+            '
+          type: string
+        totalReserve:
+          description: Int64(e8), Current size of the Reserve.
+          type: string
+      required:
+      - bondMetrics
+      - blockRewards
+      - activeBonds
+      - standbyBonds
+      - activeNodeCount
+      - standbyNodeCount
+      - totalPooledRune
+      - totalReserve
+      - nextChurnHeight
+      - poolActivationCountdown
+      - poolShareFactor
+      - bondingAPY
+      - liquidityAPY
+      type: object
+    NetworkFees:
+      description: 'List of network fees associated to an action. One network fee
+        is charged for each
+
+        outbound transaction
+
+        '
+      items:
+        $ref: '#/components/schemas/Coin'
+      type: array
+    Node:
+      properties:
+        ed25519:
+          description: ed25519 public key
+          example: thorpub1addwnpepqgxwdf3ure0pg5fwnpeux3ym9n06267lkres54zwjh4c8048ezhj5024qyr
+          type: string
+        nodeAddress:
+          description: node thorchain address
+          example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+          type: string
+        secp256k1:
+          description: secp256k1 public key
+          example: thorpub1addwnpepqgxwdf3ure0pg5fwnpeux3ym9n06267lkres54zwjh4c8048ezhj5024qyr
+          type: string
+      required:
+      - nodeAddress
+      - secp256k1
+      - ed25519
+      type: object
+    Nodes:
+      items: &id006
+        $ref: '#/components/schemas/Node'
+      type: array
+    PoolDetail:
+      properties:
+        annualPercentageRate:
+          description: 'Float, Also called APR. Annual return estimated linearly (not
+            compounded) from
+
+            a period of typically the last 30 or 100 days (configurable by the period
+            parameter,
+
+            default is 30). E.g. 0.1 means 10% yearly return.
+
+            Due to Impermanent Loss and Synths this might be negative, but given Impermanent
+
+            Loss Protection for 100+ day members, frontends might show MAX(APR, 0).
+
+            '
+          type: string
+        asset:
+          type: string
+        assetDepth:
+          description: Int64(e8), the amount of Asset in the pool.
+          type: string
+        assetPrice:
+          description: Float, price of asset in rune. I.e. rune amount / asset amount.
+          type: string
+        assetPriceUSD:
+          description: Float, the price of asset in USD (based on the deepest USD
+            pool).
+          type: string
+        earnings:
+          description: "Int64(e8), The earning that has been recorded from the pool\
+            \ asset's Liquidity Fees\nand Rewards in RUNE. The earnings shown are\
+            \ from the period parameter default being 14 days \n(configurable by the\
+            \ period parameter).\n"
+          type: string
+        earningsAnnualAsPercentOfDepth:
+          description: "Float, The estimation of earnings during the time interval\
+            \ expanded through a year \ncompared to the current pool depth.\nE.g.\
+            \ 0.1 means the pool based on this interval earnings can earn 10% of its\
+            \ pool during a year.\n"
+          type: string
+        liquidityUnits:
+          description: Int64, Liquidity Units in the pool.
+          type: string
+        nativeDecimal:
+          description: Int64, The native decimal number of the pool asset. (If the
+            value is "-1", it means midgard doesn't know the pool native decimal)
+          type: string
+        poolAPY:
+          description: 'Float, MAX(AnnualPercentageRate, 0)
+
+            '
+          type: string
+        runeDepth:
+          description: Int64(e8), the amount of Rune in the pool.
+          type: string
+        saversAPR:
+          description: 'Float, Annual Return estimated linearly (not compounded) for
+            savers from
+
+            a period of typically the last 30 or 100 days (configurable by the period
+            parameter,
+
+            default is 30). E.g. 0.1 means 10% yearly return.
+
+            If the savers period has not yet been reached, It will show zero instead.
+
+            '
+          type: string
+        saversDepth:
+          description: Int64, Total synth locked in saver vault.
+          type: string
+        saversUnits:
+          description: Int64, Units tracking savers vault ownership.
+          type: string
+        status:
+          description: The state of the pool, e.g. Available, Staged.
+          type: string
+        synthSupply:
+          description: Int64, Synth supply in the pool.
+          type: string
+        synthUnits:
+          description: Int64, Synth Units in the pool.
+          type: string
+        totalCollateral:
+          description: Int64, Total collateral of the pool created by the borrowers.
+          type: string
+        totalDebtTor:
+          description: Int64, Total debt of the pool by the borrowers.
+          type: string
+        units:
+          description: Int64, Total Units (synthUnits + liquidityUnits) in the pool.
+          type: string
+        volume24h:
+          description: 'Int64(e8), the total volume of swaps in the last 24h to and
+            from Rune denoted in Rune.
+
+            It includes synth mint or burn.
+
+            '
+          type: string
+      required:
+      - asset
+      - volume24h
+      - assetDepth
+      - runeDepth
+      - assetPrice
+      - assetPriceUSD
+      - annualPercentageRate
+      - poolAPY
+      - earnings
+      - earningsAnnualAsPercentOfDepth
+      - status
+      - liquidityUnits
+      - synthUnits
+      - synthSupply
+      - units
+      - nativeDecimal
+      - saversUnits
+      - saversDepth
+      - saversAPR
+      - totalCollateral
+      - totalDebtTor
+      - lpLuvi
+      type: object
+    PoolDetails:
+      items: &id007
+        $ref: '#/components/schemas/PoolDetail'
+      type: array
+    PoolStatsDetail:
+      properties:
+        addAssetLiquidityVolume:
+          description: Int64(e8), same as history/liquidity_changes:addAssetLiquidityVolume
+          type: string
+        addLiquidityCount:
+          description: Int64, same as history/liquidity_changes:addLiquidityCount
+          type: string
+        addLiquidityVolume:
+          description: Int64(e8), same as history/liquidity_changes:addLiquidityVolume
+          type: string
+        addRuneLiquidityVolume:
+          description: Int64(e8), same as history/liquidity_changes:addRuneLiquidityVolume
+          type: string
+        annualPercentageRate:
+          description: 'Float, Also called APR. Annual return estimated linearly (not
+            compounded) from
+
+            a period of typically the last 30 or 100 days (configurable by the period
+            parameter,
+
+            default is 30). E.g. 0.1 means 10% yearly return.
+
+            Due to Impermanent Loss and Synths this might be negative, but given Impermanent
+
+            Loss Protection for 100+ day members, frontends might show MAX(APR, 0).
+
+            '
+          type: string
+        asset:
+          type: string
+        assetDepth:
+          description: Int64(e8), the amount of Asset in the pool
+          type: string
+        assetPrice:
+          description: Float, price of asset in rune. I.e. rune amount / asset amount
+          type: string
+        assetPriceUSD:
+          description: Float, the price of asset in USD (based on the deepest USD
+            pool).
+          type: string
+        averageSlip:
+          description: 'Float64 (Basis points, 0-10000, where 10000=100%), same as
+            history/swaps:averageSlip
+
+            '
+          type: string
+        impermanentLossProtectionPaid:
+          description: 'Int64(e8), part of the withdrawRuneVolume which was payed
+            because of impermanent loss
+
+            protection.
+
+            '
+          type: string
+        liquidityUnits:
+          description: Int64, Liquidity Units in the pool
+          type: string
+        poolAPY:
+          description: 'Float, MAX(AnnualPercentageRate, 0)
+
+            '
+          type: string
+        runeDepth:
+          description: Int64(e8), the amount of Rune in the pool
+          type: string
+        status:
+          description: The state of the pool, e.g. Available, Staged
+          type: string
+        swapCount:
+          description: Int64, same as history/swaps:totalCount
+          type: string
+        swapVolume:
+          description: Int64(e8), same as history/swaps:totalVolume
+          type: string
+        synthSupply:
+          description: Int64, Synth supply in the pool
+          type: string
+        synthUnits:
+          description: Int64, Synth Units in the pool
+          type: string
+        toAssetAverageSlip:
+          description: 'Float64 (Basis points, 0-10000, where 10000=100%), same as
+
+            history/swaps:toAssetAverageSlip
+
+            '
+          type: string
+        toAssetCount:
+          description: Int64, same as history/swaps:toAssetCount
+          type: string
+        toAssetFees:
+          description: Int64(e8), same as history/swaps:toAssetFees
+          type: string
+        toAssetVolume:
+          description: Int64(e8), same as history/swaps:toAssetVolume
+          type: string
+        toRuneAverageSlip:
+          description: 'Float64 (Basis points, 0-10000, where 10000=100%), same as
+
+            history/swaps:toRuneAverageSlip
+
+            '
+          type: string
+        toRuneCount:
+          description: Int64, same as history/swaps:toRuneCount
+          type: string
+        toRuneFees:
+          description: Int64(e8), same as history/swaps:toRuneFees
+          type: string
+        toRuneVolume:
+          description: Int64(e8), same as history/swaps:toRuneVolume
+          type: string
+        totalFees:
+          description: Int64(e8), same as history/swaps:totalFees
+          type: string
+        uniqueMemberCount:
+          description: Int64, same as len(history/members?pool=POOL)
+          type: string
+        uniqueSwapperCount:
+          description: Deprecated, it's always 0.
+          type: string
+        units:
+          description: Int64, Total Units (synthUnits + liquidityUnits) in the pool
+          type: string
+        withdrawAssetVolume:
+          description: Int64(e8), same as history/liquidity_changes:withdrawAssetVolume
+          type: string
+        withdrawCount:
+          description: Int64, same as history/liquidity_changes:withdrawCount
+          type: string
+        withdrawRuneVolume:
+          description: Int64(e8), same as history/liquidity_changes:withdrawRuneVolume
+          type: string
+        withdrawVolume:
+          description: Int64(e8), same as history/liquidity_changes:withdrawVolume
+          type: string
+      required:
+      - asset
+      - status
+      - assetPrice
+      - assetPriceUSD
+      - assetDepth
+      - runeDepth
+      - liquidityUnits
+      - synthUnits
+      - synthSupply
+      - units
+      - toAssetVolume
+      - toRuneVolume
+      - swapVolume
+      - toAssetCount
+      - toRuneCount
+      - swapCount
+      - uniqueSwapperCount
+      - toAssetAverageSlip
+      - toRuneAverageSlip
+      - averageSlip
+      - toAssetFees
+      - toRuneFees
+      - totalFees
+      - annualPercentageRate
+      - poolAPY
+      - addAssetLiquidityVolume
+      - addRuneLiquidityVolume
+      - addLiquidityVolume
+      - addLiquidityCount
+      - withdrawAssetVolume
+      - withdrawRuneVolume
+      - impermanentLossProtectionPaid
+      - withdrawVolume
+      - withdrawCount
+      - uniqueMemberCount
+      type: object
+    RefundMetadata:
+      properties:
+        affiliateAddress:
+          description: Affiliate fee address of the swap, empty if fee swap
+          type: string
+        affiliateFee:
+          description: Int64 (Basis points, 0-1000, where 1000=10%)
+          type: string
+        memo:
+          description: Transaction memo of the refund action
+          type: string
+        networkFees:
+          $ref: '#/components/schemas/NetworkFees'
+        reason:
+          description: Reason for the refund
+          type: string
+      required:
+      - networkFees
+      - reason
+      - memo
+      - affiliateFee
+      - affiliateAddress
+      type: object
+    ReverseTHORNames:
+      items: &id004
+        description: THORName name
+        example: myname
+        type: string
+      type: array
+    SaverDetails:
+      properties:
+        pools:
+          description: List details of all the savers identified with the given address
+          items:
+            $ref: '#/components/schemas/SaverPool'
+          type: array
+      required:
+      - pools
+      type: object
+    SaverPool:
+      properties:
+        assetAdded:
+          description: Int64(e8), total asset added in the saver pool by member
+          type: string
+        assetAddress:
+          description: saver address used by the member
+          type: string
+        assetDeposit:
+          description: Int64(e8), total asset that is currently deposited by the member
+          type: string
+        assetRedeem:
+          description: Int64(e8), total asset can be redeemed from the saver pool
+            by member
+          type: string
+        assetWithdrawn:
+          description: Int64(e8), total asset withdrawn from the saver pool by member
+          type: string
+        dateFirstAdded:
+          description: Int64, Unix timestamp for the first time member deposited into
+            the saver pool
+          type: string
+        dateLastAdded:
+          description: Int64, Unix timestamp for the last time member deposited into
+            the saver pool
+          type: string
+        pool:
+          description: The Pool rest of the data are refering to (only those pools
+            can show up which have a corresponding saver pool)
+          type: string
+        saverUnits:
+          description: Int64, saver liquidity units that belong the the member
+          type: string
+      required:
+      - pool
+      - assetAddress
+      - saverUnits
+      - assetAdded
+      - assetRedeem
+      - assetDeposit
+      - assetWithdrawn
+      - dateFirstAdded
+      - dateLastAdded
+      type: object
+    SaversHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/SaversHistoryIntervals'
+        meta:
+          $ref: '#/components/schemas/SaversHistoryMeta'
+      required:
+      - meta
+      - intervals
+      type: object
+    SaversHistoryIntervals:
+      items:
+        $ref: '#/components/schemas/SaversHistoryItem'
+      type: array
+    SaversHistoryItem:
+      properties:
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        saversCount:
+          description: Int64, Number of saver members in the pool at the end of the
+            interval
+          type: string
+        saversDepth:
+          description: Int64(e8), The depth in the savers vault at the end of the
+            interval
+          type: string
+        saversUnits:
+          description: 'Int64, Savers Units in the saver vault at the end of the interval
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+      required:
+      - startTime
+      - endTime
+      - saversDepth
+      - saversCount
+      - saversUnits
+      type: object
+    SaversHistoryMeta:
+      properties:
+        endSaversCount:
+          description: Int64, Number of savers member in the savers vault at the end
+            of the interval at time endTime
+          type: string
+        endSaversDepth:
+          description: 'Int64(e8), The depth in the savers vault at the end of the
+            interval at time
+
+            endTime
+
+            '
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        endUnits:
+          description: Int64, Savers Units in the savers vault at the end of the interval
+            at time endTime
+          type: string
+        startSaversCount:
+          description: 'Int64, Number of savers member in the savers vault at the
+            start of the interval at time startTime
+
+            '
+          type: string
+        startSaversDepth:
+          description: 'Int64(e8), The depth in savers vault at the start of the interval
+            at time
+
+            startTime
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+        startUnits:
+          description: 'Int64, Savers Units in the savers vault at the start of the
+            interval at time startTime
+
+            '
+          type: string
+      required:
+      - startTime
+      - endTime
+      - startSaversDepth
+      - startUnits
+      - startSaversCount
+      - endSaversDepth
+      - endUnits
+      - endSaversCount
+      type: object
+    SendMetadata:
+      properties:
+        code:
+          description: failed transaction code
+          type: string
+        memo:
+          description: Transaction memo of the send action
+          type: string
+        networkFees:
+          $ref: '#/components/schemas/NetworkFees'
+        reason:
+          description: failed transaction code
+          type: string
+      required:
+      - networkFees
+      - memo
+      - reason
+      - code
+      type: object
+    StatsData:
+      properties:
+        addLiquidityCount:
+          description: Int64, number of deposits since beginning.
+          type: string
+        addLiquidityVolume:
+          description: 'Int64(e8), total of deposits since beginning.
+
+            '
+          type: string
+        cacaoPriceUSD:
+          description: Float, the price of Cacao based on the deepest USD pool.
+          type: string
+        dailyActiveUsers:
+          description: Int64, number of unique users who made a swap in the last 24h.
+          type: string
+        impermanentLossProtectionPaid:
+          description: 'Int64(e8), impermanent loss protection paid out.
+
+            '
+          type: string
+        monthlyActiveUsers:
+          description: Int64, number of unique users who made a swap in the last 30d.
+          type: string
+        runeDepth:
+          description: Int64(e8), current total Rune in the pools.
+          type: string
+        runePriceUSD:
+          description: Float, the price of Rune based on the deepest USD pool.
+          type: string
+        swapCount:
+          description: Int64, number of swaps (including synths) since beginning.
+          type: string
+        swapCount24h:
+          description: Int64(e8), number of swaps (including synths) in the last 24h.
+          type: string
+        swapCount30d:
+          description: Int64, number of swaps (including synths) in the last 30d.
+          type: string
+        swapVolume:
+          description: 'Int64(e8), total volume of swaps (including synths) denoted
+            in Rune since beginning.
+
+            '
+          type: string
+        switchedRune:
+          description: Int64(e8), amount of native rune switched from erc20 or bep2
+            rune.
+          type: string
+        synthBurnCount:
+          description: Int64, number of swaps from Synth to Rune since beginning.
+          type: string
+        synthMintCount:
+          description: Int64, number of swaps from Rune to Synth since beginning.
+          type: string
+        toAssetCount:
+          description: Int64, number of swaps from Rune to Asset since beginning.
+          type: string
+        toRuneCount:
+          description: Int64, number of swaps from Asset to Rune since beginning.
+          type: string
+        uniqueSwapperCount:
+          description: Int64, number of unique users who made a swap since beginning.
+          type: string
+        withdrawCount:
+          description: Int64, number of withdraws since beginning.
+          type: string
+        withdrawVolume:
+          description: 'Int64(e8), total of withdraws since beginning.
+
+            '
+          type: string
+      required:
+      - runeDepth
+      - switchedRune
+      - cacaoPriceUSD
+      - runePriceUSD
+      - swapVolume
+      - swapCount24h
+      - swapCount30d
+      - swapCount
+      - toAssetCount
+      - toRuneCount
+      - synthMintCount
+      - synthBurnCount
+      - dailyActiveUsers
+      - monthlyActiveUsers
+      - uniqueSwapperCount
+      - addLiquidityVolume
+      - withdrawVolume
+      - impermanentLossProtectionPaid
+      - addLiquidityCount
+      - withdrawCount
+      type: object
+    StreamingSwapMeta:
+      description: Streaming Metadata associated with the action if it was streaming
+        swap
+      properties:
+        count:
+          description: Int64, Number of swaps events which already happened.
+          type: string
+        depositedCoin:
+          $ref: '#/components/schemas/Coin'
+        failedSwapReasons:
+          description: Array of failed swaps reasons in streaming swap.
+          items:
+            description: The reason why swap got failed
+            type: string
+          type: array
+        failedSwaps:
+          description: Array of failed swaps index in streaming swap.
+          items:
+            description: Int64, Failed Swap number
+            type: string
+          type: array
+        inCoin:
+          $ref: '#/components/schemas/Coin'
+        interval:
+          description: Int64, Number of blocks between swpas. (Blocks/Swap) E.g. 1
+            means every block.
+          type: string
+        lastHeight:
+          description: 'Int64, The last blockheight the final swap happend (not outbound).
+            This field will be missing until the final swap happens.
+
+            '
+          type: string
+        outCoin:
+          $ref: '#/components/schemas/Coin'
+        quantity:
+          description: 'Int64,  Number of swaps which thorchain is planning to execute.
+            Total count at the end might be less.
+
+            '
+          type: string
+      required:
+      - count
+      - quantity
+      - interval
+      - lastHeight
+      - inCoin
+      - outCoin
+      - depositedCoin
+      type: object
+    SwapHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/SwapHistoryIntervals'
+        meta:
+          $ref: '#/components/schemas/SwapHistoryItem'
+      required:
+      - meta
+      - intervals
+      type: object
+    SwapHistoryIntervals:
+      items:
+        $ref: '#/components/schemas/SwapHistoryItem'
+      type: array
+    SwapHistoryItem:
+      properties:
+        averageSlip:
+          description: 'Float64 (Basis points, 0-10000, where 10000=100%), the weighted
+            average (by count)
+
+            of toAssetAverageSlip, toRuneAverageSlip, synthMintAverageSlip, synthRedeemAverageSlip.
+
+            Big swaps have the same weight as small swaps.
+
+            '
+          type: string
+        cacaoPriceUSD:
+          description: 'Float, the price of Cacao based on the deepest USD pool at
+            the end of the interval.
+
+            '
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        runePriceUSD:
+          description: 'Float, the price of Rune based on the deepest USD pool at
+            the end of the interval.
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+        synthMintAverageSlip:
+          description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
+            slip for swaps
+
+            from rune to synthetic asset.
+
+            Big swaps have the same weight as small swaps
+
+            '
+          type: string
+        synthMintCount:
+          description: Int64, count of rune to synthetic asset swaps
+          type: string
+        synthMintFees:
+          description: 'Int64(e8), the fees collected from swaps from rune to synthetic
+            asset (in rune)
+
+            '
+          type: string
+        synthMintVolume:
+          description: Int64(e8), volume of swaps from rune to synthetic asset denoted
+            in rune
+          type: string
+        synthRedeemAverageSlip:
+          description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
+            slip for swaps
+
+            from synthetic asset to rune.
+
+            Big swaps have the same weight as small swaps
+
+            '
+          type: string
+        synthRedeemCount:
+          description: Int64, count of synthetic asset to rune swaps
+          type: string
+        synthRedeemFees:
+          description: 'Int64(e8), the fees collected from swaps from synthetic asset
+            to rune (in rune)
+
+            '
+          type: string
+        synthRedeemVolume:
+          description: Int64(e8), volume of swaps from synthetic asset to rune denoted
+            in rune
+          type: string
+        toAssetAverageSlip:
+          description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
+            slip for swaps
+
+            from rune to asset.
+
+            Big swaps have the same weight as small swaps
+
+            '
+          type: string
+        toAssetCount:
+          description: Int64, count of swaps from rune to asset
+          type: string
+        toAssetFees:
+          description: Int64(e8), the fees collected from swaps from rune to asset
+            (in rune)
+          type: string
+        toAssetVolume:
+          description: Int64(e8), volume of swaps from rune to asset denoted in rune
+          type: string
+        toRuneAverageSlip:
+          description: 'Float64 (Basis points, 0-10000, where 10000=100%), the average
+            slip for swaps
+
+            from asset to rune.
+
+            Big swaps have the same weight as small swaps
+
+            '
+          type: string
+        toRuneCount:
+          description: Int64, count of swaps from asset to rune
+          type: string
+        toRuneFees:
+          description: Int64(e8), the fees collected from swaps from asset to rune
+            (in rune)
+          type: string
+        toRuneVolume:
+          description: Int64(e8), volume of swaps from asset to rune denoted in rune
+          type: string
+        totalCount:
+          description: Int64, toAssetCount + toRuneCount + synthMintCount + synthRedeemCount
+          type: string
+        totalFees:
+          description: Int64(e8), toAssetFees + toRuneFees + synthMintFees + synthRedeemFees
+          type: string
+        totalVolume:
+          description: 'Int64(e8),
+
+            toAssetVolume + toRuneVolume + synthMintVolume + synthRedeemVolume (denoted
+            in rune)
+
+            '
+          type: string
+      required:
+      - startTime
+      - endTime
+      - toAssetCount
+      - toRuneCount
+      - synthMintCount
+      - synthRedeemCount
+      - totalCount
+      - toAssetVolume
+      - toRuneVolume
+      - synthMintVolume
+      - synthRedeemVolume
+      - totalVolume
+      - toAssetFees
+      - toRuneFees
+      - synthMintFees
+      - synthRedeemFees
+      - totalFees
+      - toAssetAverageSlip
+      - toRuneAverageSlip
+      - synthMintAverageSlip
+      - synthRedeemAverageSlip
+      - averageSlip
+      - cacaoPriceUSD
+      - runePriceUSD
+      type: object
+    SwapMetadata:
+      properties:
+        affiliateAddress:
+          description: Affiliate fee address of the swap, empty if fee swap
+          type: string
+        affiliateFee:
+          description: Int64 (Basis points, 0-1000, where 1000=10%)
+          type: string
+        inPriceUSD:
+          description: in asset price usd at the first interval
+          type: string
+        isStreamingSwap:
+          description: indicate whether this action was streaming
+          example: true
+          type: boolean
+        liquidityFee:
+          description: Int64(e8), RUNE amount charged as swap liquidity fee
+          type: string
+        memo:
+          description: Transaction memo of the swap action
+          type: string
+        networkFees:
+          $ref: '#/components/schemas/NetworkFees'
+        outPriceUSD:
+          description: out asset price usd at the first interval
+          type: string
+        streamingSwapMeta:
+          $ref: '#/components/schemas/StreamingSwapMeta'
+        swapSlip:
+          description: Int64 (Basis points, 0-10000, where 10000=100%), swap slip
+            percentage
+          type: string
+        swapTarget:
+          description: Int64(e8), minimum output amount specified for the swap
+          type: string
+      required:
+      - networkFees
+      - liquidityFee
+      - swapSlip
+      - swapTarget
+      - affiliateFee
+      - affiliateAddress
+      - memo
+      - isStreamingSwap
+      - inPriceUSD
+      - outPriceUSD
+      type: object
+    THORNameDetails:
+      properties:
+        affiliate_bps:
+          description: Int64, affiliate fee in basis points
+          type: string
+        entries:
+          description: List details of all chains and their addresses for a given
+            THORName
+          items:
+            $ref: '#/components/schemas/THORNameEntry'
+          type: array
+        expire:
+          description: Int64, THORChain block height in which THORName expires
+          type: string
+        owner:
+          description: owner's THOR address
+          example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+          type: string
+        preferred_asset:
+          description: Preferred asset for the THORName owner to receive fees in
+          type: string
+        registration_block:
+          description: Int64, THORChain block height in which THORName is registered
+          type: string
+        sub_affiliates:
+          description: List details of all sub affiliates for a given THORName
+          items:
+            $ref: '#/components/schemas/THORNameSubAffiliate'
+          type: array
+      required:
+      - owner
+      - registration_block
+      - expire
+      - preferred_asset
+      - affiliate_bps
+      - entries
+      - sub_affiliates
+      type: object
+    THORNameEntry:
+      properties:
+        address:
+          description: address on blockchain
+          type: string
+        chain:
+          description: blockchain
+          type: string
+      required:
+      - chain
+      - address
+      type: object
+    THORNameSubAffiliate:
+      properties:
+        affiliate_bps:
+          description: Int64, affiliate fee in basis points
+          type: string
+        expire:
+          description: Int64, THORChain block height in which THORName expires
+          type: string
+        name:
+          description: THORName name
+          type: string
+        share_bps:
+          description: Int64, share of this sub affiliate from the main name in basis
+            points
+          type: string
+      required:
+      - name
+      - share_bps
+      - affiliate_bps
+      - expire
+      type: object
+    TVLHistory:
+      properties:
+        intervals:
+          $ref: '#/components/schemas/TVLHistoryIntervals'
+        meta:
+          $ref: '#/components/schemas/TVLHistoryItem'
+      required:
+      - meta
+      - intervals
+      type: object
+    TVLHistoryIntervals:
+      items:
+        $ref: '#/components/schemas/TVLHistoryItem'
+      type: array
+    TVLHistoryItem:
+      properties:
+        cacaoPriceUSD:
+          description: 'Float, the price of Cacao based on the deepest USD pool at
+            the end of the interval.
+
+            '
+          type: string
+        endTime:
+          description: Int64, The end time of bucket in unix timestamp
+          type: string
+        poolsDepth:
+          items:
+            $ref: '#/components/schemas/DepthHistoryItemPool'
+          type: array
+        runePriceUSD:
+          description: 'Float, the price of Rune based on the deepest USD pool at
+            the end of the interval.
+
+            '
+          type: string
+        startTime:
+          description: Int64, The beginning time of bucket in unix timestamp
+          type: string
+        totalValueBonded:
+          description: 'Int64(e8), the total amount of bonds (both active and standby)
+            at the end of
+
+            the interval
+
+            '
+          type: string
+        totalValueLocked:
+          description: 'Int64(e8), total value locked in the chain (in rune)
+
+            This equals `totalPooledValue + totalBondedValue`, as it combines the
+            liquidity
+
+            pools and bonds of the nodes.
+
+            '
+          type: string
+        totalValuePooled:
+          description: 'Int64(e8) in rune, the total pooled value (both assets and
+            rune) in all of the pools at
+
+            the end of the interval.
+
+            Note: this is twice the aggregate Rune depth of all pools.
+
+            '
+          type: string
+      required:
+      - startTime
+      - endTime
+      - totalValuePooled
+      - cacaoPriceUSD
+      - runePriceUSD
+      - poolsDepth
+      type: object
+    ThornameMetadata:
+      properties:
+        address:
+          description: The CHAIN address thorname has been registered to.
+          type: string
+        chain:
+          description: The thorname's chain.
+          type: string
+        expire:
+          description: Int64, THORChain block height in which THORName expires.
+          type: string
+        fundAmount:
+          description: Int64, the amount of funding for the THORName registration.
+          type: string
+        memo:
+          description: Transaction memo of thorname deposit message.
+          type: string
+        owner:
+          description: owner's THOR address.
+          example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+          type: string
+        registrationFee:
+          description: Int64, the registration fee paid.
+          type: string
+        thorname:
+          description: The thorname registered to the address.
+          type: string
+        txType:
+          description: The type of the transaction given from its Memo.
+          type: string
+      required:
+      - memo
+      - thorname
+      - address
+      - owner
+      - expire
+      - chain
+      - fundAmount
+      - registrationFee
+      - txType
+      type: object
+    Transaction:
+      description: Transaction data
+      properties:
+        address:
+          description: Sender address
+          type: string
+        affiliate:
+          description: If transactions flagged as affiliate
+          type: boolean
+        coins:
+          $ref: '#/components/schemas/Coins'
+        height:
+          description: 'The thorchain height that the outbound transaction occurred.
+
+            '
+          type: string
+        txID:
+          description: 'Transaction id hash. Some transactions (such as outbound transactions
+            made in the
+
+            native asset) may have a zero value.
+
+            '
+          type: string
+      required:
+      - txID
+      - address
+      - coins
+      type: object
+    WithdrawMetadata:
+      properties:
+        asymmetry:
+          description: 'Decimal (-1.0 <=> 1.0), indicates how assymetrical the withdrawal
+            was. 0 means
+
+            totally symetrical
+
+            '
+          type: string
+        basisPoints:
+          description: 'Int64 (Basis points, 0-10000, where 10000=100%), percentage
+            of total pool ownership
+
+            withdrawn
+
+            '
+          type: string
+        impermanentLossProtection:
+          description: Int64, additional Rune payed out because of impermanent loss
+            protection
+          type: string
+        liquidityUnits:
+          description: 'Int64, amount of liquidity units removed from the member as
+            result of the withdrawal
+
+            '
+          type: string
+        memo:
+          description: Transaction memo of the withdraw action
+          type: string
+        networkFees:
+          $ref: '#/components/schemas/NetworkFees'
+      required:
+      - liquidityUnits
+      - asymmetry
+      - basisPoints
+      - networkFees
+      - impermanentLossProtection
+      - memo
+      type: object
+info:
+  contact:
+    email: devs@thorchain.org
+  description: "The Midgard Public API queries THORChain and any chains linked via\
+    \ the Bifr\xF6st and prepares information about the network to be readily available\
+    \ for public users. The API parses transaction event data from THORChain and stores\
+    \ them in a time-series database to make time-dependent queries easy. Midgard\
+    \ does not hold critical information. To interact with MAYAChain protocol, users\
+    \ should query MAYANode directly."
+  title: Midgard Public API
+  version: 2.10.0
+openapi: 3.0.0
+paths:
+  /v2/actions:
+    get:
+      description: 'List actions along with their related transactions. An action
+        is generated by one or more
+
+        inbound transactions with the intended action set in the transaction memo.
+        The action may
+
+        result in one or more outbound transactions. Results are paginated by sets
+        of 50.
+
+        Filters may be applied to query actions.
+
+        '
+      operationId: GetActions
+      parameters:
+      - description: 'Comma separated list. Address of sender or recipient of any
+          in/out transaction related
+
+          to the action.
+
+          '
+        example: tbnb1fj2lqj8dvr5pumfchc7ntlfqd2v6zdxqwjewf5
+        in: query
+        name: address
+        schema:
+          type: string
+      - description: ID of any in/out tx related to the action
+        example: 2F624637DE179665BA3322B864DB9F30001FD37B4E0D22A0B6ECE6A5B078DAB4
+        in: query
+        name: txid
+        schema:
+          type: string
+      - description: 'Comma separated list. Any asset that is part of the action (CHAIN.SYMBOL)
+
+          Additionally, synth, nosynth, and norune filters can be used for swap, add/withdraw
+          actions.
+
+          '
+        examples:
+          filterAsset:
+            summary: Query action that are neither synth nor rune asset
+            value: nosynth,norune
+          regularAsset:
+            summary: Regular multiple asset query. (having at least either one of
+              them)
+            value: BTC.BTC,THOR.RUNE
+        in: query
+        name: asset
+        schema:
+          type: string
+      - description: 'One or more comma separated unique types of action
+
+          (swap, addLiquidity, withdraw, donate, refund, switch, mayaname, cacaoPoolDeposit,
+          cacaoPoolWithdraw)
+
+          '
+        example: swap,addLiquidity
+        in: query
+        name: type
+        schema:
+          type: string
+      - description: 'Comma separated list. Affiliate address of the action (swap,
+          refund)
+
+          '
+        examples:
+          multiple:
+            summary: Query affiliates that one is THORName and other is address
+            value: ts,thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+          regular:
+            value: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+        in: query
+        name: affiliate
+        schema:
+          type: string
+      - description: number of actions returned, default is 50
+        in: query
+        name: limit
+        schema:
+          format: int64
+          maximum: 50
+          minimum: 0
+          type: integer
+      - description: pagination offset, default is 0
+        in: query
+        name: offset
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      - description: if this is given, the actions for the next page will be given
+        in: query
+        name: nextPageToken
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      - description: if this is given, the actions older than the timestamp will be
+          given
+        in: query
+        name: timestamp
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      - description: if this is given, the actions older than the height will be given
+        in: query
+        name: height
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      - description: if this is given, the actions for the previous page will be given
+        in: query
+        name: prevPageToken
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      - description: if this is given, the actions newer than the timestamp will be
+          given
+        in: query
+        name: fromTimestamp
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      - description: if this is given, the actions newer than the height will be given
+        in: query
+        name: fromHeight
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/ActionsResponse'
+      summary: Actions List
+  /v2/balance/{address}:
+    get:
+      description: 'Returns all coin amounts of the given address at the specified
+        timestamp or
+
+        height, or at the latest process block if neither is provided. (Only one of
+
+        timestamp or height can be specified, not both.)
+
+
+        This endpoint is enabled only if the midgard startup config allows it.
+
+        '
+      operationId: GetBalance
+      parameters:
+      - description: Rune address.
+        example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      - description: Unix timestamp as seconds since 1970 (if provided, height must
+          not be provided)
+        example: 1606780800
+        in: query
+        name: timestamp
+        schema:
+          format: int64
+          type: integer
+      - description: Block height (if provided, timestamp must not be provided)
+        example: 2000000
+        in: query
+        name: height
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+      summary: Current balance for an address
+  /v2/borrower/{address}:
+    get:
+      description: 'Returns an array of statistics for all the open loans associated
+        with a given
+
+        borrower address.
+
+        '
+      operationId: GetBorrowerDetail
+      parameters:
+      - description: 'Address to match borrower, an asset address is given.
+
+          Query can also be multiple addresses should be seperated by comma ('','')
+
+          '
+        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m,bc1qcxssye4j6730h7ehgega3gyykkuwgdgmmpu62n
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowerDetails'
+      summary: Borrower Details
+  /v2/borrowers:
+    get:
+      description: 'Returns an array containing the addresses for all borrowers.
+
+        Addresses are only shown once.
+
+        '
+      operationId: GetBorrowersAddresses
+      parameters:
+      - description: Return only borrowers getting loan against this asset as collateral.
+        in: query
+        name: asset
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id001
+                type: array
+      summary: Borrowers List
+  /v2/cacaopool/{address}:
+    get:
+      description: 'Returns an array of statistics for all the CACAOPool associated
+        with given
+
+        member addresses.
+
+        Query can also be multiple addresses should be separated by comma ('','')
+
+        '
+      operationId: GetCACAOPoolDetail
+      parameters:
+      - description: 'Address to match the CACAOPool. multiple cacao addresses can
+          be given.
+
+          '
+        example: maya1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m,maya2qcxssye4j6730h7ehgega3gyykkuwgdgmmpu62n
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: List details of all the CACAOPoolPools identified with
+                  the given addresses
+                items: *id002
+                type: array
+      summary: CACAOPool Details
+  /v2/churns:
+    get:
+      description: Returns block height and timestamp for each churn.
+      operationId: GetChurns
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id003
+                type: array
+      summary: Churns List
+  /v2/doc:
+    get:
+      description: Swagger/OpenAPI 3.0 specification generated documents.
+      operationId: GetDocs
+      responses:
+        '200':
+          description: swagger/OpenAPI 3.0 spec generated docs
+      summary: Documentation
+      tags:
+      - Specification
+  /v2/health:
+    get:
+      description: 'Returns an object containing the health response of the API.
+
+        Meaning of heights:
+
+
+        lastThorNode - Latest block as reported by ThorNode.
+
+
+        lastFetched - Latest block fetched from ThorNode.
+
+
+        lastCommitted - Latest block committed to the DB but not fully processed yet.
+
+
+        lastAggregated - Latest block fully processed and aggregated.
+
+
+        genesisInfo - The genesis height Midgard bootstrapped with.
+
+        '
+      operationId: GetHealth
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+      summary: Health Info
+  /v2/history/cacao:
+    get:
+      description: 'Returns cacao price history in USD based on the time bucket given
+
+        '
+      operationId: GetCacaoPriceHistory
+      parameters:
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400].
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now.
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacaoPriceHistory'
+      summary: Cacao price history in USD
+  /v2/history/cacaopool:
+    get:
+      description: "Returns CacaoPool members and units.\nThe values report the state\
+        \ at the end of each interval.\n\nHistory endpoint has two modes:\n* With\
+        \ Interval parameter it returns a series of time buckets. From and To dates\
+        \ will\n  be rounded to the Interval boundaries.\n* Without Interval parameter\
+        \ a single From..To search is performed with exact timestamps.\n\n\n* Interval:\
+        \ possible values: 5min, hour, day, week, month, quarter, year.\n* count:\
+        \ [1..400]. Defines number of intervals. Don't provide if Interval is missing.\n\
+        * from/to: optional int, unix second.\n\nPossible usages with interval.\n\
+        * last 10 days: `?interval=day&count=10`\n* last 10 days before to: `?interval=day&count=10&to=1608825600`\n\
+        * next 10 days after from: `?interval=day&count=10&from=1606780800`\n* Days\
+        \ between from and to. From defaults to start of chain, to defaults to now.\n\
+        \  Only the first 400 intervals are returned:\n  `interval=day&from=1606780800&to=1608825600`\n\
+        \nPagination is possible with from&count and then using the returned meta.endTime\
+        \ as the\nFrom parameter of the next query.\n\nPossible configurations without\
+        \ interval:\n* exact search for one time frame: `?from=1606780899&to=1608825600`\n\
+        * one time frame until now: `?from=1606780899`\n* from chain start until now:\
+        \ no query parameters\n"
+      operationId: GetCacaoPoolHistory
+      parameters:
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400].
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now.
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CACAOPoolHistory'
+      summary: CacaoPool total members and units History
+  /v2/history/depths/{pool}:
+    get:
+      description: "Returns the asset and rune depths and price.\nThe values report\
+        \ the state at the end of each interval.\n\nHistory endpoint has two modes:\n\
+        * With Interval parameter it returns a series of time buckets. From and To\
+        \ dates will\n  be rounded to the Interval boundaries.\n* Without Interval\
+        \ parameter a single From..To search is performed with exact timestamps.\n\
+        \n\n* Interval: possible values: 5min, hour, day, week, month, quarter, year.\n\
+        * count: [1..400]. Defines number of intervals. Don't provide if Interval\
+        \ is missing.\n* from/to: optional int, unix second.\n\nPossible usages with\
+        \ interval.\n* last 10 days: `?interval=day&count=10`\n* last 10 days before\
+        \ to: `?interval=day&count=10&to=1608825600`\n* next 10 days after from: `?interval=day&count=10&from=1606780800`\n\
+        * Days between from and to. From defaults to start of chain, to defaults to\
+        \ now.\n  Only the first 400 intervals are returned:\n  `interval=day&from=1606780800&to=1608825600`\n\
+        \nPagination is possible with from&count and then using the returned meta.endTime\
+        \ as the\nFrom parameter of the next query.\n\nPossible configurations without\
+        \ interval:\n* exact search for one time frame: `?from=1606780899&to=1608825600`\n\
+        * one time frame until now: `?from=1606780899`\n* from chain start until now:\
+        \ no query parameters\n"
+      operationId: GetDepthHistory
+      parameters:
+      - description: Return stats for this single pool.
+        in: path
+        name: pool
+        required: true
+        schema:
+          type: string
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400].
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now.
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepthHistory'
+      summary: Depth and Price History
+  /v2/history/earnings:
+    get:
+      description: "Returns earnings data for the specified interval.\n\nHistory endpoint\
+        \ has two modes:\n* With Interval parameter it returns a series of time buckets.\
+        \ From and To dates will\n  be rounded to the Interval boundaries.\n* Without\
+        \ Interval parameter a single From..To search is performed with exact timestamps.\n\
+        \n\n* Interval: possible values: 5min, hour, day, week, month, quarter, year.\n\
+        * count: [1..400]. Defines number of intervals. Don't provide if Interval\
+        \ is missing.\n* from/to: optional int, unix second.\n\nPossible usages with\
+        \ interval.\n* last 10 days: `?interval=day&count=10`\n* last 10 days before\
+        \ to: `?interval=day&count=10&to=1608825600`\n* next 10 days after from: `?interval=day&count=10&from=1606780800`\n\
+        * Days between from and to. From defaults to start of chain, to defaults to\
+        \ now.\n  Only the first 400 intervals are returned:\n  `interval=day&from=1606780800&to=1608825600`\n\
+        \nPagination is possible with from&count and then using the returned meta.endTime\
+        \ as the\nFrom parameter of the next query.\n\nPossible configurations without\
+        \ interval:\n* exact search for one time frame: `?from=1606780899&to=1608825600`\n\
+        * one time frame until now: `?from=1606780899`\n* from chain start until now:\
+        \ no query parameters\n"
+      operationId: GetEarningsHistory
+      parameters:
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400].
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now.
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EarningsHistory'
+      summary: Earnings History
+  /v2/history/liquidity_changes:
+    get:
+      description: "Returns withdrawals and deposits for given time interval.\nIf\
+        \ pool is not specified returns for all pools\n\nHistory endpoint has two\
+        \ modes:\n* With Interval parameter it returns a series of time buckets. From\
+        \ and To dates will\n  be rounded to the Interval boundaries.\n* Without Interval\
+        \ parameter a single From..To search is performed with exact timestamps.\n\
+        \n\n* Interval: possible values: 5min, hour, day, week, month, quarter, year.\n\
+        * count: [1..400]. Defines number of intervals. Don't provide if Interval\
+        \ is missing.\n* from/to: optional int, unix second.\n\nPossible usages with\
+        \ interval.\n* last 10 days: `?interval=day&count=10`\n* last 10 days before\
+        \ to: `?interval=day&count=10&to=1608825600`\n* next 10 days after from: `?interval=day&count=10&from=1606780800`\n\
+        * Days between from and to. From defaults to start of chain, to defaults to\
+        \ now.\n  Only the first 400 intervals are returned:\n  `interval=day&from=1606780800&to=1608825600`\n\
+        \nPagination is possible with from&count and then using the returned meta.endTime\
+        \ as the\nFrom parameter of the next query.\n\nPossible configurations without\
+        \ interval:\n* exact search for one time frame: `?from=1606780899&to=1608825600`\n\
+        * one time frame until now: `?from=1606780899`\n* from chain start until now:\
+        \ no query parameters\n"
+      operationId: GetLiquidityHistory
+      parameters:
+      - description: Return stats for given pool. Returns sum of all pools if missing
+        in: query
+        name: pool
+        schema:
+          type: string
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400]
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LiquidityHistory'
+      summary: Liquidity Changes History
+  /v2/history/savers/{pool}:
+    get:
+      description: "Returns savers depths and units.\nThe values report the state\
+        \ at the end of each interval.\n\nHistory endpoint has two modes:\n* With\
+        \ Interval parameter it returns a series of time buckets. From and To dates\
+        \ will\n  be rounded to the Interval boundaries.\n* Without Interval parameter\
+        \ a single From..To search is performed with exact timestamps.\n\n\n* Interval:\
+        \ possible values: 5min, hour, day, week, month, quarter, year.\n* count:\
+        \ [1..400]. Defines number of intervals. Don't provide if Interval is missing.\n\
+        * from/to: optional int, unix second.\n\nPossible usages with interval.\n\
+        * last 10 days: `?interval=day&count=10`\n* last 10 days before to: `?interval=day&count=10&to=1608825600`\n\
+        * next 10 days after from: `?interval=day&count=10&from=1606780800`\n* Days\
+        \ between from and to. From defaults to start of chain, to defaults to now.\n\
+        \  Only the first 400 intervals are returned:\n  `interval=day&from=1606780800&to=1608825600`\n\
+        \nPagination is possible with from&count and then using the returned meta.endTime\
+        \ as the\nFrom parameter of the next query.\n\nPossible configurations without\
+        \ interval:\n* exact search for one time frame: `?from=1606780899&to=1608825600`\n\
+        * one time frame until now: `?from=1606780899`\n* from chain start until now:\
+        \ no query parameters\n"
+      operationId: GetSaversHistory
+      parameters:
+      - description: Return stats for this single pool.
+        in: path
+        name: pool
+        required: true
+        schema:
+          type: string
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400].
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now.
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaversHistory'
+      summary: Savers Units and Depth History
+  /v2/history/swaps:
+    get:
+      description: "Returns swap count, volume, fees, slip in specified interval.\n\
+        If pool is not specified returns for all pools\n\nHistory endpoint has two\
+        \ modes:\n* With Interval parameter it returns a series of time buckets. From\
+        \ and To dates will\n  be rounded to the Interval boundaries.\n* Without Interval\
+        \ parameter a single From..To search is performed with exact timestamps.\n\
+        \n\n* Interval: possible values: 5min, hour, day, week, month, quarter, year.\n\
+        * count: [1..400]. Defines number of intervals. Don't provide if Interval\
+        \ is missing.\n* from/to: optional int, unix second.\n\nPossible usages with\
+        \ interval.\n* last 10 days: `?interval=day&count=10`\n* last 10 days before\
+        \ to: `?interval=day&count=10&to=1608825600`\n* next 10 days after from: `?interval=day&count=10&from=1606780800`\n\
+        * Days between from and to. From defaults to start of chain, to defaults to\
+        \ now.\n  Only the first 400 intervals are returned:\n  `interval=day&from=1606780800&to=1608825600`\n\
+        \nPagination is possible with from&count and then using the returned meta.endTime\
+        \ as the\nFrom parameter of the next query.\n\nPossible configurations without\
+        \ interval:\n* exact search for one time frame: `?from=1606780899&to=1608825600`\n\
+        * one time frame until now: `?from=1606780899`\n* from chain start until now:\
+        \ no query parameters\n"
+      operationId: GetSwapHistory
+      parameters:
+      - description: Return history given pool. Returns sum of all pools if missing.
+        in: query
+        name: pool
+        schema:
+          type: string
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400].
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now.
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapHistory'
+      summary: Swaps History
+  /v2/history/tvl:
+    get:
+      description: "Returns total pool depths, total bonds, and total value locked\
+        \ in specified interval.\n\nTotal Value Locked = Total Bonds + 2 * Total Pool\
+        \ Depths\n\nHistory endpoint has two modes:\n* With Interval parameter it\
+        \ returns a series of time buckets. From and To dates will\n  be rounded to\
+        \ the Interval boundaries.\n* Without Interval parameter a single From..To\
+        \ search is performed with exact timestamps.\n\n* Interval: possible values:\
+        \ 5min, hour, day, week, month, quarter, year.\n* count: [1..400]. Defines\
+        \ number of intervals. Don't provide if Interval is missing.\n* from/to: optional\
+        \ int, unix second.\n\nPossible usages with interval.\n* last 10 days: `?interval=day&count=10`\n\
+        * last 10 days before to: `?interval=day&count=10&to=1608825600`\n* next 10\
+        \ days after from: `?interval=day&count=10&from=1606780800`\n* Days between\
+        \ from and to. From defaults to start of chain, to defaults to now.\n  Only\
+        \ the first 400 intervals are returned:\n  `interval=day&from=1606780800&to=1608825600`\n\
+        \nPagination is possible with from&count and then using the returned meta.endTime\
+        \ as the\nFrom parameter of the next query.\n\nPossible configurations without\
+        \ interval:\n* exact search for one time frame: `?from=1606780899&to=1608825600`\n\
+        * one time frame until now: `?from=1606780899`\n* from chain start until now:\
+        \ no query parameters\n"
+      operationId: GetTVLHistory
+      parameters:
+      - description: Interval of calculations
+        example: day
+        in: query
+        name: interval
+        schema:
+          enum:
+          - 5min
+          - hour
+          - day
+          - week
+          - month
+          - quarter
+          - year
+          type: string
+      - description: Number of intervals to return. Should be between [1..400].
+        example: 30
+        in: query
+        name: count
+        schema:
+          type: integer
+      - description: 'End time of the query as unix timestamp. If only count is given,
+          defaults to now.
+
+          '
+        example: 1608825600
+        in: query
+        name: to
+        schema:
+          format: int64
+          type: integer
+      - description: Start time of the query as unix timestamp
+        example: 1606780800
+        in: query
+        name: from
+        schema:
+          format: int64
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TVLHistory'
+      summary: Total Value Locked History
+  /v2/knownpools:
+    get:
+      description: Returns an object with known pools and their statuses
+      operationId: GetKnownPools
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnownPools'
+      summary: Known Pools List
+  /v2/mayaname/lookup/{name}:
+    get:
+      description: Returns an array of chains and their addresses associated with
+        the given THORName
+      operationId: GetTHORNameDetail
+      parameters:
+      - description: a THORName
+        example: thorchain
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/THORNameDetails'
+      summary: THORName Details
+  /v2/mayaname/owner/{address}:
+    get:
+      description: 'Returns an array of THORNames owned by the address. The address
+        is not necessarily an
+
+        associated address for those mayanames.
+
+        '
+      operationId: GetTHORNamesOwnerByAddress
+      parameters:
+      - description: Address which owns a THORName.
+        example: thor102y0m3uptg0vvudeyh00r2fnz70wq7d8y7mu2g
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id004
+                type: array
+      summary: THORName owner
+  /v2/mayaname/rlookup/{address}:
+    get:
+      description: Returns an array of THORNames associated with the given address
+      operationId: GetTHORNamesByAddress
+      parameters:
+      - description: Address to match THORNames against.
+        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id004
+                type: array
+      summary: Gives a list of THORNames by reverse lookup
+  /v2/member/{address}:
+    get:
+      description: 'Returns an array of statistics for all the liquidity providers
+        associated with a given
+
+        member address.
+
+        '
+      operationId: GetMemberDetail
+      parameters:
+      - description: 'Address to match liquidity providers. Either a rune or an asset
+          address may be given.
+
+          Query can also be multiple addresses should be seperated by comma ('','')
+
+          '
+        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m,bc1qcxssye4j6730h7ehgega3gyykkuwgdgmmpu62n
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      - description: 'A flag to show saver vault membership details, the default is
+          false.
+
+          '
+        example: true
+        in: query
+        name: showSavers
+        schema:
+          default: false
+          type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberDetails'
+      summary: Member Details
+  /v2/members:
+    get:
+      description: 'Returns an array containing the addresses for all pool members.
+
+        Addresses are only shown once. If there''s both a RUNE address and an asset
+        address
+
+        for a member, only the RUNE address will be shown.
+
+        '
+      operationId: GetMembersAdresses
+      parameters:
+      - description: Return only members present in the pool.
+        in: query
+        name: pool
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id005
+                type: array
+      summary: Members List
+  /v2/network:
+    get:
+      description: Returns an object containing Network data
+      operationId: GetNetworkData
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Network'
+      summary: Network Data
+  /v2/nodes:
+    get:
+      description: Returns a list of Node public keys and adresses.
+      operationId: GetNodes
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id006
+                type: array
+      summary: Nodes List
+  /v2/pool/{asset}:
+    get:
+      description: 'Returns details of the pool: depths, price, 24h volume, APY. '
+      operationId: GetPool
+      parameters:
+      - description: pool name
+        example: BNB.TOMOB-1E1
+        in: path
+        name: asset
+        required: true
+        schema:
+          type: string
+      - description: 'Specifies the base interval from which APY is extrapolated.
+
+          Default is 30d.
+
+          '
+        example: 100d
+        in: query
+        name: period
+        schema:
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 14d
+          - 30d
+          - 90d
+          - 100d
+          - 180d
+          - 365d
+          - all
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolDetail'
+      summary: Details of a Pool
+  /v2/pool/{asset}/stats:
+    get:
+      description: 'Statistics about the pool. The description of the fields have
+        pointers about the
+
+        corresponding v2/history location. Visit the history endpoint for drilldowns.
+
+        '
+      operationId: GetPoolStats
+      parameters:
+      - description: pool name
+        example: BNB.TOMOB-1E1
+        in: path
+        name: asset
+        required: true
+        schema:
+          type: string
+      - description: 'Restricts aggregation type fields to the last period only.
+
+          Default is 30d.
+
+          '
+        example: 24h
+        in: query
+        name: period
+        schema:
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 14d
+          - 30d
+          - 90d
+          - 100d
+          - 180d
+          - 365d
+          - all
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoolStatsDetail'
+      summary: Pool Statistics
+  /v2/pools:
+    get:
+      description: Returns an array containing details for a set of pools
+      operationId: GetPools
+      parameters:
+      - description: Filter for only pools with this status
+        in: query
+        name: status
+        schema:
+          enum:
+          - available
+          - staged
+          - suspended
+          type: string
+      - description: 'Specifies the base interval from which annualPercentageRate
+          and poolAPY is extrapolated.
+
+          Default is 14d.
+
+          '
+        example: 100d
+        in: query
+        name: period
+        schema:
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 14d
+          - 30d
+          - 90d
+          - 100d
+          - 180d
+          - 365d
+          - all
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items: *id007
+                type: array
+      summary: Pools List
+  /v2/saver/{address}:
+    get:
+      description: 'Returns an array of statistics for all the savers associated with
+        a given
+
+        member address.
+
+        Query can also be multiple addresses should be seperated by comma ('','')
+
+        '
+      operationId: GetSaverDetail
+      parameters:
+      - description: 'Address to match the saver. an asset address should be given.
+
+          '
+        example: bnb1jxfh2g85q3v0tdq56fnevx6xcxtcnhtsmcu64m,bc1qcxssye4j6730h7ehgega3gyykkuwgdgmmpu62n
+        in: path
+        name: address
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaverDetails'
+      summary: Saver Details
+  /v2/stats:
+    get:
+      description: Returns an object containing global stats for all pools and all
+        transactions
+      operationId: GetStats
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsData'
+      summary: Global Stats
+  /v2/swagger.json:
+    get:
+      description: Returns human and machine readable swagger/openapi specification
+      operationId: GetSwagger
+      responses:
+        '200':
+          description: human and machine readable swagger/openapi specification
+      summary: Swagger File
+      tags:
+      - Specification
+x-readme-file: README.md
