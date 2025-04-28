@@ -506,3 +506,23 @@ def test_multi_affiliates():
                Affiliate('a', 1), Affiliate('b', 2), Affiliate('c', 3),
                Affiliate('d', 4), Affiliate('e', 5)
            ]
+
+
+def test_tcy():
+    m = THORMemo.tcy_claim(ETH_ADDR)
+    assert m.action == ActionType.TCY_CLAIM
+    assert m.dest_address == ETH_ADDR
+    assert m.build() == f'TCY:{ETH_ADDR}'
+    assert THORMemo.parse_memo(f'TCY:{ETH_ADDR}') == m
+
+    m = THORMemo.tcy_stake()
+    assert m.action == ActionType.TCY_STAKE
+    assert m.build() == 'TCY+'
+    assert THORMemo.parse_memo('TCY+') == m
+
+    m = THORMemo.tcy_unstake(5891)
+    assert m.action == ActionType.TCY_UNSTAKE
+    assert m.withdraw_portion_bp == 5891
+    assert m.affiliate_address == ''
+    assert m.build() == f'TCY-:5891'
+    assert THORMemo.parse_memo(f'tcy-:5891') == m

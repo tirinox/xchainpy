@@ -48,6 +48,11 @@ class ActionType(Enum):
     TRADE_ACC_DEPOSIT = 'trade+'
     TRADE_ACC_WITHDRAW = 'trade-'
 
+    # TCY
+    TCY_CLAIM = 'tcy'
+    TCY_STAKE = 'tcy+'
+    TCY_UNSTAKE = 'tcy-'
+
     UNKNOWN = '_unknown_'
 
 
@@ -82,6 +87,10 @@ MEMO_ACTION_TABLE = {
     "trade-": ActionType.TRADE_ACC_WITHDRAW,
     "pool+": ActionType.RUNEPOOL_ADD,
     "pool-": ActionType.RUNEPOOL_WITHDRAW,
+    "tcy": ActionType.TCY_CLAIM,
+    "tcy+": ActionType.TCY_STAKE,
+    "tcy-": ActionType.TCY_UNSTAKE,
+
     # "migrate": TxMigrate,
     # "ragnarok": TxRagnarok,
     # "consolidate": TxConsolidate,
@@ -339,6 +348,17 @@ class THORMemo:
                 affiliates=cls._parse_affiliates(affiliate, affiliate_fee_bp)
             )
 
+        elif tx_type == ActionType.TCY_CLAIM:
+            l1_address = ith(components, 1, '')
+            return cls.tcy_claim(l1_address=l1_address)
+
+        elif tx_type == ActionType.TCY_STAKE:
+            return cls.tcy_stake()
+
+        elif tx_type == ActionType.TCY_UNSTAKE:
+            unstake_bp = ith(components, 1, 0, is_number=True)
+            return cls.tcy_unstake(bp=unstake_bp)
+
         else:
             # todo: limit order, register memo, etc.
             if no_raise:
@@ -442,6 +462,17 @@ class THORMemo:
 
         elif self.action == ActionType.RUNEPOOL_WITHDRAW:
             memo = f'POOL-:{self.withdraw_portion_bp}:{self._affiliate_part}'
+
+        elif self.action == ActionType.TCY_CLAIM:
+            memo = f'TCY:{self.dest_address}'
+
+        elif self.action == ActionType.TCY_STAKE:
+            memo = f'TCY+'
+
+        elif self.action == ActionType.TCY_UNSTAKE:
+            # todo: more checks here and in the similar places
+            assert isinstance(self.withdraw_portion_bp, int)
+            memo = f'TCY-:{self.withdraw_portion_bp}'
 
         else:
             raise NotImplementedError(f"Can not build memo for {self.action}")
@@ -633,6 +664,18 @@ class THORMemo:
             withdraw_portion_bp=bp,
             affiliates=cls._form_affiliates(affiliate_address, affiliate_fee_bp, affiliates),
         )
+
+    @classmethod
+    def tcy_claim(cls, l1_address: str):
+        return cls(ActionType.TCY_CLAIM, dest_address=l1_address)
+
+    @classmethod
+    def tcy_stake(cls):
+        return cls(ActionType.TCY_STAKE)
+
+    @classmethod
+    def tcy_unstake(cls, bp: int):
+        return cls(ActionType.TCY_UNSTAKE, withdraw_portion_bp=bp)
 
     # Utils:
 
