@@ -465,4 +465,4 @@ class MayaChainClient(CosmosGaiaClient):
         return await self._mrc20_submit_tx(memo, recipient=seller_address)
 
     async def wait_for_transaction(self, tx_id: str):
-        raise NotImplemented
+        raise NotImplementedError
