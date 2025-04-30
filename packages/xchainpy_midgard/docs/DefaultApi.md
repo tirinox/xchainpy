@@ -34,6 +34,7 @@ Method | HTTP request | Description
 [**get_thor_names_by_address**](DefaultApi.md#get_thor_names_by_address) | **GET** /v2/thorname/rlookup/{address} | Gives a list of THORNames by reverse lookup
 [**get_thor_names_owner_by_address**](DefaultApi.md#get_thor_names_owner_by_address) | **GET** /v2/thorname/owner/{address} | THORName owner
 [**get_tvl_history**](DefaultApi.md#get_tvl_history) | **GET** /v2/history/tvl | Total Value Locked History
+[**get_votes**](DefaultApi.md#get_votes) | **GET** /v2/votes | Current Protocol Voting
 
 # **get_actions**
 > InlineResponse200 get_actions(address=address, txid=txid, asset=asset, type=type, tx_type=tx_type, affiliate=affiliate, limit=limit, offset=offset, next_page_token=next_page_token, timestamp=timestamp, height=height, prev_page_token=prev_page_token, from_timestamp=from_timestamp, from_height=from_height)
@@ -1547,6 +1548,54 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**TVLHistory**](TVLHistory.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_votes**
+> list[VoteValue] get_votes(period=period)
+
+Current Protocol Voting
+
+Returns timestamp, key, value for each active node member.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard.DefaultApi()
+period = 'period_example' # str | Specifies the base interval from which votes will be shown. Default is 90d.  (optional)
+
+try:
+    # Current Protocol Voting
+    api_response = api_instance.get_votes(period=period)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_votes: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **period** | **str**| Specifies the base interval from which votes will be shown. Default is 90d.  | [optional] 
+
+### Return type
+
+[**list[VoteValue]**](VoteValue.md)
 
 ### Authorization
 
