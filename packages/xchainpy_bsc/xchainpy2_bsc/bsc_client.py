@@ -20,7 +20,7 @@ class BinanceSmartChainClient(EthereumClient):
     def _get_default_provider(self):
         return select_random_free_provider(self.network, FREE_BSC_PROVIDERS)
 
-    async def _deduct_gas(self, fee_option: FeeOption, gas_limit=23000) -> GasOptions:
+    async def _deduct_gas_price(self, fee_option: FeeOption, gas_limit=23000) -> GasOptions:
         # last_fee = await self.get_last_fee()
         if fee_option == FeeOption.FASTEST:
             return GasOptions.eip1559_in_gwei(BSC_SURE_FEE, 1, gas_limit)

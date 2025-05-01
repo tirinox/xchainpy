@@ -85,11 +85,11 @@ class GasLimits(NamedTuple):
     @classmethod
     def default(cls):
         return cls(
-            200000,
-            23000,
-            100000,
-            160000,
-            30 * 10 ** 9,
+            approve_gas_limit=200000,
+            transfer_gas_asset_gas_limit=23000,
+            transfer_token_gas_limit=170000,
+            deposit_gas_limit=180000,
+            gas_price=30 * 10 ** 9,
         )
 
 

@@ -83,6 +83,14 @@ class EthereumClient(XChainClient):
         self.fee_estimation_percentiles = (20, 50, 80)
         self.fee_estimation_block_history = 20
 
+        self.gas_limit_estimation = False
+        """
+        If True, it will estimate the gas limit for the transaction before sending it.
+        It is useful for complex transactions where the gas limit is not known in advance.
+        This action requires an extra RPC call to the node.
+        Otherwise, it will use the default gas limit for the transaction.
+        """
+
     def _init_extra_data_provider(self, extra_data_provider):
         if extra_data_provider:
             self._ex_provider = extra_data_provider
@@ -163,7 +171,8 @@ class EthereumClient(XChainClient):
         """
         return self._token_list.get_erc20_as_contract(contract_address)
 
-    async def get_erc20_token_balance(self, contract_address: Union[str, Asset, Contract], address: str = '') -> CryptoAmount:
+    async def get_erc20_token_balance(self, contract_address: Union[str, Asset, Contract],
+                                      address: str = '') -> CryptoAmount:
         """
         Get the balance of a given address.
         """
@@ -201,6 +210,7 @@ class EthereumClient(XChainClient):
         """
         Get the public key for the current wallet.
         """
+        # noinspection PyUnresolvedReferences
         return self.get_account()._key_obj.public_key
 
     def get_account(self) -> Account:
@@ -321,19 +331,6 @@ class EthereumClient(XChainClient):
             # transfer ERC20 token
             return await self._transfer_erc20_token(what, recipient, gas, memo)
 
-    @staticmethod
-    def _fill_gas_params(params: dict, gas: GasOptions):
-        # Gas limit for the transaction
-        params['gas'] = gas.gas_limit
-        if gas.max_fee_per_gas and gas.max_priority_fee_per_gas is not None:
-            # Maximum amount you’re willing to pay
-            params['maxFeePerGas'] = gas.max_fee_per_gas
-            # Priority fee to include the transaction in the block (if the block is full)
-            params['maxPriorityFeePerGas'] = gas.max_priority_fee_per_gas
-        elif gas.gas_price:
-            params['gasPrice'] = gas.gas_price
-        return params
-
     def _prepare_tx_params(self, to: str, value: int, nonce: int, gas: GasOptions, data: Optional[str] = None):
         params = {
             'value': value,
@@ -343,17 +340,27 @@ class EthereumClient(XChainClient):
         }
         if data:
             params['data'] = data.encode('utf-8')
+
         if to:
             params['to'] = to
 
-        params = self._fill_gas_params(params, gas)
+        # Gas limit for the transaction
+        params['gas'] = gas.gas_limit
+        if gas.max_fee_per_gas and gas.max_priority_fee_per_gas is not None:
+            # Maximum amount you’re willing to pay
+            params['maxFeePerGas'] = gas.max_fee_per_gas
+            # Priority fee to include the transaction in the block (if the block is full)
+            params['maxPriorityFeePerGas'] = gas.max_priority_fee_per_gas
+        elif gas.gas_price:
+            params['gasPrice'] = gas.gas_price
+
         return params
 
     def _get_gas_limit(self):
         return self.gas_limits[self.network]
 
     # noinspection PyTypeChecker
-    async def _deduct_gas(self, fee_option: FeeOption, gas_limit=23000) -> GasOptions:
+    async def _deduct_gas_price(self, fee_option: FeeOption, gas_limit=23000) -> GasOptions:
         """
         Deduct gas amount from hi-level fee options
         """
@@ -375,11 +382,11 @@ class EthereumClient(XChainClient):
                             memo: Optional[str] = None) -> str:
         nonce = await self.get_nonce()
 
-        gas = gas.updates_gas_limit(self._get_gas_limit().transfer_gas_asset_gas_limit)
         if gas.is_automatic:
-            gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
+            gas = await self._deduct_gas_price(gas.fee_option, gas.gas_limit)
 
         tx_params = self._prepare_tx_params(recipient, what.amount.internal_amount, nonce, gas, memo)
+        tx_params = await self._calc_gas_limit(tx_params, gas.gas_limit)
         tx = TxParams(**tx_params)
         acc = self.get_account()
         signed_tx = acc.sign_transaction(tx)
@@ -397,7 +404,7 @@ class EthereumClient(XChainClient):
 
         gas = gas.updates_gas_limit(self._get_gas_limit().transfer_token_gas_limit)
         if gas.is_automatic:
-            gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
+            gas = await self._deduct_gas_price(gas.fee_option, gas.gas_limit)
 
         contract_address = self.validated_checksum_address(what.asset.contract)
         contract = self.get_erc20_as_contract(contract_address)
@@ -416,21 +423,32 @@ class EthereumClient(XChainClient):
         :param nonce: Nonce (optional) if not provided, it will fetch the nonce from the blockchain
         :return: Transaction hash
         """
-        gas_limit_transfer = self._get_gas_limit().transfer_token_gas_limit
-        gas = gas.updates_gas_limit(gas_limit if gas_limit > 0 else gas_limit_transfer)
         if gas.is_automatic:
-            gas = await self._deduct_gas(gas.fee_option, gas.gas_limit)
+            gas = await self._deduct_gas_price(gas.fee_option, gas.gas_limit)
 
         if nonce < 0:
             nonce = await self.get_nonce()  # todo: bsc nonce is mistakenly high
 
         tx_params = self._prepare_tx_params('', value, nonce, gas)
-        tx = method_pointer.build_transaction(tx_params)
-        signed_tx = self.get_account().sign_transaction(tx)
+
+        tx_with_data = method_pointer.build_transaction(tx_params)
+        tx_with_data = await self._calc_gas_limit(tx_with_data, gas_limit)
+        signed_tx = self.get_account().sign_transaction(tx_with_data)
         tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
         # convert bytes to hex
         tx_hash = self._normalize_tx_id(tx_hash)
         return tx_hash
+
+    async def _calc_gas_limit(self, tx_with_data, gas_limit=-1):
+        if self.gas_limit_estimation:
+            tx_with_data['gas'] = 0
+            gas = await self.call_service(self.web3.eth.estimate_gas, tx_with_data)
+        else:
+            gas_limit_transfer = self._get_gas_limit().transfer_token_gas_limit
+            gas = gas_limit if gas_limit > 0 else gas_limit_transfer
+
+        tx_with_data['gas'] = gas
+        return tx_with_data
 
     async def get_block_timestamp(self, block_number: int) -> int:
         """
