@@ -405,6 +405,9 @@ AssetCACAO = Asset.from_string('MAYA.CACAO')
 AssetDASH = Asset.from_string('DASH.DASH')
 AssetKUJI = Asset.from_string('KUJI.KUJI')
 AssetBaseETH = Asset.from_string('BASE.ETH')
+AssetTCY = Asset.from_string("THOR.TCY")
+# todo add comments
+AssetRUJI = Asset.from_string("THOR.RUJI")
 
 
 def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
