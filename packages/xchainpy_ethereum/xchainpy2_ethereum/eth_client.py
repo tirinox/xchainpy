@@ -325,7 +325,7 @@ class EthereumClient(XChainClient):
     def _fill_gas_params(params: dict, gas: GasOptions):
         # Gas limit for the transaction
         params['gas'] = gas.gas_limit
-        if gas.max_fee_per_gas and gas.max_priority_fee_per_gas:
+        if gas.max_fee_per_gas and gas.max_priority_fee_per_gas is not None:
             # Maximum amount you’re willing to pay
             params['maxFeePerGas'] = gas.max_fee_per_gas
             # Priority fee to include the transaction in the block (if the block is full)
