@@ -155,15 +155,15 @@ class EthereumClient(XChainClient):
 
         return balances
 
-    def get_erc20_as_contract(self, contract_address: str):
+    def get_erc20_as_contract(self, contract_address: Union[str, Asset, Contract]):
         """
         Get the ERC20 contract object for a given contract address.
-        :param contract_address: Contract address
+        :param contract_address: Contract address, or Asset object, or Contract object
         :return: Contract object
         """
         return self._token_list.get_erc20_as_contract(contract_address)
 
-    async def get_erc20_token_balance(self, contract_address: str, address: str = '') -> CryptoAmount:
+    async def get_erc20_token_balance(self, contract_address: Union[str, Asset, Contract], address: str = '') -> CryptoAmount:
         """
         Get the balance of a given address.
         """
@@ -182,7 +182,7 @@ class EthereumClient(XChainClient):
 
         return await self._token_list.load_erc20_token_info(contract)
 
-    async def get_erc20_allowance(self, contract_address: Union[Asset, str],
+    async def get_erc20_allowance(self, contract_address: Union[str, Asset, Contract],
                                   spender: str, address: str = '') -> CryptoAmount:
         """
         Get the allowance of a given address.
@@ -201,7 +201,7 @@ class EthereumClient(XChainClient):
         """
         Get the public key for the current wallet.
         """
-        return self.get_account().public_key
+        return self.get_account()._key_obj.public_key
 
     def get_account(self) -> Account:
         """

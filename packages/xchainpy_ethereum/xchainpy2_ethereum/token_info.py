@@ -122,6 +122,12 @@ class TokenInfoList:
         """
         if isinstance(contract_address, Asset):
             contract_address = contract_address.contract
+        elif isinstance(contract_address, Contract):
+            return contract_address
+        elif isinstance(contract_address, str):
+            pass
+        else:
+            raise NotImplementedError(f"Unsupported type {type(contract_address)}. Expected str, Asset or Contract.")
         
         contract_address = validated_checksum_address(self.web3, contract_address)
         # noinspection PyTypeChecker
