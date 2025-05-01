@@ -53,9 +53,8 @@ ARB_FEE_BOUNDS = FeeBounds(2_000_000_000, 1_000_000_000_000)
 FREE_ARB_PROVIDERS = {
     # https://chainlist.org/chain/42161
     NetworkType.MAINNET: [
+        "https://rpc.therpc.io/arbitrum",
         "https://arb1.arbitrum.io/rpc",
-        "https://rpc.ankr.com/arbitrum",
-        "https://1rpc.io/arb",
     ],
     # https://chainlist.org/chain/421614
     NetworkType.TESTNET: [
@@ -64,16 +63,6 @@ FREE_ARB_PROVIDERS = {
 }
 
 FREE_ARB_PROVIDERS[NetworkType.STAGENET] = FREE_ARB_PROVIDERS[NetworkType.MAINNET]
-
-"""
-    Default Arbitrum gas prices in gwei.
-"""
-ARB_NORMAL_FEE = 30
-
-"""
-    Default Arbitrum gas prices in gwei for sure transactions.
-"""
-ARB_SURE_FEE = 50
 
 """
     This is ETH asset on Arbitrum network. It is the gas asset.
