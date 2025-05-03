@@ -6,7 +6,7 @@ from xchainpy2_utils import NetworkType
 
 class NodeURL(NamedTuple):
     node: str
-    rpc: str
+    rpc: str = ''
 
     @classmethod
     def from_ip_address(cls, ip_address: str, thornode_port: int, rpc_port: int, protocol='http'):
