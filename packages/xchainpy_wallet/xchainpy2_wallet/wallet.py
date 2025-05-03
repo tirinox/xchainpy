@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 from contextlib import suppress
-from typing import Optional, Set, Union, List, Tuple
+from typing import Optional, Set, Union, List, Tuple, Iterable
 
 from xchainpy2_client import NoClient, XChainClient
 from xchainpy2_thorchain_query import THORChainQuery, THORChainCache, InboundDetail
@@ -53,6 +53,23 @@ class Wallet:
 
         self.clients = {}
         self._create_clients(phrase)
+
+    @classmethod
+    def from_clients(cls, chain_clients: Iterable[XChainClient], query_api: Optional[THORChainQuery] = None):
+        """
+        Create a Wallet instance from a list of chain clients.
+
+        :param chain_clients: List of chain clients
+        :param query_api: THORChainQuery instance, if not provided, a new instance will be created
+        :return: Wallet instance
+        """
+        wallet = cls(phrase="", enabled_chains=[], query_api=query_api)
+        for client in chain_clients:
+            if isinstance(client, XChainClient):
+                wallet.clients[client.chain] = client
+            else:
+                raise TypeError(f"Expected XChainClient, got {type(client)}")
+        return wallet
 
     @property
     def cache(self) -> THORChainCache:
