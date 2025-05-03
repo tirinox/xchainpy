@@ -9,6 +9,7 @@ from xchainpy2_thorchain import THORMemo, THOR_BASIS_POINT_MAX
 from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, QuoteFees, \
     TxStatusResponse, TxSignersResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE
+from .midgard import MidgardAPIClient, ConfigurationEx
 from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES, THORNAME_BLOCKS_ONE_YEAR
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity
@@ -18,6 +19,7 @@ from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, 
     BlockInformation, LoanCloseQuote, THORNameEstimate, WithdrawMode, InboundDetail
 from .swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
     get_chain_gas_asset
+from .thornode import THORNodeAPIClient
 from .track.tracker import TransactionTracker
 
 
@@ -53,6 +55,32 @@ class THORChainQuery:
         # todo: write some tests
         self.cache.thornode_client.patch_client(self.interface_id, self.interface_id)
         self.cache.midgard_client.patch_client(self.interface_id, self.interface_id)
+
+    @classmethod
+    def from_thornode_and_midgard(cls, thornode_url='', midgard_url='',
+                                  chain_attributes=None,
+                                  interface_id=DEFAULT_INTERFACE_ID,
+                                  native_decimal=RUNE_DECIMAL):
+        """
+        Create a THORChainQuery instance using custom Thornode and Midgard URLs.
+
+        :param thornode_url: URL for Thornode API (with port and protocol)
+        :param midgard_url: URL for Midgard API (with port and protocol)
+        :param native_decimal: Native asset decimal places (e.g. RUNE has 8 decimals)
+        :param interface_id: Interface ID for the API client. This is used to identify your requests and avoid blocking.
+        :param chain_attributes: Dict of chain attributes for the query. Default is DEFAULT_CHAIN_ATTRS.
+
+        :return: THORChainQuery instance
+        """
+        midgard = MidgardAPIClient(ConfigurationEx.new(host=midgard_url)) if midgard_url else MidgardAPIClient()
+        thornode = THORNodeAPIClient(ConfigurationEx.new(host=thornode_url)) if thornode_url else THORNodeAPIClient()
+        cache = THORChainCache(midgard, thornode)
+        return cls(
+            cache=cache,
+            interface_id=interface_id,
+            chain_attributes=chain_attributes or DEFAULT_CHAIN_ATTRS,
+            native_decimal=native_decimal
+        )
 
     @property
     def native_chain_attributes(self):

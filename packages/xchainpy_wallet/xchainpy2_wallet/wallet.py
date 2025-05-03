@@ -10,7 +10,7 @@ from .detect_clients import THORChainClient, CLIENT_CLASSES
 # from .evm_helper import EVMHelper
 from .models import AllBalances, ChainBalances, ALL
 
-ChainCollection = Union[Set[Chain], List[Chain], Tuple[Chain]]
+ChainCollection = Union[Set[Chain], List[Chain], Tuple[Chain], Chain]
 
 
 class Wallet:
@@ -36,11 +36,16 @@ class Wallet:
         like explorer URLs.
         """
 
+        # todo: supply WEB3 provider URLS, and API for other chain clients
+
         self.default_chain = default_chain
 
         self._semaphore = asyncio.Semaphore(concurrency)
 
         self.query_api = query_api or THORChainQuery()
+
+        if isinstance(enabled_chains, Chain):
+            enabled_chains = {enabled_chains}
 
         self._enabled_chains = set(CLIENT_CLASSES.keys()) if enabled_chains is ALL else set(enabled_chains)
 
@@ -48,9 +53,6 @@ class Wallet:
 
         self.clients = {}
         self._create_clients(phrase)
-
-        self._evm_helpers = {}
-        self._init_evm_helpers()
 
     @property
     def cache(self) -> THORChainCache:
@@ -90,13 +92,6 @@ class Wallet:
         if not self._enabled_chains:
             return True
         return chain in self._enabled_chains
-
-    def _init_evm_helpers(self):
-        pass  # todo
-        # for chain in EVM_CHAINS:
-        #     if self.is_chain_enabled(chain):
-        #         # noinspection PyTypeChecker
-        #         self._evm_helpers[chain] = EVMHelper(self.get_client(chain), self.cache)
 
     def _create_clients(self, phrase):
         for chain in self._enabled_chains:
@@ -183,3 +178,19 @@ class Wallet:
         if not cli:
             raise ValueError(f"Client for {self.default_chain} is not found.")
         return cli.get_explorer_address_url(address)
+
+    async def __aenter__(self):
+        """
+        Enter the async context manager.
+        :return: self
+        """
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """
+        Exit the async context manager.
+        :param exc_type: Exception type
+        :param exc_val: Exception value
+        :param exc_tb: Exception traceback
+        """
+        await self.close()
