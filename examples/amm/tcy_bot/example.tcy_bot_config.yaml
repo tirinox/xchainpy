@@ -1,0 +1,7 @@
+# Just copy this file, name it tcy_bot_config.yaml
+
+thor:
+  node_url: "https://thornode.ninerealms.com/"
+  midgard_url: "https://midgard.ninerealms.com/"
+  phrase: "your twelve word seed phrase goes here"
+  network_id: "mainnet"
