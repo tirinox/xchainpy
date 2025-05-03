@@ -5,3 +5,11 @@ thor:
   midgard_url: "https://midgard.ninerealms.com/"
   phrase: "your twelve word seed phrase goes here"
   network_id: "mainnet"
+
+
+strategy:
+  source_amount: 100
+  source_asset: "THOR.RUNE"
+  target_asset: "THOR.TCY"
+
+  check_interval: 1

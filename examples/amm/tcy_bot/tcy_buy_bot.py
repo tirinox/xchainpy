@@ -22,9 +22,10 @@ class TCYBot:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        phrase = self.cfg['thor']['phrase']
-        thornode = self.cfg['thor']['node_url']
-        network = self.cfg['thor']['network_id']
+        thor = self.cfg['thor']
+        phrase = thor['phrase']
+        thornode = thor['node_url']
+        network = thor['network_id']
         self.query = THORChainQuery.from_thornode_and_midgard(thornode_url=thornode)
 
         self.client = THORChainClient(
@@ -56,7 +57,7 @@ class TCYBot:
             r = await self.amm.query.quote_swap(
                 self.buy_amount,
                 self.client.get_address(),
-                self.to_asset,
+                self.target_asset,
             )
             print(r)
             if r.can_swap:
@@ -66,9 +67,17 @@ class TCYBot:
 
         return False
 
+    @property
+    def strategy(self):
+        return self.cfg['strategy']
+
+    @property
+    def target_asset(self):
+        return self.strategy['target_asset']
+
     async def run_loop(self):
         await self.print_balances()
-        check_interval = self.cfg['buy']['check_interval']
+        check_interval = self.strategy['check_interval']
         tick = 1
         while True:
             print(f"#{tick:05} Checking if buy is possible...")
@@ -85,18 +94,13 @@ class TCYBot:
 
     @property
     def buy_amount(self):
-        from_asset = self.cfg['buy']['asset']
-        from_amount = self.cfg['buy']['amount']
+        from_asset = self.strategy['source_asset']
+        from_amount = self.strategy['source_amount']
         return CryptoAmount.automatic(from_amount, from_asset)
-
-    @property
-    def to_asset(self):
-        to_asset = "THOR.TCY"
-        return to_asset
 
     async def submit_buy_order(self):
         cfg, amm = self.cfg, self.amm
-        tx_hash = await amm.do_swap(self.buy_amount, self.to_asset)
+        tx_hash = await amm.do_swap(self.buy_amount, self.target_asset)
         print(f"Transaction hash: {amm.get_track_url(tx_hash)}")
 
 

@@ -1,0 +1,10 @@
+xchainpy2_midgard
+xchainpy2_thorchain
+xchainpy2_thorchain_amm
+aiofiles
+pyyaml
+
+
+# Temporary . AMM requires it
+xchainpy2_ethereum
+xchainpy2_mayachain
