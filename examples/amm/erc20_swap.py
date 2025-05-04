@@ -59,7 +59,7 @@ async def main():
     input("Press Enter to send TX...")
 
     try:
-        tx_hash = await amm.do_swap(
+        tx_hash = await amm.swap(
             input_amount=from_amount,
             destination_asset=to_asset,
             destination_address=my_address,

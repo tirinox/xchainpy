@@ -47,7 +47,7 @@ async def main(seed_phrase):
         dest_asset = AssetBSC.as_trade  # to trade BSC~BNB
         if input(f'Do you want to swap Trade Asset {amt_to_swap}? (y/n): ').lower() == 'y':
             print(f'Swapping {amt_to_swap} to is in progress...')
-            tx_hash = await amm.do_swap(
+            tx_hash = await amm.swap(
                 amt_to_swap,
                 dest_asset,
             )

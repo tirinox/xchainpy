@@ -9,6 +9,7 @@ from xchainpy2_thorchain import THORChainClient, THORMemo
 from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode
 from xchainpy2_thornode import Amount
 from xchainpy2_utils import CryptoAmount, Asset, Chain, AssetRUNE, remove_0x_prefix, AssetTCY
+from xchainpy2_utils.versions import deprecated
 from xchainpy2_wallet import Wallet
 from .consts import THOR_BASIS_POINT_MAX, DEFAULT_TOLERANCE_BPS, THOR_SWAP_TRACKER_URL, DEFAULT_EXPIRY
 from .evm_helper import EVMHelper
@@ -62,17 +63,17 @@ class THORChainAMM:
 
     # ---------------------------- SWAPS ----------------------------
 
-    async def do_swap(self,
-                      input_amount: CryptoAmount,
-                      destination_asset: Union[Asset, str],
-                      destination_address: str = '',
-                      tolerance_bps=DEFAULT_TOLERANCE_BPS,
-                      affiliate_bps=0,
-                      affiliate_address: str = '',
-                      streaming_interval=0,
-                      streaming_quantity=0,
-                      gas_options: Optional[GasOptions] = None,
-                      allowance_check=True) -> str:
+    async def swap(self,
+                   input_amount: CryptoAmount,
+                   destination_asset: Union[Asset, str],
+                   destination_address: str = '',
+                   tolerance_bps=DEFAULT_TOLERANCE_BPS,
+                   affiliate_bps=0,
+                   affiliate_address: str = '',
+                   streaming_interval=0,
+                   streaming_quantity=0,
+                   gas_options: Optional[GasOptions] = None,
+                   allowance_check=True) -> str:
         # todo: add an ability to override swap limit
         """
         Do a swap using the THORChain protocol AMM.
@@ -120,6 +121,14 @@ class THORChainAMM:
             raise AMMException(f'Swap is not possible: {estimate.errors}', estimate.errors)
 
         return await self.general_deposit(input_amount, estimate.details.inbound_address, estimate.memo, gas_options)
+
+    @deprecated("Use swap() method instead")
+    async def do_swap(self, *args, **kwargs) -> str:
+        """
+        This method is obsolete and will be removed in the future.
+        Please use "swap" method instead.
+        """
+        return await self.swap(*args, **kwargs)
 
     # ---------------------------- LIQUIDITY ----------------------------
 

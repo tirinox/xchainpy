@@ -19,7 +19,7 @@ async def main():
     balance_avax = await avax.get_gas_balance()
     print(f"BSC balance: {balance_bsc} and AVAX balance: {balance_avax}")
 
-    tx_hash = await amm.do_swap(
+    tx_hash = await amm.swap(
         input_amount=bsc.gas_amount(1.0),  # 1 BNB
         destination_asset=AssetAVAX,
         tolerance_bps=NO_SWAP_LIMIT,

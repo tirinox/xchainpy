@@ -114,7 +114,7 @@ class TCYBot:
 
     async def submit_buy_order(self):
         cfg, amm = self.cfg, self.amm
-        tx_hash = await amm.do_swap(self.buy_amount, self.target_asset)
+        tx_hash = await amm.swap(self.buy_amount, self.target_asset)
         print(f"Transaction hash: {amm.get_track_url(tx_hash)}")
 
 

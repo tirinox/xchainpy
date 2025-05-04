@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xchainpy2_thorchain_amm"
-version = "0.0.33"
+version = "0.0.34"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
@@ -31,7 +31,7 @@ classifiers = [
 dependencies = [
     "bip-utils>=2.7.0,<3.0.0",
     "pycryptodome>=3.17,<4.0",
-    "xchainpy2_utils>=0.0.26",
+    "xchainpy2_utils>=0.0.29",
     "xchainpy2_crypto>=0.0.4",
     "xchainpy2_client>=0.0.4",
     "xchainpy2_thorchain>=0.0.4",
