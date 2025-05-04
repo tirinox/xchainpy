@@ -4,11 +4,14 @@ import math
 from datetime import datetime, timedelta
 from typing import Union, List, Optional, Tuple
 
+
 from xchainpy2_client import XChainClient
 from xchainpy2_thorchain import THORMemo, THOR_BASIS_POINT_MAX
 from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, QuoteFees, \
     TxStatusResponse, TxSignersResponse
-from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE
+from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \
+    get_chain_gas_asset
+from .fee import calc_network_fee, calc_outbound_fee
 from .midgard import MidgardAPIClient, ConfigurationEx
 from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES, THORNAME_BLOCKS_ONE_YEAR
@@ -17,8 +20,7 @@ from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, 
     LiquidityPosition, PoolRatios, EstimateWithdrawLP, \
     EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, LoanOpenQuote, \
     BlockInformation, LoanCloseQuote, THORNameEstimate, WithdrawMode, InboundDetail
-from .swap import get_base_amount_with_diff_decimals, calc_network_fee, calc_outbound_fee, \
-    get_chain_gas_asset
+from .swap import get_base_amount_with_diff_decimals
 from .thornode import THORNodeAPIClient
 from .track.tracker import TransactionTracker
 
