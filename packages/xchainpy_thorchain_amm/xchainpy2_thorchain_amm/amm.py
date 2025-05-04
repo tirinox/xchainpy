@@ -3,10 +3,12 @@ from contextlib import suppress
 from typing import Union, Optional
 
 from xchainpy2_client import FeeOption
+# todo fix this!
 from xchainpy2_ethereum import EthereumClient, GasOptions
 from xchainpy2_thorchain import THORChainClient, THORMemo
 from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode
-from xchainpy2_utils import CryptoAmount, Asset, Chain, AssetRUNE, remove_0x_prefix
+from xchainpy2_thornode import Amount
+from xchainpy2_utils import CryptoAmount, Asset, Chain, AssetRUNE, remove_0x_prefix, AssetTCY
 from xchainpy2_wallet import Wallet
 from .consts import THOR_BASIS_POINT_MAX, DEFAULT_TOLERANCE_BPS, THOR_SWAP_TRACKER_URL, DEFAULT_EXPIRY
 from .evm_helper import EVMHelper
@@ -770,6 +772,50 @@ class THORChainAMM:
 
         helper = self._get_evm_helper(amount.asset)
         return await helper.approve_tc_router(amount, gas_options)
+
+    # ------------------------------ TCY ------------------------------
+
+    async def tcy_claim(self, thor_address: str = '', gas_options: Optional[GasOptions] = None) -> str:
+        """
+        Claim TCY tokens. Call this from your L1 address.
+        TCY live in the THORChain blockchain so you will need thor_address to claim them.
+
+        :param thor_address: Target THORChain address to send the TCY tokens to. By default, it will be the default THORChain address.
+        :param gas_options: Gas options. You can set gas price explicitly or use automatic fee option
+        :return: str TX hash
+        """
+        if not thor_address:
+            thor_address = self.default_thor_address
+
+        memo = THORMemo.tcy_claim(thor_address).build()
+        inbound_address = await self._get_inbound_address(AssetRUNE)
+        return await self.general_deposit(CryptoAmount.zero(AssetRUNE), inbound_address, memo, gas_options)
+
+    async def tcy_stake(self, amount: Union[int, float, Amount, CryptoAmount]) -> str:
+        """
+        Stake TCY tokens. This method invokes a deposit from your THORChain account
+        :param amount: amount of TCY to stake
+        :return: str TX hash
+        """
+        if not isinstance(amount, CryptoAmount):
+            amount = CryptoAmount.automatic(amount, AssetTCY, self._get_thorchain_client().decimal)
+        elif amount.asset != AssetTCY:
+            raise ValueError(f'Asset {amount.asset} is not {AssetTCY}')
+
+        memo = THORMemo.tcy_stake().build()
+        return await self.general_deposit(amount, '', memo)
+
+    async def tcy_unstake(self, bp_units: int) -> str:
+        """
+        Unstake TCY tokens.
+        :param bp_units: amount of TCY to unstake in basic points 0..10000 where 10k is 100%
+        :return: str TX hash
+        """
+        if not isinstance(bp_units, int) or bp_units <= 0:
+            raise ValueError(f'Invalid amount: {bp_units}')
+
+        memo = THORMemo.tcy_unstake(bp_units).build()
+        return await self.general_deposit(CryptoAmount.zero(AssetRUNE), '', memo)
 
     # ---------------------------- GENERAL ----------------------------
 
