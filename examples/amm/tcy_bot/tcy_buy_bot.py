@@ -59,13 +59,27 @@ class TCYBot:
                 self.client.get_address(),
                 self.target_asset,
             )
-            print(r)
-            if r.can_swap:
-                return True
+            if not r.can_swap:
+                print(f'Cannot swap: {r.error}')
+                return False
+
+            # Check price bounds
+            input_amount = self.buy_amount.amount.as_base
+            output_amount = r.net_output.amount.as_base
+            price = output_amount / input_amount
+
+            print(f'Estimated net output: {r.net_output}')
+            print(f"Price: {price}: {self.buy_amount.asset} / {r.net_output.asset}")
+
+            max_price = self.strategy['max_price_tcy_per_source_asset']
+            if price > max_price:
+                print(f'Price exceeds max price {max_price}. Not buying.')
+                return False
+
+            # We can swap!
+            return True
         except ApiException as e:
             print(f"Error: {e}!")
-
-        return False
 
     @property
     def strategy(self):
