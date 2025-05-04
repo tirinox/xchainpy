@@ -150,6 +150,30 @@ def test_divide():
         assert a / 0 == 0
 
 
+def test_divide_amount_and_amount():
+    a1 = Amount(100, 8, Denomination.BASE)
+    assert a1 / a1 == 1.0
+    assert a1 // a1 == 1
+
+    a2 = Amount(20, 8, Denomination.ASSET)
+    assert a2 / a2 == 1.0
+    assert a2 // a2 == 1
+
+    assert a2 / a1 == Decimal('0.2')
+    assert a1 / a2 == Decimal('5.0')
+    assert a2 // a1 == 0
+
+    a3 = Amount(300, 18, Denomination.BASE)
+    with pytest.raises(ZeroDivisionError):
+        assert a3 / Amount(0, 18) == 0
+
+    with pytest.raises(ValueError):
+        a3 // a1  # different decimals
+
+    with pytest.raises(ValueError):
+        a2 // a3  # different decimals
+
+
 def test_bool():
     assert Amount(400)
     assert Amount(-5)

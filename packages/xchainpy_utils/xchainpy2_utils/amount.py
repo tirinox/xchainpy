@@ -86,15 +86,37 @@ class Amount(NamedTuple):
         else:
             raise TypeError(f'Cannot multiply {self} with {type(other)}')
 
-    def __truediv__(self, other) -> 'Amount':
+    def __truediv__(self, other: Union['Amount', Decimal, float, int]) -> 'Amount':
+        """
+        Divide the amount by another amount or a number.
+        In case of Amount/Amount division, it returns a dimensionless quantity of type Decimal.
+
+        :param other: Another Amount or a number (int, float, Decimal)
+        :return: Decimal or Amount
+        """
         if isinstance(other, (int, float, Decimal)):
             return Amount(int(self.internal_amount / other), self.decimals, self.denom)
+        elif isinstance(other, Amount):
+            # Useful for price calculation, returns a dimensionless quantity of type Decimal
+            return Decimal(self.internal_amount) / Decimal(other.internal_amount)
         else:
             raise TypeError(f'Cannot divide {self} with {type(other)}')
 
-    def __div__(self, other) -> 'Amount':
+    def __floordiv__(self, other: Union['Amount', Decimal, float, int]) -> Union['Amount', Decimal]:
+        """
+        Divide the amount by another amount or a number.
+        In case of Amount/Amount division, it returns a dimensionless quantity of type Decimal.
+
+        :param other: Another Amount or a number (int, float, Decimal)
+        :return: Decimal or Amount
+        """
         if isinstance(other, (int, float, Decimal)):
             return Amount(int(self.internal_amount // other), self.decimals, self.denom)
+        elif isinstance(other, Amount):
+            if self.decimals != other.decimals:
+                raise ValueError(f'Cannot divide {self.denom} with {other.denom}. Decimals mismatch!')
+            # Useful for price calculation, returns a dimensionless quantity of type Decimal
+            return Decimal(self.internal_amount) // Decimal(other.internal_amount)
         else:
             raise TypeError(f'Cannot divide {self} with {type(other)}')
 
@@ -351,7 +373,7 @@ class CryptoAmount(NamedTuple):
         multiplier = self._get_multiplier(other)
         return CryptoAmount(self.amount / multiplier, self.asset)
 
-    def __div__(self, other) -> 'CryptoAmount':
+    def __floordiv__(self, other) -> 'CryptoAmount':
         self.check(other)
         multiplier = self._get_multiplier(other)
         return CryptoAmount(self.amount // multiplier, self.asset)
