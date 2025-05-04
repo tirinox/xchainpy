@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from xchainpy2_thorchain_query import InboundDetail
+from xchainpy2_thorchain_query.models import InboundDetail
 from xchainpy2_utils import CryptoAmount, Amount, CACAO_DECIMAL, AssetCACAO, Asset, AssetRUNE, RUNE_DECIMAL, Chain, \
     AssetBTC, AssetDOGE, AssetLTC, AssetBCH, AssetBNB, AssetATOM, get_chain_gas_asset, ETH_DECIMALS
 
