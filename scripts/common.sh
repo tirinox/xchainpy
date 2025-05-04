@@ -173,52 +173,12 @@ function invalid_number() {
 }
 
 function ask_for_package() {
-  # Use the default value (all packages)
-  PACKS=(../packages/xchainpy_*)
-  N=3 # Set the number of columns
-  COLUMN_WIDTH=40 # Adjust column width as needed
-
-  echo "Available packages:"
-
-  counter=1
-  column=1
-
-  for i in "${PACKS[@]}"; do
-    # Print the current package in the column format
-    printf "%-$((COLUMN_WIDTH - 1))s" "$counter) $(basename "$i")"
-
-    # Check if we reached the last column or the last package
-    if (( column == N )); then
-      echo # Move to the next row
-      column=1
-    else
-      ((column++))
+    SELECTED_PACKAGE=$(python3 ask_package.py 2>/dev/tty)
+    # check empty
+    if [ -z "$SELECTED_PACKAGE" ]; then
+        echo "No package selected. Aborting."
+        exit 1
     fi
-    ((counter++))
-  done
-
-  # Print a newline if the last row is incomplete
-  if (( column > 1 && column <= N )); then
-    echo
-  fi
-
-  echo "Which package do you want to select (enter the number)?"
-
-  # Ask for the number
-  read -r number
-
-  # Check if the number is not valid
-  if ! [[ "$number" =~ ^[0-9]+$ ]]; then
-    echo "Invalid input: not a number."
-    return
-  elif (( number < 1 || number > ${#PACKS[@]} )); then
-    echo "Invalid input: number out of range."
-    return
-  fi
-
-  # Get the package name
-  SELECTED_PACKAGE=${PACKS[$number - 1]}
-  echo "Selected package: $SELECTED_PACKAGE"
 }
 
 
