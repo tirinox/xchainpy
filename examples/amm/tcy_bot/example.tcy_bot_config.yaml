@@ -14,4 +14,6 @@ strategy:
 
   check_interval: 1
 
-  max_price_tcy_per_source_asset: 12.0   # TCY= $0.11 @ 1.32$/Rune
+  min_price_target_per_source_asset: 12.0   # TCY= $0.11 @ 1.32$/Rune
+
+  skip_check: false

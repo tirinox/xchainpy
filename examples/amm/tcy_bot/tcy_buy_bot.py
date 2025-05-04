@@ -35,7 +35,7 @@ class TCYBot:
             }
         )
         self.wallet = Wallet.from_clients([self.client])
-        self.amm = THORChainAMM(self.wallet)
+        self.amm = THORChainAMM(self.wallet, self.query)
 
     @staticmethod
     async def load_config():
@@ -69,12 +69,15 @@ class TCYBot:
             price = output_amount / input_amount
 
             print(f'Estimated net output: {r.net_output}')
-            print(f"Price: {price}: {self.buy_amount.asset} / {r.net_output.asset}")
+            print(f"Price: {price}: {r.net_output.asset} / {self.buy_amount.asset} ")
+            return False
 
-            max_price = self.strategy['max_price_tcy_per_source_asset']
-            if price > max_price:
-                print(f'Price exceeds max price {max_price}. Not buying.')
-                return False
+            min_price = self.strategy.get('min_price_target_per_source_asset')
+            if min_price:
+                min_price = float(min_price)
+                if price < min_price:
+                    print(f'Price exceeds min price {min_price}. Not buying.')
+                    return False
 
             # We can swap!
             return True
@@ -91,15 +94,19 @@ class TCYBot:
 
     async def run_loop(self):
         await self.print_balances()
-        check_interval = self.strategy['check_interval']
-        tick = 1
-        while True:
-            print(f"#{tick:05} Checking if buy is possible...")
-            if await self.check_possibility():
-                print("Buy is possible!!!")
-                break
 
-            await asyncio.sleep(check_interval)
+        if self.strategy.get('skip_check'):
+            print(f"Skipping check")
+        else:
+            check_interval = self.strategy['check_interval']
+            tick = 1
+            while True:
+                print(f"#{tick:05} Checking if buy is possible...")
+                if await self.check_possibility():
+                    print("Buy is possible!!!")
+                    break
+
+                await asyncio.sleep(check_interval)
 
         await self.submit_buy_order()
         print("Done!")
