@@ -2,7 +2,7 @@ from cosmpy.aerial.client import Coin
 
 from xchainpy2_thorchain import convert_coin_to_crypto_amount, get_thor_address_prefix, get_asset_from_denom, \
     crypto_amount_to_msg_coin
-from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE, RUNE_DECIMAL, Asset, NetworkType, AssetBNB
+from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE, RUNE_DECIMAL, Asset, NetworkType, AssetBSC
 
 
 def test_convert_coin_to_crypto_amount():
@@ -25,7 +25,7 @@ def test_prefix():
 
 def test_asset_from_denom():
     assert get_asset_from_denom('rune') == AssetRUNE
-    assert get_asset_from_denom('bnb.bnb') == AssetBNB
+    assert get_asset_from_denom('bsc.bnb') == AssetBSC
 
 
 def test_crypto_amount_to_msg_coin():
