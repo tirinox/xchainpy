@@ -382,6 +382,8 @@ class THORChainClient(CosmosGaiaClient):
 
         api = TradeAccountApi(self.thornode_api_client)
         result: List[TradeAccountResponse] = await api.trade_account(address)
+        if not result:
+            return []
 
         return [
             CryptoAmount(
