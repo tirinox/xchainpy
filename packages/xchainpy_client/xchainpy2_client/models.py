@@ -4,7 +4,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Optional, List, NamedTuple, Dict, Union
 
-from xchainpy2_utils import Asset, Amount, NetworkType, CryptoAmount, DEFAULT_ASSET_DECIMAL
+from xchainpy2_utils import Asset, Amount, NetworkType, CryptoAmount
 
 
 class TxType(Enum):
