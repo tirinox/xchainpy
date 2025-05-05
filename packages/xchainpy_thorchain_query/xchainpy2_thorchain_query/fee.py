@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from xchainpy2_thorchain_query.models import InboundDetail
 from xchainpy2_utils import CryptoAmount, Amount, CACAO_DECIMAL, AssetCACAO, Asset, AssetRUNE, RUNE_DECIMAL, Chain, \
-    AssetBTC, AssetDOGE, AssetLTC, AssetBCH, AssetBNB, AssetATOM, get_chain_gas_asset, ETH_DECIMALS
+    AssetBTC, AssetDOGE, AssetLTC, AssetBCH, AssetATOM, get_chain_gas_asset, ETH_DECIMALS
 
 try:
     from xchainpy2_mayachain import DEFAULT_CACAO_NETWORK_FEE
@@ -42,8 +42,6 @@ def calc_network_fee(asset: Asset, inbound: InboundDetail,
         return CryptoAmount(Amount.from_base(inbound.gas_rate * inbound.outbound_tx_size), AssetLTC)
     elif asset.chain == Chain.Doge.value:
         return CryptoAmount(Amount.from_base(inbound.gas_rate * inbound.outbound_tx_size), AssetDOGE)
-    elif asset.chain == Chain.Binance.value:
-        return CryptoAmount(Amount.from_base(inbound.gas_rate), AssetBNB)
     elif Chain(asset.chain).is_evm:
         gas_asset = get_chain_gas_asset(Chain(asset.chain))
         decimals = ETH_DECIMALS
@@ -88,8 +86,6 @@ def calc_outbound_fee(asset: Asset, inbound: InboundDetail, base_asset=AssetRUNE
         return CryptoAmount(Amount.from_base(inbound.outbound_fee), AssetLTC)
     elif asset.chain == Chain.Doge.value:
         return CryptoAmount(Amount.from_base(inbound.outbound_fee), AssetDOGE)
-    elif asset.chain == Chain.Binance.value:
-        return CryptoAmount(Amount.from_base(inbound.outbound_fee), AssetBNB)
     elif Chain(asset.chain).is_evm:
         gas_asset = get_chain_gas_asset(Chain(asset.chain))
         decimals = ETH_DECIMALS

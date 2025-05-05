@@ -134,24 +134,14 @@ class THORChainCache:
     def thornode_client(self) -> THORNodeAPIClient:
         """
         Returns the THORNode API client.
+
         """
         return self._thornode_client
 
     async def close(self):
         """
-        Closes
-        the
-        Midgard and THORNode
-        clients.
-        It is recommended
-        to
-        call
-        this
-        method
-        before
-        the
-        application
-        exits.
+        Closes the Midgard and THORNode clients.
+        It is recommended to call this method before the application exits.
 
         :return: None
         """
@@ -162,52 +152,22 @@ class THORChainCache:
 
     def is_native_asset(self, a: Asset):
         """
-        Checks if the
-        asset is the
-        native
-        asset
-        of
-        the
-        chain.
+        Checks if the asset is the native asset of the chain.
 
-        :param
-        a: Any
-        Asset
-        :return: True if the
-        asset is the
-        native
-        asset, False
-        otherwise
+        :param a: Any Asset
+        :return: True if the asset is the native asset, False otherwise
         :rtype: bool
         """
         return a == self.native_asset
 
     async def get_exchange_rate(self, a_from: Asset, a_to: Asset) -> Decimal:
         """
-        Returns
-        the
-        exchange
-        rate
-        between
-        two
-        assets
-        when
-        using
-        selected
-        AMM
-        protocol.
-        Attention: slippage is not taken
-        into
-        account! Use
-        THORChainQuery.quote_swap
-        for more accurate simulation.
+        Returns the exchange rate between two assets when using the selected AMM protocol.
 
-        :param
-        a_from: Source
-        Asset
-        :param
-        a_to: Destination
-        Asset
+        Attention: Slippage is not taken into account! Use THORChainQuery.quote_swap for more accurate simulation.
+
+        :param a_from: Source Asset
+        :param a_to: Destination Asset
         :return: Decimal
         """
         if a_from == a_to:
@@ -225,33 +185,14 @@ class THORChainCache:
 
     async def get_pool_for_asset(self, asset: Asset) -> LiquidityPool:
         """
-        Returns
-        the
-        liquidity
-        pool
-        for the given asset.
-        Rune
-        does
-        not have
-        a
-        pool, because
-        it is the
-        collateral
-        for any other asset.
+        Returns the liquidity pool for the given asset.
 
-        :raises
-        ValueError:
-        if the asset is native
-        :raises
-        LookupError:
-        if the pool is not found
-        :param
-        asset: Asset
-        to
-        find
-        pool
-        with
-            :return: LiquidityPool
+        Rune does not have a pool, because it is the collateral for any other asset.
+
+        :raises ValueError: if the asset is native
+        :raises LookupError: if the pool is not found
+        :param asset: Asset to find pool with
+        :return: LiquidityPool
         """
         if self.is_native_asset(asset):
             raise ValueError('Native Rune does not have a pool')
@@ -262,21 +203,9 @@ class THORChainCache:
 
     async def get_pools(self, forced=False) -> Dict[str, LiquidityPool]:
         """
-        Returns
-        cached
-        liquidity
-        pools
-        state as a
-        Dict.
+        Returns cached liquidity pools state as a Dict.
 
-        :param
-        forced: Force
-        reload
-        data
-        from the API
-        bypassing
-        the
-        cache
+        :param forced: Force reload data from the API bypassing the cache
         :return: Dict[str, LiquidityPool]
         """
 
@@ -289,17 +218,7 @@ class THORChainCache:
 
     async def refresh_pool_cache(self) -> Dict[str, LiquidityPool]:
         """
-        This
-        will
-        reload
-        the
-        pool
-        details
-        from both THORNode and Midgard and store
-        them
-        into
-        the
-        cache.
+        This will reload the pool details from both THORNode and Midgard and store them into the cache.
 
         :return: Dict[str, LiquidityPool]
         """

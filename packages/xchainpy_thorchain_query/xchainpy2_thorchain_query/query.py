@@ -4,13 +4,12 @@ import math
 from datetime import datetime, timedelta
 from typing import Union, List, Optional, Tuple
 
-
 from xchainpy2_client import XChainClient
 from xchainpy2_thorchain import THORMemo, THOR_BASIS_POINT_MAX
 from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, QuoteFees, \
     TxStatusResponse, TxSignersResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \
-    get_chain_gas_asset
+    get_chain_gas_asset, NetworkType
 from .fee import calc_network_fee, calc_outbound_fee
 from .midgard import MidgardAPIClient, ConfigurationEx
 from .cache import THORChainCache
@@ -59,10 +58,14 @@ class THORChainQuery:
         self.cache.midgard_client.patch_client(self.interface_id, self.interface_id)
 
     @classmethod
-    def from_thornode_and_midgard(cls, thornode_url='', midgard_url='',
-                                  chain_attributes=None,
-                                  interface_id=DEFAULT_INTERFACE_ID,
-                                  native_decimal=RUNE_DECIMAL):
+    def from_thornode_and_midgard(
+            cls,
+            thornode_url='', midgard_url='',
+            chain_attributes=None,
+            interface_id=DEFAULT_INTERFACE_ID,
+            native_decimal=RUNE_DECIMAL,
+            network: NetworkType = NetworkType.MAINNET
+    ):
         """
         Create a THORChainQuery instance using custom Thornode and Midgard URLs.
 
@@ -71,12 +74,13 @@ class THORChainQuery:
         :param native_decimal: Native asset decimal places (e.g. RUNE has 8 decimals)
         :param interface_id: Interface ID for the API client. This is used to identify your requests and avoid blocking.
         :param chain_attributes: Dict of chain attributes for the query. Default is DEFAULT_CHAIN_ATTRS.
+        :param network: Network type (Mainnet, Stagenet, Testnet). Default is MAINNET.
 
         :return: THORChainQuery instance
         """
         midgard = MidgardAPIClient(ConfigurationEx.new(host=midgard_url)) if midgard_url else MidgardAPIClient()
         thornode = THORNodeAPIClient(ConfigurationEx.new(host=thornode_url)) if thornode_url else THORNodeAPIClient()
-        cache = THORChainCache(midgard, thornode)
+        cache = THORChainCache(midgard, thornode, network=network)
         return cls(
             cache=cache,
             interface_id=interface_id,
@@ -360,7 +364,7 @@ class THORChainQuery:
 
         # RUNE, BNB and Synths have near instant finality, so no conf counting required. - need to make a BFT only case.
         if (input_coin.asset == self.native_asset or
-                input_coin.asset.chain in (Chain.Binance, Chain.Cosmos, Chain.THORChain, Chain.Maya) or
+                input_coin.asset.chain in (Chain.Cosmos, Chain.THORChain, Chain.Maya) or
                 input_coin.asset.chain):
             return self.chain_attributes[Chain.THORChain].avg_block_time
         else:
