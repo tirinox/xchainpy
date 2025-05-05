@@ -35,7 +35,7 @@ class THORChainAMM:
         :param fee_option: Default fee option to use for transactions, default is FeeOption.FAST
         """
 
-        self.query = query or wallet.query_api or THORChainQuery()
+        self.query = query or wallet.query_api or THORChainQuery(wallet.network)
         self.wallet = wallet
         self.dry_run = dry_run
         self.check_balance = check_balance
