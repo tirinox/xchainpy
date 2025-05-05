@@ -127,19 +127,6 @@ FALLBACK_CLIENT_URLS = {
 }
 """Fallback client URLs for the THORChain network."""
 
-AssetRuneBNBTestnet = Asset.from_string('BNB.RUNE-67C')
-"""BEP2 RUNE asset on Binance testnet. No longer used."""
-
-AssetRuneBNBMainnet = Asset.from_string('BNB.RUNE-B1A')
-"""BEP2 RUNE asset on Binance mainnet. No longer used."""
-
-AssetRuneERC20Mainnet = Asset.from_string('ETH.RUNE-0x3155ba85d5f96b2d030a4966af206230e46849cb')
-"""ERC20 RUNE asset on Ethereum mainnet. No longer used."""
-
-# Base "chain" asset for RUNE on ethereum test net.
-AssetRuneERC20Testnet = Asset.from_string('ETH.RUNE-0xd601c6A3a36721320573885A8d8420746dA3d7A0')
-"""ERC20 RUNE asset on Ethereum testnet. No longer used."""
-
 DENOM_RUNE_NATIVE = 'rune'
 """Denomination for RUNE on THORChain (COSMOS demon)."""
 
