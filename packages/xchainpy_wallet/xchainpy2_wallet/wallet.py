@@ -5,7 +5,7 @@ from typing import Optional, Set, Union, List, Tuple, Iterable
 
 from xchainpy2_client import NoClient, XChainClient
 from xchainpy2_thorchain_query import THORChainQuery, THORChainCache, InboundDetail
-from xchainpy2_utils import Chain, Asset
+from xchainpy2_utils import Chain, Asset, NetworkType
 from .detect_clients import THORChainClient, CLIENT_CLASSES
 # from .evm_helper import EVMHelper
 from .models import AllBalances, ChainBalances, ALL
@@ -24,7 +24,8 @@ class Wallet:
                  query_api: Optional[THORChainQuery] = None,
                  enabled_chains: ChainCollection = ALL,
                  concurrency: int = 5,
-                 default_chain: Chain = Chain.THORChain):
+                 default_chain: Chain = Chain.THORChain,
+                 network: NetworkType = NetworkType.MAINNET):
         """
         Initialize the Wallet with a mnemonic phrase.
 
@@ -32,7 +33,8 @@ class Wallet:
         :param query_api: THORChainQuery instance, if not provided, a new instance will be created
         :param enabled_chains: A set of chains that are enabled for the wallet, if not provided, all chains are enabled
         :param concurrency: Concurrency level for some async operations
-        :param default_chain: Default chain for the wallet, by default it is THORChain. Used in some methods,
+        :param default_chain: By default it is THORChain. Now it is only used to get explorer URLs
+        :param network: Network type, by default it is MAINNET.
         like explorer URLs.
         """
 
@@ -42,17 +44,34 @@ class Wallet:
 
         self._semaphore = asyncio.Semaphore(concurrency)
 
-        self.query_api = query_api or THORChainQuery()
+        self._network = network
+        if network not in NetworkType:
+            raise ValueError(f"Invalid network type: {network}. Supported types are: {list(NetworkType)}")
+
+        if query_api is None:
+            cache = THORChainCache(network=network)
+            query_api = THORChainQuery(cache)
+        self.query_api = query_api
+        if not query_api:
+            raise ValueError(f"Invalid query api: {query_api}")
 
         if isinstance(enabled_chains, Chain):
             enabled_chains = {enabled_chains}
 
         self._enabled_chains = set(CLIENT_CLASSES.keys()) if enabled_chains is ALL else set(enabled_chains)
 
-        self.network = self.cache.network
-
         self.clients = {}
         self._create_clients(phrase)
+
+    @property
+    def network(self) -> NetworkType:
+        """
+        Get the network type of the wallet. (Mainnet, Stagenet, Testnet)
+        This property is set in the constructor and is used to determine the network type of the wallet.
+
+        :return: NetworkType
+        """
+        return self._network
 
     @classmethod
     def from_clients(cls, chain_clients: Iterable[XChainClient], query_api: Optional[THORChainQuery] = None):
@@ -119,7 +138,7 @@ class Wallet:
                                   f"or remove it from the enabled chains set in "
                                   f"config(WalletSettings).")
             # todo add kwargs!
-            self.clients[chain] = chain_class(phrase=phrase)
+            self.clients[chain] = chain_class(phrase=phrase, network=self._network)
 
     async def get_all_balances(self) -> AllBalances:
         """
