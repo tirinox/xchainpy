@@ -19,3 +19,5 @@ sphinx-copybutton
 pydantic
 myst_parser
 aiofiles
+toml
+packaging

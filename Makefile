@@ -91,4 +91,4 @@ upver: # Helper script to raise package version number, you will be asked which 
 
 .PHONY: versions
 versions: # Show versions of all packages
-	cd scripts && ./print_versions.sh
+	cd scripts && python print_version_vs_pypi.py
