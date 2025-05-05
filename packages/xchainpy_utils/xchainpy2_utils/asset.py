@@ -392,7 +392,6 @@ class Asset(NamedTuple):
 
 AssetBTC = Asset.from_string('BTC.BTC')
 AssetETH = Asset.from_string('ETH.ETH')
-AssetBNB = Asset.from_string('BNB.BNB')
 AssetBSC = Asset.from_string('BSC.BNB')
 AssetBCH = Asset.from_string('BCH.BCH')
 AssetLTC = Asset.from_string('LTC.LTC')
@@ -408,6 +407,8 @@ AssetBaseETH = Asset.from_string('BASE.ETH')
 AssetTCY = Asset.from_string("THOR.TCY")
 # todo add comments
 AssetRUJI = Asset.from_string("THOR.RUJI")
+AssetXRP = Asset.from_string('XRP.XRP')
+AssetSOL = Asset.from_string('SOL.SOL')
 
 
 def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
@@ -428,8 +429,6 @@ def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
         return AssetLTC
     elif chain == Chain.Doge:
         return AssetDOGE
-    elif chain == Chain.Binance:
-        return AssetBNB
     elif chain == Chain.Ethereum:
         return AssetETH
     elif chain == Chain.Avalanche:
@@ -448,6 +447,10 @@ def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
         return AssetAEth
     elif chain == Chain.Base:
         return AssetBaseETH
+    elif chain == Chain.Ripple:
+        return AssetXRP
+    elif chain == Chain.Solana:
+        return AssetSOL
 
     else:
         raise ValueError(f"Could not get gas asset for {chain} chain")
@@ -472,9 +475,6 @@ class CommonAssets:
 
     ETH = AssetETH
     """Ethereum asset"""
-
-    BNB = AssetBNB
-    """Binance Coin asset in the Beacon chain"""
 
     BSC = AssetBSC
     """Binance Coin asset in the Binance Smart Chain"""
@@ -512,6 +512,12 @@ class CommonAssets:
     BASE_ETH = AssetBaseETH
     """Base Ethereum asset"""
 
+    XRP = AssetXRP
+    """XRP Ripple asset"""
+
+    SOL = AssetSOL
+    """Solana asset"""
+
     SHORT_CODES = {
         'a': AssetAVAX,
         'b': AssetBTC,
@@ -520,10 +526,10 @@ class CommonAssets:
         'e': AssetETH,
         'g': AssetATOM,
         'l': AssetLTC,
-        'n': AssetBNB,
         's': AssetBSC,
         'r': AssetRUNE,
         'f': AssetBaseETH,
+        'x': AssetXRP,
     }
     """
     THORChain short codes for common assets.

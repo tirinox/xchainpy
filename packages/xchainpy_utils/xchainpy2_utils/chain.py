@@ -7,7 +7,6 @@ class Chain(Enum):
     These values must correspond to the chain names in THORChain; do not change them without a good reason.
     """
 
-    Binance = "BNB"
     Bitcoin = "BTC"
     Ethereum = "ETH"
     THORChain = "THOR"
@@ -22,7 +21,8 @@ class Chain(Enum):
     Kujira = "KUJI"
     Arbitrum = "ARB"
     Base = "BASE"
-    # todo: add XRP, SOL, etc.
+    Ripple = "XRP"
+    Solana = "SOL"
 
     UNKNOWN = 'Unknown'
 
@@ -53,4 +53,4 @@ class Chain(Enum):
 
 UTXO_CHAINS = {Chain.Bitcoin, Chain.Litecoin, Chain.BitcoinCash, Chain.Doge, Chain.Dash}
 EVM_CHAINS = {Chain.Ethereum, Chain.BinanceSmartChain, Chain.Avalanche, Chain.Base}
-COSMOS_CHAINS = {Chain.Cosmos, Chain.THORChain, Chain.Maya, Chain.Binance}
+COSMOS_CHAINS = {Chain.Cosmos, Chain.THORChain, Chain.Maya}

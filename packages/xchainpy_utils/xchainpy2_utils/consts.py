@@ -84,10 +84,6 @@ DEFAULT_CHAIN_ATTRS = {
         0, 6,
         DustAmount(Amount.zero(decimals=ATOM_DECIMALS), AssetATOM)
     ),
-    Chain.Binance: ChainAttributes(
-        0, 6,
-        DustAmount(Amount.from_asset(Decimal("0.000001")), AssetBNB)
-    ),
     Chain.THORChain: ChainAttributes(
         0, 6,
         DustAmount(Amount.zero(decimals=RUNE_DECIMAL), AssetRUNE)
@@ -96,6 +92,17 @@ DEFAULT_CHAIN_ATTRS = {
         0, 6,
         DustAmount(Amount.zero(decimals=CACAO_DECIMAL), AssetCACAO),
     ),
+
+    # todo: verify this
+    Chain.Solana: ChainAttributes(
+        0, 0.4,
+        DustAmount(Amount.zero(decimals=SOLANA_DECIMALS), AssetSOL),
+    ),
+    # todo: verify this
+    Chain.Ripple: ChainAttributes(
+        0, 3.5,
+        DustAmount(Amount.zero(decimals=RIPPLE_DECIMALS), AssetXRP),
+    )
 }
 
 Address = str

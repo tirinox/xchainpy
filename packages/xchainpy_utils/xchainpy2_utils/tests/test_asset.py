@@ -9,29 +9,22 @@ def test_asset_rune():
 
 
 def test_asset_equals():
-    asset = Asset('BNB', 'BNB')
-    asset2 = Asset('BNB', 'BNB')
+    asset = Asset('BSC', 'BNB')
+    asset2 = Asset('BSC', 'BNB')
     assert asset == asset2
 
-    assert AssetBNB == asset
-    assert AssetBNB != AssetETH
+    assert AssetBSC == asset
+    assert AssetBSC != AssetETH
     assert AssetRUNE == AssetRUNE
 
 
 def test_asset_from_string():
-    asset = Asset.from_string('BNB.BNB')
-    assert asset.chain == 'BNB'
+    asset = Asset.from_string('BSC.BNB')
+    assert asset.chain == 'BSC'
     assert asset.symbol == 'BNB'
     assert asset.contract == ''
     assert not asset.synth
-    assert str(asset) == 'BNB.BNB'
-
-    asset = Asset.from_string('BNB.BNB-1A2')
-    assert asset.chain == 'BNB'
-    assert asset.symbol == 'BNB'
-    assert asset.contract == '1A2'
-    assert not asset.synth
-    assert str(asset) == 'BNB.BNB-1A2'
+    assert str(asset) == 'BSC.BNB'
 
     asset = Asset.from_string('ETH.USDT-0xdac17f958d2ee523a2206206994597c13d831ec7')
     assert asset.chain == 'ETH'
@@ -103,9 +96,9 @@ def test_well_known_assets():
            and not AssetCACAO.synth
     assert AssetBTC.chain == 'BTC' == AssetBTC.symbol and AssetBTC.contract == '' and not AssetBTC.synth
     assert AssetETH.chain == 'ETH' == AssetETH.symbol and AssetETH.contract == '' and not AssetETH.synth
-    assert AssetBNB.chain == 'BNB' == AssetBNB.symbol and AssetBNB.contract == '' and not AssetBNB.synth
+    assert AssetBSC.chain == 'BSC' == AssetBSC.symbol and AssetBSC.contract == '' and not AssetBSC.synth
 
-    for asset in (AssetBNB, AssetRUNE, AssetBTC, AssetATOM, AssetAVAX, AssetBCH, AssetCACAO, AssetDOGE, AssetLTC):
+    for asset in (AssetRUNE, AssetBTC, AssetATOM, AssetAVAX, AssetBCH, AssetCACAO, AssetDOGE, AssetLTC, AssetBSC):
         assert asset.is_valid
 
 
@@ -130,7 +123,6 @@ def test_equality():
     ('r', AssetRUNE),
     ('b', AssetBTC),
     ('e', AssetETH),
-    ('n', AssetBNB),
     ('g', AssetATOM),
     ('d', AssetDOGE),
     ('l', AssetLTC),
@@ -144,7 +136,6 @@ def test_equality():
     (AssetBTC, AssetBTC),
     (AssetRUNE, AssetRUNE),
     (AssetETH, AssetETH),
-    (AssetBNB, AssetBNB),
     (AssetBCH, AssetBCH),
     (AssetLTC, AssetLTC),
     (AssetBaseETH, AssetBaseETH),
@@ -194,10 +185,13 @@ def test_derived_asset():
 
 @pytest.mark.parametrize('source, expected', [
     ('BTC', 'b'),
+    (AssetBSC, 's'),
     (AssetBTC, 'b'),
     (AssetLTC, 'l'),
     ('BASE.ETH', 'f'),
     (AssetBaseETH, 'f'),
+    (AssetXRP, 'x'),
 ])
 def test_get_short_code(source, expected):
     assert get_short_code(source) == expected
+    assert Asset.automatic(expected) == Asset.automatic(source)

@@ -15,15 +15,17 @@ from xchainpy2_utils import guess_decimals, AssetRUNE, AssetATOM, AssetBSC
     ('ETH.UOS-0XD13C7342E1EF687C5AD21B27C2B65D772CAB5C8C', 4),
     ('AVAX.USDC-0XB97EF9EF8734C71904D8002F8B6BC66DD9C48A6E', 6),
     ('ETH.GUSD-0X056FD409E1D7A124BD7017459DFEA2F387B6D5CD', 2),
+    ('BASE.USDC-0X833589FCD6EDB6E08F4C7C32D4F71B54BDA02913', 6),
+    ('AVAX.USDT-0X9702230A8EA53601F5CD2DC00FDBC13D4DF4A8C7', 6),
     ('KUJI.KUJI', 6),
     ('THOR.RUNE', 8),
     ('GAIA.ATOM', 6),
-    ('BNB.BNB', 8),
     ('BCH.BCH', 8),
     ('LTC.LTC', 8),
     ('DOGE.DOGE', 8),
     ('AVAX.AVAX', 18),
     (AssetBSC, 18),
+    ('x', 6),
 ])
 def test_decimals(a, dec):
     assert guess_decimals(a) == dec
