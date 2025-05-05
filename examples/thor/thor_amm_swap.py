@@ -12,7 +12,7 @@ async def main(seed_phrase):
     (1 Rune will be more than enough)
     Just don't forget to pass PHRASE environment variable that contains a mnemonic phrase of your wallet
     """
-    wallet = Wallet(seed_phrase, enabled_chains={Chain.THORChain, Chain.Binance, Chain.Cosmos})
+    wallet = Wallet(seed_phrase, enabled_chains={Chain.THORChain, Chain.Cosmos})
     amm = THORChainAMM(wallet)
 
     balances = await wallet.get_all_balances()

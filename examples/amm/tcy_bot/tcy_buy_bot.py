@@ -70,7 +70,6 @@ class TCYBot:
 
             print(f'Estimated net output: {r.net_output}')
             print(f"Price: {price}: {r.net_output.asset} / {self.buy_amount.asset} ")
-            return False
 
             min_price = self.strategy.get('min_price_target_per_source_asset')
             if min_price:
