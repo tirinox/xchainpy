@@ -58,7 +58,9 @@ class CosmosGaiaClient(XChainClient):
         """
         root_derivation_paths = root_derivation_paths.copy() \
             if root_derivation_paths else COSMOS_ROOT_DERIVATION_PATHS.copy()
+        self._ready_to_make_wallet = False
         super().__init__(Chain.Cosmos, network, phrase, private_key, fee_bound, root_derivation_paths, wallet_index)
+        self._ready_to_make_wallet = True
 
         self.explorers = explorer_providers
 
@@ -574,18 +576,19 @@ class CosmosGaiaClient(XChainClient):
         is_native = amount.asset == self._gas_asset
         extra_fee = fee if is_native else Amount.from_base(0, self._decimal)
 
-        if (asset_balance is None
-                or asset_balance.amount.as_base < (required := amount.amount.as_base + extra_fee.as_base)):
+        required = amount.amount.as_base + extra_fee.as_base
+        if asset_balance is None or asset_balance.amount.as_base < required:
             raise ValueError(f"Insufficient funds: {required} is required. Balance is {asset_balance}")
 
         if native_balance is None or native_balance.amount < fee:
             raise ValueError(f"Insufficient funds to pay fee: {fee.amount} {self._gas_asset}")
 
     def _make_wallet(self) -> LocalWallet:
-        if self.phrase or self._private_key:
-            pk = PrivateKey(bytes.fromhex(self.get_private_key()))
-            self._wallet = LocalWallet(pk, self._prefix)
-            return self._wallet
+        if self._ready_to_make_wallet:
+            if self.phrase or self._private_key:
+                pk = PrivateKey(bytes.fromhex(self.get_private_key()))
+                self._wallet = LocalWallet(pk, self._prefix)
+                return self._wallet
 
     def get_amount_string(self, amount):
         return f"{int(amount)}{self._denom}"
