@@ -90,6 +90,10 @@ class THORChainCache:
         self.expire_network = expire_network
 
         self.native_asset = native_asset
+
+        if not isinstance(network, NetworkType):
+            network = NetworkType(network)
+
         self.network = network
 
         self.usd_stable_coins = stable_coins or USD_ASSETS[network]

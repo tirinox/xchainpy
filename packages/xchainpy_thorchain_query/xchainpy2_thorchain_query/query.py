@@ -78,6 +78,9 @@ class THORChainQuery:
 
         :return: THORChainQuery instance
         """
+        if not isinstance(network, NetworkType):
+            network = NetworkType(network)
+
         midgard = MidgardAPIClient(ConfigurationEx.new(host=midgard_url)) if midgard_url else MidgardAPIClient()
         thornode = THORNodeAPIClient(ConfigurationEx.new(host=thornode_url)) if thornode_url else THORNodeAPIClient()
         cache = THORChainCache(midgard, thornode, network=network)
