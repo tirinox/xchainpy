@@ -169,6 +169,10 @@ class XChainClient(abc.ABC):
     def set_network(self, network: NetworkType):
         if not network:
             network = NetworkType.MAINNET
+
+        if not isinstance(network, NetworkType):
+            network = NetworkType(network)
+
         self.network = network
 
         # Fire off a warning in the console to indicate that stagenet and real assets are being used.
