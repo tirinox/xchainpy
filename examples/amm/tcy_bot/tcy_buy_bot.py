@@ -26,15 +26,20 @@ class TCYBot:
         phrase = thor['phrase']
         thornode = thor['node_url']
         network = thor['network_id']
-        self.query = THORChainQuery.from_thornode_and_midgard(thornode_url=thornode)
+        self.query = THORChainQuery.from_thornode_and_midgard(
+            thornode_url=thornode,
+            network=network,
+        )
 
         self.client = THORChainClient(
             phrase=phrase,
             client_urls={
                 NetworkType(network): NodeURL(thornode)
-            }
+            },
+            network=network,
         )
-        self.wallet = Wallet.from_clients([self.client])
+
+        self.wallet = Wallet.from_clients([self.client], query_api=self.query)
         self.amm = THORChainAMM(self.wallet, self.query)
 
     @staticmethod
@@ -60,7 +65,7 @@ class TCYBot:
                 self.target_asset,
             )
             if not r.can_swap:
-                print(f'Cannot swap: {r.error}')
+                print(f'Cannot swap: {r.errors}')
                 return False
 
             # Check price bounds
@@ -93,13 +98,15 @@ class TCYBot:
 
     async def run_loop(self):
         await self.print_balances()
+        print(f"Going to buy {self.buy_amount} {self.target_asset}")
 
         if self.strategy.get('skip_check'):
             print(f"Skipping check")
         else:
             check_interval = self.strategy['check_interval']
-            tick = 1
+            tick = 0
             while True:
+                tick += 1
                 print(f"#{tick:05} Checking if buy is possible...")
                 if await self.check_possibility():
                     print("Buy is possible!!!")
