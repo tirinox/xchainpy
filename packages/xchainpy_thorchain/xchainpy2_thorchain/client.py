@@ -14,10 +14,10 @@ from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
 from xchainpy2_thornode import ApiClient, NetworkApi, TradeAccountApi, TradeAccountResponse
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, \
-    Asset, AssetKind
+    Asset, AssetKind, AssetTCY
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_RUNE_FEE, \
-    make_client_urls_from_ip_address
+    make_client_urls_from_ip_address, DENOM_TCY
 from .utils import get_thor_address_prefix, build_deposit_tx_unsigned, build_transfer_tx_draft
 
 
@@ -79,7 +79,6 @@ class THORChainClient(CosmosGaiaClient):
 
         # Tune for THORChain
         self.chain = Chain.THORChain
-        self._prefix = get_thor_address_prefix(network)
         self._gas_asset = AssetRUNE
         self._denom = DENOM_RUNE_NATIVE
         self._decimal = RUNE_DECIMAL
@@ -88,6 +87,7 @@ class THORChainClient(CosmosGaiaClient):
         self.standard_tx_fee = DEFAULT_RUNE_FEE
 
         self.set_network(self.network)  # this will set the prefix and client urls for THORNode client
+
         self._recreate_client()
         self._make_wallet()
 
@@ -103,6 +103,9 @@ class THORChainClient(CosmosGaiaClient):
 
         :param network: new network type
         """
+        if not isinstance(network, NetworkType):
+            network = NetworkType(network)
+
         super().set_network(network)
         self._prefix = get_thor_address_prefix(network)
         self.thornode_api_client.configuration.host = self._client_urls[self.network].node
@@ -334,6 +337,8 @@ class THORChainClient(CosmosGaiaClient):
             return Asset.from_string(denom.upper())
         elif denom == DENOM_RUNE_NATIVE:
             return AssetRUNE
+        elif denom == DENOM_TCY:
+            return AssetTCY
 
     def get_denom(self, asset: Asset) -> str:
         """

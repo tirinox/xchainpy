@@ -130,6 +130,9 @@ FALLBACK_CLIENT_URLS = {
 DENOM_RUNE_NATIVE = 'rune'
 """Denomination for RUNE on THORChain (COSMOS demon)."""
 
+DENOM_TCY = 'tcy'
+"""Denomination for TCY on THORChain."""
+
 THOR_BLOCK_TIME_SEC = 6.0
 """Typical time in seconds for a block to be produced in THORChain."""
 

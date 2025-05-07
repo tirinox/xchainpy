@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xchainpy2_thorchain"
-version = "0.0.36"
+version = "0.0.37"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
