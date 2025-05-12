@@ -3,7 +3,7 @@ from contextlib import suppress
 from typing import Union, Optional
 
 from xchainpy2_client import FeeOption
-# todo fix this!
+# todo fix this! move gas options to Client or Utils
 from xchainpy2_ethereum import EthereumClient, GasOptions
 from xchainpy2_thorchain import THORChainClient, THORMemo
 from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode
@@ -106,6 +106,7 @@ class THORChainAMM:
         if validation_error:
             raise AMMException(f'Invalid swap: {validation_error}')
 
+        # todo: allow to skip quote if necessary
         estimate = await self.query.quote_swap(
             input_amount,
             destination_address,
@@ -612,6 +613,8 @@ class THORChainAMM:
 
         # noinspection PyTypeChecker
         helper = self._get_evm_helper(input_amount.asset)
+        if not helper:
+            raise AMMException(f'Cannot find EVM helper for {input_amount.asset}. Did you enable the client?')
         gas_options = gas_options or GasOptions.automatic(self.fee_option)
         tx_hash = await helper.deposit(input_amount, memo, gas_options, self.evm_expiration_sec,
                                        check_allowance=self.check_allowance)
