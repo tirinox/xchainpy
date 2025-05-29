@@ -35,7 +35,7 @@ class TokenInfo(NamedTuple):
         :param amount:
         :return: CryptoAmount
         """
-        return CryptoAmount(Amount.automatic(amount).changed_decimals(self.decimals), self.as_asset)
+        return CryptoAmount(Amount.automatic(amount).converted_decimals(self.decimals), self.as_asset)
 
     @classmethod
     def from_json(cls, data, chain: Chain):
@@ -111,7 +111,7 @@ class TokenInfoList:
             token_info = await self.get_token_info(contract_address)
 
         return CryptoAmount(
-            a.amount.changed_decimals(token_info.decimals), token_info.as_asset
+            a.amount.converted_decimals(token_info.decimals), token_info.as_asset
         )
 
     def get_erc20_as_contract(self, contract_address: Union[str, Asset]) -> Contract:
