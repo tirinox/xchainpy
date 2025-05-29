@@ -106,7 +106,7 @@ AssetCbBTC = Asset.from_string('BASE.cbBTC-0xcbB7C0000aB88B473b1f5aFd9ef808440ee
     Coinbase Wrapped BTC on Base Chain
 """
 
-BASE_NORMAL_GAS_PRICE = CryptoAmount.from_base(0.03 * 10 ** 9, AssetBaseETH, BASE_DECIMALS)
+BASE_NORMAL_GAS_PRICE = CryptoAmount.automatic_base(0.03 * 10 ** 9, AssetBaseETH, BASE_DECIMALS)
 """
     Base Normal Gas Price. Please note that this is a rough estimate and can vary depending on the network congestion.
     Note: please use the estimation methods provided by the library to get the most accurate gas price.
