@@ -61,6 +61,9 @@ def test_amount_automatic_base(in_amt, in_dec, e_internal, e_decimals, e_int):
     (0.1, 0, 0, 0, 0),
     (0.1, 1, 1, 1, 1),
     ("123456789", 8, 12345678900000000, 8, 12345678900000000),
+    (Amount(431, 8), 8, 431, 8, 431),
+    (Amount(431, 8), 6, 4, 6, 4),
+    (Amount(431, 8), 10, 43100, 10, 43100),
 ])
 def test_amount_automatic_asset(in_amt, in_dec, e_internal, e_decimals, e_int):
     a = Amount.automatic(in_amt, decimals=in_dec)
@@ -276,6 +279,7 @@ def test_divide_amount_and_amount():
     # different decimals
     assert Amount(480, 2) / Amount(1200, 3) == 4.0
     assert Amount(480, 2) // Amount(1200, 3) == 4
+
 
 def test_bool():
     assert Amount(400)

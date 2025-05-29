@@ -264,7 +264,7 @@ class Amount(NamedTuple):
         :return: Amount
         """
         if isinstance(x, Amount):
-            if x.decimals != decimals:
+            if decimals is not None and x.decimals != decimals:
                 # If the decimals are different, convert to the new decimals
                 return x.converted_decimals(decimals, context)
             return x
@@ -465,7 +465,12 @@ class CryptoAmount(NamedTuple):
         :param decimals: Decimals for this asset, if None, then it will be guessed automatically
         :return: CryptoAmount
         """
-        return cls.automatic(_amount, asset, decimals=decimals)
+        if decimals is None:
+            decimals = guess_decimals(asset)
+
+        return cls(
+            Amount.automatic_base(_amount, decimals), Asset.automatic(asset),
+        )
 
     def __add__(self, other: CryptoAmountLike) -> 'CryptoAmount':
         """
@@ -641,15 +646,19 @@ class CryptoAmount(NamedTuple):
                 raise ValueError(f"Cannot perform math on 2 different assets: {self.asset} and {a.asset}")
 
     @classmethod
-    def zero(cls, asset: Union[str, Asset], decimals=DEFAULT_ASSET_DECIMAL):
+    def zero(cls, asset: Union[str, Asset], decimals=None):
         """
         Create a zero CryptoAmount with the specified asset and decimals.
+        If decimals is None, it will be guessed automatically based on the asset.
 
         :param asset: Asset instance or asset name
-        :param decimals: Decimals for this asset
+        :param decimals: Decimals for this asset (optional)
         :return: CryptoAmount
         """
-        return cls(Amount.zero(decimals), Asset.automatic(asset))
+        asset = Asset.automatic(asset)
+        if decimals is None:
+            decimals = guess_decimals(asset)
+        return cls(Amount.zero(decimals), asset)
 
     @classmethod
     def zero_from(cls, amount: 'CryptoAmount') -> 'CryptoAmount':
@@ -660,19 +669,6 @@ class CryptoAmount(NamedTuple):
         :return: CryptoAmount
         """
         return cls.zero(amount.asset, amount.amount.decimals)
-
-    @classmethod
-    def from_base(cls, amount, asset: Asset = None, decimals=DEFAULT_ASSET_DECIMAL, ) -> 'CryptoAmount':
-        """
-        Create a CryptoAmount from a base amount.
-        Example: CryptoAmount.automatic_base(100000000, AssetBTC, 8) represents 1 BTC.
-
-        :param amount: Amount in base units (no decimal)
-        :param asset: Asset instance or asset name
-        :param decimals: Decimals for this asset
-        :return: CryptoAmount
-        """
-        return CryptoAmount(Amount.automatic_base(amount, decimals), asset.automatic(asset))
 
     @classmethod
     def pick(cls, balances: List['CryptoAmount'], asset: Asset) -> 'CryptoAmount':
@@ -690,7 +686,7 @@ class CryptoAmount(NamedTuple):
         else:
             return cls.zero(asset)
 
-    def changed_decimals(self, new_decimals, context=DC) -> 'CryptoAmount':
+    def converted_decimals(self, new_decimals, context=DC) -> 'CryptoAmount':
         """
         Change the decimals of the amount. Non-destructive. Returns a new instance.
 
@@ -708,3 +704,12 @@ class CryptoAmount(NamedTuple):
         :return: int
         """
         return self.amount.decimals
+
+    @property
+    def base_amount(self):
+        """
+        Return the amount in base units (no decimal, e.g. satoshi).
+
+        :return: int
+        """
+        return self.amount.internal_amount
