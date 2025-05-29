@@ -31,7 +31,7 @@ classifiers = [
 dependencies = [
     "xchainpy2_utils>=0.1.0",
     "xchainpy2_crypto",
-    "xchainpy2_client",
+    "xchainpy2_client>=0.1.2",
     "bitcash",
 ]
 [project.optional-dependencies]
