@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xchainpy2_bitcoincash"
-version = "0.0.7"
+version = "0.1.1"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
@@ -29,7 +29,7 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
 ]
 dependencies = [
-    "xchainpy2_utils",
+    "xchainpy2_utils>=0.1.0",
     "xchainpy2_crypto",
     "xchainpy2_client",
     "bitcash",
