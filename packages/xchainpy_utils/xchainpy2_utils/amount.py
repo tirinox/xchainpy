@@ -71,7 +71,7 @@ class Amount(NamedTuple):
 
         :return: A string e.g. "1.34 (D:8)"
         """
-        return f"{float(self)} (D:{self.decimals})"
+        return f"{self.format()} (D:{self.decimals})"
 
     def __repr__(self):
         """
@@ -79,7 +79,7 @@ class Amount(NamedTuple):
 
         :return: A string e.g. "Amount(100000000, 8)"
         """
-        return f"Amount({self.internal_amount}, {self.decimals})"
+        return f"Amount({int(self.internal_amount)}, {self.decimals})"
 
     def __add__(self, other: AmountLike) -> 'Amount':
         """
@@ -90,8 +90,8 @@ class Amount(NamedTuple):
         :param other: Another Amount or a number (int, float, Decimal)
         :return:
         """
-        if isinstance(other, (int, float, Decimal)):
-            return Amount(self.internal_amount + int(other * self.ten_power), self.decimals)
+        if isinstance(other, (int, float, str, Decimal)):
+            return Amount(self.internal_amount + int(Decimal(other) * self.ten_power), self.decimals)
         elif isinstance(other, Amount):
             self._guard_decimals_equal(other)
             return Amount(self.internal_amount + other.internal_amount, self.decimals)
@@ -107,8 +107,8 @@ class Amount(NamedTuple):
         :param other: Another Amount or a number (int, float, Decimal)
         :return: Amount
         """
-        if isinstance(other, (int, float, Decimal)):
-            return Amount(self.internal_amount - int(other * self.ten_power), self.decimals)
+        if isinstance(other, (int, float, str, Decimal)):
+            return Amount(self.internal_amount - int(Decimal(other) * self.ten_power), self.decimals)
         elif isinstance(other, Amount):
             self._guard_decimals_equal(other)
             return Amount(self.internal_amount - other.internal_amount, self.decimals)
@@ -268,15 +268,12 @@ class Amount(NamedTuple):
                 # If the decimals are different, convert to the new decimals
                 return x.converted_decimals(decimals, context)
             return x
-        elif isinstance(x, (float, str, int)):
+        elif isinstance(x, (Decimal, float, str, int)):
             v = int(
                 Decimal(x, context) *
                 decimal_power_10(decimals, context)
             )
             return cls(v, decimals)
-        elif isinstance(x, Decimal):
-            d = x / decimal_power_10(decimals, context)
-            return cls(int(d), decimals)
         else:
             raise ValueError(f'Cannot convert {x} to Amount')
 
@@ -291,8 +288,10 @@ class Amount(NamedTuple):
         """
         if isinstance(x, Amount):
             return x
-        elif isinstance(x, (float, str, int, Decimal)):
+        elif isinstance(x, (float, int, Decimal)):
             return cls(int(x), decimals)
+        elif isinstance(x, str):
+            return cls(int(Decimal(x)), decimals)
         else:
             raise ValueError(f'Cannot convert {x} to Amount')
 
@@ -333,6 +332,8 @@ class Amount(NamedTuple):
         decimal_part = self.decimal_part_str
         if not trailing_zeros:
             decimal_part = decimal_part.rstrip('0')
+        if not decimal_part:
+            decimal_part = '0'
         return f'{self.integer_part}.{decimal_part}'
 
     def __int__(self):
@@ -385,6 +386,36 @@ class Amount(NamedTuple):
         :return: bool
         """
         return self.internal_amount == 0
+
+    def __lshift__(self, shifter: int):
+        """
+        Shift the decimals to the left by the specified number of places.
+        If shifter is positive, it will decrease the number of decimals.
+        Example: Amount(100000000, 8) << 2 will return Amount(1000000, 6).
+
+        This is useful for converting the amount to a different decimal representation.
+
+        :param shifter: Number of places to shift
+        :return: Amount
+        """
+        if not isinstance(shifter, int):
+            raise TypeError(f'Cannot shift {self} with {type(shifter)}')
+        return self.converted_decimals(self.decimals - shifter)
+
+    def __rshift__(self, shifter: int):
+        """
+        Shift the decimals to the right by the specified number of places.
+        If shifter is positive, it will increase the number of decimals.
+        Example: Amount(1000000, 6) >> 2 will return Amount(100000000, 8).
+
+        This is useful for converting the amount to a different decimal representation.
+
+        :param shifter: Number of places to shift
+        :return: Amount
+        """
+        if not isinstance(shifter, int):
+            raise TypeError(f'Cannot shift {self} with {type(shifter)}')
+        return self.converted_decimals(self.decimals + shifter)
 
 
 class CryptoAmount(NamedTuple):
@@ -634,7 +665,7 @@ class CryptoAmount(NamedTuple):
     def from_base(cls, amount, asset: Asset = None, decimals=DEFAULT_ASSET_DECIMAL, ) -> 'CryptoAmount':
         """
         Create a CryptoAmount from a base amount.
-        Example: CryptoAmount.from_base(100000000, AssetBTC, 8) represents 1 BTC.
+        Example: CryptoAmount.automatic_base(100000000, AssetBTC, 8) represents 1 BTC.
 
         :param amount: Amount in base units (no decimal)
         :param asset: Asset instance or asset name
