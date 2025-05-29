@@ -15,7 +15,7 @@ def get_base_amount_with_diff_decimals(amount: Union[CryptoAmount, Amount], out_
     """
     if isinstance(amount, CryptoAmount):
         amount = amount.amount
-    new_amount = amount.changed_decimals(out_decimals)
+    new_amount = amount.converted_decimals(out_decimals)
     return Decimal(new_amount.internal_amount)
 
 
@@ -57,7 +57,7 @@ def get_swap_fee(input_amount: CryptoAmount, pool: LiquidityPool, to_rune: bool,
     numerator = x * x * Y
     denominator = (x + X) ** 2
     result = numerator / denominator
-    result8 = CryptoAmount(Amount.from_base(result), units)
+    result8 = CryptoAmount(Amount.automatic_base(result), units)
     decimals = base_decimals if to_rune else decimal_out
     base_out = get_base_amount_with_diff_decimals(result8, decimals)
     swap_fee = CryptoAmount(Amount.automatic(base_out, decimals), units)
@@ -106,7 +106,7 @@ def get_swap_output(input_amount: CryptoAmount, pool: LiquidityPool, to_rune: bo
     numerator = x * X * Y
     denominator = (x + X) ** 2
     result = numerator / denominator
-    result8 = CryptoAmount(Amount.from_base(result), units)
+    result8 = CryptoAmount(Amount.automatic_base(result), units)
     decimals = base_decimals if to_rune else decimal_out
     base_out = get_base_amount_with_diff_decimals(result8, decimals)
     output_amount = CryptoAmount(Amount.automatic(base_out, decimals), units)

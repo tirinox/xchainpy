@@ -7,8 +7,7 @@ from typing import NamedTuple, List, Dict, Optional, Set
 
 from xchainpy2_midgard import PoolDetail, THORNameDetails
 from xchainpy2_thorchain import THOR_BLOCK_TIME_SEC
-from xchainpy2_thornode import Pool, LiquidityProviderSummary, QuoteFees, LastBlock, QuoteSwapResponse, \
-    QuoteSaverWithdrawResponse
+from xchainpy2_thornode import Pool, LiquidityProviderSummary, LastBlock, QuoteSwapResponse
 from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
 
 
@@ -47,19 +46,19 @@ class TotalFees(NamedTuple):
 
     @property
     def total_fee_amount(self) -> CryptoAmount:
-        return CryptoAmount(Amount.from_base(self.total_fee), self.asset)
+        return CryptoAmount(Amount.automatic_base(self.total_fee), self.asset)
 
     @property
     def affiliate_fee_amount(self) -> CryptoAmount:
-        return CryptoAmount(Amount.from_base(self.affiliate_fee), self.asset)
+        return CryptoAmount(Amount.automatic_base(self.affiliate_fee), self.asset)
 
     @property
     def liquidity_fee_amount(self) -> CryptoAmount:
-        return CryptoAmount(Amount.from_base(self.liquidity_fee), self.asset)
+        return CryptoAmount(Amount.automatic_base(self.liquidity_fee), self.asset)
 
     @property
     def outbound_fee_amount(self) -> CryptoAmount:
-        return CryptoAmount(Amount.from_base(self.outbound_fee), self.asset)
+        return CryptoAmount(Amount.automatic_base(self.outbound_fee), self.asset)
 
     @classmethod
     def zero(cls, asset: Asset) -> 'TotalFees':
@@ -142,7 +141,7 @@ def get_rune_balance_of_node_pool(pool: Pool) -> Amount:
     balance = getattr(pool, 'balance_rune', None)
     if balance is None:
         balance = getattr(pool, 'balance_cacao', None)
-    return Amount.from_base(balance)
+    return Amount.automatic_base(balance)
 
 
 class LiquidityPool(NamedTuple):
@@ -184,8 +183,8 @@ class LiquidityPool(NamedTuple):
         :rtype: LiquidityPool
         """
 
-        ab = Amount.from_base(pool.asset_depth)
-        rb = Amount.from_base(pool.rune_depth)
+        ab = Amount.automatic_base(pool.asset_depth)
+        rb = Amount.automatic_base(pool.rune_depth)
 
         ab_dec = Decimal(pool.asset_depth, DC)
         rb_dec = Decimal(pool.rune_depth, DC)
@@ -211,7 +210,7 @@ class LiquidityPool(NamedTuple):
         :rtype: LiquidityPool
         """
         rune_balance = get_rune_balance_of_node_pool(thornode_pool)
-        asset_balance = Amount.from_base(thornode_pool.balance_asset)
+        asset_balance = Amount.automatic_base(thornode_pool.balance_asset)
 
         ab_dec = asset_balance.as_decimal
         rb_dec = rune_balance.as_decimal
@@ -534,73 +533,6 @@ class EstimateWithdrawLP(NamedTuple):
         )
 
 
-class SaverFees(NamedTuple):
-    affiliate: CryptoAmount
-    asset: Asset
-    outbound: CryptoAmount
-
-
-class EstimateWithdrawSaver(NamedTuple):
-    """
-    A named tuple representing an estimate for withdrawing liquidity from the savers vault.
-    """
-
-    expected_asset_amount: CryptoAmount
-    """Expected asset amount that will be withdrawn to the user after applying fees and slippage"""
-
-    fee: SaverFees
-    """Fees for the withdrawal"""
-
-    expiry: datetime
-    """Expiry date of the withdrawal request"""
-
-    to_address: Address
-    """Address to send the withdraw request to"""
-
-    memo: str
-    """Memo string that is supposed to be sent along with the transaction to perform the withdrawal"""
-    estimated_wait_time: float
-    """Estimated wait time in seconds"""
-
-    slip_basis_points: float
-    """Slippage in basis points 0..10000 paid for internal swaps"""
-
-    dust_amount: CryptoAmount
-    """Dust amount, any amount below this value will be considered dust and ignored"""
-
-    errors: List[str]
-    """List of errors, if any"""
-
-    details: Optional[QuoteSaverWithdrawResponse] = None
-    """QuoteSaverWithdrawResponse received from THORChain API, may contain additional details"""
-
-    @property
-    def can_withdraw(self):
-        """
-        If there are no errors, the withdrawal can be made.
-        :return: bool
-        """
-        return not self.errors
-
-    @classmethod
-    def make_error(cls, errors, asset: Asset, details=None):
-        """
-        Create an EstimateWithdrawSaver instance with errors list.
-
-        :param errors: List of errors
-        :param asset: Asset to withdraw
-        :return: EstimateWithdrawSaver
-        """
-        return cls(
-            CryptoAmount.zero(asset),
-            SaverFees(CryptoAmount.zero(asset), asset, CryptoAmount.zero(asset)),
-            datetime.now(), '', '', 0, 0,
-            CryptoAmount.zero(asset),
-            errors,
-            details=details,
-        )
-
-
 class WithdrawLiquidityPosition(NamedTuple):
     asset: Asset
     percentage: Decimal
@@ -618,50 +550,6 @@ class PoolRatios(NamedTuple):
     asset_to_rune: Decimal
     rune_to_asset: Decimal
 
-
-class EstimateAddSaver(NamedTuple):
-    can_add_saver: bool
-    asset_amount: CryptoAmount
-    estimated_deposit_value: CryptoAmount
-    slip_basis_points: int
-    fee: SaverFees
-    expiry: datetime
-    to_address: str
-    memo: str
-    saver_cap_filled_percent: float
-    estimated_wait_time: int
-    errors: List[str]
-    recommended_min_amount_in: int
-
-    @classmethod
-    def make_error(cls, errors, asset: Asset):
-        return cls(
-            False,
-            CryptoAmount.zero(asset), CryptoAmount.zero(asset), 0,
-            SaverFees(CryptoAmount.zero(asset), asset, CryptoAmount.zero(asset)),
-            datetime.now(), '', '', 0, 0, errors, 0
-        )
-
-
-class SaversPosition(NamedTuple):
-    """
-    A named tuple representing the position of a saver in the savers vault.
-    """
-
-    deposit_value: CryptoAmount
-    """Deposit value"""
-
-    redeemable_value: CryptoAmount
-    """Current redeemable value"""
-
-    last_add_height: int
-    """Last add height (THORChain blocks)"""
-
-    saver_growth: float
-    """Saver growth (percentage)"""
-
-    errors: List[str]
-    """List of errors, if any"""
 
 
 class SwapOutput(NamedTuple):
@@ -689,135 +577,6 @@ class BlockInformation(NamedTuple):
     """Outbound delay blocks"""
     outbound_delay_seconds: float = 0.0
     """Outbound delay seconds"""
-
-
-class LoanOpenQuote(NamedTuple):
-    """
-    A named tuple representing a quote for opening a loan.
-    """
-
-    inbound_address: str
-    """Vault's address to send your collateral to"""
-    expected_wait_time: BlockInformation
-    """Expected wait time for the transaction to be confirmed"""
-    fees: QuoteFees
-    """Fees for the transaction"""
-    slippage_bps: int
-    """Slippage in basis points"""
-    router: str
-    """Router address (for EVM chains)"""
-    expiry: int
-    """Expiry block number"""
-    warning: str
-    """Warning message"""
-    notes: str
-    """Notes and instructions"""
-    dust_threshold: int
-    """Dust threshold"""
-    memo: str
-    """Prepared memo for the transaction"""
-    expected_amount_out: int
-    """Expected amount out"""
-    expected_collateralization_ratio: float
-    """Expected collateralization ratio"""
-    expected_collateral_up: int
-    """Expected collateral up"""
-    expected_debt_up: int
-    """Expected debt up"""
-    errors: List[str]
-    """List of errors, if any"""
-    recommended_min_amount_in: int
-    """Recommended minimum amount to send in the transaction"""
-
-    @classmethod
-    def empty_with_errors(cls, errors):
-        """
-        Create an empty LoanOpenQuote instance with errors list.
-
-        :param errors: List of errors
-        :return: LoanOpenQuote
-        """
-        return cls(
-            inbound_address='',
-            expected_wait_time=BlockInformation(),
-            fees=QuoteFees(),
-            slippage_bps=-1,
-            router='',
-            expiry=-1,
-            warning='',
-            notes='',
-            dust_threshold=0,
-            memo='',
-            expected_amount_out=0,
-            expected_debt_up=0,
-            expected_collateral_up=0,
-            expected_collateralization_ratio=0,
-            errors=errors,
-            recommended_min_amount_in=0,
-        )
-
-
-class LoanCloseQuote(NamedTuple):
-    """
-    A named tuple representing a quote for closing a loan.
-    """
-
-    inbound_address: str
-    """Inbound address to repay the loan"""
-    expected_wait_time: BlockInformation
-    """Expected wait time for the transaction to be confirmed"""
-    fees: QuoteFees
-    """Fees for the transaction"""
-    slippage_bps: int
-    """Slippage in basis points"""
-    router: str
-    """Router address (for EVM chains)"""
-    expiry: int
-    """Expiry block number"""
-    warning: str
-    """Warning message"""
-    notes: str
-    """Notes and instructions"""
-    dust_threshold: int
-    """Dust threshold"""
-    memo: str
-    """Prepared memo for the transaction"""
-    expected_amount_out: int
-    """Expected amount out"""
-    expected_collateral_down: int
-    """Expected collateral down"""
-    expected_debt_down: int
-    """Expected debt down"""
-    errors: List[str]
-    """List of errors, if any"""
-    recommended_min_amount_in: int
-    """Recommended minimum amount to send in the transaction"""
-
-    @classmethod
-    def empty_with_errors(cls, errors):
-        """
-        Create an empty LoanCloseQuote instance with errors list.
-
-        :param errors: List of errors
-        :return: LoanCloseQuote
-        """
-        return cls(
-            inbound_address='',
-            expected_wait_time=BlockInformation(),
-            fees=QuoteFees(),
-            slippage_bps=-1,
-            router='',
-            expiry=-1,
-            warning='',
-            notes='',
-            dust_threshold=0,
-            memo='',
-            expected_amount_out=0,
-            expected_collateral_down=0,
-            expected_debt_down=0,
-            errors=errors,
-            recommended_min_amount_in=0,
-        )
 
 
 class THORNameEstimate(NamedTuple):

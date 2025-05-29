@@ -449,7 +449,7 @@ class THORChainCache:
         adjust_decimals = out_decimals - in_decimals
         base_amount_out *= Decimal(10 ** adjust_decimals)
         # noinspection PyTypeChecker
-        amt = Amount.from_base(int(base_amount_out), out_decimals)
+        amt = Amount.automatic_base(int(base_amount_out), out_decimals)
         return CryptoAmount(amt, out_asset)
 
     async def get_details_for_chain(self, chain: Union[str, Chain]) -> InboundDetail:
@@ -491,8 +491,8 @@ class THORChainCache:
         deepest_pool = None
         for usd_asset in self.usd_stable_coins:
             usd_pool = await self.get_pool_for_asset(usd_asset)
-            if usd_pool.rune_balance.amount > deepest_rune_depth:
-                deepest_rune_depth = usd_pool.rune_balance.amount
+            if float(usd_pool.rune_balance) > deepest_rune_depth:
+                deepest_rune_depth = float(usd_pool.rune_balance)
                 deepest_pool = usd_pool
         if not deepest_pool:
             raise QueryError('no USD Pool found')

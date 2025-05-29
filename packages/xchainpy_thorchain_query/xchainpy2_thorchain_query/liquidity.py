@@ -39,8 +39,8 @@ def get_pool_share(unit_data: UnitData, pool: LiquidityPool,
     asset = T * units / total
     rune = R * units / total
     return LPAmount(
-        rune=CryptoAmount(Amount.from_base(rune, get_base_asset_decimals(base_asset)), base_asset),
-        asset=CryptoAmount(Amount.from_base(asset, pool.thornode_details.decimals), pool.asset)
+        rune=CryptoAmount(Amount.automatic_base(rune, get_base_asset_decimals(base_asset)), base_asset),
+        asset=CryptoAmount(Amount.automatic_base(asset, pool.thornode_details.decimals), pool.asset)
     )
 
 

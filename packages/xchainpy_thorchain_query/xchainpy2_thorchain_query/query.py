@@ -1,24 +1,23 @@
 import asyncio
 import json
 import math
-from datetime import datetime, timedelta
-from typing import Union, List, Optional, Tuple
+from datetime import datetime
+from typing import Union, Optional, Tuple
 
 from xchainpy2_client import XChainClient
 from xchainpy2_thorchain import THORMemo, THOR_BASIS_POINT_MAX
-from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteSaverDepositResponse, QuoteFees, \
+from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteFees, \
     TxStatusResponse, TxSignersResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \
     get_chain_gas_asset, NetworkType
-from .fee import calc_network_fee, calc_outbound_fee
-from .midgard import MidgardAPIClient, ConfigurationEx
 from .cache import THORChainCache
-from .const import DEFAULT_INTERFACE_ID, Mimir, DEFAULT_EXTRA_ADD_MINUTES, THORNAME_BLOCKS_ONE_YEAR
+from .const import DEFAULT_INTERFACE_ID, Mimir, THORNAME_BLOCKS_ONE_YEAR
+from .fee import calc_network_fee, calc_outbound_fee
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity
+from .midgard import MidgardAPIClient, ConfigurationEx
 from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
     LiquidityPosition, PoolRatios, EstimateWithdrawLP, \
-    EstimateAddSaver, SaverFees, EstimateWithdrawSaver, SaversPosition, LoanOpenQuote, \
-    BlockInformation, LoanCloseQuote, THORNameEstimate, WithdrawMode, InboundDetail
+    THORNameEstimate, WithdrawMode, InboundDetail
 from .swap import get_base_amount_with_diff_decimals
 from .thornode import THORNodeAPIClient
 from .track.tracker import TransactionTracker
@@ -287,17 +286,17 @@ class THORChainQuery:
         values = await self.cache.get_network_values()
 
         min_tx_volume_threshold = CryptoAmount(
-            Amount.from_base(values.get(Mimir.MIN_TX_OUT_VOLUME_THRESHOLD, 1), self.native_decimal),
+            Amount.automatic_base(values.get(Mimir.MIN_TX_OUT_VOLUME_THRESHOLD, 1), self.native_decimal),
             self.cache.native_asset
         )
         max_tx_out_offset = values.get(Mimir.MAX_TX_OUT_OFFSET, 0)
         tx_out_delay_rate = float(
-            Amount.from_base(values.get(Mimir.TX_OUT_DELAY_RATE, 0), self.native_decimal)
+            Amount.automatic_base(values.get(Mimir.TX_OUT_DELAY_RATE, 0), self.native_decimal)
         )
 
         queue: QueueResponse = await self.cache.queue_api.get_queue()
         outbound_value = CryptoAmount(
-            Amount.from_base(queue.scheduled_outbound_value, self.native_decimal),
+            Amount.automatic_base(queue.scheduled_outbound_value, self.native_decimal),
             self.cache.native_asset
         )
 
@@ -318,11 +317,11 @@ class THORChainQuery:
         volume_threshold = outbound_amount_total / min_tx_volume_threshold
 
         # check delay rate
-        if tx_out_delay_rate - volume_threshold.amount.amount <= 1:
+        if tx_out_delay_rate - float(volume_threshold.amount) <= 1:
             tx_out_delay_rate = 1
 
         # calculate the minimum number of blocks in the future the txn has to be
-        min_blocks = math.ceil(rune_value.amount.amount / tx_out_delay_rate)
+        min_blocks = math.ceil(float(rune_value.amount) / tx_out_delay_rate)
 
         min_blocks = min(max_tx_out_offset, min_blocks)
         return avg_block_time * min_blocks
@@ -433,7 +432,7 @@ class THORChainQuery:
             asset_pool=asset_pool.pool.asset,
             slip_percent=float(slip) * 100.0,
             pool_share=pool_share,
-            lp_units=Amount.from_base(lp_units),
+            lp_units=Amount.automatic_base(lp_units),
             rune_to_asset_ratio=int(asset_pool.rune_to_asset_ratio),
             inbound_fees=LPAmountTotal(
                 asset=asset_inbound_fee,
@@ -479,8 +478,8 @@ class THORChainQuery:
         )
 
         current_lp = LPAmount(
-            asset=Amount.from_base(liquidity_provider.asset_deposit_value),
-            rune=Amount.from_base(liquidity_provider.rune_deposit_value),
+            asset=Amount.automatic_base(liquidity_provider.asset_deposit_value),
+            rune=Amount.automatic_base(liquidity_provider.rune_deposit_value),
         )
 
         pool_share = get_pool_share(unit_data, pool_asset)
@@ -493,7 +492,7 @@ class THORChainQuery:
         )
 
         redeem_luvi = math.sqrt(
-            pool_share.asset.amount.amount * pool_share.rune.amount.amount / unit_data.liquidity_units
+            float(pool_share.asset.amount) * float(pool_share.rune.amount) / unit_data.liquidity_units
         )
 
         lp_growth = redeem_luvi - deposit_luvi
@@ -639,216 +638,6 @@ class THORChainQuery:
             inbound_address=inbound_address,
         )
 
-    async def estimate_add_saver(self, add_amount: CryptoAmount) -> EstimateAddSaver:
-        """
-        Estimate the add liquidity with saver.
-        Derived from https://dev.thorchain.org/thorchain-dev/connection-guide/savers-guide
-
-        :param add_amount: CryptoAmount
-        :return: EstimateAddSaver
-        """
-        # check for errors before sending quote
-        errors = await self.get_add_savers_estimate_errors(add_amount)
-
-        if errors:
-            return EstimateAddSaver.make_error(errors, add_amount.asset)
-
-        # request param amount should always be in 1e8 which is why we pass in adjusted decimals if chain decimals != 8
-        if add_amount.amount.decimals != self.native_decimal:
-            new_add_amount = get_base_amount_with_diff_decimals(add_amount, self.native_decimal)
-        else:
-            new_add_amount = add_amount.amount.as_base
-
-        new_add_amount_raw = int(new_add_amount)
-        deposit_quote: QuoteSaverDepositResponse = await self.cache.quote_api.quotesaverdeposit(
-            asset=str(add_amount.asset),
-            amount=new_add_amount_raw,
-        )
-
-        if not deposit_quote:
-            errors.append(f"Thornode request quote failed")
-        if hasattr(deposit_quote, 'error'):
-            errors.append(f"Thornode request quote failed: {deposit_quote.error}")
-
-        # The recommended minimum inbound amount for this transaction type & inbound asset.
-        # Sending less than this amount could result in failed refunds
-        recommended_min_amount_in = int(deposit_quote.recommended_min_amount_in or 0)
-        if recommended_min_amount_in and new_add_amount_raw < int(recommended_min_amount_in):
-            recommended_in = CryptoAmount.automatic(int(deposit_quote.recommended_min_amount_in), new_add_amount.asset,
-                                                    decimals=self.native_decimal)
-
-            errors.append(f"Amount {new_add_amount.amount} is less than recommended min amount {recommended_in}")
-
-        # Error handling
-        if errors:
-            return EstimateAddSaver.make_error(errors, add_amount.asset)
-
-        # Calculate transaction expiry time of the vault address
-        current_date_time = datetime.now()
-        minutes_to_add = DEFAULT_EXTRA_ADD_MINUTES
-        expiry_date_time = current_date_time + timedelta(minutes=minutes_to_add)
-
-        # Calculate seconds
-        if deposit_quote.inbound_confirmation_seconds:
-            estimated_wait = deposit_quote.inbound_confirmation_seconds
-        else:
-            estimated_wait = await self._get_confirmation_counting(add_amount)
-
-        pool_details = await self.cache.get_pool_for_asset(add_amount.asset)
-        pool = pool_details.pool
-
-        # Organise fees
-        saver_fees = SaverFees(
-            affiliate=CryptoAmount.from_base(deposit_quote.fees.affiliate, add_amount.asset),
-            asset=add_amount.asset,
-            outbound=CryptoAmount.from_base(deposit_quote.fees.outbound, add_amount.asset)
-        )
-
-        # Define savers filled capacity
-        saver_cap_filled_percent = int(pool.synth_supply) / int(pool.asset_depth) * 100
-
-        # Return object
-        return EstimateAddSaver(
-            asset_amount=CryptoAmount.from_base(deposit_quote.expected_amount_out, add_amount.asset),
-            estimated_deposit_value=CryptoAmount.from_base(deposit_quote.expected_amount_out, add_amount.asset),
-            fee=saver_fees,
-            expiry=expiry_date_time,
-            to_address=deposit_quote.inbound_address,
-            memo=deposit_quote.memo,
-            estimated_wait_time=estimated_wait,
-            can_add_saver=(not errors),
-            slip_basis_points=int(deposit_quote.fees.slippage_bps),
-            saver_cap_filled_percent=saver_cap_filled_percent,
-            errors=errors,
-            recommended_min_amount_in=recommended_min_amount_in,
-        )
-
-    async def get_add_savers_estimate_errors(self, add_amount: CryptoAmount) -> List[str]:
-        errors = []
-
-        if add_amount.amount.internal_amount <= 0:
-            errors.append(f'Invalid input amount: {add_amount.amount}; must be greater than 0')
-
-        if add_amount.asset.synth:
-            errors.append(f'Cannot add savers for synthetic assets: {add_amount.asset}')
-
-        if add_amount.asset.chain == Chain.THORChain.value:
-            errors.append(f'Cannot add RUNE to savers vault')
-
-        pools = await self.cache.get_pools()
-        saver_pools = [pool for pool in pools.values() if pool.thornode_details.savers_depth != "0"]
-        saver_pool = next((pool for pool in saver_pools if pool.asset == add_amount.asset), None)
-        if not saver_pool:
-            errors.append(f"{add_amount.asset} does not have a saver's pool")
-
-        inbound_details = await self.cache.get_inbound_details()
-        inbound = inbound_details.get(add_amount.asset.chain)
-        if inbound is None:
-            errors.append(f"no inbound details for chain {add_amount.asset.chain}")
-        if inbound.halted_chain:
-            errors.append(f"{add_amount.asset.chain} is halted, cannot add")
-
-        pool = pools.get(str(add_amount.asset))
-        if pool.pool.status.lower() != pool.AVAILABLE:
-            errors.append(f"Pool is not available for this asset {add_amount.asset}")
-
-        # "Quote"-call will check it!
-        # inbound_fee = calc_network_fee(add_amount.asset, inbound)
-        # if add_amount < inbound_fee:
-        #     errors.append(f"Add amount does not cover fees")
-        return errors
-
-    async def estimate_withdraw_saver(self,
-                                      asset: Asset,
-                                      address: str,
-                                      withdraw_bps: int,
-                                      height: int = 0) -> EstimateWithdrawSaver:
-        """
-        Estimate the withdrawal liquidity with saver (query THORChain node)
-        :param asset: asset to withdraw
-        :param address: address to withdraw to
-        :param withdraw_bps: basis points to withdraw 0..10k (0..100%)
-        :param height: block height to query (optional)
-        :return: EstimateWithdrawSaver
-        """
-        errors = []
-
-        if not asset.chain or not asset.symbol:
-            errors.append(f'Invalid asset: {asset}')
-
-        if withdraw_bps < 0 or withdraw_bps > THOR_BASIS_POINT_MAX:
-            errors.append(f'Invalid withdraw basis points: {withdraw_bps}; '
-                          f'must be between 0 and {THOR_BASIS_POINT_MAX}')
-
-        if asset == self.native_asset or asset.synth:
-            errors.append(f"Native Rune and synth assets are not supported only L1's")
-
-        if errors:
-            return EstimateWithdrawSaver.make_error(errors, asset)
-
-        try:
-            # Request withdraw quote
-            withdraw_quote = await self.cache.quote_api.quotesaverwithdraw(
-                height=height,
-                asset=str(asset),
-                address=address,
-                withdraw_bps=withdraw_bps
-            )
-        except ValueError:
-            error, withdraw_quote = self._get_error_and_response_from_last_thor_response()
-            if error:
-                errors.append(error)
-
-            zero = CryptoAmount(Amount.zero(), asset)
-            # noinspection PyTypeChecker
-            return EstimateWithdrawSaver(
-                expected_asset_amount=zero,
-                fee=SaverFees(zero, asset, zero),
-                expiry=datetime.now(),
-                to_address='',
-                memo='',
-                estimated_wait_time=0,
-                slip_basis_points=0,
-                dust_amount=zero,
-                errors=errors,
-                details=withdraw_quote,
-            )
-
-        if not withdraw_quote:
-            errors.append(f"Thornode request quote failed")
-        elif hasattr(withdraw_quote, 'error'):
-            errors.append(f"Thornode request quote failed: {withdraw_quote.error}")
-
-        if not withdraw_quote.fees.asset or withdraw_quote.expected_amount_out == '':
-            errors.append(f"This address is not found in the savers list of {asset}")
-
-        if errors:
-            return EstimateWithdrawSaver.make_error(errors, asset, withdraw_quote)
-
-        # Calculate transaction expiry time of the vault address
-        current_date_time = datetime.now()
-        minutes_to_add = DEFAULT_EXTRA_ADD_MINUTES
-        expiry_date_time = current_date_time + timedelta(minutes=minutes_to_add)
-        estimated_wait = int(withdraw_quote.outbound_delay_seconds)
-        withdraw_asset = Asset.from_string_exc(withdraw_quote.fees.asset)
-
-        return EstimateWithdrawSaver(
-            expected_asset_amount=CryptoAmount.from_base(withdraw_quote.expected_amount_out, asset),
-            fee=SaverFees(
-                CryptoAmount.from_base(withdraw_quote.fees.affiliate, withdraw_asset),
-                withdraw_asset,
-                CryptoAmount.from_base(withdraw_quote.fees.outbound, withdraw_asset)
-            ),
-            expiry=expiry_date_time,
-            to_address=withdraw_quote.inbound_address,
-            memo=withdraw_quote.memo,
-            estimated_wait_time=estimated_wait,
-            slip_basis_points=int(withdraw_quote.fees.slippage_bps),
-            dust_amount=CryptoAmount.from_base(withdraw_quote.dust_amount, withdraw_asset),
-            errors=errors,
-            details=withdraw_quote,
-        )
-
     def _get_error_and_response_from_last_thor_response(self) -> Tuple[str, object]:
         try:
             response = self.cache.thornode_client.last_response
@@ -863,185 +652,6 @@ class THORChainQuery:
             return str(error), response
         except Exception as e:
             return f'Could not pass error info. {e!r}', None
-
-    async def get_saver_position(self, asset: Union[str, Asset], address: str) -> Optional[SaversPosition]:
-        """
-        Get the position of a saver
-        :param asset: asset (pool) to check
-        :type asset: Union[str, Asset]
-        :param address: saver's address
-        :type address: str
-        :return: SaversPosition or None if not found
-        :rtype: Optional[SaversPosition]
-        """
-        errors = []
-
-        pool_details = await self.cache.get_pool_for_asset(asset)
-
-        saver = await self.cache.saver_api.saver(str(asset), address)
-
-        if not pool_details or not pool_details.pool:
-            errors.append(f"Could not get pool details for {asset}")
-
-        if not saver or not saver.last_add_height:
-            errors.append(f"Could not find position for {address}")
-
-        owner_units = int(saver.units)
-        last_added = int(saver.last_add_height)
-        saver_units = int(pool_details.thornode_details.savers_units)
-        asset_depth = int(pool_details.thornode_details.savers_depth)
-        redeemable_value = (owner_units / saver_units) * asset_depth
-        deposit_amount = CryptoAmount.from_base(saver.asset_deposit_value, asset)
-        redeemable_asset_amount = CryptoAmount.from_base(redeemable_value, asset)
-
-        if saver.asset_deposit_value:
-            saver_growth = (redeemable_value - saver.asset_deposit_value) / saver.asset_deposit_value * 100.0
-        else:
-            saver_growth = 0.0
-
-        return SaversPosition(
-            deposit_amount,
-            redeemable_asset_amount,
-            last_added,
-            saver_growth,
-            errors,
-        )
-
-    async def get_loan_quote_open(self, amount: CryptoAmount, target_asset: Asset,
-                                  destination: str, min_out: Amount, affiliate_bps: int = 0,
-                                  affiliate: str = '', height: int = 0) -> LoanOpenQuote:
-        """
-        Get a quote for opening a loan
-        :param int amount: the asset amount in 1e8 decimals and the asset used to repay the loan
-        :param Asset target_asset: the target asset to receive (loan denominated in TOR regardless)
-        :param str destination: the destination address, required to generate memo
-        :param Amount min_out: the minimum amount of the target asset to accept
-        :param str affiliate_bps: the affiliate fee in basis points
-        :param int affiliate: the affiliate (address or thorname)
-        :param height: optional height (default is the last block)
-        :return: LoanOpenQuote
-        """
-        errors = []
-
-        try:
-            resp = await self.cache.quote_api.quoteloanopen(
-                asset=str(amount.asset),
-                amount=amount.amount.as_base.amount,
-                target_asset=str(target_asset),
-                destination=destination,
-                min_out=min_out.as_base.amount,
-                affiliate_bps=int(affiliate_bps),
-                affiliate=affiliate,
-                height=height
-            )
-        except ValueError:
-            error, _ = self._get_error_and_response_from_last_thor_response()
-            if error:
-                errors.append(error)
-            return LoanOpenQuote.empty_with_errors(errors)
-
-        if resp.recommended_min_amount_in and amount.amount.as_base.amount < resp.recommended_min_amount_in:
-            errors.append(f"Amount is less than recommended minimum amount in: {resp.recommended_min_amount_in}")
-
-        if errors:
-            return LoanOpenQuote.empty_with_errors(errors)
-
-        return LoanOpenQuote(
-            inbound_address=resp.inbound_address,
-            expected_wait_time=BlockInformation(
-                outbound_delay_blocks=int(resp.expected_delay_blocks),
-                outbound_delay_seconds=float(resp.outbound_delay_seconds),
-            ),
-            fees=QuoteFees(
-                asset=Asset.from_string(resp.fees.asset),
-                affiliate=int(resp.fees.affiliate),
-                outbound=int(resp.fees.outbound),
-                total_bps=int(resp.fees.total_bps),
-            ),
-            slippage_bps=int(resp.slippage_bps),
-            router=resp.router,
-            expiry=int(resp.expiry),
-            warning=resp.warning,
-            notes=resp.notes,
-            dust_threshold=int(resp.dust_threshold),
-            memo=resp.memo,
-            expected_amount_out=int(resp.expected_amount_out),
-            expected_debt_up=int(resp.expected_debt_up),
-            expected_collateral_up=int(resp.expected_collateral_up),
-            expected_collateralization_ratio=float(resp.expected_collateralization_ratio),
-            errors=errors,
-            recommended_min_amount_in=int(resp.recommended_min_amount_in),
-        )
-
-    async def get_loan_quote_close(self, amount: CryptoAmount, from_address: str,
-                                   loan_asset: Asset, loan_owner: str,
-                                   min_out: Amount, height: int = 0) -> LoanCloseQuote:
-        """
-        Get a quote for closing a loan.
-
-        :param amount:
-            CryptoAmount object representing the asset amount in 1e8 decimals and the asset used to repay the loan.
-        :param from_address:
-            The address that is paying off the loan.
-        :param loan_asset:
-            Asset object representing the collateral asset of the loan.
-        :param loan_owner:
-            The owner of the loan collateral.
-        :param min_out:
-            Amount object representing the minimal threshold for output amount.
-        :param height:
-            Optional block height, defaults to the current tip if not provided.
-        :type height: int, optional
-        :return:
-            LoanCloseQuote object representing the quote for closing the loan.
-        :rtype: LoanCloseQuote
-        """
-        errors = []
-
-        try:
-            resp = await self.cache.quote_api.quoteloanclose(
-                height=height,
-                asset=str(amount.asset),
-                amount=amount.amount.as_base.amount,
-                from_address=from_address,
-                loan_asset=str(loan_asset),
-                loan_owner=loan_owner,
-                min_out=min_out.as_base.amount
-            )
-        except ValueError:
-            error, _ = self._get_error_and_response_from_last_thor_response()
-            if error:
-                errors.append(error)
-            return LoanCloseQuote.empty_with_errors(errors)
-
-        if errors:
-            return LoanCloseQuote.empty_with_errors(errors)
-
-        return LoanCloseQuote(
-            inbound_address=resp.inbound_address,
-            expected_wait_time=BlockInformation(
-                outbound_delay_blocks=int(resp.outbound_delay_blocks),
-                outbound_delay_seconds=float(resp.outbound_delay_seconds),
-            ),
-            fees=QuoteFees(
-                asset=Asset.from_string(resp.fees.asset),
-                liquidity=int(resp.fees.liquidity),
-                outbound=int(resp.fees.outbound),
-                total_bps=int(resp.fees.total_bps),
-            ),
-            slippage_bps=int(resp.slippage_bps),
-            router=resp.router,
-            expiry=int(resp.expiry),
-            warning=resp.warning,
-            notes=resp.notes,
-            dust_threshold=int(resp.dust_threshold),
-            memo=resp.memo,
-            expected_amount_out=int(resp.expected_amount_out),
-            expected_collateral_down=int(resp.expected_collateral_down),
-            expected_debt_down=int(resp.expected_debt_down),
-            errors=errors,
-            recommended_min_amount_in=int(resp.recommended_min_amount_in),
-        )
 
     async def estimate_thor_name(self, is_update: bool, thorname: str, expiry: datetime = None) -> THORNameEstimate:
         """
@@ -1081,10 +691,10 @@ class THORChainQuery:
 
         # compute value
         constants = await self.cache.get_network_values()
-        one_time_fee = Amount.zero(self.native_decimal) if is_update else Amount.from_base(
+        one_time_fee = Amount.zero(self.native_decimal) if is_update else Amount.automatic_base(
             constants.get(Mimir.TNS_REGISTER_FEE, 0), self.native_decimal)
         fee_per_block = constants.get(Mimir.TNS_FEE_PER_BLOCK, 0)
-        total_fee_per_block = Amount.from_base(
+        total_fee_per_block = Amount.automatic_base(
             fee_per_block * max(blocks_to_add_to_expiry, 0),
             self.native_decimal
         )

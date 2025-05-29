@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xchainpy2_thorchain_query"
-version = "0.0.33"
+version = "0.1.1"
 authors = [
     { name = "Tirinox", email = "developer@tirinox.ru" },
 ]
@@ -31,7 +31,7 @@ classifiers = [
 dependencies = [
     'aiohttp',
     'aiohttp-retry>=2.3.0',
-    'xchainpy2_utils',
+    'xchainpy2_utils>=0.1.0',
     'xchainpy2_crypto',
     'xchainpy2_midgard',
     'xchainpy2_thornode',

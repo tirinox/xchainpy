@@ -59,7 +59,7 @@ class TransactionTracker:
                 raise ValueError('outbound_chain_client is not set')
             tx_details = await self.outbound_chain_client.get_transaction_data(tx_hash)
 
-        return TxDetails(tx_details, )
+        return TxDetails(tx_details, )  # todo....!
 
     async def tc_get_tx_details(self, inbound_tx_hash: str, height=0) -> Optional[TxSignersResponse]:
         try:
@@ -67,7 +67,7 @@ class TransactionTracker:
             return tx_details
         except ApiException as e:
             if e.status == 404:
-                return
+                return None
             raise
 
     async def tc_get_tx_status(self, inbound_tx_hash: str, height=0) -> Optional[TxStatusResponse]:
@@ -96,7 +96,7 @@ class TransactionTracker:
             return tx_status
         except ApiException as e:
             if e.status == 404:
-                return
+                return None
             raise
 
     async def check_tx_progress(self, inbound_tx_hash: str) -> TxDetails:
