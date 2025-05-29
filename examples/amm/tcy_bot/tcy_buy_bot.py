@@ -69,8 +69,8 @@ class TCYBot:
                 return False
 
             # Check price bounds
-            input_amount = self.buy_amount.amount.as_base
-            output_amount = r.net_output.amount.as_base
+            input_amount = self.buy_amount.amount
+            output_amount = r.net_output.amount
             price = output_amount / input_amount
 
             print(f'Estimated net output: {r.net_output}')
