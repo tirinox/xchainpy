@@ -389,6 +389,16 @@ class Asset(NamedTuple):
         a, b = self.upper(), other.upper()
         return a.chain == b.chain and a.symbol == b.symbol and a.contract == b.contract and a.synth == b.synth
 
+    @classmethod
+    def dimensionless(cls):
+        """
+        Get a dimensionless asset, which is an asset with empty chain and symbol.
+
+        :return: A dimensionless Asset object.
+        """
+
+        return cls('', '', '', AssetKind.NATIVE)
+
 
 AssetBTC = Asset.from_string('BTC.BTC')
 AssetETH = Asset.from_string('ETH.ETH')

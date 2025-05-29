@@ -5,10 +5,29 @@ from .asset import Asset
 from .decimals import guess_decimals
 
 DECIMAL_CONTEXT = Context(prec=100)
+"""
+    Default decimal context for all Amount and CryptoAmount operations.
+"""
+
 DC = DECIMAL_CONTEXT
+"""
+    Just a shortcut for the default decimal context.
+"""
+
 DEFAULT_ASSET_DECIMAL = 8
+"""
+    Default number of decimals for asset amounts. Widely used in THORChain, Maya, Cosmos. 
+"""
 
 AmountLike = Union['Amount', Decimal, float, int, str]
+"""
+    Either an Amount instance or a number (int, float, Decimal, str) that can be converted to Amount.
+"""
+
+CryptoAmountLike = Union['CryptoAmount', AmountLike]
+"""
+    Either a CryptoAmount instance or an AmountLike that can be converted to CryptoAmount.
+"""
 
 
 def decimal_power_10(x, context=DC):
@@ -49,6 +68,7 @@ class Amount(NamedTuple):
     def __str__(self):
         """
         Return a string representation of the amount.
+
         :return: A string e.g. "1.34 (D:8)"
         """
         return f"{float(self)} (D:{self.decimals})"
@@ -56,6 +76,7 @@ class Amount(NamedTuple):
     def __repr__(self):
         """
         Return a string representation of the amount for debugging.
+
         :return: A string e.g. "Amount(100000000, 8)"
         """
         return f"Amount({self.internal_amount}, {self.decimals})"
@@ -82,6 +103,7 @@ class Amount(NamedTuple):
         Perform subtraction with another Amount or a number.
         If the other is an Amount, it must have the same number of decimals.
         If the other is a number (int, float, Decimal), it is assumed to be in the same decimals as self.
+
         :param other: Another Amount or a number (int, float, Decimal)
         :return: Amount
         """
@@ -148,6 +170,9 @@ class Amount(NamedTuple):
         """
         Check if two Amount instances are equal.
         They must have the same internal amount and the same number of decimals to be considered equal.
+
+        :param other: Another Amount instance or a value that can be converted to Amount
+        :return: bool
         """
         if not isinstance(other, Amount):
             return self == self.like_me(other)
@@ -231,7 +256,7 @@ class Amount(NamedTuple):
     def automatic(cls, x, decimals=DEFAULT_ASSET_DECIMAL, context=DC):
         """
         Convert any type to an Amount instance.
-        .. warning::  This method uses "asset" amount, e.g. 1 BTC is 1, not 100000000 (satoshi). See also: automatic_base
+        .. warning::  This method uses "asset" amount, e.g. 1 BTC is 1, not 100000000 (satoshi). See also: automatic_base.
 
         :param x: Input value (int, float, str, Decimal, Amount)
         :param decimals: Number of decimals (default 8)
@@ -258,7 +283,7 @@ class Amount(NamedTuple):
     @classmethod
     def automatic_base(cls, x, decimals=DEFAULT_ASSET_DECIMAL):
         """
-        Convert any type to an Amount instance in base denomination
+        Convert any type to an Amount instance in base denomination.
 
         :param x: Input value (int, float, str, Decimal, Amount)
         :param decimals: Number of decimals (default 8)
@@ -275,6 +300,7 @@ class Amount(NamedTuple):
     def integer_part(self):
         """
         Return the integer part of the amount.
+
         :return: int
         """
         return self.internal_amount // self.ten_power
@@ -283,6 +309,7 @@ class Amount(NamedTuple):
     def decimal_part(self):
         """
         Return the decimal part of the amount.
+
         :return: int
         """
         return self.internal_amount % self.ten_power
@@ -290,14 +317,16 @@ class Amount(NamedTuple):
     @property
     def decimal_part_str(self):
         """
-        Return the decimal part as a string
+        Return the decimal part as a string.
+
         :return: str
         """
         return f'{self.decimal_part:0>{self.decimals}}'
 
     def format(self, trailing_zeros=False):
         """
-        Format the amount as a string
+        Format the amount as a string.
+
         :param trailing_zeros: If keeping zeros than it will be like 1.0000, otherwise. e.g. 1
         :return: str
         """
@@ -308,15 +337,17 @@ class Amount(NamedTuple):
 
     def __int__(self):
         """
-        Extract the integer value of the amount. Same as self.internal_amount
-        :return:
+        Extract the integer value of the amount. Same as self.internal_amount.
+
+        :return: int
         """
         return self.internal_amount
 
     @property
     def as_decimal(self):
         """
-        Convert the amount to Decimal with default context DC
+        Convert the amount to Decimal with default context DC.
+
         :return: Decimal
         """
         return self.as_decimal_ctx()
@@ -324,6 +355,7 @@ class Amount(NamedTuple):
     def as_decimal_ctx(self, context=DC):
         """
         Convert the amount to Decimal with the specified context
+
         :param context: Decimal context
         :return: Decimal
         """
@@ -332,13 +364,15 @@ class Amount(NamedTuple):
     def __float__(self):
         """
         Convert the amount to float. Returns the asset amount not the base amount.
+
         :return: float
         """
         return float(self.as_decimal)
 
     def __bool__(self):
         """
-        Check if the amount is non-zero
+        Check if the amount is non-zero.
+
         :return: bool
         """
         return bool(self.internal_amount)
@@ -346,7 +380,8 @@ class Amount(NamedTuple):
     @property
     def is_zero(self):
         """
-        Check if the amount is zero
+        Check if the amount is zero.
+
         :return: bool
         """
         return self.internal_amount == 0
@@ -356,6 +391,7 @@ class CryptoAmount(NamedTuple):
     """
     Represents an amount of a cryptocurrency asset. Basically a combination of an Amount and an Asset.
     """
+
     amount: Amount
     """The amount of the asset with decimals. Amount Object"""
 
@@ -400,52 +436,127 @@ class CryptoAmount(NamedTuple):
         """
         return cls.automatic(_amount, asset, decimals=decimals)
 
-    def __add__(self, other) -> 'CryptoAmount':
+    def __add__(self, other: CryptoAmountLike) -> 'CryptoAmount':
+        """
+        Add another CryptoAmount or a number to this CryptoAmount.
+        You can only add CryptoAmounts with the same asset.
+        If you add a number, it is treated as an "asset" amount in the same decimals as this CryptoAmount.
+
+        :param other: Another CryptoAmount or a number (int, float, Decimal)
+        :return: CryptoAmount
+        """
         self._guard_asset(other)
         return CryptoAmount(self.amount + other.amount, self.asset)
 
-    def __sub__(self, other) -> 'CryptoAmount':
+    def __sub__(self, other: CryptoAmountLike) -> 'CryptoAmount':
+        """
+        Subtract another CryptoAmount or a number from this CryptoAmount.
+        You can only subtract CryptoAmounts with the same asset.
+        If you subtract a number, it is treated as an "asset" amount in the same decimals as this CryptoAmount.
+
+        :param other: Another CryptoAmount or a number (int, float, Decimal)
+        :return: CryptoAmount
+        """
         self._guard_asset(other)
         return CryptoAmount(self.amount - other.amount, self.asset)
 
-    def __mul__(self, other) -> 'CryptoAmount':
-        self._guard_asset(other)
-        multiplier = self._get_multiplier(other)
-        return CryptoAmount(self.amount * multiplier, self.asset)
+    def __mul__(self, other: Union[int, float, Decimal, str]) -> 'CryptoAmount':
+        """
+        Multiply this CryptoAmount by a number (int, float, Decimal, or str).
+        Strings are converted to Decimal.
 
-    def __truediv__(self, other) -> 'CryptoAmount':
-        self._guard_asset(other)
-        multiplier = self._get_multiplier(other)
-        return CryptoAmount(self.amount / multiplier, self.asset)
+        :param other: A number to multiply by (int, float, Decimal, or str)
+        :return: CryptoAmount
+        """
+        return CryptoAmount(self.amount * other, self.asset)
 
-    def __floordiv__(self, other) -> 'CryptoAmount':
-        self._guard_asset(other)
-        multiplier = self._get_multiplier(other)
-        return CryptoAmount(self.amount // multiplier, self.asset)
+    def __truediv__(self, other: CryptoAmountLike) -> 'CryptoAmount':
+        """
+        Divide this CryptoAmount by a number (int, float, Decimal, or str).
+        See Amount.__truediv__ for more details.
+        If other is a CryptoAmount, it returns a dimensionless CryptoAmount with the dividend's decimals.
+        Otherwise, it returns a CryptoAmount with the same asset.
 
-    def _get_multiplier(self, other):
-        if isinstance(other, (int, float, Decimal)):
-            return other
+        :param other: CryptoAmount or Amount or a number (int, float, Decimal, or str)
+        :return: CryptoAmount
+        """
+        if isinstance(other, CryptoAmount):
+            divisor = other.amount
+            asset = Asset.dimensionless()
         else:
-            raise TypeError(f'Cannot multiply or divide {self} with {type(other)}')
+            divisor = other
+            asset = self.asset
+        return CryptoAmount(self.amount / divisor, asset)
+
+    def __floordiv__(self, other: CryptoAmountLike) -> 'CryptoAmount':
+        """
+        Floor divide this CryptoAmount by a number (int, float, Decimal, or str).
+        See Amount.__floordiv__ for more details.
+        If you divide by another CryptoAmount, it returns a dimensionless CryptoAmount with the dividend's decimals.
+        Otherwise, it returns a CryptoAmount with the same asset.
+
+        :param other: CryptoAmount or Amount or a number (int, float, Decimal, or str)
+        :return: CryptoAmount
+        """
+        if isinstance(other, CryptoAmount):
+            divisor = other.amount
+            asset = Asset.dimensionless()
+        else:
+            divisor = other
+            asset = self.asset
+        return CryptoAmount(self.amount // divisor, asset)
 
     def __eq__(self, other: 'CryptoAmount'):
-        self._guard_asset(other)
-        return self.amount == other.amount
+        """
+        Check if two CryptoAmount instances are equal.
+        Two CryptoAmounts are considered equal if they have the same asset and the same amount.
+
+        :param other: another CryptoAmount instance
+        :return: bool
+        """
+        return self.asset == other.asset and self.amount == other.amount
 
     def __lt__(self, other: 'CryptoAmount'):
+        """
+        Check if this CryptoAmount is less than another CryptoAmount.
+        You can only compare CryptoAmounts with the same asset.
+
+        :param other: Another CryptoAmount instance
+        :return: bool
+        """
         self._guard_asset(other)
         return self.amount < other.amount
 
     def __le__(self, other: 'CryptoAmount'):
+        """
+        Check if this CryptoAmount is less than or equal to another CryptoAmount.
+        You can only compare CryptoAmounts with the same asset.
+
+        :param other: Another CryptoAmount instance
+        :return: bool
+        """
         self._guard_asset(other)
         return self.amount <= other.amount
 
     def __gt__(self, other: 'CryptoAmount'):
+        """
+        Check if this CryptoAmount is greater than another CryptoAmount.
+        You can only compare CryptoAmounts with the same asset.
+
+        :param other: Another CryptoAmount instance
+        :return: bool
+        """
         self._guard_asset(other)
         return self.amount > other.amount
 
     def __ge__(self, other: 'CryptoAmount'):
+        """
+        Check if this CryptoAmount is greater than or equal to another CryptoAmount.
+        You can only compare CryptoAmounts with the same asset.
+
+        :param other: Another CryptoAmount instance
+        :return: bool
+        """
         self._guard_asset(other)
         return self.amount >= other.amount
 
@@ -475,10 +586,11 @@ class CryptoAmount(NamedTuple):
         """
         return int(self.amount)
 
-    def change_amount(self, new_amount: Union[int, float, Decimal]) -> 'CryptoAmount':
+    def changed_amount(self, new_amount: Union[int, float, Decimal]) -> 'CryptoAmount':
         """
         Change the amount only of this CryptoAmount. The asset remains the same.
         Non-destructive. Returns a new instance.
+
         :param new_amount: New amount
         :return: CryptoAmount
         """
@@ -488,6 +600,7 @@ class CryptoAmount(NamedTuple):
     def _guard_asset(self, a: 'CryptoAmount'):
         """
         Check if the asset of the other CryptoAmount is the same as this one.
+
         :param a: other CryptoAmount
         :raises ValueError: if the assets are different
         :return: None
@@ -499,7 +612,8 @@ class CryptoAmount(NamedTuple):
     @classmethod
     def zero(cls, asset: Union[str, Asset], decimals=DEFAULT_ASSET_DECIMAL):
         """
-        Create a zero CryptoAmount with the specified asset and decimals
+        Create a zero CryptoAmount with the specified asset and decimals.
+
         :param asset: Asset instance or asset name
         :param decimals: Decimals for this asset
         :return: CryptoAmount
@@ -509,7 +623,8 @@ class CryptoAmount(NamedTuple):
     @classmethod
     def zero_from(cls, amount: 'CryptoAmount') -> 'CryptoAmount':
         """
-        Create a zero CryptoAmount with the same asset and decimals as the given amount
+        Create a zero CryptoAmount with the same asset and decimals as the given amount.
+
         :param amount: Reference amount
         :return: CryptoAmount
         """
@@ -518,7 +633,9 @@ class CryptoAmount(NamedTuple):
     @classmethod
     def from_base(cls, amount, asset: Asset = None, decimals=DEFAULT_ASSET_DECIMAL, ) -> 'CryptoAmount':
         """
-        Create a CryptoAmount from a base amount
+        Create a CryptoAmount from a base amount.
+        Example: CryptoAmount.from_base(100000000, AssetBTC, 8) represents 1 BTC.
+
         :param amount: Amount in base units (no decimal)
         :param asset: Asset instance or asset name
         :param decimals: Decimals for this asset
@@ -527,10 +644,14 @@ class CryptoAmount(NamedTuple):
         return CryptoAmount(Amount.automatic_base(amount, decimals), asset.automatic(asset))
 
     @classmethod
-    def pick(cls, balances: List['CryptoAmount'], asset: Asset):
+    def pick(cls, balances: List['CryptoAmount'], asset: Asset) -> 'CryptoAmount':
         """
         Pick an amount from the list of balances. Search by asset.
-        If not found, return zero.
+        If not found, return zero CryptoAmount.
+
+        :param balances: List of CryptoAmount instances
+        :param asset: Asset to search for
+        :return: CryptoAmount
         """
         for b in balances:
             if b.asset == asset:
@@ -541,6 +662,7 @@ class CryptoAmount(NamedTuple):
     def changed_decimals(self, new_decimals, context=DC) -> 'CryptoAmount':
         """
         Change the decimals of the amount. Non-destructive. Returns a new instance.
+
         :param new_decimals: New number of decimals
         :param context: Decimal context (optional)
         :return: CryptoAmount
@@ -550,7 +672,8 @@ class CryptoAmount(NamedTuple):
     @property
     def decimals(self):
         """
-        Return the number of decimals for the amount. Instead of calling self.amount.decimals
-        :return:
+        Return the number of decimals for the amount. Shortcut for self.amount.decimals.
+
+        :return: int
         """
         return self.amount.decimals
