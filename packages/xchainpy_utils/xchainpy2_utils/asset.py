@@ -397,7 +397,16 @@ class Asset(NamedTuple):
         :return: A dimensionless Asset object.
         """
 
-        return cls('', '', '', AssetKind.NATIVE)
+        return cls(Chain.THORChain.value, '', '', AssetKind.NATIVE)
+
+    @property
+    def is_dimensionless(self):
+        """
+        Check if the asset is dimensionless, which means it has an empty chain and symbol.
+
+        :return: True if the asset is dimensionless, otherwise False.
+        """
+        return not self.symbol
 
 
 AssetBTC = Asset.from_string('BTC.BTC')

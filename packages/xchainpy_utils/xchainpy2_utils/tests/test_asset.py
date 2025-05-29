@@ -195,3 +195,13 @@ def test_derived_asset():
 def test_get_short_code(source, expected):
     assert get_short_code(source) == expected
     assert Asset.automatic(expected) == Asset.automatic(source)
+
+
+def test_dimensionless():
+    a = Asset.dimensionless()
+    assert a.is_dimensionless
+    assert not a.symbol
+    assert a.chain == Chain.THORChain.value
+
+    b = AssetRUNE
+    assert not b.is_dimensionless
