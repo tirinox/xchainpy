@@ -401,29 +401,64 @@ class Asset(NamedTuple):
 
 
 AssetBTC = Asset.from_string('BTC.BTC')
+"""Bitcoin asset on the Bitcoin network."""
+
 AssetETH = Asset.from_string('ETH.ETH')
+"""Ethereum asset on the Ethereum network."""
+
 AssetBSC = Asset.from_string('BSC.BNB')
+"""Binance Coin asset on the Binance Smart Chain."""
+
 AssetBCH = Asset.from_string('BCH.BCH')
+"""Bitcoin Cash asset on the Bitcoin Cash network."""
+
 AssetLTC = Asset.from_string('LTC.LTC')
+"""Litecoin asset on the Litecoin network."""
+
 AssetDOGE = Asset.from_string('DOGE.DOGE')
+"""Dogecoin asset on the Dogecoin network."""
+
 AssetAVAX = Asset.from_string('AVAX.AVAX')
+"""Avalanche asset on the Avalanche C-Chain."""
+
 AssetAEth = Asset.from_string('ARB.ETH')
+"""Arbitrum Ethereum asset on the Arbitrum network."""
+
 AssetRUNE = Asset.from_string('THOR.RUNE')
+"""THORChain RUNE asset on the THORChain network."""
+
 AssetATOM = Asset.from_string('GAIA.ATOM')
+"""Cosmos Atom asset on the Cosmos network."""
+
 AssetCACAO = Asset.from_string('MAYA.CACAO')
+"""Maya Cacao asset on the Maya network."""
+
 AssetDASH = Asset.from_string('DASH.DASH')
+"""Dash asset on the Dash network."""
+
 AssetKUJI = Asset.from_string('KUJI.KUJI')
+"""Kujira asset on the Kujira network."""
+
 AssetBaseETH = Asset.from_string('BASE.ETH')
+"""Base Ethereum asset on the Base network."""
+
 AssetTCY = Asset.from_string("THOR.TCY")
-# todo add comments
+"""TCY asset on the THORChain network."""
+
 AssetRUJI = Asset.from_string("THOR.RUJI")
+"""Rujira asset on the THORChain network."""
+
 AssetXRP = Asset.from_string('XRP.XRP')
+"""XRP Ripple asset on the XRP network."""
+
 AssetSOL = Asset.from_string('SOL.SOL')
+"""Solana asset on the Solana network."""
 
 
 def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
     """
     Get the gas asset for the specified chain.
+
     :param chain: The chain to get the gas asset for. Can be a Chain object or a string.
     :raise ValueError: If the chain is not recognized.
     :return: The gas Asset for the specified chain.
@@ -469,6 +504,7 @@ def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
 def is_gas_asset(asset: Asset) -> bool:
     """
     Check if the asset is a gas asset for its chain.
+
     :param asset: The asset to check
     :return: True if the asset is a gas asset, otherwise False
     """
@@ -480,6 +516,7 @@ class CommonAssets:
     """
     Common assets used in the cross-chain environment and their short codes.
     """
+
     BTC = AssetBTC
     """Bitcoin asset"""
 
