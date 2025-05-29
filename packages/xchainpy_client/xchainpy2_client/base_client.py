@@ -48,7 +48,7 @@ class XChainClient(abc.ABC):
 
         self.explorers = {network: ExplorerProvider('', '', '')}
 
-        # NOTE: we don't call this.setPhrase() to void generating an address and paying the perf penalty
+        # NOTE: we don't call self.set_phrase() to void generating an address and paying the perf penalty
         if phrase:
             if not validate_mnemonic(phrase):
                 raise KeyException('Invalid phrase')
@@ -68,24 +68,47 @@ class XChainClient(abc.ABC):
 
     @property
     def decimal(self):
+        """
+        Get the decimal places for the main (gas?) asset.
+
+        :return: int Decimal places for the main asset, default is 8.
+        """
         return self._decimal
 
     @abc.abstractmethod
     def validate_address(self, address: str) -> bool:
+        """
+        Validate the address for the given chain.
+
+        :param address: str Address to validate.
+        :return: bool True if the address is valid, False otherwise.
+        """
         pass
 
     @abc.abstractmethod
     def get_address(self) -> str:
+        """
+        Get the address for the wallet.
+
+        :return: str Address of the wallet.
+        """
         pass
 
     @abc.abstractmethod
     def get_public_key(self):
+        """
+        Get the public key for the given wallet index.
+        # todo: make it consistent for all clients, some return hex, some return bytes!
+
+        :return: str Public key as hex string.
+        """
         pass
 
     def get_private_key(self) -> str:
         """
-        Get the private key for the given wallet index.
-        :return:
+        Get the private key for the given wallet index as hex string.
+
+        :return: str Hex representation of the private key.
         """
         if self.pk_hex:
             return self.pk_hex
@@ -102,7 +125,12 @@ class XChainClient(abc.ABC):
             raise KeyException('Phrase or private key must be provided to do this action')
 
     @property
-    def pk_hex(self):
+    def pk_hex(self) -> str:
+        """
+        Get the private key in hex format regardless of how it was set (phrase or private key).
+
+        :return: str Hex representation of the private key or None if not set.
+        """
         if callable(self._private_key):
             return self._private_key()
         elif isinstance(self._private_key, str):
@@ -110,43 +138,41 @@ class XChainClient(abc.ABC):
         elif isinstance(self._private_key, bytes):
             return self._private_key.hex()
         else:
-            return None
+            raise KeyException('Private key must be set as str or bytes')
 
     def gas_amount(self, amount: Union[float, str, int, Decimal, Amount]) -> CryptoAmount:
         """
-        Easy way to construct CryptoAmount of gas asset
-        Type int means base amount (like satoshi, wei, 1e-8 rune, etc)
-        Types float and Decimal means asset amount (like btc, eth, rune, etc)
-        :param amount: Union[float, str, int, Decimal] amount of asset (not base!)
+        Easy way to construct CryptoAmount of gas asset.
+        See :py:class:`CryptoAmount` and :py:class:`Amount` for more details.
+
+        :param amount: Union[float, str, int, Decimal] amount of asset (not base!), e.g. 1.1 ETH, 0.05 BTC
         :return: CryptoAmount
         """
         return CryptoAmount(Amount.automatic(amount, self._decimal), self._gas_asset)
 
     def gas_base_amount(self, amount: int) -> CryptoAmount:
         """
-        Easy way to construct CryptoAmount of gas asset from base units
-        :param amount: base amount of asset (like satoshi, wei, 1e-8 rune, etc); must be int type
+        Easy way to construct CryptoAmount of gas asset from base units (like satoshi, wei, 1e-8 rune, etc); must be int type
+
+        :param amount: int amount of asset in base units
         :return:
         """
         assert isinstance(amount, int)
-        return CryptoAmount(Amount.from_base(amount, self._decimal), self._gas_asset)
-
-    def gas_asset_amount(self, amount: Union[float, str, Decimal]) -> CryptoAmount:
-        """
-        Easy way to construct CryptoAmount of gas asset from asset units
-        :param amount: asset amount (like btc, eth, rune, etc); must be float or Decimal type or str
-        :return:
-        """
-        assert isinstance(amount, (float, str, Decimal))
-        return CryptoAmount(Amount.from_asset(amount, self._decimal), self._gas_asset)
+        return CryptoAmount(Amount.automatic_base(amount, self._decimal), self._gas_asset)
 
     @property
     def zero_gas_amount(self) -> CryptoAmount:
+        """
+        Get zero amount of gas asset.
+
+        :return: CryptoAmount of gas asset with zero amount
+        """
         return self.gas_base_amount(0)
 
     async def max_gas_amount(self, balances: List[CryptoAmount] = None) -> CryptoAmount:
         """
-        Calculate maximum amount of Gas asset that you can send to empty your wallet
+        Calculate maximum amount of Gas asset that you can send to empty your wallet.
+
         :param balances: (Optional) if you already have your balance, otherwise they will be loaded
         :return: CryptoAmount
         """
@@ -159,7 +185,8 @@ class XChainClient(abc.ABC):
 
         fees = await self.get_fees()
         fee = fees.fees[FeeOption.FAST]
-        max_value = gas_balance.amount.as_asset - fee.as_asset
+        # note: must be same decimals
+        max_value = gas_balance.amount - fee
         if max_value.internal_amount < 0:
             # less than fee
             return self.zero_gas_amount
@@ -179,10 +206,21 @@ class XChainClient(abc.ABC):
         if self.network == NetworkType.STAGENET:
             print("WARNING: This is using stagenet! Real assets are being used!")
 
-    def get_network(self):
+    def get_network(self) -> NetworkType:
+        """
+        Get the network type for this client.
+
+        :return: NetworkType
+        """
         return self.network
 
     def set_phrase(self, phrase: str, wallet_index: int = 0):
+        """
+        Set the seed phrase for the client. It will also set the wallet index.
+
+        :param phrase: Mnemonic phrase (12-24 words)
+        :param wallet_index: Wallet index (default is 0)
+        """
         if phrase:
             if not validate_mnemonic(phrase):
                 raise KeyException('Invalid phrase')
@@ -192,19 +230,25 @@ class XChainClient(abc.ABC):
         self.wallet_index = wallet_index
 
     def purge_client(self):
+        """
+        Purge the client by clearing the phrase and private key.
+        """
         self.phrase = ''
         self._private_key = None
 
     def get_explorer_url(self) -> str:
         """
         Get the explorer url.
+
         :return: The explorer url based on the network.
         """
         return self.explorers[self.network].explorer_url
 
-    def get_explorer_address_url(self, address: str) -> str:
+    def get_explorer_address_url(self, address: str = '') -> str:
         """
         Get the explorer url for the given address.
+        If address is not provided, it will use the address of this client.
+
         :param address: address
         :return: The explorer url for the given address based on the network.
         """
@@ -215,7 +259,8 @@ class XChainClient(abc.ABC):
     def get_explorer_tx_url(self, tx_id: str) -> str:
         """
         Get the explorer url for the given transaction id.
-        :param tx_id: The transaction id
+
+        :param tx_id: str The transaction id
         :return: str The explorer url for the given transaction id based on the network.
         """
         if not tx_id:
@@ -224,11 +269,18 @@ class XChainClient(abc.ABC):
 
     @abc.abstractmethod
     async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+        """
+        Get the balance of the wallet.
+
+        :param address: Address to get the balance for (optional). If not provided, it will use the address of this client.
+        :return: List of CryptoAmount objects representing the balance of each asset in the wallet.
+        """
         pass
 
     async def get_gas_balance(self, address: str = '') -> CryptoAmount:
         """
-        Get the balance of the gas asset for the given address
+        Get the balance of the gas asset for the given address.
+
         :param address: address (optional)
         :return: CryptoAmount of the gas asset
         """
@@ -240,7 +292,8 @@ class XChainClient(abc.ABC):
 
     async def has_balance(self, amount: CryptoAmount):
         """
-        Check if the wallet has enough balance to send the given amount
+        Check if the wallet has enough balance to send the given amount.
+
         :param amount: amount to send
         :return: True if the wallet has enough balance, False otherwise
         """
@@ -251,6 +304,12 @@ class XChainClient(abc.ABC):
         return balance.amount >= amount.amount
 
     def get_full_derivation_path(self, wallet_index: int) -> str:
+        """
+        Get the full derivation path for the given wallet index.
+
+        :param wallet_index: int Wallet index to derive the path for.
+        :return: str Full derivation path for the wallet index.
+        """
         if self.root_derivation_paths:
             # BREAKING CHANGE!
             # return f"{self.root_derivation_paths[self.network]}{wallet_index}'"  # original with apostrophe
@@ -291,6 +350,7 @@ class XChainClient(abc.ABC):
         """
 
         while poll_period < timeout:
+            # noinspection PyUnresolvedReferences
             tx = await self.get_transaction_data(tx_id)
             if tx and tx.is_success:
                 return tx
@@ -303,13 +363,19 @@ class XChainClient(abc.ABC):
     async def broadcast_tx(self, tx_hex: str) -> str:
         """
         Broadcast the transaction to the network.
+
         :param tx_hex: The transaction content in hex format.
         :return: The transaction identifier (or hash).
         """
         pass
 
     @property
-    def gas_asset(self):
+    def gas_asset(self) -> Asset:
+        """
+        Get the gas asset for the chain.
+
+        :return: Asset The gas asset for the chain, e.g. AssetRUNE, AssetETH, etc.
+        """
         return self._gas_asset
 
     def _save_last_response(self, txid, result):
@@ -317,13 +383,30 @@ class XChainClient(abc.ABC):
             self.last_response_dict[txid] = result
 
     def get_last_response(self, txid: str):
+        """
+        Get the last response for the given transaction ID.
+
+        :param txid: str Transaction ID to get the last response for.
+        :return: dict or None
+        """
         return self.last_response_dict.get(txid)
 
     def clear_last_responses(self):
+        """
+        Clear the last responses dictionary. Useful for testing or resetting the client state.
+        This method will remove all entries from the last_response_dict.
+        """
         self.last_response_dict = {}
 
     @classmethod
     async def call_service(cls, method, *args):
+        """
+        This is a helper method to call a method of the underlying service in an asynchronous way.
+
+        :param method: Method to call
+        :param args: Arguments to pass to the method
+        :return: Result of the method call
+        """
         return await asyncio.get_event_loop().run_in_executor(
             None,
             method,
@@ -332,4 +415,7 @@ class XChainClient(abc.ABC):
 
 
 class NoClient(XChainClient, abc.ABC):
+    """
+    This is a placeholder class for clients that do not have any implementation.
+    """
     ...

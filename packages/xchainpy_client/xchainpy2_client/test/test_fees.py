@@ -37,9 +37,9 @@ async def test_calc_fees():
 
     def test_result():
         assert r.type == FeeType.PER_BYTE
-        assert r.fees[FeeOption.AVERAGE] == Amount.from_base(23)
-        assert r.fees[FeeOption.FAST] == Amount.from_base(27)
-        assert r.fees[FeeOption.FASTEST] == Amount.from_base(100)
+        assert r.fees[FeeOption.AVERAGE] == Amount.automatic_base(23)
+        assert r.fees[FeeOption.FAST] == Amount.automatic_base(27)
+        assert r.fees[FeeOption.FASTEST] == Amount.automatic_base(100)
 
     test_result()
 
