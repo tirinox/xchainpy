@@ -19,7 +19,7 @@ async def test_balance():
         balances = await btc.get_balance('bc1pjt9a2j85q8yn6p0g7q07c38nev9wct9fquj9fda7283y94khmc0s3fwp4j')
         assert balances
         assert balances[0].asset == AssetBTC
-        assert balances[0].amount.as_base.internal_amount == 5589017
+        assert balances[0].amount.internal_amount == 5589017
 
         m.get('https://mempool.space/api/address/bc1pjt9a2j85q8yn6p0g7q07c38nev9wct9fquj9fda7283y94khmc0s3fwp4g',
               text='Invalid Bitcoin address')
@@ -37,4 +37,4 @@ async def test_balance():
         balances = await btc.get_balance('bc1qlejn5eh6kf6wm7mxv2drnt0mk66uthvxzcemvc')
         assert balances
         assert balances[0].asset == AssetBTC
-        assert balances[0].amount.as_base.internal_amount == 0
+        assert balances[0].amount.internal_amount == 0
