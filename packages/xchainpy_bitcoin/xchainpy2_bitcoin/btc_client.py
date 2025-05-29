@@ -117,7 +117,7 @@ class BitcoinClient(XChainClient):
             raise UTXOException('Failed to get fee rate')
 
         if isinstance(fee_rate, Amount):
-            fee_rate = fee_rate.as_base.internal_amount
+            fee_rate = int(fee_rate)
 
         self.fee_bound.check_fee_bounds(fee_rate, per_kb=True)
 

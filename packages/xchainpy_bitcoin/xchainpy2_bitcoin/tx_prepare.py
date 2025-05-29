@@ -110,7 +110,7 @@ class UTXOPrepare:
         outputs = [
             # this output is the actual transfer
             {
-                'value': int(amount.as_base),
+                'value': int(amount),
                 'address': recipient,
             }
         ]
