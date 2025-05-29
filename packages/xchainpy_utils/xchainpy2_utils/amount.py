@@ -482,7 +482,8 @@ class CryptoAmount(NamedTuple):
         :return: CryptoAmount
         """
         self._guard_asset(other)
-        return CryptoAmount(self.amount + other.amount, self.asset)
+        right = other.amount if isinstance(other, CryptoAmount) else other
+        return CryptoAmount(self.amount + right, self.asset)
 
     def __sub__(self, other: CryptoAmountLike) -> 'CryptoAmount':
         """
@@ -494,7 +495,8 @@ class CryptoAmount(NamedTuple):
         :return: CryptoAmount
         """
         self._guard_asset(other)
-        return CryptoAmount(self.amount - other.amount, self.asset)
+        right = other.amount if isinstance(other, CryptoAmount) else other
+        return CryptoAmount(self.amount - right, self.asset)
 
     def __mul__(self, other: Union[int, float, Decimal, str]) -> 'CryptoAmount':
         """

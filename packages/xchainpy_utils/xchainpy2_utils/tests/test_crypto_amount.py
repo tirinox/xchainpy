@@ -137,10 +137,26 @@ def test_arithmetic():
     assert amt * 3 == CryptoAmount(Amount(300, 8), AssetRUNE)
     assert amt / 2 == CryptoAmount(Amount(50, 8), AssetRUNE)
 
-    bmt = CryptoAmount(Amount(100, 8), Asset.from_string('BNB.BNB'))
-
     with pytest.raises(ValueError):
+        bmt = CryptoAmount(Amount(100, 8), Asset.from_string(AssetBTC))
         amt + bmt
+
+    assert amt / amt == CryptoAmount.automatic(1, Asset.dimensionless())
+    assert amt // amt == CryptoAmount.automatic(1, Asset.dimensionless())
+    assert amt * 5 / amt == CryptoAmount.automatic(5, Asset.dimensionless())
+    # 7 // 2 == 3
+    assert amt * 7 // (amt * 2) == CryptoAmount.automatic(3, Asset.dimensionless())
+
+    amt = CryptoAmount.automatic(5, AssetRUNE)
+    assert amt + 6 == CryptoAmount.automatic(11, AssetRUNE)
+    assert amt - 1 == CryptoAmount.automatic(4, AssetRUNE)
+    assert amt + 6.0 == CryptoAmount.automatic(11, AssetRUNE)
+    assert amt - 1.0 == CryptoAmount.automatic(4, AssetRUNE)
+    assert amt + "6.0" == CryptoAmount.automatic(11, AssetRUNE)
+    assert amt - "1.0" == CryptoAmount.automatic(4, AssetRUNE)
+    assert amt + Decimal("6.0") == CryptoAmount.automatic(11, AssetRUNE)
+    assert amt - Decimal("1.0") == CryptoAmount.automatic(4, AssetRUNE)
+
 
 
 def test_conv():
