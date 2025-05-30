@@ -26,9 +26,6 @@ RUNE_DISPLAY_SYMBOL = 'ᚱ'
 RUNE_TICKER = 'RUNE'
 """Ticker symbol for the RUNE token."""
 
-DEFAULT_RUNE_FEE = Amount.from_asset(0.02, RUNE_DECIMAL)
-"""Default fee for RUNE transactions. Subject to change."""
-
 DEFAULT_EXPLORER_URL = 'https://runescan.io{path}{network_tag}'
 """Default explorer URL for the THORChain network."""
 
@@ -136,7 +133,7 @@ DENOM_TCY = 'tcy'
 THOR_BLOCK_TIME_SEC = 6.0
 """Typical time in seconds for a block to be produced in THORChain."""
 
-DEFAULT_RUNE_NETWORK_FEE = CryptoAmount(Amount.from_asset(Decimal("0.02"), RUNE_DECIMAL), AssetRUNE)
+DEFAULT_RUNE_NETWORK_FEE = CryptoAmount(Amount.automatic(Decimal("0.02"), RUNE_DECIMAL), AssetRUNE)
 """
     Default network fee for RUNE transactions. 
     This may be overridden by the network constants. 
