@@ -196,3 +196,21 @@ def test_dimensionless():
 
     b = AssetRUNE
     assert not b.is_dimensionless
+
+
+@pytest.mark.parametrize('source_asset, expected', [
+    ("", AssetKind.UNKNOWN),
+    ("foobar", AssetKind.UNKNOWN),
+    ("THOR?BTC", AssetKind.UNKNOWN),
+    ("BTC.BTC", AssetKind.NATIVE),
+    ("ETH.USDT-0xdac17f958d2ee523a2206206994597c13d831ec7", AssetKind.NATIVE),
+    ("BTC~BTC", AssetKind.TRADE),
+    ("BTC-BTC", AssetKind.SECURED),
+    ("ETH/ETH", AssetKind.SYNTH),
+    # weird but true:
+    (".", AssetKind.NATIVE),
+    ("~", AssetKind.TRADE),
+    ("-", AssetKind.SECURED),
+])
+def test_asset_kind_recognize(source_asset, expected):
+    assert AssetKind.recognize(source_asset) == expected

@@ -78,12 +78,13 @@ class AssetKind(Enum):
             return NATIVE_DELIMITER
 
     @classmethod
-    def recognize(cls, asset_str: str):
+    def recognize(cls, asset_str: str) -> 'AssetKind':
         """
             Detects the asset type based on the first delimiter in the asset string.
 
             :param asset_str: The asset string (e.g., "ETH.ETH", "BTC-BTC", "XRP~XRP").
             :return: The asset type: "trade" for "~", "secured" for "-", "native" for ".", or "unknown" if no valid delimiter is found.
+            :rtype AssetKind
         """
         for char in asset_str:
             if char in ALL_DELIMITERS:
