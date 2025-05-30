@@ -1,3 +1,4 @@
+from contextlib import suppress
 from enum import Enum
 from typing import NamedTuple, Optional, Union
 
@@ -225,16 +226,17 @@ class Asset(NamedTuple):
         elif len(components) == 1:
             return input_str, ''
         else:
-            raise Exception(f'Invalid input string: {input_str}')
+            raise ValueError(f'Invalid input string: {input_str}')
 
     @classmethod
     def from_string(cls, s) -> Optional['Asset']:
         """
         Create an Asset object by parsing the input string.
         If the input string is already an Asset object, it will be returned as is.
-        The format of the input string should be "CHAIN.SYMBOL-CONTRACT". Synth assets should use '/' as delimiter.
+        The format of the input string should be "CHAIN.SYMBOL-CONTRACT".
         If you pass a string with only the symbol (e.g. ETH), it will be used as both symbol and ticker: ETH.ETH
         This method does not recognize short codes like 'rune' or 'btc' and does not do any case conversion.
+        
         See Asset.automatic() for that.
         :param s: The input string to parse
         :return: An Asset object if the input string is valid, otherwise None
@@ -247,7 +249,7 @@ class Asset(NamedTuple):
 
         s = s.strip()
         if not s:
-            raise ValueError('Asset string cannot be empty')
+            raise ValueError('Asset string cannot be empty.')
 
         kind = AssetKind.recognize(s)
 
@@ -255,13 +257,22 @@ class Asset(NamedTuple):
         n = len(data)
         if n == 1:
             if symbol := data[0]:
+                if not symbol:
+                    raise ValueError(f'Asset symbol cannot be empty. You passed "{s}"')
                 return cls(symbol, symbol)
         elif n == 2:
-            try:
-                name, tag = cls.get_name_and_contract(data[1])
-            except ValueError:
-                return None
-            chain = data[0]
+            chain, name_part = data
+            chain = chain.strip()
+            if not chain:
+                raise ValueError(f'Asset chain cannot be empty. You passed "{s}"')
+
+            name_part = name_part.strip()
+            if not name_part:
+                raise ValueError(f'Asset name cannot be empty. You passed "{s}"')
+
+            if "." in name_part:
+                raise ValueError(f'Invalid extra symbol "." in "{name_part}"')
+            name, tag = cls.get_name_and_contract(name_part)
 
             if kind is AssetKind.NATIVE and chain.upper() == Chain.THORChain.value:
                 # Looks like THOR.BTC
@@ -270,16 +281,18 @@ class Asset(NamedTuple):
             return cls(chain, name, tag, kind)
 
     @classmethod
-    def from_string_exc(cls, s) -> Optional['Asset']:
+    def from_string_no_exc(cls, s) -> Optional['Asset']:
         """
         Create an Asset object by parsing the input string.
-        The difference between this method and from_string is that this method raises a ValueError
-        if the input string is invalid.
+        Return None if input string is invalid. Does not raise an exception.
+
+        :param s: The input string to parse
+        :return: An Asset object if the input string is valid, otherwise None
+        :rtype: Optional[Asset]
         """
-        a = cls.from_string(s)
-        if a is None:
-            raise ValueError(f'Invalid asset string: {s}')
-        return a
+        with suppress(ValueError):
+            return cls.from_string(s)
+        return None
 
     @classmethod
     def automatic(cls, x) -> Optional['Asset']:

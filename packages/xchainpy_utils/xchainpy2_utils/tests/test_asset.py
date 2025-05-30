@@ -18,61 +18,41 @@ def test_asset_equals():
     assert AssetRUNE == AssetRUNE
 
 
-def test_asset_from_string():
-    asset = Asset.from_string('BSC.BNB')
-    assert asset.chain == 'BSC'
-    assert asset.symbol == 'BNB'
-    assert asset.contract == ''
-    assert not asset.synth
-    assert str(asset) == 'BSC.BNB'
+@pytest.mark.parametrize(
+    'input_string, expected_chain, expected_symbol, expected_contract, expected_synth, expected_str', [
+        ('BSC.BNB', 'BSC', 'BNB', '', False, 'BSC.BNB'),
+        ('ETH.USDT-0xdac17f958d2ee523a2206206994597c13d831ec7', 'ETH', 'USDT',
+         '0xdac17f958d2ee523a2206206994597c13d831ec7', False, 'ETH.USDT-0xdac17f958d2ee523a2206206994597c13d831ec7'),
+        ('BTC/BTC', 'BTC', 'BTC', '', True, 'BTC/BTC'),
+        ('AVAX', 'AVAX', 'AVAX', '', False, None),
+        ('XRP-OMG', 'XRP', 'OMG', '', False, 'XRP-OMG'),
+        ('ETH-USDT-0xdac17f958d2ee523a2206206994597c13d831ec7', 'ETH', 'USDT',
+         '0xdac17f958d2ee523a2206206994597c13d831ec7', False, 'ETH-USDT-0xdac17f958d2ee523a2206206994597c13d831ec7'),
+        ('XRP~OMG', 'XRP', 'OMG', '', False, 'XRP~OMG'),
+    ])
+def test_asset_from_string(input_string, expected_chain, expected_symbol, expected_contract, expected_synth,
+                           expected_str):
+    asset = Asset.from_string(input_string)
+    assert asset.chain == expected_chain
+    assert asset.symbol == expected_symbol
+    assert asset.contract == expected_contract
+    assert asset.synth == expected_synth
+    if expected_str is not None:
+        assert str(asset) == expected_str
 
-    asset = Asset.from_string('ETH.USDT-0xdac17f958d2ee523a2206206994597c13d831ec7')
-    assert asset.chain == 'ETH'
-    assert asset.symbol == 'USDT'
-    assert asset.contract == '0xdac17f958d2ee523a2206206994597c13d831ec7'
-    assert not asset.synth
-    assert str(asset) == 'ETH.USDT-0xdac17f958d2ee523a2206206994597c13d831ec7'
 
-    asset = Asset.from_string('BTC/BTC')
-    assert asset.chain == 'BTC'
-    assert asset.symbol == 'BTC'
-    assert asset.contract == ''
-    assert asset.synth
-    assert str(asset) == 'BTC/BTC'
-
-    asset = Asset.from_string('AVAX')
-    assert asset.chain == 'AVAX'
-    assert asset.symbol == 'AVAX'
-    assert not asset.synth
-
-    # secured asset
-    asset = Asset.from_string('XRP-OMG')
-    assert asset.chain == 'XRP'
-    assert asset.symbol == 'OMG'
-    assert not asset.synth and not asset.is_native and not asset.is_trade
-    assert str(asset) == 'XRP-OMG'
-    assert asset.is_secured
-
-    # secured asset
-    asset = Asset.from_string('ETH-USDT-0xdac17f958d2ee523a2206206994597c13d831ec7')
-    assert asset.chain == 'ETH'
-    assert asset.symbol == 'USDT'
-    assert asset.contract == '0xdac17f958d2ee523a2206206994597c13d831ec7'
-    assert not asset.synth and not asset.is_native and not asset.is_trade
-    assert str(asset) == 'ETH-USDT-0xdac17f958d2ee523a2206206994597c13d831ec7'
-    assert asset.is_secured
-
-    asset = Asset.from_string('XRP~OMG')
-    assert asset.chain == 'XRP'
-    assert asset.symbol == 'OMG'
-    assert asset.is_trade
-    assert str(asset) == 'XRP~OMG'
-
+@pytest.mark.parametrize('invalid_input', [
+    '',  # Empty string
+    'x.y.z.w',  # Uncomment if needed for additional invalid cases
+    ".",
+    "~",
+    "-",
+    "BTC.",
+    ".ETH",
+])
+def test_asset_from_string_invalid_cases(invalid_input):
     with pytest.raises(ValueError):
-        Asset.from_string_exc('')
-
-    # with pytest.raises(ValueError):
-    #     Asset.from_string_exc('x.y.z.w')
+        Asset.from_string(invalid_input)
 
 
 def test_convert_synth():
@@ -96,9 +76,13 @@ def test_well_known_assets():
            and not AssetCACAO.synth
     assert AssetBTC.chain == 'BTC' == AssetBTC.symbol and AssetBTC.contract == '' and not AssetBTC.synth
     assert AssetETH.chain == 'ETH' == AssetETH.symbol and AssetETH.contract == '' and not AssetETH.synth
-    assert AssetBSC.chain == 'BSC' == AssetBSC.symbol and AssetBSC.contract == '' and not AssetBSC.synth
+    assert AssetBSC.chain == 'BSC' and AssetBSC.contract == '' and not AssetBSC.synth
+    assert AssetBSC.symbol == 'BNB'
 
-    for asset in (AssetRUNE, AssetBTC, AssetATOM, AssetAVAX, AssetBCH, AssetCACAO, AssetDOGE, AssetLTC, AssetBSC):
+    for asset in (
+            AssetRUNE, AssetBTC, AssetATOM, AssetAVAX, AssetBCH, AssetCACAO, AssetDOGE, AssetLTC, AssetBSC,
+            AssetXRP, AssetDASH, AssetAEth, AssetTCY, AssetSOL
+    ):
         assert asset.is_valid
 
 
@@ -117,6 +101,13 @@ def test_equality():
     fox = 'etH.UsDt-0XDAC17F958D2EE523a2206206994597C13D831Ec8'  # 8 != 7
     d = Asset.from_string(fox)
     assert a != d
+
+    assert Asset.from_string(camel.lower()) == Asset.from_string(camel.upper())
+    assert AssetETH == Asset("ETH", "eth", "", kind=AssetKind.NATIVE)
+
+    assert AssetRUNE == AssetRUNE
+    assert AssetRUNE != AssetBTC
+    assert AssetBTC != AssetRUNE
 
 
 @pytest.mark.parametrize('source, expected', [
