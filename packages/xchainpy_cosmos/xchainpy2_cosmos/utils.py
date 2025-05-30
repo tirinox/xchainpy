@@ -51,7 +51,6 @@ def get_asset(denom: str, native_denom=COSMOS_DENOM, native_asset=AssetATOM) -> 
             # Get readable ticker for IBC assets from denom #600 https://github.com/xchainjs/xchainjs-lib/issues/600
             # At the meantime ticker will be empty
             contract='',
-            synth=False
         )
 
     return None
@@ -59,8 +58,8 @@ def get_asset(denom: str, native_denom=COSMOS_DENOM, native_asset=AssetATOM) -> 
 
 def get_coin_amount(coins, decimals) -> Amount:
     return sum(
-        (Amount.from_base(int(key_attr_getter(coin, 'amount')), decimals) for coin in coins),
-        Amount.from_base(0, decimals)
+        (Amount.automatic_base(int(key_attr_getter(coin, 'amount')), decimals) for coin in coins),
+        Amount.automatic_base(0, decimals)
     )
 
 
@@ -84,7 +83,7 @@ def parse_transfer_log(log: TxLog, decimals, filter_address, native_denom: str, 
                     recipient = attribute.value
                 elif attribute.key == 'amount':
                     amount_int, asset = parse_cosmos_amount(attribute.value)
-                    amount = Amount.from_base(amount_int, decimals)
+                    amount = Amount.automatic_base(amount_int, decimals)
                     if asset == native_denom:
                         asset = native_asset
                     else:

@@ -61,7 +61,7 @@ async def test_get_tx(cosm_client):
     assert tr.to_address == 'cosmos1hfdkewc9cuzdkh4f498a8e4a3hh0qpqm83s82k'
     assert tr.asset == AssetATOM
     assert tx.asset == AssetATOM
-    assert tr.amount == Amount.from_base(715197, COSMOS_DECIMAL)
+    assert tr.amount == Amount.automatic_base(715197, COSMOS_DECIMAL)
 
 
 def test_pk_init(cosm_client):

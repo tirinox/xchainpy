@@ -249,7 +249,7 @@ class CosmosGaiaClient(XChainClient):
     def convert_coin_to_amount(self, c: Coin):
         asset = self.parse_denom_to_asset(c.denom)
         return CryptoAmount(
-            Amount.from_base(c.amount, self._decimal),
+            Amount.automatic_base(c.amount, self._decimal),
             asset
         )
 
@@ -281,7 +281,7 @@ class CosmosGaiaClient(XChainClient):
             return account
         except RuntimeError as e:
             if 'NotFound' in str(e):
-                return
+                return None
             raise e
 
     async def get_transactions(self, address: str = '',
@@ -574,14 +574,14 @@ class CosmosGaiaClient(XChainClient):
                 native_balance = balance
 
         is_native = amount.asset == self._gas_asset
-        extra_fee = fee if is_native else Amount.from_base(0, self._decimal)
+        extra_fee = fee if is_native else Amount.automatic_base(0, self._decimal)
 
-        required = amount.amount.as_base + extra_fee.as_base
-        if asset_balance is None or asset_balance.amount.as_base < required:
+        required = amount.amount + extra_fee
+        if asset_balance is None or asset_balance.amount < required:
             raise ValueError(f"Insufficient funds: {required} is required. Balance is {asset_balance}")
 
         if native_balance is None or native_balance.amount < fee:
-            raise ValueError(f"Insufficient funds to pay fee: {fee.amount} {self._gas_asset}")
+            raise ValueError(f"Insufficient funds to pay fee: {fee} {self._gas_asset}")
 
     def _make_wallet(self) -> LocalWallet:
         if self._ready_to_make_wallet:
