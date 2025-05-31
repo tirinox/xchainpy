@@ -205,19 +205,6 @@ class CosmosGaiaClient(XChainClient):
         pub_key = self.get_public_key().public_key_bytes
         return create_address(pub_key, self._prefix)
 
-    def get_private_key(self) -> str:
-        """
-        Get the private key for the given wallet index.
-        :return:
-        """
-        if self.pk_hex:
-            return self.pk_hex
-        else:
-            return derive_private_key(
-                self.phrase,
-                self.get_full_derivation_path(self.wallet_index)
-            ).hex()
-
     def get_public_key(self) -> PublicKey:
         return self.get_private_key_cosmos().public_key
 
