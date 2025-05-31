@@ -57,7 +57,7 @@ async def main(seed_phrase):
         # ---------------------- WITHDRAW Trade Account to L1 ----------------------
 
         amt_to_withdraw = CryptoAmount.automatic(0.005, AssetBSC.as_trade)
-        amt_to_withdraw = amt_to_withdraw.changed_decimals(RUNE_DECIMAL)
+        amt_to_withdraw = amt_to_withdraw.converted_decimals(RUNE_DECIMAL)
         if input(f'Do you want to withdraw Trade Asset {amt_to_withdraw}? (y/n): ').lower() == 'y':
             print(f'Withdraw {amt_to_withdraw} from Trade Account is in progress...')
             tx_hash = await amm.withdraw_from_trade_account(amt_to_withdraw)
