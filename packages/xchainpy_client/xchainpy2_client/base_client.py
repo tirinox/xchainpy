@@ -1,5 +1,6 @@
 import abc
 import asyncio
+import warnings
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List, Union
@@ -106,12 +107,20 @@ class XChainClient(abc.ABC):
 
     def get_private_key(self) -> str:
         """
-        Get the private key for the given wallet index as hex string.
+        Get the private key for the current wallet.
+        First it will try to use the provided private key, then the phrase, and finally raise an exception if neither is available.
 
         :return: str Hex representation of the private key.
         """
-        if self.pk_hex:
-            return self.pk_hex
+        if callable(self._private_key):
+            pk = self._private_key()
+            if not pk or not isinstance(pk, str):
+                raise KeyException('_private_key function must return a HEX string')
+            return pk
+        elif isinstance(self._private_key, str):
+            return self._private_key
+        elif isinstance(self._private_key, bytes):
+            return self._private_key.hex()
         elif self.phrase:
             return derive_private_key(
                 self.phrase,
@@ -123,22 +132,6 @@ class XChainClient(abc.ABC):
     def _throw_if_empty_phrase(self):
         if not self.phrase and not self._private_key:
             raise KeyException('Phrase or private key must be provided to do this action')
-
-    @property
-    def pk_hex(self) -> str:
-        """
-        Get the private key in hex format regardless of how it was set (phrase or private key).
-
-        :return: str Hex representation of the private key or None if not set.
-        """
-        if callable(self._private_key):
-            return self._private_key()
-        elif isinstance(self._private_key, str):
-            return self._private_key
-        elif isinstance(self._private_key, bytes):
-            return self._private_key.hex()
-        else:
-            raise KeyException('Private key must be set as str or bytes')
 
     def gas_amount(self, amount: Union[float, str, int, Decimal, Amount]) -> CryptoAmount:
         """
@@ -204,7 +197,9 @@ class XChainClient(abc.ABC):
 
         # Fire off a warning in the console to indicate that stagenet and real assets are being used.
         if self.network == NetworkType.STAGENET:
-            print("WARNING: This is using stagenet! Real assets are being used!")
+            warnings.warn("Your are using The Stagenet! "
+                          "This means that real assets are being used! "
+                          "Don't swap large amounts because pools are very shallow.", UserWarning)
 
     def get_network(self) -> NetworkType:
         """
