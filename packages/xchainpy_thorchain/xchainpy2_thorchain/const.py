@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from xchainpy2_client import ExplorerProvider
-from xchainpy2_utils import Asset, Amount, CryptoAmount, AssetRUNE
+from xchainpy2_utils import Amount, CryptoAmount, AssetRUNE
 from xchainpy2_utils.consts import NetworkType, RUNE_DECIMAL
 from .models import NodeURL
 
@@ -129,6 +129,9 @@ DENOM_RUNE_NATIVE = 'rune'
 
 DENOM_TCY = 'tcy'
 """Denomination for TCY on THORChain."""
+
+DENOM_RUJIRA = 'x/rujira'
+"""Denomination for Rujira on THORChain."""
 
 THOR_BLOCK_TIME_SEC = 6.0
 """Typical time in seconds for a block to be produced in THORChain."""

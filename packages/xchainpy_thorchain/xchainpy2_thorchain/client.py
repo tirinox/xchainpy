@@ -1,4 +1,5 @@
 import asyncio
+import warnings
 from typing import Optional, Union, List
 
 from aiohttp import ClientSession
@@ -12,12 +13,12 @@ from xchainpy2_client.fees import single_fee
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
-from xchainpy2_thornode import ApiClient, NetworkApi, TradeAccountApi, TradeAccountResponse
+from xchainpy2_thornode import NetworkApi, TradeAccountApi, TradeAccountResponse
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, \
-    Asset, AssetKind, AssetTCY
+    Asset, AssetKind, AssetTCY, AssetRUJI
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
-    THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, DEFAULT_RUNE_FEE, \
-    make_client_urls_from_ip_address, DENOM_TCY
+    THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, \
+    make_client_urls_from_ip_address, DENOM_TCY, DEFAULT_RUNE_NETWORK_FEE, DENOM_RUJIRA
 from .utils import get_thor_address_prefix, build_deposit_tx_unsigned, build_transfer_tx_draft
 
 
@@ -43,6 +44,7 @@ class THORChainClient(CosmosGaiaClient):
                  chain_ids=DEFAULT_CHAIN_IDS,
                  explorer_providers=THOR_EXPLORERS,
                  wallet_index=0,
+                 thornode_api_client=None,
                  ):
         """
         Initialize THORChainClient.
@@ -56,8 +58,9 @@ class THORChainClient(CosmosGaiaClient):
         :param chain_ids: Dictionary of chain ids for each network type. See: DEFAULT_CHAIN_IDS
         :param explorer_providers: Dictionary of explorer providers for each network type. See: THOR_EXPLORERS
         :param wallet_index: int (wallet index, default 0) We can derive any number of addresses from a single seed
+        :param thornode_api_client: Optional THORNodeAPIClient from xchainpy2_thorchain_query package.
         """
-        self.thornode_api_client = ApiClient()
+        self._thornode_api_client = thornode_api_client
 
         self.explorers = explorer_providers
 
@@ -84,18 +87,34 @@ class THORChainClient(CosmosGaiaClient):
         self._decimal = RUNE_DECIMAL
         self._gas_limit = DEFAULT_GAS_LIMIT_VALUE
         self._deposit_gas_limit = DEPOSIT_GAS_LIMIT_VALUE
-        self.standard_tx_fee = DEFAULT_RUNE_FEE
+        self.standard_tx_fee = DEFAULT_RUNE_NETWORK_FEE
 
         self.set_network(self.network)  # this will set the prefix and client urls for THORNode client
 
         self._recreate_client()
         self._make_wallet()
 
-    async def close(self):
+    @property
+    def thornode_api_client(self):
         """
-        Close the client.
+        Get the THORNode API client.
+
+        :return: THORNode API client
         """
-        await self.thornode_api_client.rest_client.pool_manager.close()
+        if not self._thornode_api_client:
+            raise Exception("THORNode API client is not set. Please provide it during initialization.")
+        return self._thornode_api_client
+
+    @thornode_api_client.setter
+    def thornode_api_client(self, value):
+        """
+        Set the THORNode API client.
+
+        :param value: THORNode API client
+        """
+        if not value:
+            raise ValueError("THORNode API client cannot be None or empty.")
+        self._thornode_api_client = value
 
     def set_network(self, network: NetworkType):
         """
@@ -108,7 +127,7 @@ class THORChainClient(CosmosGaiaClient):
 
         super().set_network(network)
         self._prefix = get_thor_address_prefix(network)
-        self.thornode_api_client.configuration.host = self._client_urls[self.network].node
+        # self._thornode_api_client.configuration.host = self._client_urls[self.network].node
 
     set_network.__doc__ = CosmosGaiaClient.set_network.__doc__
 
@@ -221,10 +240,11 @@ class THORChainClient(CosmosGaiaClient):
 
         return result if return_full_response else result.tx_hash
 
-    async def fetch_transaction_from_thornode_raw(self, tx_hash: str) -> dict:
+    async def fetch_transaction_from_thornode_raw(self, tx_hash: str) -> Optional[dict]:
         """
         Fetch transaction from THORNode, try to use fallback client if main client is not available
-        Url: https://node/thorchain/tx/{tx_hash}
+        Url: https://node/thorchain/tx/{tx_hash}.
+
         :param tx_hash: Tx Hash
         :return: Transaction data (raw, unparsed)
         """
@@ -251,6 +271,7 @@ class THORChainClient(CosmosGaiaClient):
         It is called "getTransactionDataThornode" in xchainjs
         Parsing "observed_tx" object.
         Url: https://node/thorchain/tx/{tx_hash}
+
         :param tx_id: Tx Hash
         :return: XcTx result
         """
@@ -273,11 +294,11 @@ class THORChainClient(CosmosGaiaClient):
 
         tx = raw_data['observed_tx']['tx']
         coin = tx['coins'][0]
-        sender_asset = Asset.from_string_exc(coin['asset'])
+        sender_asset = Asset.from_string(coin['asset'])
         from_address = tx.get('from_address')
         to_address = tx.get('to_address', 'undefined')
         decimals = coin.get('decimals', self._decimal)
-        coin_amount = Amount.from_base(coin['amount'], decimals)
+        coin_amount = Amount.automatic_base(coin['amount'], decimals)
         memo = tx.get('memo', '')
         split_memo = memo.split(':')
         if not split_memo:
@@ -315,14 +336,14 @@ class THORChainClient(CosmosGaiaClient):
 
         :return: Fees object
         """
-        network_api = NetworkApi(self.thornode_api_client)
+        network_api = NetworkApi(self._thornode_api_client)
         network_params = await network_api.network()
 
         fee = network_params.native_tx_fee_rune
         if not fee or not isinstance(fee, str) or not fee.isdigit() or int(fee) < 0:
             raise Exception(f"Invalid fee: {fee}")
 
-        return single_fee(FeeType.FLAT_FEE, Amount.from_base(fee, self._decimal))
+        return single_fee(FeeType.FLAT_FEE, Amount.automatic_base(fee, self._decimal))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         """
@@ -332,13 +353,18 @@ class THORChainClient(CosmosGaiaClient):
         :return: Asset
         """
         kind = AssetKind.recognize(denom)
-        if kind in (AssetKind.SYNTH, AssetKind.TRADE):
+        if kind != AssetKind.UNKNOWN:
             # convert to uppercase and then convert to Asset
             return Asset.from_string(denom.upper())
         elif denom == DENOM_RUNE_NATIVE:
             return AssetRUNE
         elif denom == DENOM_TCY:
             return AssetTCY
+        elif denom == DENOM_RUJIRA:
+            return AssetRUJI
+        else:
+            warnings.warn(f"Unknown denomination: {denom}")
+            return Asset("THOR", denom.upper())
 
     def get_denom(self, asset: Asset) -> str:
         """
@@ -385,14 +411,14 @@ class THORChainClient(CosmosGaiaClient):
         if not address:
             address = self.get_address()
 
-        api = TradeAccountApi(self.thornode_api_client)
+        api = TradeAccountApi(self._thornode_api_client)
         result: List[TradeAccountResponse] = await api.trade_account(address)
         if not result:
             return []
 
         return [
             CryptoAmount(
-                Amount.from_base(trade_acc.units, decimals=self.decimal),
+                Amount.automatic_base(trade_acc.units, decimals=self.decimal),
                 Asset.from_string(trade_acc.asset),
             ) for
             trade_acc in result
@@ -403,7 +429,7 @@ class THORChainClient(CosmosGaiaClient):
         Get the native balance of a given address.
         If `with_trade_accounts` is True, the balance will include trade assets, that takes 2 API calls.
 
-        :param address:
+        :param address: Address to get the balance for, if not specified, the address of the wallet will be used
         :param with_trade_accounts: Whether include trade account balance or not
         :return: List[CryptoAmount]
         """
@@ -415,7 +441,13 @@ class THORChainClient(CosmosGaiaClient):
 
     @property
     def rest_session(self) -> ClientSession:
-        return self.thornode_api_client.rest_client.pool_manager
+        """
+        Get the REST session used by the THORNode API client.
+
+        :return: ClientSession of the aiohttp library
+        :rtype: ClientSession
+        """
+        return self._thornode_api_client.rest_client.pool_manager if self._thornode_api_client else ClientSession()
 
     async def refresh_chain_id(self):
         """

@@ -1,7 +1,4 @@
-from typing import NamedTuple, Dict
-
-from xchainpy2_client import ExplorerProvider
-from xchainpy2_utils import NetworkType
+from typing import NamedTuple
 
 
 class NodeURL(NamedTuple):

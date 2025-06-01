@@ -29,7 +29,7 @@ def get_thor_address_prefix(network: NetworkType) -> str:
 def convert_coin_to_crypto_amount(coin: CosmosCoin, decimals=RUNE_DECIMAL) -> CryptoAmount:
     asset = Asset.from_string(f'THOR.{coin.denom.upper()}')
     return CryptoAmount(
-        amount=Amount.from_base(coin.amount, decimals),
+        amount=Amount.automatic_base(coin.amount, decimals),
         asset=asset
     )
 
@@ -44,7 +44,7 @@ def crypto_amount_to_msg_coin(a: CryptoAmount) -> THORCoin:
     )
     return THORCoin(
         asset=asset,
-        amount=str(a.amount.as_base.amount), decimals=a.amount.decimals
+        amount=str(int(a.amount)), decimals=a.amount.decimals
     )
 
 
@@ -98,7 +98,7 @@ def get_asset_from_denom(denom: str) -> Asset:
     if denom == DENOM_RUNE_NATIVE:
         return AssetRUNE
     else:
-        return Asset.from_string_exc(denom.upper())
+        return Asset.from_string(denom.upper())
 
 
 class NativeTxType:

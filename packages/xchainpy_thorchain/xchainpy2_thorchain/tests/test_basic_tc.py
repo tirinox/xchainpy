@@ -3,7 +3,7 @@ from cosmpy.aerial.client import Coin
 
 from xchainpy2_crypto import generate_mnemonic
 from xchainpy2_thorchain import THORChainClient
-from xchainpy2_utils import NetworkType, CryptoAmount, AssetRUNE, AssetCACAO, Asset, Amount, RUNE_DECIMAL, AssetETH
+from xchainpy2_utils import NetworkType, CryptoAmount, AssetRUNE, Asset, Amount, RUNE_DECIMAL, AssetETH
 
 
 @pytest.fixture
@@ -98,8 +98,8 @@ def test_maya_get_denom(client, asset, denom):
 
 
 @pytest.mark.parametrize(('denom', 'asset'), [
-    ('atom', None),
-    ('cacao', None),
+    ('atom', Asset.from_string("THOR.ATOM")),
+    ('cacao', Asset.from_string("THOR.CACAO")),
     ('rune', AssetRUNE),
     ('eth/eth', AssetETH.as_synth),
     ('eth~eth', AssetETH.as_trade),
@@ -109,8 +109,8 @@ def test_maya_parse_denom_to_asset(client, denom, asset):
 
 
 @pytest.mark.parametrize('coin, amount', [
-    (Coin(124, 'rune'), CryptoAmount(Amount.from_base(124, RUNE_DECIMAL), AssetRUNE)),
-    (Coin(123455, 'eth/eth'), CryptoAmount(Amount.from_base(123455, RUNE_DECIMAL), AssetETH.as_synth))
+    (Coin(124, 'rune'), CryptoAmount(Amount.automatic_base(124, RUNE_DECIMAL), AssetRUNE)),
+    (Coin(123455, 'eth/eth'), CryptoAmount(Amount.automatic_base(123455, RUNE_DECIMAL), AssetETH.as_synth))
 ])
 def test_convert_coin_to_amount(client, coin: Coin, amount: CryptoAmount):
     assert client.convert_coin_to_amount(coin) == amount
