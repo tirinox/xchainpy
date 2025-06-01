@@ -8,6 +8,7 @@ from xchainpy2_thornode.api.bank_api import BankApi
 from xchainpy2_thornode.api.block_api import BlockApi
 from xchainpy2_thornode.api.borrowers_api import BorrowersApi
 from xchainpy2_thornode.api.clout_api import CloutApi
+from xchainpy2_thornode.api.codes_api import CodesApi
 from xchainpy2_thornode.api.export_api import ExportApi
 from xchainpy2_thornode.api.health_api import HealthApi
 from xchainpy2_thornode.api.invariants_api import InvariantsApi
@@ -24,6 +25,8 @@ from xchainpy2_thornode.api.savers_api import SaversApi
 from xchainpy2_thornode.api.secured_asset_api import SecuredAssetApi
 from xchainpy2_thornode.api.secured_assets_api import SecuredAssetsApi
 from xchainpy2_thornode.api.streaming_swap_api import StreamingSwapApi
+from xchainpy2_thornode.api.tcy_claimers_api import TCYClaimersApi
+from xchainpy2_thornode.api.tcy_stakers_api import TCYStakersApi
 from xchainpy2_thornode.api.tss_api import TSSApi
 from xchainpy2_thornode.api.thornames_api import ThornamesApi
 from xchainpy2_thornode.api.trade_account_api import TradeAccountApi
