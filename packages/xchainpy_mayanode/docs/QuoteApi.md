@@ -113,7 +113,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **quoteswap**
-> QuoteSwapResponse quoteswap(height=height, from_asset=from_asset, to_asset=to_asset, amount=amount, destination=destination, streaming_interval=streaming_interval, streaming_quantity=streaming_quantity, tolerance_bps=tolerance_bps, liquidity_tolerance_bps=liquidity_tolerance_bps, affiliate_bps=affiliate_bps, affiliate=affiliate)
+> QuoteSwapResponse quoteswap(height=height, from_asset=from_asset, to_asset=to_asset, amount=amount, destination=destination, refund_address=refund_address, streaming_interval=streaming_interval, streaming_quantity=streaming_quantity, tolerance_bps=tolerance_bps, liquidity_tolerance_bps=liquidity_tolerance_bps, affiliate_bps=affiliate_bps, affiliate=affiliate)
 
 
 
@@ -134,6 +134,7 @@ from_asset = 'from_asset_example' # str | the source asset (optional)
 to_asset = 'to_asset_example' # str | the target asset (optional)
 amount = 789 # int | the source asset amount in 1e8 decimals (optional)
 destination = 'destination_example' # str | the destination address, required to generate memo (optional)
+refund_address = 'refund_address_example' # str | the refund address, refunds will be sent here if the swap fails (optional)
 streaming_interval = 789 # int | the interval in which streaming swaps are swapped (optional)
 streaming_quantity = 789 # int | the quantity of swaps within a streaming swap (optional)
 tolerance_bps = 789 # int | the maximum basis points from the current feeless swap price to set the limit in the generated memo (optional)
@@ -142,7 +143,7 @@ affiliate_bps = 'affiliate_bps_example' # str | the affiliate fee in basis point
 affiliate = 'affiliate_example' # str | the affiliate (address or mayaname); use \"/\" to separate multiple values (optional)
 
 try:
-    api_response = api_instance.quoteswap(height=height, from_asset=from_asset, to_asset=to_asset, amount=amount, destination=destination, streaming_interval=streaming_interval, streaming_quantity=streaming_quantity, tolerance_bps=tolerance_bps, liquidity_tolerance_bps=liquidity_tolerance_bps, affiliate_bps=affiliate_bps, affiliate=affiliate)
+    api_response = api_instance.quoteswap(height=height, from_asset=from_asset, to_asset=to_asset, amount=amount, destination=destination, refund_address=refund_address, streaming_interval=streaming_interval, streaming_quantity=streaming_quantity, tolerance_bps=tolerance_bps, liquidity_tolerance_bps=liquidity_tolerance_bps, affiliate_bps=affiliate_bps, affiliate=affiliate)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling QuoteApi->quoteswap: %s\n" % e)
@@ -157,6 +158,7 @@ Name | Type | Description  | Notes
  **to_asset** | **str**| the target asset | [optional] 
  **amount** | **int**| the source asset amount in 1e8 decimals | [optional] 
  **destination** | **str**| the destination address, required to generate memo | [optional] 
+ **refund_address** | **str**| the refund address, refunds will be sent here if the swap fails | [optional] 
  **streaming_interval** | **int**| the interval in which streaming swaps are swapped | [optional] 
  **streaming_quantity** | **int**| the quantity of swaps within a streaming swap | [optional] 
  **tolerance_bps** | **int**| the maximum basis points from the current feeless swap price to set the limit in the generated memo | [optional] 
