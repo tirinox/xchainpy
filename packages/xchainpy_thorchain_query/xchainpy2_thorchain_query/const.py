@@ -1,4 +1,5 @@
 from xchainpy2_utils import NetworkType, Asset
+from .tc_imports import THOR_BLOCK_TIME_SEC
 
 DEFAULT_INTERFACE_ID = 'XChainPy2'
 """
@@ -96,9 +97,14 @@ USD_ASSETS = {
     Subject to change.
 """
 
-THORNAME_BLOCKS_ONE_YEAR = 5259600
-"""Number of blocks in one year for THORChain."""
+THORNAME_BLOCKS_ONE_YEAR = 365 * 24 * 60 * 60 / THOR_BLOCK_TIME_SEC
+"""
+Number of THORChain blocks in one year.
+"""
 
 
-THOR_BLOCK_TIME_SEC = 6.0
-"""Typical time in seconds for a block to be produced in THORChain."""
+DEFAULT_REST_USER_AGENT = \
+    'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+"""
+Default User-Agent for REST requests.
+"""

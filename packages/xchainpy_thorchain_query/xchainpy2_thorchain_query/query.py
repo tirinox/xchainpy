@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import Union, Optional, Tuple
 
 from xchainpy2_client import XChainClient
-from xchainpy2_thorchain import THORMemo, THOR_BASIS_POINT_MAX
 from xchainpy2_thornode import QuoteSwapResponse, QueueResponse, QuoteFees, \
     TxStatusResponse, TxSignersResponse
 from xchainpy2_utils import DEFAULT_CHAIN_ATTRS, CryptoAmount, Asset, RUNE_DECIMAL, Amount, Chain, AssetRUNE, \
@@ -19,6 +18,7 @@ from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, 
     LiquidityPosition, PoolRatios, EstimateWithdrawLP, \
     THORNameEstimate, WithdrawMode, InboundDetail
 from .swap import get_base_amount_with_diff_decimals
+from .tc_imports import THORMemo, THOR_BASIS_POINT_MAX
 from .thornode import THORNodeAPIClient
 from .track.tracker import TransactionTracker
 
@@ -249,7 +249,7 @@ class THORChainQuery:
             errors.append(f'Input amount {input_amount} is less than recommended min amount in '
                           f'{recommended_in}')
 
-        fee_asset = Asset.from_string_exc(swap_quote.fees.asset)
+        fee_asset = Asset.from_string(swap_quote.fees.asset)
 
         fees: QuoteFees = swap_quote.fees
         return SwapEstimate(

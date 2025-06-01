@@ -1,18 +1,9 @@
 from decimal import Decimal
 
 from xchainpy2_thorchain_query.models import InboundDetail
-from xchainpy2_utils import CryptoAmount, Amount, CACAO_DECIMAL, AssetCACAO, Asset, AssetRUNE, RUNE_DECIMAL, Chain, \
+from xchainpy2_utils import CryptoAmount, Amount, AssetCACAO, Asset, AssetRUNE, Chain, \
     AssetBTC, AssetDOGE, AssetLTC, AssetBCH, AssetATOM, get_chain_gas_asset, ETH_DECIMALS
-
-try:
-    from xchainpy2_mayachain import DEFAULT_CACAO_NETWORK_FEE
-except ModuleNotFoundError:
-    DEFAULT_CACAO_NETWORK_FEE = CryptoAmount(Amount.automatic(Decimal("0.5"), CACAO_DECIMAL), AssetCACAO)
-
-try:
-    from xchainpy2_thorchain import DEFAULT_RUNE_NETWORK_FEE
-except ModuleNotFoundError:
-    DEFAULT_RUNE_NETWORK_FEE = CryptoAmount(Amount.automatic(Decimal("0.02"), RUNE_DECIMAL), AssetRUNE)
+from .tc_imports import DEFAULT_CACAO_NETWORK_FEE, DEFAULT_RUNE_NETWORK_FEE
 
 
 def calc_network_fee(asset: Asset, inbound: InboundDetail,

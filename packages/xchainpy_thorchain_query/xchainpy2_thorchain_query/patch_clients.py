@@ -8,10 +8,10 @@ from aiohttp import ClientTimeout
 from aiohttp.helpers import sentinel
 from aiohttp_retry import ExponentialRetry, RetryClient
 
-from xchainpy2_cosmos import DEFAULT_REST_USER_AGENT
 from xchainpy2_midgard import Configuration
 from xchainpy2_midgard.rest import RESTClientObject
 from xchainpy2_utils import XCHAINPY_IDENTIFIER, NINE_REALMS_CLIENT_HEADER
+from .const import DEFAULT_REST_USER_AGENT
 
 DEFAULT_RETRY_ATTEMPTS = 3
 """
@@ -177,6 +177,7 @@ async def request_api_with_backup_hosts(api, method, *args, **kwargs):
         raise Exception('All backup hosts failed') from last_exception
 
     return None
+
 
 
 class HeadersPatch:

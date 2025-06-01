@@ -11,7 +11,6 @@ from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMay
 from xchainpy2_midgard import PoolDetail, THORNameDetails
 from xchainpy2_midgard.api import DefaultApi as MidgardAPI
 from xchainpy2_midgard.rest import ApiException
-from xchainpy2_thorchain import THOR_BLOCK_TIME_SEC
 from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress, TransactionsApi, LiquidityProvidersApi, \
     SaversApi, QueueApi, QuoteApi, LastBlock, LiquidityProviderSummary
 from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, CryptoAmount, RUNE_DECIMAL, CACAO_DECIMAL, Amount, \
@@ -24,6 +23,7 @@ from .models import PoolCache, InboundDetailCache, NetworkValuesCache, Liquidity
 from .patch_clients import request_api_with_backup_hosts
 from .swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
     get_double_swap_slip
+from .tc_imports import THOR_BLOCK_TIME_SEC
 from .thornode import THORNodeAPIClient
 
 logger = logging.getLogger('THORChainCache')

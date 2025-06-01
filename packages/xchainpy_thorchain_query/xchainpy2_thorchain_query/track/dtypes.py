@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import NamedTuple, Optional
 
-from xchainpy2_thorchain import ActionType, THORMemo
+from ..tc_imports import ActionType, THORMemo
 from xchainpy2_thornode import TxStatusResponse, TxSignersResponse
 
 
