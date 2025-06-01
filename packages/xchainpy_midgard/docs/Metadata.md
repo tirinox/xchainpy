@@ -12,6 +12,7 @@ Name | Type | Description | Notes
 **rune_pool_withdraw** | [**RunePoolWithdrawMetadata**](RunePoolWithdrawMetadata.md) |  | [optional] 
 **send** | [**SendMetadata**](SendMetadata.md) |  | [optional] 
 **swap** | [**SwapMetadata**](SwapMetadata.md) |  | [optional] 
+**tcy** | [**TcyMetadata**](TcyMetadata.md) |  | [optional] 
 **thorname** | [**ThornameMetadata**](ThornameMetadata.md) |  | [optional] 
 **withdraw** | [**WithdrawMetadata**](WithdrawMetadata.md) |  | [optional] 
 

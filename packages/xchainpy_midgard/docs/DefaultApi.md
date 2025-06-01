@@ -7,6 +7,7 @@ Method | HTTP request | Description
 [**get_actions**](DefaultApi.md#get_actions) | **GET** /v2/actions | Actions List
 [**get_affiliate_history**](DefaultApi.md#get_affiliate_history) | **GET** /v2/history/affiliate | Affiliate History
 [**get_balance**](DefaultApi.md#get_balance) | **GET** /v2/balance/{address} | Current balance for an address
+[**get_bonders_details**](DefaultApi.md#get_bonders_details) | **GET** /v2/bonds/{address} | Bonder Details
 [**get_borrower_detail**](DefaultApi.md#get_borrower_detail) | **GET** /v2/borrower/{address} | Borrower Details
 [**get_borrowers_addresses**](DefaultApi.md#get_borrowers_addresses) | **GET** /v2/borrowers | Borrowers List
 [**get_churns**](DefaultApi.md#get_churns) | **GET** /v2/churns | Churns List
@@ -30,6 +31,7 @@ Method | HTTP request | Description
 [**get_savers_history**](DefaultApi.md#get_savers_history) | **GET** /v2/history/savers/{pool} | Savers Units and Depth History
 [**get_stats**](DefaultApi.md#get_stats) | **GET** /v2/stats | Global Stats
 [**get_swap_history**](DefaultApi.md#get_swap_history) | **GET** /v2/history/swaps | Swaps History
+[**get_tcy_distribution**](DefaultApi.md#get_tcy_distribution) | **GET** /v2/tcy/distribution/{address} | Tcy Distribution
 [**get_thor_name_detail**](DefaultApi.md#get_thor_name_detail) | **GET** /v2/thorname/lookup/{name} | THORName Details
 [**get_thor_names_by_address**](DefaultApi.md#get_thor_names_by_address) | **GET** /v2/thorname/rlookup/{address} | Gives a list of THORNames by reverse lookup
 [**get_thor_names_owner_by_address**](DefaultApi.md#get_thor_names_owner_by_address) | **GET** /v2/thorname/owner/{address} | THORName owner
@@ -206,6 +208,54 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**Balance**](Balance.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_bonders_details**
+> BonderDetails get_bonders_details(address)
+
+Bonder Details
+
+Returns the bond details of a given address. The response contains the bond amount, the bond status, and the bond type. This is wrapper from THORNode nodes API. 
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard.DefaultApi()
+address = 'address_example' # str | Address of the bonder
+
+try:
+    # Bonder Details
+    api_response = api_instance.get_bonders_details(address)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_bonders_details: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **address** | **str**| Address of the bonder | 
+
+### Return type
+
+[**BonderDetails**](BonderDetails.md)
 
 ### Authorization
 
@@ -1350,6 +1400,54 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**SwapHistory**](SwapHistory.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_tcy_distribution**
+> TCYDistribution get_tcy_distribution(address)
+
+Tcy Distribution
+
+Returns an array of TCY distribution for the given address. 
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard.DefaultApi()
+address = 'address_example' # str | Address which is assigned to TCY Holder.
+
+try:
+    # Tcy Distribution
+    api_response = api_instance.get_tcy_distribution(address)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_tcy_distribution: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **address** | **str**| Address which is assigned to TCY Holder. | 
+
+### Return type
+
+[**TCYDistribution**](TCYDistribution.md)
 
 ### Authorization
 
