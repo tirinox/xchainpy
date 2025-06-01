@@ -38,7 +38,7 @@ DENOM_MAYA = 'maya'
 AssetMAYA = Asset.from_string('MAYA.MAYA')
 """Asset object for the Maya token. Maya token collects fees in Cacao for its holders."""
 
-DEFAULT_CACAO_NETWORK_FEE = CryptoAmount(Amount.from_asset(Decimal("0.5"), CACAO_DECIMAL), AssetCACAO)
+DEFAULT_CACAO_NETWORK_FEE = CryptoAmount(Amount.automatic(Decimal("0.5"), CACAO_DECIMAL), AssetCACAO)
 """Default Cacao fee for transactions. Subject to change."""
 
 

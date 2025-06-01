@@ -26,4 +26,4 @@ async def test_fee_mayanode():
         fees = await client.get_fees()
         assert fees.type == FeeType.FLAT_FEE
         assert fees.fees[FeeOption.AVERAGE] == fees.fees[FeeOption.FAST] == fees.fees[FeeOption.FASTEST] == \
-            Amount.from_base(43435934, CACAO_DECIMAL)
+            Amount.automatic_base(43435934, CACAO_DECIMAL)

@@ -1,4 +1,5 @@
 import asyncio
+import warnings
 from typing import Optional, Union, List
 
 from bip_utils import Bech32ChecksumError
@@ -187,7 +188,7 @@ class MayaChainClient(CosmosGaiaClient):
 
         return result if return_full_response else result.tx_hash
 
-    async def fetch_transaction_from_mayanode_raw(self, tx_hash: str) -> dict:
+    async def fetch_transaction_from_mayanode_raw(self, tx_hash: str) -> Optional[dict]:
         """
         Fetch transaction from MayaNode, try to use fallback client if main client is not available
         Url: https://node/mayachain/tx/{tx_hash}
@@ -239,11 +240,11 @@ class MayaChainClient(CosmosGaiaClient):
 
         tx = raw_data['observed_tx']['tx']
         coin = tx['coins'][0]
-        sender_asset = Asset.from_string_exc(coin['asset'])
+        sender_asset = Asset.from_string(coin['asset'])
         from_address = tx.get('from_address')
         to_address = tx.get('to_address', 'undefined')
         decimals = coin.get('decimals', self._decimal)
-        coin_amount = Amount.from_base(coin['amount'], decimals)
+        coin_amount = Amount.automatic_base(coin['amount'], decimals)
         memo = tx.get('memo', '')
         split_memo = memo.split(':')
         if not split_memo:
@@ -287,7 +288,7 @@ class MayaChainClient(CosmosGaiaClient):
         except ValueError:
             raise ValueError(f"Invalid native TX fee in Mimir: {fee_param}")
 
-        return single_fee(FeeType.FLAT_FEE, Amount.from_base(fee_param, self._decimal))
+        return single_fee(FeeType.FLAT_FEE, Amount.automatic_base(fee_param, self._decimal))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         if SYNTH_DELIMITER in denom:
@@ -297,6 +298,9 @@ class MayaChainClient(CosmosGaiaClient):
             return AssetMAYA
         elif denom == DENOM_CACAO_NATIVE:
             return AssetCACAO
+        else:
+            warnings.warn(f"Unknown denomination: {denom}")
+            return Asset("MAYA", denom.upper())
 
     def convert_coin_to_amount(self, c: Coin) -> CryptoAmount:
         if c.denom == DENOM_MAYA:
@@ -307,7 +311,7 @@ class MayaChainClient(CosmosGaiaClient):
             decimal = 8
 
         return CryptoAmount(
-            Amount.from_base(c.amount, decimal),
+            Amount.automatic_base(c.amount, decimal),
             asset=self.parse_denom_to_asset(c.denom)
         )
 
@@ -396,7 +400,7 @@ class MayaChainClient(CosmosGaiaClient):
             try:
                 mrc20_balances = await self.maya_scan.get_balance(address)
                 mrc20_balances = [
-                    CryptoAmount(Amount.from_base(b.balance, b.decimals), make_mrc20_asset(b.ticker))
+                    CryptoAmount(Amount.automatic_base(b.balance, b.decimals), make_mrc20_asset(b.ticker))
                     for b in mrc20_balances
                 ]
                 on_chain_balances.extend(mrc20_balances)
@@ -463,6 +467,3 @@ class MayaChainClient(CosmosGaiaClient):
         amount = Amount.automatic(amount, MRC20_DECIMALS)
         memo = MRC20Memo.buy(ticker, amount, tx_hash)
         return await self._mrc20_submit_tx(memo, recipient=seller_address)
-
-    async def wait_for_transaction(self, tx_id: str):
-        raise NotImplementedError

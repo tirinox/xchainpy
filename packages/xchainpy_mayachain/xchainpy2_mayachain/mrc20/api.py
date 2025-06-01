@@ -152,7 +152,7 @@ class MayaScanClient:
         token = await self._request(self.url_ticker(ticker))
         return MRC20Token.from_dict(token) if token else None
 
-    async def get_balance(self, address: str) -> List[MRC20Price]:
+    async def get_balance(self, address: str) -> List[MRC20Balance]:
         """
         Get the MRC20 token balances of a specific address
 
