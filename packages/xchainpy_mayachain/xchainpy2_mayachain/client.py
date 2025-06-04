@@ -145,7 +145,7 @@ class MayaChainClient(CosmosGaiaClient):
         if isinstance(what, Amount):
             what = CryptoAmount(what, self._gas_asset)
         elif isinstance(what, (int, float)):
-            what = CryptoAmount(Amount.automatic(what, self._decimal), self._gas_asset)
+            what = CryptoAmount(Amount.auto(what, self._decimal), self._gas_asset)
 
         address = self.get_address()
 
@@ -244,7 +244,7 @@ class MayaChainClient(CosmosGaiaClient):
         from_address = tx.get('from_address')
         to_address = tx.get('to_address', 'undefined')
         decimals = coin.get('decimals', self._decimal)
-        coin_amount = Amount.automatic_base(coin['amount'], decimals)
+        coin_amount = Amount.auto_base(coin['amount'], decimals)
         memo = tx.get('memo', '')
         split_memo = memo.split(':')
         if not split_memo:
@@ -288,7 +288,7 @@ class MayaChainClient(CosmosGaiaClient):
         except ValueError:
             raise ValueError(f"Invalid native TX fee in Mimir: {fee_param}")
 
-        return single_fee(FeeType.FLAT_FEE, Amount.automatic_base(fee_param, self._decimal))
+        return single_fee(FeeType.FLAT_FEE, Amount.auto_base(fee_param, self._decimal))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         if SYNTH_DELIMITER in denom:
@@ -311,7 +311,7 @@ class MayaChainClient(CosmosGaiaClient):
             decimal = 8
 
         return CryptoAmount(
-            Amount.automatic_base(c.amount, decimal),
+            Amount.auto_base(c.amount, decimal),
             asset=self.parse_denom_to_asset(c.denom)
         )
 
@@ -339,7 +339,7 @@ class MayaChainClient(CosmosGaiaClient):
     async def transfer_mrc20(self, what: CryptoAmount, recipient: str):
         """
         Transfer MRC20 token
-        Example: await maya.transfer_mrc20(CryptoAmount.automatic(100, 'MRC20.GLD'), 'maya1f4f2a4b24')
+        Example: await maya.transfer_mrc20(CryptoAmount.auto(100, 'MRC20.GLD'), 'maya1f4f2a4b24')
         :param what: CryptoAmount
         :param recipient: maya1Address
         :return: TX hash string
@@ -376,7 +376,7 @@ class MayaChainClient(CosmosGaiaClient):
 
     @staticmethod
     def amount_of_mrc20(amount, asset_name: str):
-        return CryptoAmount.automatic(amount, make_mrc20_asset(asset_name))
+        return CryptoAmount.auto(amount, make_mrc20_asset(asset_name))
 
     async def close(self):
         if self.maya_scan:
@@ -400,7 +400,7 @@ class MayaChainClient(CosmosGaiaClient):
             try:
                 mrc20_balances = await self.maya_scan.get_balance(address)
                 mrc20_balances = [
-                    CryptoAmount(Amount.automatic_base(b.balance, b.decimals), make_mrc20_asset(b.ticker))
+                    CryptoAmount(Amount.auto_base(b.balance, b.decimals), make_mrc20_asset(b.ticker))
                     for b in mrc20_balances
                 ]
                 on_chain_balances.extend(mrc20_balances)
@@ -441,8 +441,8 @@ class MayaChainClient(CosmosGaiaClient):
         :param price: price of MRC20 token in CACAO
         :return: txid of the sell transaction
         """
-        amount = Amount.automatic(amount, MRC20_DECIMALS)
-        price = Amount.automatic(price, MRC20_DECIMALS)
+        amount = Amount.auto(amount, MRC20_DECIMALS)
+        price = Amount.auto(price, MRC20_DECIMALS)
 
         memo = MRC20Memo.sell(ticker, int(amount), int(price))
         return await self._mrc20_submit_tx(memo)
@@ -464,6 +464,6 @@ class MayaChainClient(CosmosGaiaClient):
 
         if not self.validate_address(seller_address):
             raise ValueError(f"Invalid seller address: {seller_address}")
-        amount = Amount.automatic(amount, MRC20_DECIMALS)
+        amount = Amount.auto(amount, MRC20_DECIMALS)
         memo = MRC20Memo.buy(ticker, amount, tx_hash)
         return await self._mrc20_submit_tx(memo, recipient=seller_address)

@@ -57,10 +57,10 @@ def get_swap_fee(input_amount: CryptoAmount, pool: LiquidityPool, to_rune: bool,
     numerator = x * x * Y
     denominator = (x + X) ** 2
     result = numerator / denominator
-    result8 = CryptoAmount(Amount.automatic_base(result), units)
+    result8 = CryptoAmount(Amount.auto_base(result), units)
     decimals = base_decimals if to_rune else decimal_out
     base_out = get_base_amount_with_diff_decimals(result8, decimals)
-    swap_fee = CryptoAmount(Amount.automatic(base_out, decimals), units)
+    swap_fee = CryptoAmount(Amount.auto(base_out, decimals), units)
     return swap_fee
 
 
@@ -106,10 +106,10 @@ def get_swap_output(input_amount: CryptoAmount, pool: LiquidityPool, to_rune: bo
     numerator = x * X * Y
     denominator = (x + X) ** 2
     result = numerator / denominator
-    result8 = CryptoAmount(Amount.automatic_base(result), units)
+    result8 = CryptoAmount(Amount.auto_base(result), units)
     decimals = base_decimals if to_rune else decimal_out
     base_out = get_base_amount_with_diff_decimals(result8, decimals)
-    output_amount = CryptoAmount(Amount.automatic(base_out, decimals), units)
+    output_amount = CryptoAmount(Amount.auto(base_out, decimals), units)
     return output_amount
 
 

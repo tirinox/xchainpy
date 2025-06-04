@@ -109,8 +109,8 @@ def test_maya_parse_denom_to_asset(client, denom, asset):
 
 
 @pytest.mark.parametrize('coin, amount', [
-    (Coin(124, 'rune'), CryptoAmount(Amount.automatic_base(124, RUNE_DECIMAL), AssetRUNE)),
-    (Coin(123455, 'eth/eth'), CryptoAmount(Amount.automatic_base(123455, RUNE_DECIMAL), AssetETH.as_synth))
+    (Coin(124, 'rune'), CryptoAmount(Amount.auto_base(124, RUNE_DECIMAL), AssetRUNE)),
+    (Coin(123455, 'eth/eth'), CryptoAmount(Amount.auto_base(123455, RUNE_DECIMAL), AssetETH.as_synth))
 ])
 def test_convert_coin_to_amount(client, coin: Coin, amount: CryptoAmount):
     assert client.convert_coin_to_amount(coin) == amount

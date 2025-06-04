@@ -11,7 +11,7 @@ async def main():
     query = THORChainQuery()
 
     q_swap = await query.quote_swap(
-        CryptoAmount(Amount.automatic(15.7), AssetBSC_USDT),
+        CryptoAmount(Amount.auto(15.7), AssetBSC_USDT),
         '0x1c7b17362c84287bd1184447e6dfeaf920c31bbe',
         'AVAX.AVAX',
         1000,
@@ -22,7 +22,7 @@ async def main():
     sep()  # ------------------------------------
 
     q_swap = await query.quote_swap(
-        CryptoAmount(Amount.automatic(10000.0), AssetRUNE),
+        CryptoAmount(Amount.auto(10000.0), AssetRUNE),
         '1KGMxAw3rxKvR4ECioUBtYFbgZRVFrDX2n',
         'BTC.BTC',
         1000,
@@ -35,7 +35,7 @@ async def main():
     sep()  # ------------------------------------
 
     btc_swap = await query.quote_swap(
-        CryptoAmount(Amount.automatic(1.0, BTC_DECIMAL), AssetBTC),
+        CryptoAmount(Amount.auto(1.0, BTC_DECIMAL), AssetBTC),
         destination_address='0xae2fc483527b8ef99eb5d9b44875f005ba1fae13',
         destination_asset=AssetETH,
         tolerance_bps=500,

@@ -449,7 +449,7 @@ class THORChainCache:
         adjust_decimals = out_decimals - in_decimals
         base_amount_out *= Decimal(10 ** adjust_decimals)
         # noinspection PyTypeChecker
-        amt = Amount.automatic_base(int(base_amount_out), out_decimals)
+        amt = Amount.auto_base(int(base_amount_out), out_decimals)
         return CryptoAmount(amt, out_asset)
 
     async def get_details_for_chain(self, chain: Union[str, Chain]) -> InboundDetail:

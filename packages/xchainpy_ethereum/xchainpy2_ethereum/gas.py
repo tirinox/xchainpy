@@ -19,20 +19,20 @@ class GasOptions(NamedTuple):
     gas_limit: Optional[int] = None  # in Wei
 
     @classmethod
-    def automatic(cls, fee_option: FeeOption):
+    def auto(cls, fee_option: FeeOption):
         return cls(fee_option=fee_option)
 
     @classmethod
     def average(cls):
-        return cls.automatic(FeeOption.AVERAGE)
+        return cls.auto(FeeOption.AVERAGE)
 
     @classmethod
     def fast(cls):
-        return cls.automatic(FeeOption.FAST)
+        return cls.auto(FeeOption.FAST)
 
     @classmethod
     def fastest(cls):
-        return cls.automatic(FeeOption.FASTEST)
+        return cls.auto(FeeOption.FASTEST)
 
     @classmethod
     def legacy(cls, gas_price: int, gas_limit: int):
@@ -71,7 +71,7 @@ class GasOptions(NamedTuple):
         return GasOptions._replace(self, gas_limit=gas_limit)
 
     @property
-    def is_automatic(self):
+    def is_auto(self):
         return self.fee_option is not None
 
 

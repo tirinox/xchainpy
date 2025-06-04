@@ -317,12 +317,12 @@ class EthereumClient(XChainClient):
         :param what: Amount to transfer
         :param recipient: Recipient address or contract address to call
         :param memo: Memo (optional, not supported for ERC20 token transfer)
-        :param gas: Gas options. Default is `GasOptions.automatic(FeeOption.FAST)`
+        :param gas: Gas options. Default is `GasOptions.auto(FeeOption.FAST)`
 
         :return: Transaction hash
         """
         if not gas:
-            gas = GasOptions.automatic(FeeOption.FAST)
+            gas = GasOptions.auto(FeeOption.FAST)
 
         if what.asset.upper() == self.gas_asset.upper():
             # transfer ETH
@@ -382,7 +382,7 @@ class EthereumClient(XChainClient):
                             memo: Optional[str] = None) -> str:
         nonce = await self.get_nonce()
 
-        if gas.is_automatic:
+        if gas.is_auto:
             gas = await self._deduct_gas_price(gas.fee_option, gas.gas_limit)
 
         tx_params = self._prepare_tx_params(recipient, what.amount.internal_amount, nonce, gas, memo)
@@ -403,7 +403,7 @@ class EthereumClient(XChainClient):
             raise ValueError("Memo is not supported for ERC20 token transfer")
 
         gas = gas.updates_gas_limit(self._get_gas_limit().transfer_token_gas_limit)
-        if gas.is_automatic:
+        if gas.is_auto:
             gas = await self._deduct_gas_price(gas.fee_option, gas.gas_limit)
 
         contract_address = self.validated_checksum_address(what.asset.contract)
@@ -423,7 +423,7 @@ class EthereumClient(XChainClient):
         :param nonce: Nonce (optional) if not provided, it will fetch the nonce from the blockchain
         :return: Transaction hash
         """
-        if gas.is_automatic:
+        if gas.is_auto:
             gas = await self._deduct_gas_price(gas.fee_option, gas.gas_limit)
 
         if nonce < 0:
@@ -493,7 +493,7 @@ class EthereumClient(XChainClient):
         Approve ERC20 token for a spender
         :param spender: Spender address
         :param amount: Amount to approve
-        :param gas: Gas options. Default is `GasOptions.automatic(FeeOption.FAST)`
+        :param gas: Gas options. Default is `GasOptions.auto(FeeOption.FAST)`
         :return: Transaction hash
         """
         spender = self.validated_checksum_address(spender)
@@ -511,7 +511,7 @@ class EthereumClient(XChainClient):
         Revoke ERC20 token allowance for a spender
         :param spender: Spender address
         :param token: Token symbol or Asset object
-        :param gas: Gas options. Default is `GasOptions.automatic(FeeOption.FAST)`
+        :param gas: Gas options. Default is `GasOptions.auto(FeeOption.FAST)`
         """
         if isinstance(token, str):
             asset = self.erc20_asset_from_contract(token, "dummy")

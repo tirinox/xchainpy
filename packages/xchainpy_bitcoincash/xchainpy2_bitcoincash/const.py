@@ -47,9 +47,9 @@ AssetTestBCH = Asset.from_string('BCH.TBCH')
 DEFAULT_BCH_FEES = Fees(
     FeeType.PER_BYTE,
     fees={
-        FeeOption.AVERAGE: Amount.automatic(1, BCH_DECIMAL),
-        FeeOption.FAST: Amount.automatic(3, BCH_DECIMAL),
-        FeeOption.FASTEST: Amount.automatic(6, BCH_DECIMAL),
+        FeeOption.AVERAGE: Amount.auto(1, BCH_DECIMAL),
+        FeeOption.FAST: Amount.auto(3, BCH_DECIMAL),
+        FeeOption.FASTEST: Amount.auto(6, BCH_DECIMAL),
     }
 )
 """Typical fees for Bitcoin Cash"""

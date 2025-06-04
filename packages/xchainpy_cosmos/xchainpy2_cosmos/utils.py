@@ -58,8 +58,8 @@ def get_asset(denom: str, native_denom=COSMOS_DENOM, native_asset=AssetATOM) -> 
 
 def get_coin_amount(coins, decimals) -> Amount:
     return sum(
-        (Amount.automatic_base(int(key_attr_getter(coin, 'amount')), decimals) for coin in coins),
-        Amount.automatic_base(0, decimals)
+        (Amount.auto_base(int(key_attr_getter(coin, 'amount')), decimals) for coin in coins),
+        Amount.auto_base(0, decimals)
     )
 
 
@@ -83,7 +83,7 @@ def parse_transfer_log(log: TxLog, decimals, filter_address, native_denom: str, 
                     recipient = attribute.value
                 elif attribute.key == 'amount':
                     amount_int, asset = parse_cosmos_amount(attribute.value)
-                    amount = Amount.automatic_base(amount_int, decimals)
+                    amount = Amount.auto_base(amount_int, decimals)
                     if asset == native_denom:
                         asset = native_asset
                     else:

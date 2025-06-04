@@ -26,24 +26,24 @@ def calc_network_fee(asset: Asset, inbound: InboundDetail,
             raise ValueError("Invalid Base Asset, expected RUNE or CACAO")
 
     if asset.chain == Chain.Bitcoin.value:
-        return CryptoAmount(Amount.automatic_base(inbound.gas_rate * inbound.outbound_tx_size), AssetBTC)
+        return CryptoAmount(Amount.auto_base(inbound.gas_rate * inbound.outbound_tx_size), AssetBTC)
     elif asset.chain == Chain.BitcoinCash.value:
-        return CryptoAmount(Amount.automatic_base(inbound.gas_rate * inbound.outbound_tx_size), AssetBCH)
+        return CryptoAmount(Amount.auto_base(inbound.gas_rate * inbound.outbound_tx_size), AssetBCH)
     elif asset.chain == Chain.Litecoin.value:
-        return CryptoAmount(Amount.automatic_base(inbound.gas_rate * inbound.outbound_tx_size), AssetLTC)
+        return CryptoAmount(Amount.auto_base(inbound.gas_rate * inbound.outbound_tx_size), AssetLTC)
     elif asset.chain == Chain.Doge.value:
-        return CryptoAmount(Amount.automatic_base(inbound.gas_rate * inbound.outbound_tx_size), AssetDOGE)
+        return CryptoAmount(Amount.auto_base(inbound.gas_rate * inbound.outbound_tx_size), AssetDOGE)
     elif Chain(asset.chain).is_evm:
         gas_asset = get_chain_gas_asset(Chain(asset.chain))
         decimals = ETH_DECIMALS
         gas_rate_in_gwei = Decimal(inbound.gas_rate)
-        gas_rate_in_wei = Amount.automatic_base(gas_rate_in_gwei * Decimal(10 ** 9), decimals)
+        gas_rate_in_wei = Amount.auto_base(gas_rate_in_gwei * Decimal(10 ** 9), decimals)
         if asset == gas_asset:
-            return CryptoAmount(Amount.automatic_base(gas_rate_in_wei * 23000), gas_asset)
+            return CryptoAmount(Amount.auto_base(gas_rate_in_wei * 23000), gas_asset)
         else:
-            return CryptoAmount(Amount.automatic_base(gas_rate_in_wei * 70000), gas_asset)
+            return CryptoAmount(Amount.auto_base(gas_rate_in_wei * 70000), gas_asset)
     elif asset.chain == Chain.Cosmos.value:
-        return CryptoAmount(Amount.automatic_base(inbound.gas_rate), AssetATOM)
+        return CryptoAmount(Amount.auto_base(inbound.gas_rate), AssetATOM)
     elif asset.chain == Chain.THORChain.value:
         return DEFAULT_RUNE_NETWORK_FEE
     elif asset.chain == Chain.Maya.value:
@@ -70,20 +70,20 @@ def calc_outbound_fee(asset: Asset, inbound: InboundDetail, base_asset=AssetRUNE
             raise ValueError("Invalid Base Asset, expected RUNE or CACAO")
 
     if asset.chain == Chain.Bitcoin.value:
-        return CryptoAmount(Amount.automatic_base(inbound.outbound_fee), AssetBTC)
+        return CryptoAmount(Amount.auto_base(inbound.outbound_fee), AssetBTC)
     elif asset.chain == Chain.BitcoinCash.value:
-        return CryptoAmount(Amount.automatic_base(inbound.outbound_fee), AssetBCH)
+        return CryptoAmount(Amount.auto_base(inbound.outbound_fee), AssetBCH)
     elif asset.chain == Chain.Litecoin.value:
-        return CryptoAmount(Amount.automatic_base(inbound.outbound_fee), AssetLTC)
+        return CryptoAmount(Amount.auto_base(inbound.outbound_fee), AssetLTC)
     elif asset.chain == Chain.Doge.value:
-        return CryptoAmount(Amount.automatic_base(inbound.outbound_fee), AssetDOGE)
+        return CryptoAmount(Amount.auto_base(inbound.outbound_fee), AssetDOGE)
     elif Chain(asset.chain).is_evm:
         gas_asset = get_chain_gas_asset(Chain(asset.chain))
         decimals = ETH_DECIMALS
         wei = Decimal(inbound.outbound_fee) * Decimal(10 ** 9)
-        return CryptoAmount(Amount.automatic_base(wei, decimals), gas_asset)
+        return CryptoAmount(Amount.auto_base(wei, decimals), gas_asset)
     elif asset.chain == Chain.Cosmos.value:
-        return CryptoAmount(Amount.automatic_base(inbound.outbound_fee), AssetATOM)
+        return CryptoAmount(Amount.auto_base(inbound.outbound_fee), AssetATOM)
     elif asset.chain == Chain.THORChain.value:
         return DEFAULT_RUNE_NETWORK_FEE
     elif asset.chain == Chain.Maya.value:

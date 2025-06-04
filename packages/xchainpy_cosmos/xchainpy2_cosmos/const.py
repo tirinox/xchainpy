@@ -15,7 +15,7 @@ FEE_MINIMUM_GAS_PRICE = 0.006
 
 # Default fee
 # As same as definition in Cosmosstation's web wallet
-DEFAULT_FEE = Amount.automatic_base(int(DEFAULT_GAS_LIMIT * FEE_MINIMUM_GAS_PRICE), COSMOS_DECIMAL)
+DEFAULT_FEE = Amount.auto_base(int(DEFAULT_GAS_LIMIT * FEE_MINIMUM_GAS_PRICE), COSMOS_DECIMAL)
 
 # Chain identifier for Cosmos chain
 GAIA_CHAIN_KEY = 'GAIA'
@@ -40,9 +40,9 @@ def get_default_fees() -> Fees:
     return Fees(
         type=FeeType.FLAT_FEE,
         fees={
-            FeeOption.FAST: Amount.automatic_base(750, COSMOS_DECIMAL),
-            FeeOption.FASTEST: Amount.automatic_base(2500, COSMOS_DECIMAL),
-            FeeOption.AVERAGE: Amount.automatic_base(0, COSMOS_DECIMAL),
+            FeeOption.FAST: Amount.auto_base(750, COSMOS_DECIMAL),
+            FeeOption.FASTEST: Amount.auto_base(2500, COSMOS_DECIMAL),
+            FeeOption.AVERAGE: Amount.auto_base(0, COSMOS_DECIMAL),
         }
     )
 

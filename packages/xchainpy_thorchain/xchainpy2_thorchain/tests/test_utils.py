@@ -8,11 +8,11 @@ from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE, RUNE_DECIMAL, Asset
 def test_convert_coin_to_crypto_amount():
     convert = convert_coin_to_crypto_amount
     assert convert(Coin(100000000, 'rune')) == CryptoAmount(Amount.automatic(1, RUNE_DECIMAL), AssetRUNE)
-    assert convert(Coin(10, 'uatom')) == CryptoAmount(Amount.automatic_base(10), Asset.from_string('THOR.UATOM'))
-    assert convert(Coin(333, 'uatom')) == CryptoAmount.automatic_base('333', Asset.from_string('THOR.UATOM'))
+    assert convert(Coin(10, 'uatom')) == CryptoAmount(Amount.auto_base(10), Asset.from_string('THOR.UATOM'))
+    assert convert(Coin(333, 'uatom')) == CryptoAmount.auto_base('333', Asset.from_string('THOR.UATOM'))
 
     a = convert(Coin(7777, 'btc/btc'))
-    assert a.amount == Amount.automatic_base(7777)
+    assert a.amount == Amount.auto_base(7777)
     assert a.asset == Asset.from_string('THOR.BTC/BTC')
     assert a.asset.synth
 
@@ -30,7 +30,7 @@ def test_asset_from_denom():
 
 def test_crypto_amount_to_msg_coin():
     a = crypto_amount_to_msg_coin(CryptoAmount(
-        Amount.automatic_base(100, 8),
+        Amount.auto_base(100, 8),
         AssetRUNE
     ))
 
@@ -42,7 +42,7 @@ def test_crypto_amount_to_msg_coin():
     assert a.asset.symbol == 'RUNE'
 
     a = crypto_amount_to_msg_coin(CryptoAmount(
-        Amount.automatic_base(333, 6),
+        Amount.auto_base(333, 6),
         Asset.from_string('BTC/BTC')
     ))
     assert a.decimals == 6
@@ -53,7 +53,7 @@ def test_crypto_amount_to_msg_coin():
     assert a.asset.symbol == 'BTC'
 
     a = crypto_amount_to_msg_coin(CryptoAmount(
-        Amount.automatic_base(987654321, 18),
+        Amount.auto_base(987654321, 18),
         Asset.from_string('ETH.ETH-0xdac17f958d2ee523a2206206994597c13d831ec7')
     ))
     assert a.decimals == 18

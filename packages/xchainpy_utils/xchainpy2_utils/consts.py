@@ -43,7 +43,7 @@ class ChainAttributes(NamedTuple):
     """Typically, the smallest amount of an asset that can be used by a protocol."""
 
 
-AMOUNT_10K_SAT = Amount.automatic(Decimal("0.0001"), DEFAULT_ASSET_DECIMAL)
+AMOUNT_10K_SAT = Amount.auto(Decimal("0.0001"), DEFAULT_ASSET_DECIMAL)
 """AMOUNT_10K_SAT is an Amount object that represents 10,000 satoshis."""
 
 """
@@ -64,7 +64,7 @@ DEFAULT_CHAIN_ATTRS = {
     ),
     Chain.Doge: ChainAttributes(
         10000, 60,
-        DustAmount(Amount.automatic(Decimal("0.01")), AssetDOGE)  # 1 million sat
+        DustAmount(Amount.auto(Decimal("0.01")), AssetDOGE)  # 1 million sat
     ),
 
     Chain.Ethereum: ChainAttributes(

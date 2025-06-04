@@ -131,12 +131,12 @@ def test_equality():
     (AssetLTC, AssetLTC),
     (AssetBaseETH, AssetBaseETH),
 ])
-def test_automatic_creating(source, expected):
-    assert Asset.automatic(source) == expected
+def test_auto_creating(source, expected):
+    assert Asset.auto(source) == expected
 
 
 def test_trade_asset():
-    a = Asset.automatic('BTC~BTC')
+    a = Asset.auto('BTC~BTC')
     assert a.kind == AssetKind.TRADE
     assert a.is_trade
     assert not a.is_native and not a.is_synth
@@ -150,7 +150,7 @@ def test_trade_asset():
     assert a.as_trade == a
     assert a.as_synth == AssetBTC.as_synth
 
-    a = Asset.automatic('ETH~USDT-0xdac17f958d2ee523a2206206994597c13d831ec7')
+    a = Asset.auto('ETH~USDT-0xdac17f958d2ee523a2206206994597c13d831ec7')
     assert a == Asset('ETH', 'USDT', '0xdac17f958d2ee523a2206206994597c13d831ec7', AssetKind.TRADE)
     assert a.as_trade and a.is_valid
 
@@ -162,7 +162,7 @@ def test_trade_asset():
 
 
 def test_derived_asset():
-    a = Asset.automatic('THOR.BTC')
+    a = Asset.auto('THOR.BTC')
     assert a.chain == Chain.THORChain.value
     assert a.symbol == 'BTC'
     assert a.kind == AssetKind.DERIVED and a.is_derived
@@ -185,7 +185,7 @@ def test_derived_asset():
 ])
 def test_get_short_code(source, expected):
     assert get_short_code(source) == expected
-    assert Asset.automatic(expected) == Asset.automatic(source)
+    assert Asset.auto(expected) == Asset.automatic(source)
 
 
 def test_dimensionless():

@@ -141,7 +141,7 @@ class XChainClient(abc.ABC):
         :param amount: Union[float, str, int, Decimal] amount of asset (not base!), e.g. 1.1 ETH, 0.05 BTC
         :return: CryptoAmount
         """
-        return CryptoAmount(Amount.automatic(amount, self._decimal), self._gas_asset)
+        return CryptoAmount(Amount.auto(amount, self._decimal), self._gas_asset)
 
     def gas_base_amount(self, amount: int) -> CryptoAmount:
         """
@@ -151,7 +151,7 @@ class XChainClient(abc.ABC):
         :return:
         """
         assert isinstance(amount, int)
-        return CryptoAmount(Amount.automatic_base(amount, self._decimal), self._gas_asset)
+        return CryptoAmount(Amount.auto_base(amount, self._decimal), self._gas_asset)
 
     @property
     def zero_gas_amount(self) -> CryptoAmount:

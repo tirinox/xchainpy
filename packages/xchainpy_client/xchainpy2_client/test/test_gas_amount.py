@@ -13,7 +13,7 @@ def test_gas_amount():
     assert client.zero_gas_amount.asset == AssetRUNE
     assert client.zero_gas_amount.amount.decimals == 7
 
-    assert client.gas_base_amount(3333) == CryptoAmount(Amount.automatic_base(3333, 7), AssetRUNE)
+    assert client.gas_base_amount(3333) == CryptoAmount(Amount.auto_base(3333, 7), AssetRUNE)
 
     with pytest.raises(AssertionError):
         # noinspection PyTypeChecker
@@ -23,11 +23,11 @@ def test_gas_amount():
         # noinspection PyTypeChecker
         client.gas_base_amount("3333")
 
-    assert client.gas_amount(0.0000001) == CryptoAmount(Amount.automatic(0.0000001, 7), AssetRUNE)
-    assert client.gas_amount(4433434.5535) == CryptoAmount(Amount.automatic(4433434.5535, 7), AssetRUNE)
-    assert client.gas_amount("4433434.5535") == CryptoAmount(Amount.automatic(4433434.5535, 7), AssetRUNE)
-    assert client.gas_amount(Decimal("4433434.5535")) == CryptoAmount(Amount.automatic(4433434.5535, 7),
+    assert client.gas_amount(0.0000001) == CryptoAmount(Amount.auto(0.0000001, 7), AssetRUNE)
+    assert client.gas_amount(4433434.5535) == CryptoAmount(Amount.auto(4433434.5535, 7), AssetRUNE)
+    assert client.gas_amount("4433434.5535") == CryptoAmount(Amount.auto(4433434.5535, 7), AssetRUNE)
+    assert client.gas_amount(Decimal("4433434.5535")) == CryptoAmount(Amount.auto(4433434.5535, 7),
                                                                       AssetRUNE)
 
     assert client.gas_base_amount(0) == client.zero_gas_amount
-    assert client.gas_base_amount(1001) == CryptoAmount(Amount.automatic_base(1001, 7), AssetRUNE)
+    assert client.gas_base_amount(1001) == CryptoAmount(Amount.auto_base(1001, 7), AssetRUNE)

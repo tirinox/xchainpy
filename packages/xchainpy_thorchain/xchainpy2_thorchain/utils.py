@@ -29,7 +29,7 @@ def get_thor_address_prefix(network: NetworkType) -> str:
 def convert_coin_to_crypto_amount(coin: CosmosCoin, decimals=RUNE_DECIMAL) -> CryptoAmount:
     asset = Asset.from_string(f'THOR.{coin.denom.upper()}')
     return CryptoAmount(
-        amount=Amount.automatic_base(coin.amount, decimals),
+        amount=Amount.auto_base(coin.amount, decimals),
         asset=asset
     )
 

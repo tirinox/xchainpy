@@ -42,8 +42,8 @@ def test_amount_repr(in_amt, dec, repr_str, str_str):
     (205.0, 6, 205, 6, 205),
     (Decimal('98766'), 2, 98766, 2, 98766),
 ])
-def test_amount_automatic_base(in_amt, in_dec, e_internal, e_decimals, e_int):
-    a = Amount.automatic_base(in_amt, decimals=in_dec)
+def test_amount_auto_base(in_amt, in_dec, e_internal, e_decimals, e_int):
+    a = Amount.auto_base(in_amt, decimals=in_dec)
     assert a.internal_amount == e_internal
     assert a.decimals == e_decimals
     assert int(a) == e_int
@@ -65,8 +65,8 @@ def test_amount_automatic_base(in_amt, in_dec, e_internal, e_decimals, e_int):
     (Amount(431, 8), 6, 4, 6, 4),
     (Amount(431, 8), 10, 43100, 10, 43100),
 ])
-def test_amount_automatic_asset(in_amt, in_dec, e_internal, e_decimals, e_int):
-    a = Amount.automatic(in_amt, decimals=in_dec)
+def test_amount_auto_asset(in_amt, in_dec, e_internal, e_decimals, e_int):
+    a = Amount.auto(in_amt, decimals=in_dec)
     assert a.internal_amount == e_internal
     assert a.decimals == e_decimals
     assert int(a) == e_int
@@ -84,8 +84,8 @@ def test_amount_automatic_asset(in_amt, in_dec, e_internal, e_decimals, e_int):
         (0.0001, 6, 0, 0),
     ]
 )
-def test_amount_automatic_base(input_value, decimals, expected_internal, expected_float):
-    a = Amount.automatic_base(input_value, decimals)
+def test_amount_auto_base(input_value, decimals, expected_internal, expected_float):
+    a = Amount.auto_base(input_value, decimals)
     assert a.internal_amount == expected_internal, f"Internal amount mismatch for {input_value}"
     assert a.decimals == decimals
     assert int(a) == expected_internal
@@ -285,7 +285,7 @@ def test_bool():
     assert Amount(400)
     assert Amount(-5)
     assert not Amount(0)
-    assert not Amount.automatic_base(0, 4)
+    assert not Amount.auto_base(0, 4)
     assert not Amount.automatic(0)
 
     assert Amount(0).is_zero

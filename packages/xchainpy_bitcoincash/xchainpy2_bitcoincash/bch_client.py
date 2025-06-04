@@ -180,7 +180,7 @@ class BitcoinCashClient(XChainClient):
             transfers.append(TokenTransfer(
                 input.address,
                 to_address='',
-                amount=Amount.automatic(input.amount),
+                amount=Amount.auto(input.amount),
                 asset=self.gas_asset,
                 tx_hash=data.txid,
                 outbound=False,
@@ -191,7 +191,7 @@ class BitcoinCashClient(XChainClient):
                 transfers.append(TokenTransfer(
                     output.address,
                     to_address='',
-                    amount=Amount.automatic(output.amount),
+                    amount=Amount.auto(output.amount),
                     asset=self.gas_asset,
                     tx_hash=data.txid,
                     outbound=True,

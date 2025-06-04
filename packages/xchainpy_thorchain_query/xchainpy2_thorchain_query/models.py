@@ -46,19 +46,19 @@ class TotalFees(NamedTuple):
 
     @property
     def total_fee_amount(self) -> CryptoAmount:
-        return CryptoAmount(Amount.automatic_base(self.total_fee), self.asset)
+        return CryptoAmount(Amount.auto_base(self.total_fee), self.asset)
 
     @property
     def affiliate_fee_amount(self) -> CryptoAmount:
-        return CryptoAmount(Amount.automatic_base(self.affiliate_fee), self.asset)
+        return CryptoAmount(Amount.auto_base(self.affiliate_fee), self.asset)
 
     @property
     def liquidity_fee_amount(self) -> CryptoAmount:
-        return CryptoAmount(Amount.automatic_base(self.liquidity_fee), self.asset)
+        return CryptoAmount(Amount.auto_base(self.liquidity_fee), self.asset)
 
     @property
     def outbound_fee_amount(self) -> CryptoAmount:
-        return CryptoAmount(Amount.automatic_base(self.outbound_fee), self.asset)
+        return CryptoAmount(Amount.auto_base(self.outbound_fee), self.asset)
 
     @classmethod
     def zero(cls, asset: Asset) -> 'TotalFees':
@@ -141,7 +141,7 @@ def get_rune_balance_of_node_pool(pool: Pool) -> Amount:
     balance = getattr(pool, 'balance_rune', None)
     if balance is None:
         balance = getattr(pool, 'balance_cacao', None)
-    return Amount.automatic_base(balance)
+    return Amount.auto_base(balance)
 
 
 class LiquidityPool(NamedTuple):
@@ -183,8 +183,8 @@ class LiquidityPool(NamedTuple):
         :rtype: LiquidityPool
         """
 
-        ab = Amount.automatic_base(pool.asset_depth)
-        rb = Amount.automatic_base(pool.rune_depth)
+        ab = Amount.auto_base(pool.asset_depth)
+        rb = Amount.auto_base(pool.rune_depth)
 
         ab_dec = Decimal(pool.asset_depth, DC)
         rb_dec = Decimal(pool.rune_depth, DC)
@@ -210,7 +210,7 @@ class LiquidityPool(NamedTuple):
         :rtype: LiquidityPool
         """
         rune_balance = get_rune_balance_of_node_pool(thornode_pool)
-        asset_balance = Amount.automatic_base(thornode_pool.balance_asset)
+        asset_balance = Amount.auto_base(thornode_pool.balance_asset)
 
         ab_dec = asset_balance.as_decimal
         rb_dec = rune_balance.as_decimal

@@ -236,7 +236,7 @@ class CosmosGaiaClient(XChainClient):
     def convert_coin_to_amount(self, c: Coin):
         asset = self.parse_denom_to_asset(c.denom)
         return CryptoAmount(
-            Amount.automatic_base(c.amount, self._decimal),
+            Amount.auto_base(c.amount, self._decimal),
             asset
         )
 
@@ -561,7 +561,7 @@ class CosmosGaiaClient(XChainClient):
                 native_balance = balance
 
         is_native = amount.asset == self._gas_asset
-        extra_fee = fee if is_native else Amount.automatic_base(0, self._decimal)
+        extra_fee = fee if is_native else Amount.auto_base(0, self._decimal)
 
         required = amount.amount + extra_fee
         if asset_balance is None or asset_balance.amount < required:

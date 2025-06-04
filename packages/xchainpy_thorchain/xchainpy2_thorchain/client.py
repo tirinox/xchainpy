@@ -197,7 +197,7 @@ class THORChainClient(CosmosGaiaClient):
         if isinstance(what, Amount):
             what = CryptoAmount(what, self._gas_asset)
         elif isinstance(what, (int, float)):
-            what = CryptoAmount(Amount.automatic(what, self._decimal), self._gas_asset)
+            what = CryptoAmount(Amount.auto(what, self._decimal), self._gas_asset)
 
         address = self.get_address()
 
@@ -298,7 +298,7 @@ class THORChainClient(CosmosGaiaClient):
         from_address = tx.get('from_address')
         to_address = tx.get('to_address', 'undefined')
         decimals = coin.get('decimals', self._decimal)
-        coin_amount = Amount.automatic_base(coin['amount'], decimals)
+        coin_amount = Amount.auto_base(coin['amount'], decimals)
         memo = tx.get('memo', '')
         split_memo = memo.split(':')
         if not split_memo:
@@ -343,7 +343,7 @@ class THORChainClient(CosmosGaiaClient):
         if not fee or not isinstance(fee, str) or not fee.isdigit() or int(fee) < 0:
             raise Exception(f"Invalid fee: {fee}")
 
-        return single_fee(FeeType.FLAT_FEE, Amount.automatic_base(fee, self._decimal))
+        return single_fee(FeeType.FLAT_FEE, Amount.auto_base(fee, self._decimal))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         """
@@ -418,7 +418,7 @@ class THORChainClient(CosmosGaiaClient):
 
         return [
             CryptoAmount(
-                Amount.automatic_base(trade_acc.units, decimals=self.decimal),
+                Amount.auto_base(trade_acc.units, decimals=self.decimal),
                 Asset.from_string(trade_acc.asset),
             ) for
             trade_acc in result

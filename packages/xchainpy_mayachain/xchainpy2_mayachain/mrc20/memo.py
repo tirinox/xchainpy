@@ -31,7 +31,7 @@ def get_amount(amount, zero_allowed=False):
     :param zero_allowed: if zero amounts are allowed
     """
 
-    amount = Amount.automatic(amount, MRC20_DECIMALS)
+    amount = Amount.auto(amount, MRC20_DECIMALS)
     if not zero_allowed and amount.internal_amount <= 0:
         raise ValueError('Must be positive')
     return str(amount.internal_amount)
@@ -48,9 +48,9 @@ class MRC20Memo:
         Generate a memo for deploying a MRC20 token.
 
         :param ticker: The ticker of a new token
-        :param supply: Total supply of the token. See: Amount.automatic
-        :param mint_limit: The maximum amount of tokens that can be minted. See: Amount.automatic
-        :param mint_price: The price of minting a token in Cacao. See: Amount.automatic
+        :param supply: Total supply of the token. See: Amount.auto
+        :param mint_limit: The maximum amount of tokens that can be minted. See: Amount.auto
+        :param mint_price: The price of minting a token in Cacao. See: Amount.auto
         :return: Memo string
         """
 

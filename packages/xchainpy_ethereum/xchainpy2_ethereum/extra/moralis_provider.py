@@ -18,7 +18,7 @@ class MoralisDataProvider(EVMDataProvider):
             "address": address
         })
         return [
-            CryptoAmount.automatic(
+            CryptoAmount.auto(
                 int(entry['balance']), Asset(self.chain.value, symbol=entry['symbol'], contract=entry['token_address']),
                 entry['decimals']
             ) for entry in results

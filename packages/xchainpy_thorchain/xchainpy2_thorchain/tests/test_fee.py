@@ -29,4 +29,4 @@ async def test_fees_thornode():
         fees = await client.get_fees()
         assert fees.type == FeeType.FLAT_FEE
         assert fees.fees[FeeOption.AVERAGE] == fees.fees[FeeOption.FAST] == fees.fees[FeeOption.FASTEST] == \
-            Amount.automatic_base(3120509, RUNE_DECIMAL)
+            Amount.auto_base(3120509, RUNE_DECIMAL)

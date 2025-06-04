@@ -28,23 +28,23 @@ def test_fee_subtract():
 
 
 def test_auto():
-    assert CryptoAmount.automatic_base(555111, 'THOR.RUNE') == CryptoAmount(Amount(555111, 8), AssetRUNE)
-    assert CryptoAmount.automatic_base(0.1, 'THOR.RUNE') == CryptoAmount.zero(AssetRUNE)
-    assert CryptoAmount.automatic_base("123.4", 'THOR.RUNE') == CryptoAmount(Amount(123, 8), AssetRUNE)
+    assert CryptoAmount.auto_base(555111, 'THOR.RUNE') == CryptoAmount(Amount(555111, 8), AssetRUNE)
+    assert CryptoAmount.auto_base(0.1, 'THOR.RUNE') == CryptoAmount.zero(AssetRUNE)
+    assert CryptoAmount.auto_base("123.4", 'THOR.RUNE') == CryptoAmount(Amount(123, 8), AssetRUNE)
 
-    assert CryptoAmount.automatic(1, 'THOR.RUNE') == CryptoAmount(Amount(100000000, 8), AssetRUNE)
-    assert CryptoAmount.automatic(134, 'THOR.RUNE') == CryptoAmount(Amount(13400000000, 8), AssetRUNE)
-    assert CryptoAmount.automatic(1.0, 'THOR.RUNE') == CryptoAmount(Amount.automatic(1.0, 8), AssetRUNE)
+    assert CryptoAmount.auto(1, 'THOR.RUNE') == CryptoAmount(Amount(100000000, 8), AssetRUNE)
+    assert CryptoAmount.auto(134, 'THOR.RUNE') == CryptoAmount(Amount(13400000000, 8), AssetRUNE)
+    assert CryptoAmount.auto(1.0, 'THOR.RUNE') == CryptoAmount(Amount.auto(1.0, 8), AssetRUNE)
 
     assert (
-            CryptoAmount.automatic(
+            CryptoAmount.auto(
                 333.5, 'ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7')
             == CryptoAmount(
-        Amount.automatic(333.5, 6),
+        Amount.auto(333.5, 6),
         Asset.from_string('ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7'))
     )
 
-    assert (CryptoAmount.automatic(40.0, AssetCACAO) == CryptoAmount(Amount.automatic(40.0, 10), AssetCACAO))
+    assert (CryptoAmount.auto(40.0, AssetCACAO) == CryptoAmount(Amount.automatic(40.0, 10), AssetCACAO))
 
 
 @pytest.mark.parametrize(

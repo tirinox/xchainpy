@@ -35,7 +35,7 @@ class TokenInfo(NamedTuple):
         :param amount:
         :return: CryptoAmount
         """
-        return CryptoAmount(Amount.automatic(amount).converted_decimals(self.decimals), self.as_asset)
+        return CryptoAmount(Amount.auto(amount).converted_decimals(self.decimals), self.as_asset)
 
     @classmethod
     def from_json(cls, data, chain: Chain):

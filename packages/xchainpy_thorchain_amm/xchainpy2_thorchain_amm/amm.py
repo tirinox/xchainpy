@@ -93,7 +93,7 @@ class THORChainAMM:
         :return: hash of the inbound transaction (used to track transaction status)
         """
         if not destination_address:
-            dest_chain = self._dest_chain(Asset.automatic(destination_asset))
+            dest_chain = self._dest_chain(Asset.auto(destination_asset))
             dest_client = self.wallet.get_client(dest_chain)
             if not dest_client:
                 raise AMMException('No destination address')
@@ -196,7 +196,7 @@ class THORChainAMM:
             if not await self._validate_affiliate_address(affiliate_address):
                 raise AMMException(f'Invalid affiliate address: {affiliate_address}')
 
-        pool_name = Asset.automatic(pool).upper()
+        pool_name = Asset.auto(pool).upper()
         memo = THORMemo.add_liquidity(pool_name, paired_address).build()
 
         return await self.general_deposit(amount, '', memo, gas_options)
@@ -324,7 +324,7 @@ class THORChainAMM:
         :param gas_options: gas options. You can set gas price explicitly or use automatic fee option
         :return: TX hash submitted to the network
         """
-        asset = Asset.automatic(asset)
+        asset = Asset.auto(asset)
 
         rune_address = ''
         if mode == WithdrawMode.RuneOnly or mode == WithdrawMode.Symmetric:
@@ -531,7 +531,7 @@ class THORChainAMM:
         helper = self._get_evm_helper(input_amount.asset)
         if not helper:
             raise AMMException(f'Cannot find EVM helper for {input_amount.asset}. Did you enable the client?')
-        gas_options = gas_options or GasOptions.automatic(self.fee_option)
+        gas_options = gas_options or GasOptions.auto(self.fee_option)
         tx_hash = await helper.deposit(input_amount, memo, gas_options, self.evm_expiration_sec,
                                        check_allowance=self.check_allowance)
         return tx_hash

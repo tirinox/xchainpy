@@ -120,4 +120,4 @@ class Web3LogDecoder:
 
     @staticmethod
     def _get_amount(amount):
-        return Amount.automatic_base(amount)
+        return Amount.auto_base(amount)

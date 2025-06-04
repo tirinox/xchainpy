@@ -25,7 +25,7 @@ def test_std_fee():
 async def test_calc_fees():
     def transform(k: FeeOption, v: Amount, a, b):
         c = a * v + b if k != FeeOption.FASTEST else 100
-        return Amount.automatic(int(c))
+        return Amount.auto(int(c))
 
     rates = {
         FeeOption.AVERAGE: 10,
@@ -37,9 +37,9 @@ async def test_calc_fees():
 
     def test_result():
         assert r.type == FeeType.PER_BYTE
-        assert r.fees[FeeOption.AVERAGE] == Amount.automatic_base(23)
-        assert r.fees[FeeOption.FAST] == Amount.automatic_base(27)
-        assert r.fees[FeeOption.FASTEST] == Amount.automatic_base(100)
+        assert r.fees[FeeOption.AVERAGE] == Amount.auto_base(23)
+        assert r.fees[FeeOption.FAST] == Amount.auto_base(27)
+        assert r.fees[FeeOption.FASTEST] == Amount.auto_base(100)
 
     test_result()
 

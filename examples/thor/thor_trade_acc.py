@@ -34,7 +34,7 @@ async def main(seed_phrase):
 
         # ---------------------- DEPOSIT L1 to Trade Account ----------------------
 
-        amt_to_deposit = CryptoAmount.automatic(0.05, AssetLTC)
+        amt_to_deposit = CryptoAmount.auto(0.05, AssetLTC)
         if input(f'Do you want to deposit Trade Asset {amt_to_deposit}? (y/n): ').lower() == 'y':
             print(f'Deposit {amt_to_deposit} to Trade Account is in progress...')
             tx_hash = await amm.deposit_to_trade_account(amt_to_deposit)
@@ -43,7 +43,7 @@ async def main(seed_phrase):
 
         # -------------------------------- SWAP -----------------------------------
 
-        amt_to_swap = CryptoAmount.automatic(0.05, AssetLTC.as_trade)
+        amt_to_swap = CryptoAmount.auto(0.05, AssetLTC.as_trade)
         dest_asset = AssetBSC.as_trade  # to trade BSC~BNB
         if input(f'Do you want to swap Trade Asset {amt_to_swap}? (y/n): ').lower() == 'y':
             print(f'Swapping {amt_to_swap} to is in progress...')
@@ -56,7 +56,7 @@ async def main(seed_phrase):
 
         # ---------------------- WITHDRAW Trade Account to L1 ----------------------
 
-        amt_to_withdraw = CryptoAmount.automatic(0.005, AssetBSC.as_trade)
+        amt_to_withdraw = CryptoAmount.auto(0.005, AssetBSC.as_trade)
         amt_to_withdraw = amt_to_withdraw.converted_decimals(RUNE_DECIMAL)
         if input(f'Do you want to withdraw Trade Asset {amt_to_withdraw}? (y/n): ').lower() == 'y':
             print(f'Withdraw {amt_to_withdraw} from Trade Account is in progress...')

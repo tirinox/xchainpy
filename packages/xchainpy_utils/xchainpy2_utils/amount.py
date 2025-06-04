@@ -127,7 +127,7 @@ class Amount(NamedTuple):
         if isinstance(other, (int, float, Decimal)):
             return Amount(int(self.internal_amount * other), self.decimals)
         elif isinstance(other, Amount):
-            return Amount.automatic(self.as_decimal * other.as_decimal, self.decimals)
+            return Amount.auto(self.as_decimal * other.as_decimal, self.decimals)
         else:
             raise TypeError(f'Cannot multiply {self} with {type(other)}')
 
@@ -145,7 +145,7 @@ class Amount(NamedTuple):
             # Useful for price calculation, returns a dimensionless quantity of type Decimal
             ratio = self.as_decimal / other.as_decimal
             # If the other amount has different decimals, it will return an Amount with the dividend's decimals
-            return Amount.automatic(ratio, self.decimals)
+            return Amount.auto(ratio, self.decimals)
         else:
             raise TypeError(f'Cannot divide {self} with {type(other)}')
 
@@ -162,7 +162,7 @@ class Amount(NamedTuple):
         elif isinstance(other, Amount):
             # Returns a floored ratio with the dividend's decimals
             ratio = self.as_decimal // other.as_decimal
-            return Amount.automatic(ratio, self.decimals)
+            return Amount.auto(ratio, self.decimals)
         else:
             raise TypeError(f'Cannot floor divide {self} with {type(other)}')
 
@@ -183,10 +183,10 @@ class Amount(NamedTuple):
         """
         Convert x to an Amount instance with the same decimals and decimals as self.
 
-        :param x: Any value suitable for Amount.automatic
+        :param x: Any value suitable for Amount.auto
         :return: Amount
         """
-        return self.automatic(x, self.decimals)
+        return self.auto(x, self.decimals)
 
     def __lt__(self, other: AmountLike):
         """
@@ -256,7 +256,7 @@ class Amount(NamedTuple):
     def automatic(cls, x, decimals=DEFAULT_ASSET_DECIMAL, context=DC):
         """
         Convert any type to an Amount instance.
-        .. warning::  This method uses "asset" amount, e.g. 1 BTC is 1, not 100000000 (satoshi). See also: automatic_base.
+        .. warning::  This method uses "asset" amount, e.g. 1 BTC is 1, not 100000000 (satoshi). See also: auto_base.
 
         :param x: Input value (int, float, str, Decimal, Amount)
         :param decimals: Number of decimals (default 8)
@@ -278,7 +278,7 @@ class Amount(NamedTuple):
             raise ValueError(f'Cannot convert {x} to Amount')
 
     @classmethod
-    def automatic_base(cls, x, decimals=DEFAULT_ASSET_DECIMAL):
+    def auto_base(cls, x, decimals=DEFAULT_ASSET_DECIMAL):
         """
         Convert any type to an Amount instance in base denomination.
 
@@ -452,7 +452,7 @@ class CryptoAmount(NamedTuple):
         )
 
     @classmethod
-    def automatic_base(cls, _amount: AmountLike, asset: Union[Asset, str], decimals=None) -> 'CryptoAmount':
+    def auto_base(cls, _amount: AmountLike, asset: Union[Asset, str], decimals=None) -> 'CryptoAmount':
         """
         Create a CryptoAmount instance from an amount and an asset.
         The amount can be a number, string, or an Amount instance.
@@ -469,7 +469,7 @@ class CryptoAmount(NamedTuple):
             decimals = guess_decimals(asset)
 
         return cls(
-            Amount.automatic_base(_amount, decimals), Asset.automatic(asset),
+            Amount.auto_base(_amount, decimals), Asset.automatic(asset),
         )
 
     def __add__(self, other: CryptoAmountLike) -> 'CryptoAmount':

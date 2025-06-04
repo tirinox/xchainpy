@@ -244,7 +244,7 @@ class THORChainQuery:
 
         if (int(swap_quote.recommended_min_amount_in) and
                 int(input_amount_int) < int(swap_quote.recommended_min_amount_in)):
-            recommended_in = CryptoAmount.automatic(int(swap_quote.recommended_min_amount_in), input_amount.asset,
+            recommended_in = CryptoAmount.auto(int(swap_quote.recommended_min_amount_in), input_amount.asset,
                                                     decimals=self.native_decimal)
             errors.append(f'Input amount {input_amount} is less than recommended min amount in '
                           f'{recommended_in}')
@@ -286,17 +286,17 @@ class THORChainQuery:
         values = await self.cache.get_network_values()
 
         min_tx_volume_threshold = CryptoAmount(
-            Amount.automatic_base(values.get(Mimir.MIN_TX_OUT_VOLUME_THRESHOLD, 1), self.native_decimal),
+            Amount.auto_base(values.get(Mimir.MIN_TX_OUT_VOLUME_THRESHOLD, 1), self.native_decimal),
             self.cache.native_asset
         )
         max_tx_out_offset = values.get(Mimir.MAX_TX_OUT_OFFSET, 0)
         tx_out_delay_rate = float(
-            Amount.automatic_base(values.get(Mimir.TX_OUT_DELAY_RATE, 0), self.native_decimal)
+            Amount.auto_base(values.get(Mimir.TX_OUT_DELAY_RATE, 0), self.native_decimal)
         )
 
         queue: QueueResponse = await self.cache.queue_api.get_queue()
         outbound_value = CryptoAmount(
-            Amount.automatic_base(queue.scheduled_outbound_value, self.native_decimal),
+            Amount.auto_base(queue.scheduled_outbound_value, self.native_decimal),
             self.cache.native_asset
         )
 
@@ -432,7 +432,7 @@ class THORChainQuery:
             asset_pool=asset_pool.pool.asset,
             slip_percent=float(slip) * 100.0,
             pool_share=pool_share,
-            lp_units=Amount.automatic_base(lp_units),
+            lp_units=Amount.auto_base(lp_units),
             rune_to_asset_ratio=int(asset_pool.rune_to_asset_ratio),
             inbound_fees=LPAmountTotal(
                 asset=asset_inbound_fee,
@@ -478,8 +478,8 @@ class THORChainQuery:
         )
 
         current_lp = LPAmount(
-            asset=Amount.automatic_base(liquidity_provider.asset_deposit_value),
-            rune=Amount.automatic_base(liquidity_provider.rune_deposit_value),
+            asset=Amount.auto_base(liquidity_provider.asset_deposit_value),
+            rune=Amount.auto_base(liquidity_provider.rune_deposit_value),
         )
 
         pool_share = get_pool_share(unit_data, pool_asset)
@@ -532,7 +532,7 @@ class THORChainQuery:
         :param rune_address: rune address (optional)
         :return:
         """
-        asset = Asset.automatic(asset)
+        asset = Asset.auto(asset)
         if not asset.chain or not asset.symbol:
             return EstimateWithdrawLP.make_error(f"Invalid asset {asset}", mode)
 
@@ -691,10 +691,10 @@ class THORChainQuery:
 
         # compute value
         constants = await self.cache.get_network_values()
-        one_time_fee = Amount.zero(self.native_decimal) if is_update else Amount.automatic_base(
+        one_time_fee = Amount.zero(self.native_decimal) if is_update else Amount.auto_base(
             constants.get(Mimir.TNS_REGISTER_FEE, 0), self.native_decimal)
         fee_per_block = constants.get(Mimir.TNS_FEE_PER_BLOCK, 0)
-        total_fee_per_block = Amount.automatic_base(
+        total_fee_per_block = Amount.auto_base(
             fee_per_block * max(blocks_to_add_to_expiry, 0),
             self.native_decimal
         )

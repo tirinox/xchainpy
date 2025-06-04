@@ -239,7 +239,7 @@ class Asset(NamedTuple):
         If you pass a string with only the symbol (e.g. ETH), it will be used as both symbol and ticker: ETH.ETH
         This method does not recognize short codes like 'rune' or 'btc' and does not do any case conversion.
         
-        See Asset.automatic() for that.
+        See Asset.auto() for that.
         :param s: The input string to parse
         :return: An Asset object if the input string is valid, otherwise None
         """
@@ -297,7 +297,7 @@ class Asset(NamedTuple):
         return None
 
     @classmethod
-    def automatic(cls, x) -> Optional['Asset']:
+    def auto(cls, x) -> Optional['Asset']:
         """
         Create an Asset object by parsing the input string.
         This method recognizes short codes like 'rune' or 'btc' and converts the input string to uppercase.
