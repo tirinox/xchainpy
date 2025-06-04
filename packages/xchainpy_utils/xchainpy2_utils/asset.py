@@ -131,6 +131,7 @@ class Asset(NamedTuple):
     def chain_enum(self) -> Chain:
         """
         Returns chain field in form of Chain enumeration instance
+
         :return: Chain
         """
         return Chain(self.chain)
@@ -168,7 +169,6 @@ class Asset(NamedTuple):
     def is_derived(self):
         """
         Check if the asset is a derived asset.
-        :return:
         """
         return self.kind == AssetKind.DERIVED
 
@@ -218,6 +218,7 @@ class Asset(NamedTuple):
     def get_name_and_contract(input_str):
         """
         Get the name and contract from the input string.
+
         :param input_str: The input string to parse
         :return: A tuple containing the name and contract
         """
@@ -300,6 +301,7 @@ class Asset(NamedTuple):
         """
         Create an Asset object by parsing the input string.
         This method recognizes short codes like 'rune' or 'btc' and converts the input string to uppercase.
+
         :param x: The input string to parse
         :return: An Asset object if the input string is valid, otherwise None
         """
@@ -310,10 +312,12 @@ class Asset(NamedTuple):
         elif isinstance(x, Asset):
             return x.upper()
 
+
     @property
     def as_native(self):
         """
         Get a native copy of the asset object. Native assets use '.' as delimiter (THOR.RUNE).
+
         :return: A native version of the asset.
         """
         # noinspection PyArgumentEqualDefault
@@ -323,6 +327,7 @@ class Asset(NamedTuple):
     def as_synth(self):
         """
         Get a synth copy of the asset object. Synth assets use '/' as delimiter (BTC/BTC).
+
         :return: A synth version of the asset.
         """
         return self._replace(kind=AssetKind.SYNTH)
@@ -331,6 +336,7 @@ class Asset(NamedTuple):
     def as_trade(self):
         """
         Get a trade copy of the asset object. Trade assets use '~' as delimiter (BTC~BTC).
+
         :return: A trade version of the asset.
         """
         return self._replace(kind=AssetKind.TRADE)
@@ -339,18 +345,26 @@ class Asset(NamedTuple):
     def as_secured(self):
         """
         Get a secured copy of the asset object. Secured assets use '-' as delimiter (ETH-ETH).
+
         :return: A secured version of the asset.
         """
         return self._replace(kind=AssetKind.SECURED)
 
     @property
     def as_derived(self):
+        """
+        Return a "derived"-type copy of the asset object.
+        Note, that chain will be set as THORChain.
+
+        :return: Asset
+        """
         return self._replace(kind=AssetKind.DERIVED, chain=Chain.THORChain.value)
 
     @property
     def is_rune_native(self):
         """
         Check if the asset is a native RUNE asset.
+
         :return:
         """
         return self.chain == Chain.THORChain.value and self.symbol == 'RUNE'
@@ -612,6 +626,7 @@ class CommonAssets:
 def get_short_code(asset: Union[Asset, str]) -> str:
     """
     Get the short code for the specified asset.
+
     :param asset: The asset to get the short code for
     :return: The short code for the asset
     """
