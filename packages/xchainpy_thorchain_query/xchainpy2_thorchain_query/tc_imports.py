@@ -18,7 +18,7 @@ except ModuleNotFoundError:
     THOR_BLOCK_TIME_SEC = 6.0
     """Typical time in seconds for a block to be produced in THORChain."""
 
-    DEFAULT_RUNE_NETWORK_FEE = CryptoAmount(Amount.automatic(Decimal("0.02"), RUNE_DECIMAL), AssetRUNE)
+    DEFAULT_RUNE_NETWORK_FEE = CryptoAmount(Amount.auto(Decimal("0.02"), RUNE_DECIMAL), AssetRUNE)
 
 
     class THORMemo:
@@ -34,4 +34,4 @@ except ModuleNotFoundError:
 try:
     from xchainpy2_mayachain.const import DEFAULT_CACAO_NETWORK_FEE
 except ModuleNotFoundError:
-    DEFAULT_CACAO_NETWORK_FEE = CryptoAmount(Amount.automatic(Decimal("0.5"), CACAO_DECIMAL), AssetCACAO)
+    DEFAULT_CACAO_NETWORK_FEE = CryptoAmount(Amount.auto(Decimal("0.5"), CACAO_DECIMAL), AssetCACAO)

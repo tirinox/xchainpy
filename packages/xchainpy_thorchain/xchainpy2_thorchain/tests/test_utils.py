@@ -7,7 +7,7 @@ from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE, RUNE_DECIMAL, Asset
 
 def test_convert_coin_to_crypto_amount():
     convert = convert_coin_to_crypto_amount
-    assert convert(Coin(100000000, 'rune')) == CryptoAmount(Amount.automatic(1, RUNE_DECIMAL), AssetRUNE)
+    assert convert(Coin(100000000, 'rune')) == CryptoAmount(Amount.auto(1, RUNE_DECIMAL), AssetRUNE)
     assert convert(Coin(10, 'uatom')) == CryptoAmount(Amount.auto_base(10), Asset.from_string('THOR.UATOM'))
     assert convert(Coin(333, 'uatom')) == CryptoAmount.auto_base('333', Asset.from_string('THOR.UATOM'))
 

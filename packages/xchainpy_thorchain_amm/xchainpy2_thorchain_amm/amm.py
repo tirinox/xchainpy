@@ -726,7 +726,7 @@ class THORChainAMM:
         :return: str TX hash
         """
         if not isinstance(amount, CryptoAmount):
-            amount = CryptoAmount.automatic(amount, AssetTCY, self._get_thorchain_client().decimal)
+            amount = CryptoAmount.auto(amount, AssetTCY, self._get_thorchain_client().decimal)
         elif amount.asset != AssetTCY:
             raise ValueError(f'Asset {amount.asset} is not {AssetTCY}')
 
@@ -876,7 +876,7 @@ class THORChainAMM:
         if not input_amount.asset.chain or not input_amount.asset.symbol:
             return 'Invalid input asset'
 
-        destination_asset = Asset.automatic(destination_asset)
+        destination_asset = Asset.auto(destination_asset)
         if not destination_asset.chain or not destination_asset.symbol:
             return f'Invalid destination asset "{destination_asset}"'
 
