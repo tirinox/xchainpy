@@ -277,10 +277,6 @@ class Asset(NamedTuple):
                 raise ValueError(f'Invalid extra symbol "." in "{name_part}"')
             name, tag = cls.get_name_and_contract(name_part)
 
-            # if kind is AssetKind.NATIVE and chain.upper() == Chain.THORChain.value:
-            #     # Looks like THOR.BTC
-            #     kind = AssetKind.DERIVED
-
             return cls(chain, name, tag, kind)
 
     @classmethod

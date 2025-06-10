@@ -44,7 +44,7 @@ def test_auto():
         Asset.from_string('ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7'))
     )
 
-    assert (CryptoAmount.auto(40.0, AssetCACAO) == CryptoAmount(Amount.automatic(40.0, 10), AssetCACAO))
+    assert (CryptoAmount.auto(40.0, AssetCACAO) == CryptoAmount(Amount.auto(40.0, 10), AssetCACAO))
 
 
 @pytest.mark.parametrize(
@@ -52,17 +52,17 @@ def test_auto():
     [
         (1, 'THOR.RUNE', 8, CryptoAmount(Amount(100000000, 8), AssetRUNE)),
         (134, 'THOR.RUNE', 8, CryptoAmount(Amount(13400000000, 8), AssetRUNE)),
-        (1.0, 'THOR.RUNE', 8, CryptoAmount(Amount.automatic(1.0, 8), AssetRUNE)),
+        (1.0, 'THOR.RUNE', 8, CryptoAmount(Amount.auto(1.0, 8), AssetRUNE)),
         (555111, 'THOR.RUNE', 8, CryptoAmount(Amount(55511100000000, 8), AssetRUNE)),
         (333.5, 'ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7', 6,
-         CryptoAmount(Amount.automatic(333.5, 6),
+         CryptoAmount(Amount.auto(333.5, 6),
                       Asset.from_string('ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7'))),
-        (40.0, AssetCACAO, 10, CryptoAmount(Amount.automatic(40.0, 10), AssetCACAO)),
+        (40.0, AssetCACAO, 10, CryptoAmount(Amount.auto(40.0, 10), AssetCACAO)),
         (Decimal("1.23456789"), 'BTC.BTC', 8, CryptoAmount(Amount(123456789, 8), AssetBTC)),
     ]
 )
 def test_auto_2(amount, asset, decimals, expected):
-    a = CryptoAmount.automatic(amount, asset, decimals)
+    a = CryptoAmount.auto(amount, asset, decimals)
     assert a.amount.internal_amount == expected.base_amount == expected.amount.internal_amount
     assert a == expected
     assert a.decimals == expected.decimals
@@ -79,7 +79,7 @@ def test_auto_2(amount, asset, decimals, expected):
     ]
 )
 def test_auto_guess_decimals(amount, asset, expected):
-    a = CryptoAmount.automatic(amount, asset)
+    a = CryptoAmount.auto(amount, asset)
     assert a.amount.internal_amount == expected.base_amount == expected.amount.internal_amount
     assert a == expected
     assert a.decimals == expected.decimals
@@ -110,15 +110,15 @@ def test_bad_multiply(right):
 
 def test_change_amount():
     amt = CryptoAmount(Amount(100, 8), AssetRUNE)
-    assert amt.changed_amount(200) == CryptoAmount(Amount(200, 8), AssetRUNE)
-    assert amt.changed_amount(0) == CryptoAmount(Amount(0, 8), AssetRUNE)
+    assert amt.changed_amount_base(200) == CryptoAmount(Amount(200, 8), AssetRUNE)
+    assert amt.changed_amount_base(0) == CryptoAmount.zero(AssetRUNE)
 
-
-# todo: repr
+    assert amt.changed_amount(1) == CryptoAmount(Amount(100000000, 8), AssetRUNE)
+    assert amt.changed_amount(0) == CryptoAmount.zero(amt.asset)
 
 
 def test_change_decimals():
-    amt = CryptoAmount(Amount.automatic(2.22, 18), Asset.from_string('ETH~ETH'))
+    amt = CryptoAmount(Amount.auto(2.22, 18), Asset.from_string('ETH~ETH'))
     assert amt.decimals == amt.amount.decimals == 18
     amt2 = amt.converted_decimals(8)
     assert amt2.decimals == amt2.amount.decimals == 8
@@ -141,21 +141,21 @@ def test_arithmetic():
         bmt = CryptoAmount(Amount(100, 8), Asset.from_string(AssetBTC))
         amt + bmt
 
-    assert amt / amt == CryptoAmount.automatic(1, Asset.dimensionless())
-    assert amt // amt == CryptoAmount.automatic(1, Asset.dimensionless())
-    assert amt * 5 / amt == CryptoAmount.automatic(5, Asset.dimensionless())
+    assert amt / amt == CryptoAmount.auto(1, Asset.dimensionless())
+    assert amt // amt == CryptoAmount.auto(1, Asset.dimensionless())
+    assert amt * 5 / amt == CryptoAmount.auto(5, Asset.dimensionless())
     # 7 // 2 == 3
-    assert amt * 7 // (amt * 2) == CryptoAmount.automatic(3, Asset.dimensionless())
+    assert amt * 7 // (amt * 2) == CryptoAmount.auto(3, Asset.dimensionless())
 
-    amt = CryptoAmount.automatic(5, AssetRUNE)
-    assert amt + 6 == CryptoAmount.automatic(11, AssetRUNE)
-    assert amt - 1 == CryptoAmount.automatic(4, AssetRUNE)
-    assert amt + 6.0 == CryptoAmount.automatic(11, AssetRUNE)
-    assert amt - 1.0 == CryptoAmount.automatic(4, AssetRUNE)
-    assert amt + "6.0" == CryptoAmount.automatic(11, AssetRUNE)
-    assert amt - "1.0" == CryptoAmount.automatic(4, AssetRUNE)
-    assert amt + Decimal("6.0") == CryptoAmount.automatic(11, AssetRUNE)
-    assert amt - Decimal("1.0") == CryptoAmount.automatic(4, AssetRUNE)
+    amt = CryptoAmount.auto(5, AssetRUNE)
+    assert amt + 6 == CryptoAmount.auto(11, AssetRUNE)
+    assert amt - 1 == CryptoAmount.auto(4, AssetRUNE)
+    assert amt + 6.0 == CryptoAmount.auto(11, AssetRUNE)
+    assert amt - 1.0 == CryptoAmount.auto(4, AssetRUNE)
+    assert amt + "6.0" == CryptoAmount.auto(11, AssetRUNE)
+    assert amt - "1.0" == CryptoAmount.auto(4, AssetRUNE)
+    assert amt + Decimal("6.0") == CryptoAmount.auto(11, AssetRUNE)
+    assert amt - Decimal("1.0") == CryptoAmount.auto(4, AssetRUNE)
 
 
 

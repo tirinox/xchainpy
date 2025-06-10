@@ -38,7 +38,10 @@ def guess_decimals(a: Union[Asset, str]):
     if isinstance(a, str):
         a = Asset.from_string(a)
 
-    chain = Chain(a.chain)
+    try:
+        chain = Chain(a.chain)
+    except ValueError:
+        raise ValueError(f"Unknown chain for asset {a}. Cannot guess decimals.")
 
     # may be predefined
     if custom_decimals := CUSTOM_DECIMALS.get(a):
