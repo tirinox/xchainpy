@@ -506,6 +506,10 @@ class CryptoAmount(NamedTuple):
         :param other: A number to multiply by (int, float, Decimal, or str)
         :return: CryptoAmount
         """
+        if isinstance(other, CryptoAmount):
+            raise TypeError("You re trying to multiply two CryptoAmount, can not determine the resulting asset")
+        if not isinstance(other, (int, float, Decimal, str)):
+            raise TypeError(f'Cannot multiply {self} with {type(other)}')
         return CryptoAmount(self.amount * other, self.asset)
 
     def __truediv__(self, other: CryptoAmountLike) -> 'CryptoAmount':
@@ -614,7 +618,7 @@ class CryptoAmount(NamedTuple):
 
         :return: str
         """
-        return f'CryptoAmount({self.amount}, {self.asset})'
+        return f'CryptoAmount({self.amount!r}, {self.asset!r})'
 
     def __int__(self):
         """
@@ -632,8 +636,19 @@ class CryptoAmount(NamedTuple):
         :param new_amount: New amount
         :return: CryptoAmount
         """
-        a = Amount.automatic(new_amount, decimals=self.amount.decimals)
+        a = Amount.auto(new_amount, decimals=self.amount.decimals)
         return CryptoAmount(a, self.asset)
+
+    def changed_amount_base(self, new_amount: int) -> 'CryptoAmount':
+        """
+        Change the amount only of this CryptoAmount. Sets the base amount (integer)
+        The asset remains the same.
+        Non-destructive. Returns a new instance.
+
+        :param new_amount: New amount
+        :return: CryptoAmount
+        """
+        return CryptoAmount(Amount(new_amount, self.amount.decimals), self.asset)
 
     def _guard_asset(self, a: 'CryptoAmount'):
         """
@@ -657,7 +672,7 @@ class CryptoAmount(NamedTuple):
         :param decimals: Decimals for this asset (optional)
         :return: CryptoAmount
         """
-        asset = Asset.automatic(asset)
+        asset = Asset.auto(asset)
         if decimals is None:
             decimals = guess_decimals(asset)
         return cls(Amount.zero(decimals), asset)
