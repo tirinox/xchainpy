@@ -212,7 +212,8 @@ class Asset(NamedTuple):
         return s
 
     def __repr__(self):
-        return f"Asset({self!s})"
+        return (f"Asset(chain='{self.chain}', symbol='{self.symbol}', "
+                f"contract='{self.contract}', kind='{self.kind.value}')")
 
     @staticmethod
     def get_name_and_contract(input_str):
@@ -276,9 +277,9 @@ class Asset(NamedTuple):
                 raise ValueError(f'Invalid extra symbol "." in "{name_part}"')
             name, tag = cls.get_name_and_contract(name_part)
 
-            if kind is AssetKind.NATIVE and chain.upper() == Chain.THORChain.value:
-                # Looks like THOR.BTC
-                kind = AssetKind.DERIVED
+            # if kind is AssetKind.NATIVE and chain.upper() == Chain.THORChain.value:
+            #     # Looks like THOR.BTC
+            #     kind = AssetKind.DERIVED
 
             return cls(chain, name, tag, kind)
 

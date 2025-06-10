@@ -121,6 +121,7 @@ def test_equality():
     ('a', AssetAVAX),
     ('s', AssetBSC),
     ('f', AssetBaseETH),
+    ('x', AssetXRP),
     ('BTC.BTC', AssetBTC),
     ('THOR.RUNE', AssetRUNE),
     ('ETH/ETH', AssetETH.as_synth),
@@ -165,7 +166,8 @@ def test_derived_asset():
     a = Asset.auto('THOR.BTC')
     assert a.chain == Chain.THORChain.value
     assert a.symbol == 'BTC'
-    assert a.kind == AssetKind.DERIVED and a.is_derived
+    assert a.kind == AssetKind.NATIVE
+    assert a.as_derived.is_derived
 
     a = AssetAVAX.as_derived
     assert a.chain == Chain.THORChain.value
@@ -185,7 +187,7 @@ def test_derived_asset():
 ])
 def test_get_short_code(source, expected):
     assert get_short_code(source) == expected
-    assert Asset.auto(expected) == Asset.automatic(source)
+    assert Asset.auto(expected) == Asset.auto(source)
 
 
 def test_dimensionless():
@@ -214,3 +216,23 @@ def test_dimensionless():
 ])
 def test_asset_kind_recognize(source_asset, expected):
     assert AssetKind.recognize(source_asset) == expected
+
+
+Asset_USDC_ARB = Asset.from_string("ARB.USDC-0XAF88D065E77C8CC2239327C5EDB3A432268E5831").upper()
+
+
+# test for Asset repr
+@pytest.mark.parametrize('asset, expected_repr', [
+    (AssetRUNE, "Asset(chain='THOR', symbol='RUNE', contract='', kind='native')"),
+    (AssetBTC, "Asset(chain='BTC', symbol='BTC', contract='', kind='native')"),
+    (AssetBTC.as_trade, "Asset(chain='BTC', symbol='BTC', contract='', kind='trade')"),
+    (AssetETH, "Asset(chain='ETH', symbol='ETH', contract='', kind='native')"),
+    (AssetETH.as_secured, "Asset(chain='ETH', symbol='ETH', contract='', kind='secured')"),
+    (AssetBSC, "Asset(chain='BSC', symbol='BNB', contract='', kind='native')"),
+    (Asset_USDC_ARB,
+     "Asset(chain='ARB', symbol='USDC', contract='0XAF88D065E77C8CC2239327C5EDB3A432268E5831', kind='native')"),
+    (Asset_USDC_ARB.as_synth,
+     "Asset(chain='ARB', symbol='USDC', contract='0XAF88D065E77C8CC2239327C5EDB3A432268E5831', kind='synth')"),
+])
+def test_asset_repr(asset, expected_repr):
+    assert repr(asset) == expected_repr
