@@ -21,7 +21,7 @@ async def swap_cacao_to_synth_btc(client, amount: float):
     out_address = client.get_address()
 
     tx_hash = await client.deposit(
-        CryptoAmount(Amount.automatic(amount, CACAO_DECIMAL), AssetCACAO),
+        CryptoAmount(Amount.auto(amount, CACAO_DECIMAL), AssetCACAO),
         memo=f'=:BTC/BTC:{out_address}'
     )
 
@@ -34,7 +34,7 @@ async def swap_synth_btc_back_to_cacao(client, satoshi):
     out_address = client.get_address()
 
     tx_hash = await client.deposit(
-        CryptoAmount(Amount.automatic(satoshi, CACAO_DECIMAL), SYNTH_BTC),
+        CryptoAmount(Amount.auto(satoshi, CACAO_DECIMAL), SYNTH_BTC),
         memo=f'=:MAYA.CACAO:{out_address}'
     )
 

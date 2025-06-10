@@ -37,7 +37,7 @@ async def main():
         print('Invalid dest address!')
         usage()
 
-    amount = Amount.automatic(float(sys.argv[1]), MRC20_DECIMALS)
+    amount = Amount.auto(float(sys.argv[1]), MRC20_DECIMALS)
     if amount <= 0:
         print("Amount is <= 0")
         usage()

@@ -1,8 +1,8 @@
 from xchainpy2_utils.amount import CryptoAmount
 from xchainpy2_utils.asset import AssetRUNE, AssetETH
 
-amount1 = CryptoAmount.automatic(100, AssetRUNE)
-amount2 = CryptoAmount.automatic(200, AssetRUNE)
+amount1 = CryptoAmount.auto(100, AssetRUNE)
+amount2 = CryptoAmount.auto(200, AssetRUNE)
 
 # Addition
 result = amount1 + amount2
@@ -25,7 +25,7 @@ print(amount1 == amount2)  # False
 print(amount1 < amount2)  # True
 print(amount1 > amount2)  # False
 
-amount_bnb = CryptoAmount.automatic(100, AssetETH)
+amount_bnb = CryptoAmount.auto(100, AssetETH)
 try:
     result = amount1 + amount_bnb
 except ValueError as e:

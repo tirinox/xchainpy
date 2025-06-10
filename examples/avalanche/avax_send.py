@@ -24,7 +24,7 @@ async def main():
         avax1, avax2 = avax2, avax1
         balance1, balance2 = balance2, balance1
 
-    gas = GasOptions.automatic(FeeOption.FAST)
+    gas = GasOptions.auto(FeeOption.FAST)
 
     async def transfer_some_avax():
         input("Press Enter to send TX...")

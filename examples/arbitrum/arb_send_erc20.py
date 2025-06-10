@@ -6,7 +6,7 @@ from xchainpy2_client import FeeOption
 from xchainpy2_ethereum import GasOptions
 from xchainpy2_utils import NetworkType, Asset, CryptoAmount
 
-Asset_USDC_ARB = Asset.from_string("ARB.USDC-0xaf88d065e77c8cc2239327c5edb3a432268e5831").upper()
+Asset_USDC_ARB = Asset.from_string("ARB.USDC-0XAF88D065E77C8CC2239327C5EDB3A432268E5831").upper()
 
 
 async def main():
@@ -35,9 +35,9 @@ async def main():
     # gas = GasOptions.legacy(gas_price, 100000)
 
     ## automatic fee
-    gas = GasOptions.automatic(FeeOption.FAST)
+    gas = GasOptions.auto(FeeOption.FAST)
 
-    amount = CryptoAmount.automatic(0.01, Asset_USDC_ARB, 6)
+    amount = CryptoAmount.auto(0.01, Asset_USDC_ARB, 6)
     print(f"Transferring {amount} to {arb1.get_address()}")
     # input("Press Enter to send TX...")
 

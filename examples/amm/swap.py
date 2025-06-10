@@ -56,7 +56,7 @@ async def main():
     decimals = None
 
     tx_hash = await amm.swap(
-        input_amount=CryptoAmount.automatic(input_amount, input_asset, decimals=decimals),
+        input_amount=CryptoAmount.auto(input_amount, input_asset, decimals=decimals),
         destination_asset=output_asset,
         tolerance_bps=tolerance_bps,
         affiliate_bps=affiliate_fee_bps,

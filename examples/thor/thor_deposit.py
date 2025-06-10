@@ -23,7 +23,7 @@ async def swap_rune_to_synth_btc(client, rune_amount):
     out_address = client.get_address()
 
     tx_hash = await client.deposit(
-        CryptoAmount(Amount.automatic(rune_amount, RUNE_DECIMAL), AssetRUNE),
+        CryptoAmount(Amount.auto(rune_amount, RUNE_DECIMAL), AssetRUNE),
         memo=f'=:BTC/BTC:{out_address}'
     )
 
@@ -36,7 +36,7 @@ async def swap_synth_btc_back_to_rune(client, satoshi):
     out_address = client.get_address()
 
     tx_hash = await client.deposit(
-        CryptoAmount(Amount.automatic(satoshi, RUNE_DECIMAL), SYNTH_BTC),
+        CryptoAmount(Amount.auto(satoshi, RUNE_DECIMAL), SYNTH_BTC),
         memo=f'=:THOR.RUNE:{out_address}'
     )
 

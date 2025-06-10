@@ -28,7 +28,7 @@ async def main():
     print(f"{client_a.get_address()}'s balance is {balance}")
 
     temp_address = client_b.get_address()
-    r = await client_a.transfer(CryptoAmount(Amount.automatic(0.1, RUNE_DECIMAL), AssetRUNE), temp_address)
+    r = await client_a.transfer(CryptoAmount(Amount.auto(0.1, RUNE_DECIMAL), AssetRUNE), temp_address)
     print(f"Transfer submitted: {client_a.get_explorer_tx_url(r)}")
 
     while True:

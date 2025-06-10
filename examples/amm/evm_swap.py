@@ -33,17 +33,17 @@ async def main():
 
     my_address = bsc.get_address()
 
-    gas = GasOptions.automatic(FeeOption.FAST)
+    gas = GasOptions.auto(FeeOption.FAST)
     # gas = GasOptions.legacy(gas_price=50, gas_limit=210000)
     # gas = GasOptions.eip1559_in_gwei(max_fee_per_gas=1, max_priority_fee_per_gas=1, gas_limit=210000)
 
     async def swap_bnb_and_avax(from_avax_to_bnb: bool):
         if from_avax_to_bnb:
-            from_amount = CryptoAmount.automatic(0.6, 'AVAX.AVAX', AVAX_DECIMALS)
-            to_asset = Asset.automatic('BSC.BNB').upper()
+            from_amount = CryptoAmount.auto(0.6, 'AVAX.AVAX', AVAX_DECIMALS)
+            to_asset = Asset.auto('BSC.BNB').upper()
         else:
-            from_amount = CryptoAmount.automatic(0.033, 'BSC.BNB', BSC_DECIMALS)
-            to_asset = Asset.automatic('AVAX.AVAX').upper()
+            from_amount = CryptoAmount.auto(0.033, 'BSC.BNB', BSC_DECIMALS)
+            to_asset = Asset.auto('AVAX.AVAX').upper()
 
         if from_avax_to_bnb:
             print(f"I will swap {from_amount} to BNB.")
@@ -53,9 +53,9 @@ async def main():
         input("Press Enter to send TX...")
 
         # r = await amm.query.quote_swap(
-        #     input_amount=CryptoAmount.automatic(0.05, 'BSC.BNB', BSC_DECIMALS),
-        #     # destination_asset=Asset.automatic('BSC.USDT-0x55d398326f99059ff775485246999027b3197955').upper(),
-        #     destination_asset=Asset.automatic('AVAX.AVAX').upper(),
+        #     input_amount=CryptoAmount.auto(0.05, 'BSC.BNB', BSC_DECIMALS),
+        #     # destination_asset=Asset.auto('BSC.USDT-0x55d398326f99059ff775485246999027b3197955').upper(),
+        #     destination_asset=Asset.auto('AVAX.AVAX').upper(),
         #     destination_address=bsc1.get_address(),
         #     tolerance_bps=500,
         # )

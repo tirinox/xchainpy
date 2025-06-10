@@ -36,7 +36,7 @@ async def main():
         print('Invalid dest address!')
         usage()
 
-    amount = Amount.automatic(sys.argv[1], MAYA_DECIMAL)
+    amount = Amount.auto(sys.argv[1], MAYA_DECIMAL)
     if amount <= 0:
         print("Amount is <= 0")
         usage()

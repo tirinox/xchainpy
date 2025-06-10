@@ -19,12 +19,12 @@ async def main(seed_phrase):
     print(f"Balances: {balances}")
 
     # tx_hash = await amm.swap(
-    #     CryptoAmount.automatic("1.5", 'THOR.RUNE'),
+    #     CryptoAmount.auto("1.5", 'THOR.RUNE'),
     #     AssetATOM,
     #     tolerance_bps=3000,
     # )
     tx_hash = await amm.swap(
-        CryptoAmount.automatic("1.38", AssetATOM),
+        CryptoAmount.auto("1.38", AssetATOM),
         AssetRUNE,
         tolerance_bps=3000,
     )

@@ -23,7 +23,7 @@ async def main():
         input_amount=bsc.gas_amount(1.0),  # 1 BNB
         destination_asset=AssetAVAX,
         tolerance_bps=NO_SWAP_LIMIT,
-        gas_options=GasOptions.automatic(FeeOption.FAST),
+        gas_options=GasOptions.auto(FeeOption.FAST),
     )
 
     print(f"Swap TX hash {bsc.get_explorer_tx_url(tx_hash)}")

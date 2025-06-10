@@ -13,7 +13,7 @@ Just don't forget to pass "PHRASE" environment variable that contains a mnemonic
 NETWORK = NetworkType.MAINNET
 
 WHAT_SEND = CryptoAmount(
-    Amount.automatic(1.0, CACAO_DECIMAL),
+    Amount.auto(1.0, CACAO_DECIMAL),
     AssetCACAO
 )
 

@@ -123,7 +123,7 @@ class TCYBot:
     def buy_amount(self):
         from_asset = self.strategy['source_asset']
         from_amount = self.strategy['source_amount']
-        return CryptoAmount.automatic(from_amount, from_asset)
+        return CryptoAmount.auto(from_amount, from_asset)
 
     async def submit_buy_order(self):
         cfg, amm = self.cfg, self.amm

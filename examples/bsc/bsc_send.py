@@ -28,7 +28,7 @@ async def main():
         bsc1, bsc2 = bsc2, bsc1
         balance1, balance2 = balance2, balance1
 
-    gas = GasOptions.automatic(FeeOption.FAST)
+    gas = GasOptions.auto(FeeOption.FAST)
 
     # gas = GasOptions.legacy(gas_price=50, gas_limit=210000)
     # gas = GasOptions.eip1559_in_gwei(max_fee_per_gas=1, max_priority_fee_per_gas=1, gas_limit=210000)

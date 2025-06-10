@@ -39,11 +39,11 @@ async def main():
     my_address = source_client.get_address()
 
     # pick a gas option
-    gas = GasOptions.automatic(FeeOption.FAST)
+    gas = GasOptions.auto(FeeOption.FAST)
     # gas = GasOptions.legacy(gas_price=50, gas_limit=210000)
     # gas = GasOptions.eip1559_in_gwei(max_fee_per_gas=1, max_priority_fee_per_gas=1, gas_limit=210000)
 
-    from_amount = CryptoAmount.automatic(5.0, AssetBSC_USDT)
+    from_amount = CryptoAmount.auto(5.0, AssetBSC_USDT)
 
     if await amm.is_tc_router_approved_to_spend(from_amount):
         print("Router is approved to spend the asset.")
@@ -53,7 +53,7 @@ async def main():
         tx_hash = await amm.approve_tc_router_to_spend(from_amount, gas_options=gas)
         print(f"Approval tx hash {tx_hash} ({source_client.get_explorer_tx_url(tx_hash)})")
 
-    to_asset = Asset.automatic('AVAX.AVAX').upper()
+    to_asset = Asset.auto('AVAX.AVAX').upper()
 
     print(f"I will swap {from_amount} to {to_asset}.")
     input("Press Enter to send TX...")
