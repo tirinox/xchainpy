@@ -253,7 +253,7 @@ class Amount(NamedTuple):
         return Amount(int(a), new_decimals)
 
     @classmethod
-    def automatic(cls, x, decimals=DEFAULT_ASSET_DECIMAL, context=DC):
+    def auto(cls, x, decimals=DEFAULT_ASSET_DECIMAL, context=DC):
         """
         Convert any type to an Amount instance.
         .. warning::  This method uses "asset" amount, e.g. 1 BTC is 1, not 100000000 (satoshi). See also: auto_base.
@@ -430,8 +430,8 @@ class CryptoAmount(NamedTuple):
     """The asset itself. Asset Object"""
 
     @classmethod
-    def automatic(cls, _amount: AmountLike, asset: Union[Asset, str], decimals=None) -> 'CryptoAmount':
-        """
+    def auto(cls, _amount: AmountLike, asset: Union[Asset, str], decimals=None) -> 'CryptoAmount':
+        """˚
         Create a CryptoAmount instance from an amount and an asset.
         The amount can be a number, string, or an Amount instance.
         The amount is treated as an asset amount, e.g. 1 BTC is 1, not 100000000 (satoshi).
@@ -447,8 +447,8 @@ class CryptoAmount(NamedTuple):
             decimals = guess_decimals(asset)
 
         return cls(
-            Amount.automatic(_amount, decimals),
-            Asset.automatic(asset),
+            Amount.auto(_amount, decimals),
+            Asset.auto(asset),
         )
 
     @classmethod
@@ -469,7 +469,7 @@ class CryptoAmount(NamedTuple):
             decimals = guess_decimals(asset)
 
         return cls(
-            Amount.auto_base(_amount, decimals), Asset.automatic(asset),
+            Amount.auto_base(_amount, decimals), Asset.auto(asset),
         )
 
     def __add__(self, other: CryptoAmountLike) -> 'CryptoAmount':

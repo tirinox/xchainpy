@@ -203,12 +203,12 @@ def test_compare():
     assert Amount(400000, 4) >= 39  # , but
     assert Amount(40, 4) < 39
 
-    assert Amount.automatic(40) > 39.0
-    assert Amount.automatic(40) >= 40.0
-    assert Amount.automatic(40) >= 38.0
-    assert Amount.automatic(40) < 40.1
-    assert Amount.automatic(40) <= 40.0
-    assert Amount.automatic(40) <= 40.1
+    assert Amount.auto(40) > 39.0
+    assert Amount.auto(40) >= 40.0
+    assert Amount.auto(40) >= 38.0
+    assert Amount.auto(40) < 40.1
+    assert Amount.auto(40) <= 40.0
+    assert Amount.auto(40) <= 40.1
 
 
 def test_change_decimals():
@@ -286,10 +286,10 @@ def test_bool():
     assert Amount(-5)
     assert not Amount(0)
     assert not Amount.auto_base(0, 4)
-    assert not Amount.automatic(0)
+    assert not Amount.auto(0)
 
     assert Amount(0).is_zero
-    assert not Amount.automatic(25.3).is_zero
+    assert not Amount.auto(25.3).is_zero
 
 
 @pytest.mark.parametrize('internal_amount, decimals, shifter, expected_internal, expected_decimals', [

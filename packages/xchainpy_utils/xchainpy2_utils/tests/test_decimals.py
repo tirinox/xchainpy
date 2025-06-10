@@ -25,10 +25,16 @@ from xchainpy2_utils import guess_decimals, AssetRUNE, AssetATOM, AssetBSC
     ('DOGE.DOGE', 8),
     ('AVAX.AVAX', 18),
     (AssetBSC, 18),
-    ('x', 6),
 ])
 def test_decimals(a, dec):
     assert guess_decimals(a) == dec
+
+
+def test_cannot_guess_decimals():
+    with pytest.raises(ValueError):
+        guess_decimals('UNKNOWN.ASSET')
+    with pytest.raises(ValueError):
+        guess_decimals('x.y')
 
 
 def test_invalid_chain():
