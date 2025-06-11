@@ -616,7 +616,7 @@ class THORChainCache:
 
         try:
             thor_names = await self.midgard_api.get_thor_names_by_address(address)
-            self._name_cache.address_to_name[address] = thor_names
+            self._name_cache.address_to_name[address] = set(thor_names)
             return thor_names
         except ApiException as e:
             if getattr(e, 'status', 0) == 404:
@@ -625,20 +625,20 @@ class THORChainCache:
             else:
                 raise
 
-    async def get_names_with_details(self, address: str) -> List[THORNameDetails]:
+    async def get_names_with_details(self, address: str) -> Dict[str, THORNameDetails]:
         """
         Look up THORNames with their details by a wallet address. Names are cached.
         But details are not cached yet.
 
         :param address: Address to look up
-        :return: List[THORNameDetails]
+        :return: Dict[str, THORNameDetails] a dictionary where keys are THORNames (syt) and values are their details.
         """
 
         names = await self.get_names_by_address(address)
         if not names:
-            return []
+            return {}
         details = await asyncio.gather(*[self.get_name_details(name) for name in names])
-        return list(details)
+        return dict(zip(names, details))
 
     async def get_name_details(self, name: str) -> Optional[THORNameDetails]:
         """

@@ -62,7 +62,7 @@ async def run_thorchain_cache():
 
 
 async def main():
-    # await run_midgard_pools()
+    await run_midgard_pools()
     await run_thorchain_cache()
 
 
