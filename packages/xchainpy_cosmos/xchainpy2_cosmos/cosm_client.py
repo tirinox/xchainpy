@@ -563,8 +563,9 @@ class CosmosGaiaClient(XChainClient):
         is_native = amount.asset == self._gas_asset
         extra_fee = fee if is_native else Amount.auto_base(0, self._decimal)
 
-        required = amount.amount + extra_fee
-        if asset_balance is None or asset_balance.amount < required:
+        # Insufficient funds: 730350.0 (D:8) is required. Balance is 0.0073035 BSC~BNB
+        required = CryptoAmount(amount.amount + extra_fee, amount.asset)
+        if asset_balance is None or asset_balance < required:
             raise ValueError(f"Insufficient funds: {required} is required. Balance is {asset_balance}")
 
         if native_balance is None or native_balance.amount < fee:
