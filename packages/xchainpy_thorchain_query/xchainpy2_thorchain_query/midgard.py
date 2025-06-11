@@ -15,12 +15,13 @@ class MidgardAPIClient(HeadersPatch, mdg.ApiClient):
     def __init__(self, configuration: Optional[ConfigurationEx] = None,
                  header_name=NINE_REALMS_CLIENT_HEADER,
                  header_value=XCHAINPY_IDENTIFIER,
-                 cookie=None, pool_processes=None, user_agent=DEFAULT_USER_AGENT):
+                 cookie=None, user_agent=DEFAULT_USER_AGENT):
         if configuration is None:
             configuration = ConfigurationEx()
         self.configuration = configuration
 
-        self.pool = ThreadPool(pool_processes)
+        # Not really used, but required for compatibility with the parent class.
+        self.pool = ThreadPool()
 
         self.default_headers = {}
         if header_name is not None:

@@ -8,7 +8,7 @@ from .patch_clients import ConfigurationEx, RESTClientRetry, HeadersPatch
 
 class THORNodeAPIClient(HeadersPatch, thornode.ApiClient):
     """
-    THORNode API client.
+    Advanced THORNode API client with timeout and retry logic.
 
     :param configuration: ConfigurationEx object
     """
@@ -16,12 +16,13 @@ class THORNodeAPIClient(HeadersPatch, thornode.ApiClient):
     # noinspection PyMissingConstructor
     def __init__(self, configuration: Optional[ConfigurationEx] = None,
                  header_name=NINE_REALMS_CLIENT_HEADER, header_value=XCHAINPY_IDENTIFIER,
-                 cookie=None, pool_processes=None, user_agent=DEFAULT_USER_AGENT):
+                 cookie=None, user_agent=DEFAULT_USER_AGENT):
         if configuration is None:
             configuration = ConfigurationEx()
         self.configuration = configuration
 
-        self.pool = ThreadPool(pool_processes)
+        # Not really used, but required for compatibility with the parent class.
+        self.pool = ThreadPool()
 
         # Patch REST client with additional retry logic and backup hosts
         self.rest_client = None
