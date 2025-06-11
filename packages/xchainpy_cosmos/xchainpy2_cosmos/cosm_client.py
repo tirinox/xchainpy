@@ -496,9 +496,16 @@ class CosmosGaiaClient(XChainClient):
         )
         return tx
 
-    async def broadcast_tx(self, tx_hex: str) -> str:
+    async def broadcast_tx(self, tx_hex: Union[bytes, str]) -> str:
+        """
+        Broadcast a transaction to the Cosmos-based network.
+
+        :param tx_hex: Either a hex string or bytes representing the transaction.
+        :return: str Transaction hash (tx digest).
+        """
+        tx_bytes = tx_hex if isinstance(tx_hex, bytes) else bytes.fromhex(tx_hex)
         broadcast_req = BroadcastTxRequest(
-            tx_bytes=tx_hex.encode('utf-8'), mode=BroadcastMode.BROADCAST_MODE_SYNC
+            tx_bytes=tx_bytes, mode=BroadcastMode.BROADCAST_MODE_SYNC
         )
 
         # broadcast the transaction
@@ -518,8 +525,9 @@ class CosmosGaiaClient(XChainClient):
 
     async def fetch_chain_id(self, server='') -> str:
         """
-        Helper to get Cosmos' chain id
-        :return:
+        Helper to get Cosmos' chain id.
+
+        :return: str Chain ID
         """
         url = f"{server or self.server_url}/node_info"
         j = await self._get_json(url)
