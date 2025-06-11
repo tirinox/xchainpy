@@ -408,6 +408,14 @@ class XChainClient(abc.ABC):
             *args
         )
 
+    async def close(self):
+        """
+        Close the client and release resources.
+        By default, this method does nothing,
+        but it can be overridden in subclasses to close connections or clean up resources.
+        """
+        ...
+
 
 class NoClient(XChainClient, abc.ABC):
     """
