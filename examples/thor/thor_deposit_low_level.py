@@ -21,8 +21,8 @@ async def main():
         raise Exception('Account not found')
 
     tx = build_deposit_tx_unsigned(
-        CryptoAmount(Amount.zero(), AssetRUNE),
-        '=:BTC/BTC',
+        CryptoAmount.auto(0.1, AssetRUNE),
+        '=:BSC~BNB',
         public_key,
         fee=client.get_amount_string(0),
         prefix=client.prefix,
@@ -37,7 +37,9 @@ async def main():
     tx.complete()
 
     result = await client.broadcast_tx(tx.tx.SerializeToString())
-    print(f'TX submitted: {result}')
+    print(f'TX submitted: {client.get_explorer_tx_url(result)}')
+
+    await client.close()
 
 
 if __name__ == "__main__":

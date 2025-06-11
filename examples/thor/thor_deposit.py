@@ -10,70 +10,43 @@ This example requires a real wallet with some amount of Rune
 Just don't forget to pass "PHRASE" environment variable that contains a mnemonic phrase of your wallet
 """
 
-SYNTH_BTC = Asset.from_string('BTC/BTC')
+TRADE_BNB = Asset.from_string('BSC~BNB')
+TARGET_ASSET = TRADE_BNB
 
-NETWORK = NetworkType.MAINNET
+NETWORK = NetworkType.MAINNET  # or NetworkType.STAGENET
 
 
-# NETWORK = NetworkType.STAGENET
-
-async def swap_rune_to_synth_btc(client, rune_amount):
-    print('I will swap 0.1 RUNE to BTC/BTC now.')
+async def swap_rune_to_target_asset(client, rune_amount):
+    amount = CryptoAmount(Amount.auto(rune_amount, RUNE_DECIMAL), AssetRUNE)
+    print(f'I will swap {amount} to {TARGET_ASSET} now.')
 
     out_address = client.get_address()
 
-    tx_hash = await client.deposit(
-        CryptoAmount(Amount.auto(rune_amount, RUNE_DECIMAL), AssetRUNE),
-        memo=f'=:BTC/BTC:{out_address}'
-    )
+    tx_hash = await client.deposit(amount, memo=f'=:{TARGET_ASSET!s}:{out_address}')
 
     print(f"Swap TX submitted: {client.get_explorer_tx_url(tx_hash)}")
 
 
-async def swap_synth_btc_back_to_rune(client, satoshi):
-    print(f'I will swap {satoshi} of BTC/BTC back to RUNE now.')
+async def swap_back_to_rune(client, amount: CryptoAmount):
+    print(f'I will swap {amount} of {TARGET_ASSET}` back to RUNE now.')
 
     out_address = client.get_address()
 
-    tx_hash = await client.deposit(
-        CryptoAmount(Amount.auto(satoshi, RUNE_DECIMAL), SYNTH_BTC),
-        memo=f'=:THOR.RUNE:{out_address}'
-    )
+    tx_hash = await client.deposit(amount, memo=f'=:THOR.RUNE:{out_address}')
 
     print(f"Swap TX submitted: {client.get_explorer_tx_url(tx_hash)}")
 
 
-async def check_for_synth_btc_balance(client) -> int:
+async def check_for_trade_btc_balance(client):
     balance = await client.get_balance()
 
     for b in balance:
-        if b.asset == SYNTH_BTC:
-            print(f'It seems we got some synth {b.amount} synth BTC')
-            satoshi = b.amount.internal_amount
-            return satoshi
+        if b.asset == TARGET_ASSET:
+            print(f'It seems we got {b}')
+            return b
     else:
-        print('No BTC yet.')
-        return 0
-
-
-async def demo_simple_deposit(client):
-    # Swap 0.1 RUNE to BTC/BTC
-    await swap_rune_to_synth_btc(client, 0.1)
-
-    # Wait until it is done
-    while True:
-        print("Waiting until things settle down...")
-        await asyncio.sleep(10.0)
-        satoshi = await check_for_synth_btc_balance(client)
-        if satoshi:
-            break
-
-    # A little bit more sleep to be sure...
-    print('Sleeping for 6 seconds...')
-    await asyncio.sleep(6.0)
-
-    # Swap all BTC/BTC back to RUNE
-    await swap_synth_btc_back_to_rune(client, satoshi)
+        print('Not received yet.')
+        return CryptoAmount.zero(TARGET_ASSET, RUNE_DECIMAL)
 
 
 async def main():
@@ -86,7 +59,26 @@ async def main():
     balance = await client.get_balance()
     print(f"{client.get_address()}'s balance is {balance}")
 
-    await demo_simple_deposit(client)
+    # Now swap some Rune to the target asset (e.g., BNB)
+    # await swap_rune_to_target_asset(client, 0.1)
+
+    # Wait until it is done
+    while True:
+        print("Waiting until things settle down...")
+        await asyncio.sleep(10.0)
+        satoshi = await check_for_trade_btc_balance(client)
+        if satoshi:
+            break
+
+    # A little bit more sleep to be sure...
+    print('Sleeping for 6 seconds...')
+    await asyncio.sleep(6.0)
+
+    # Swap all BTC/BTC back to RUNE
+    await swap_back_to_rune(client, satoshi)
+
+    # Close the client
+    await client.close()
 
 
 if __name__ == "__main__":
