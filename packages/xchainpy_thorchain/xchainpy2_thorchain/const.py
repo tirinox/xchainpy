@@ -133,6 +133,13 @@ DENOM_TCY = 'tcy'
 DENOM_RUJIRA = 'x/rujira'
 """Denomination for Rujira on THORChain."""
 
+DENOM_TOR = 'tor'
+"""
+    TOR (THOR.TOR) is a non-transferable unit of account within THORChain designed to match the value of $1 USD and 
+    has been in use since ADR 003. 
+    It cannot be exported anywhere and always has a market cap of $0. TOR is valued by taking the median price 
+    of the active USD pools.
+"""
 
 DEFAULT_RUNE_NETWORK_FEE = CryptoAmount(Amount.auto(Decimal("0.02"), RUNE_DECIMAL), AssetRUNE)
 """

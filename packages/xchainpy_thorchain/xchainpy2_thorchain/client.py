@@ -2,7 +2,6 @@ import asyncio
 import warnings
 from typing import Optional, Union, List
 
-from aiohttp import ClientSession
 from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.tx_helpers import SubmittedTx
@@ -13,13 +12,13 @@ from xchainpy2_client.fees import single_fee
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
-from xchainpy2_thorchain_query import DEFAULT_RUNE_NETWORK_FEE
+from xchainpy2_thorchain_query import DEFAULT_RUNE_NETWORK_FEE, THORNodeAPIClient, ConfigurationEx
 from xchainpy2_thornode import NetworkApi, TradeAccountApi, TradeAccountResponse
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, \
     Asset, AssetKind, AssetTCY, AssetRUJI
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, \
-    make_client_urls_from_ip_address, DENOM_TCY, DENOM_RUJIRA
+    make_client_urls_from_ip_address, DENOM_TCY, DENOM_RUJIRA, DENOM_TOR
 from .utils import get_thor_address_prefix, build_deposit_tx_unsigned, build_transfer_tx_draft
 
 
@@ -45,7 +44,7 @@ class THORChainClient(CosmosGaiaClient):
                  chain_ids=DEFAULT_CHAIN_IDS,
                  explorer_providers=THOR_EXPLORERS,
                  wallet_index=0,
-                 thornode_api_client=None,
+                 thornode_api_client: Optional[THORNodeAPIClient] = None,
                  ):
         """
         Initialize THORChainClient.
@@ -61,12 +60,12 @@ class THORChainClient(CosmosGaiaClient):
         :param wallet_index: int (wallet index, default 0) We can derive any number of addresses from a single seed
         :param thornode_api_client: Optional THORNodeAPIClient from xchainpy2_thorchain_query package.
         """
-        self._thornode_api_client = thornode_api_client
-
         self.explorers = explorer_providers
 
         if isinstance(client_urls, NodeURL):
             client_urls = {network: client_urls}
+
+        self._thornode_api_client = None
 
         self._client_urls = client_urls.copy() if client_urls else DEFAULT_CLIENT_URLS.copy()
         self.fallback_client_urls = fallback_client_urls.copy() if fallback_client_urls else None
@@ -89,6 +88,10 @@ class THORChainClient(CosmosGaiaClient):
         self._gas_limit = DEFAULT_GAS_LIMIT_VALUE
         self._deposit_gas_limit = DEPOSIT_GAS_LIMIT_VALUE
         self.standard_tx_fee = DEFAULT_RUNE_NETWORK_FEE
+
+        if not thornode_api_client:
+            thornode_api_client = THORNodeAPIClient(ConfigurationEx.new(host=self.server_url))
+        self._thornode_api_client = thornode_api_client
 
         self.set_network(self.network)  # this will set the prefix and client urls for THORNode client
 
@@ -128,7 +131,8 @@ class THORChainClient(CosmosGaiaClient):
 
         super().set_network(network)
         self._prefix = get_thor_address_prefix(network)
-        # self._thornode_api_client.configuration.host = self._client_urls[self.network].node
+        if self._thornode_api_client:
+            self._thornode_api_client.configuration.host = self.server_url
 
     set_network.__doc__ = CosmosGaiaClient.set_network.__doc__
 
@@ -363,6 +367,8 @@ class THORChainClient(CosmosGaiaClient):
             return AssetTCY
         elif denom == DENOM_RUJIRA:
             return AssetRUJI
+        elif denom == DENOM_TOR:
+            return Asset.from_string("THOR.TOR")
         else:
             warnings.warn(f"Unknown denomination: {denom}")
             return Asset("THOR", denom.upper())
@@ -440,23 +446,20 @@ class THORChainClient(CosmosGaiaClient):
             main_balance += await self.get_trade_asset_balance(address)
         return main_balance
 
-    @property
-    def rest_session(self) -> ClientSession:
-        """
-        Get the REST session used by the THORNode API client.
-
-        :return: ClientSession of the aiohttp library
-        :rtype: ClientSession
-        """
-        return self._thornode_api_client.rest_client.pool_manager if self._thornode_api_client else ClientSession()
-
     async def refresh_chain_id(self):
         """
         Refresh chain ID for the current network.
         """
-        rpc = self._client_urls[self.network].rpc
+        rpc = self.rpc_url
         async with self.rest_session.get(f'{rpc}/status?') as resp:
             data = await resp.json()
             new_chain_id = data['result']['node_info']['network']
             self.chain_ids[self.network] = new_chain_id
             return new_chain_id
+
+    async def close(self):
+        """
+        Close the client and release resources.
+        """
+        if self._thornode_api_client:
+            await self._thornode_api_client.close()

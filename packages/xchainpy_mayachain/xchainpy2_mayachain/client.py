@@ -93,7 +93,7 @@ class MayaChainClient(CosmosGaiaClient):
         self._make_wallet()
 
         self.maya_scan = MayaScanClient()
-        self.mayanode_api_client.configuration.host = self._client_urls[self.network].node
+        self.mayanode_api_client.configuration.host = self.server_url
 
     @property
     def server_url(self) -> str:
