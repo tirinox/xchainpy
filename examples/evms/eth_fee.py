@@ -11,7 +11,7 @@ async def main():
     # You can obtain an Infura URL by creating a project at https://infura.io/
     url = '' or os.environ.get('INFURA_URL')
     if not url:
-        raise ValueError('Please provide an ETH RPC URL')
+        print(f"Please provide an ETH RPC URL via the INFURA_URL environment variable or directly in the code.")
 
     provider = Web3.HTTPProvider(url)
 
