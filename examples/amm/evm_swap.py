@@ -11,10 +11,6 @@ from xchainpy2_utils import CryptoAmount, Chain, Asset, BSC_DECIMALS
 
 
 async def main():
-    # midgard = MidgardAPIClient()
-    # node = THORNodeAPIClient()
-    # cache = THORChainCache(midgard, node)
-
     phrase = get_phrase()
     wallet = Wallet(phrase)
 

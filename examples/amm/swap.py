@@ -34,11 +34,6 @@ def parse_arguments():
 
 
 async def main():
-    # midgard = MidgardAPIClient()
-    # node = THORNodeAPIClient()
-    # cache = THORChainCache(midgard, node)
-    # query = THORChainQuery(cache)
-
     phrase = get_phrase()
     wallet = Wallet(phrase)
 

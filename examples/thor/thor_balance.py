@@ -37,6 +37,8 @@ async def main():
     reserve_balance = await client.get_balance(TC_RESERVE_ADDR)
     print(f"Balance of the Reserve ({TC_RESERVE_ADDR}) is {reserve_balance}")
 
+    await client.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
