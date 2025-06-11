@@ -165,3 +165,17 @@ def test_conv():
 
     amt = amt.changed_amount(0)
     assert int(amt) == 0
+
+
+def test_bool():
+    amt = CryptoAmount(Amount(100, 8), AssetRUNE)
+    assert bool(amt) is True
+
+    amt = CryptoAmount.zero(AssetRUNE)
+    assert bool(amt) is False
+
+    amt = CryptoAmount(Amount(0, 8), AssetRUNE)
+    assert bool(amt) is False
+
+    amt = CryptoAmount(Amount(-100, 8), AssetBTC)
+    assert bool(amt) is True  # Negative amounts are still considered True

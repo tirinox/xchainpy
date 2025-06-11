@@ -730,3 +730,11 @@ class CryptoAmount(NamedTuple):
         :return: int
         """
         return self.amount.internal_amount
+
+    def __bool__(self):
+        """
+        Check if the CryptoAmount is non-zero.
+
+        :return: bool
+        """
+        return bool(self.amount)
