@@ -55,7 +55,7 @@ AVAX_FEE_BOUNDS = FeeBounds(100_000_000, 1_000_000_000)
 FREE_AVAX_PROVIDERS = {
     # https://chainlist.org/chain/43114
     NetworkType.MAINNET: [
-        "https://rpc.ankr.com/avalanche",
+        "https://avalanche.drpc.org",
         "https://1rpc.io/avax/c",
     ],
     # https://chainlist.org/chain/43113
