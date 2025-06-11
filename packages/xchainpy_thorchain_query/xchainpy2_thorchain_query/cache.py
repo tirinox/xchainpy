@@ -15,7 +15,7 @@ from xchainpy2_midgard.rest import ApiException
 from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress, TransactionsApi, LiquidityProvidersApi, \
     SaversApi, QueueApi, QuoteApi, LastBlock, LiquidityProviderSummary
 from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, CryptoAmount, RUNE_DECIMAL, CACAO_DECIMAL, Amount, \
-    NetworkType
+    NetworkType, guess_decimals
 from .const import Mimir, TEN_MINUTES, SAME_ASSET_EXCHANGE_RATE, USD_ASSETS, THOR_BLOCK_TIME_SEC
 from .env import URLs
 from .midgard import MidgardAPIClient
@@ -200,6 +200,9 @@ class THORChainCache:
         """
         if self.is_native_asset(asset):
             raise ValueError('Native Rune does not have a pool')
+
+        await self.get_pools()
+
         pool = self._pool_cache.pools.get(str(asset))
         if not pool:
             raise LookupError(f'Pool for {asset} not found')
@@ -428,13 +431,16 @@ class THORChainCache:
             return self.native_decimals
         else:
             pool = await self.get_pool_for_asset(asset)
-            decimal = int(pool.thornode_details.decimals)
-            return decimal if decimal > 0 else self.native_decimals
+            decimals = pool.thornode_details.decimals
+            if decimals is None:
+                decimals = guess_decimals(asset)
+            return decimals if decimals > 0 else self.native_decimals
 
     async def convert(self, input_amount: CryptoAmount, out_asset: Asset) -> CryptoAmount:
         """
         Returns the exchange of a CryptoAmount to a different Asset
         Ex. convert(input:100 BUSD, outAsset: BTC) -> 0.0001234 BTC
+
         :param input_amount: amount/asset to convert to outAsset
         :param out_asset: the Asset you want to convert to
         :return: CryptoAmount of input

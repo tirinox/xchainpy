@@ -245,7 +245,7 @@ class THORChainQuery:
         if (int(swap_quote.recommended_min_amount_in) and
                 int(input_amount_int) < int(swap_quote.recommended_min_amount_in)):
             recommended_in = CryptoAmount.auto(int(swap_quote.recommended_min_amount_in), input_amount.asset,
-                                                    decimals=self.native_decimal)
+                                               decimals=self.native_decimal)
             errors.append(f'Input amount {input_amount} is less than recommended min amount in '
                           f'{recommended_in}')
 
@@ -753,3 +753,14 @@ class THORChainQuery:
         return TransactionTracker(self.cache, self.chain_attributes,
                                   inbound_chain_client=inbound_client,
                                   outbound_chain_client=outbound_client)
+
+    async def convert(self, input_amount: CryptoAmount, out_asset: Asset) -> CryptoAmount:
+        """
+        Returns the exchange of a CryptoAmount to a different Asset
+        Ex. convert(input:100 BUSD, outAsset: BTC) -> 0.0001234 BTC
+
+        :param input_amount: amount/asset to convert to outAsset
+        :param out_asset: the Asset you want to convert to
+        :return: CryptoAmount of input
+        """
+        return await self.cache.convert(input_amount, out_asset)
