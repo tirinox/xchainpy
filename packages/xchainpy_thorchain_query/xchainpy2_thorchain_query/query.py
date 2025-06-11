@@ -13,12 +13,12 @@ from .cache import THORChainCache
 from .const import DEFAULT_INTERFACE_ID, Mimir, THORNAME_BLOCKS_ONE_YEAR
 from .fee import calc_network_fee, calc_outbound_fee
 from .liquidity import get_liquidity_units, get_pool_share, get_slip_on_liquidity
+from .memo import THORMemo, THOR_BASIS_POINT_MAX
 from .midgard import MidgardAPIClient, ConfigurationEx
 from .models import SwapEstimate, TotalFees, LPAmount, EstimateAddLP, UnitData, LPAmountTotal, \
     LiquidityPosition, PoolRatios, EstimateWithdrawLP, \
     THORNameEstimate, WithdrawMode, InboundDetail
 from .swap import get_base_amount_with_diff_decimals
-from .tc_imports import THORMemo, THOR_BASIS_POINT_MAX
 from .thornode import THORNodeAPIClient
 from .track.tracker import TransactionTracker
 

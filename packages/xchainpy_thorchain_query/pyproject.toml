@@ -32,7 +32,6 @@ dependencies = [
     'aiohttp',
     'aiohttp-retry>=2.3.0',
     'xchainpy2_utils>=0.1.0',
-    'xchainpy2_crypto',
     'xchainpy2_midgard',
     'xchainpy2_thornode',
     # Later, in mayachain_query

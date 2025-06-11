@@ -1,4 +1,5 @@
 from multiprocessing.pool import ThreadPool
+from typing import Optional
 
 import xchainpy2_thornode as thornode
 from xchainpy2_utils import NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER, DEFAULT_USER_AGENT
@@ -11,15 +12,16 @@ class THORNodeAPIClient(HeadersPatch, thornode.ApiClient):
 
     :param configuration: ConfigurationEx object
     """
+
     # noinspection PyMissingConstructor
-    def __init__(self, configuration: ConfigurationEx = None,
+    def __init__(self, configuration: Optional[ConfigurationEx] = None,
                  header_name=NINE_REALMS_CLIENT_HEADER, header_value=XCHAINPY_IDENTIFIER,
-                 cookie=None):
+                 cookie=None, pool_processes=None, user_agent=DEFAULT_USER_AGENT):
         if configuration is None:
             configuration = ConfigurationEx()
         self.configuration = configuration
 
-        self.pool = ThreadPool()
+        self.pool = ThreadPool(pool_processes)
 
         # Patch REST client with additional retry logic and backup hosts
         self.rest_client = None
@@ -28,6 +30,9 @@ class THORNodeAPIClient(HeadersPatch, thornode.ApiClient):
         if header_name is not None:
             self.default_headers[header_name] = header_value
         self.cookie = cookie
+
+        # Set User-Agent.
+        self.user_agent = user_agent
 
         # Set default User-Agent.
         self.user_agent = DEFAULT_USER_AGENT

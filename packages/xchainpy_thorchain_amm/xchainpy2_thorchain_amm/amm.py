@@ -5,8 +5,7 @@ from typing import Union, Optional
 from xchainpy2_client import FeeOption
 # todo fix this! move gas options to Client or Utils
 from xchainpy2_ethereum import EthereumClient, GasOptions
-from xchainpy2_thorchain import THORChainClient, THORMemo
-from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode
+from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode, THORMemo
 from xchainpy2_thornode import Amount
 from xchainpy2_utils import CryptoAmount, Asset, Chain, AssetRUNE, remove_0x_prefix, AssetTCY
 from xchainpy2_utils.versions import deprecated

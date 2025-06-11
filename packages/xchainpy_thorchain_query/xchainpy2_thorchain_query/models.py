@@ -8,7 +8,7 @@ from typing import NamedTuple, List, Dict, Optional, Set
 from xchainpy2_midgard import PoolDetail, THORNameDetails
 from xchainpy2_thornode import Pool, LiquidityProviderSummary, LastBlock, QuoteSwapResponse
 from xchainpy2_utils import CryptoAmount, Amount, Asset, Chain, Address, DC
-from .tc_imports import THOR_BLOCK_TIME_SEC
+from .const import THOR_BLOCK_TIME_SEC
 
 
 class QueryError(LookupError):

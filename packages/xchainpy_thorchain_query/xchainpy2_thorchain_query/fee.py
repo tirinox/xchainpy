@@ -3,7 +3,7 @@ from decimal import Decimal
 from xchainpy2_thorchain_query.models import InboundDetail
 from xchainpy2_utils import CryptoAmount, Amount, AssetCACAO, Asset, AssetRUNE, Chain, \
     AssetBTC, AssetDOGE, AssetLTC, AssetBCH, AssetATOM, get_chain_gas_asset, ETH_DECIMALS
-from .tc_imports import DEFAULT_CACAO_NETWORK_FEE, DEFAULT_RUNE_NETWORK_FEE
+from .const import DEFAULT_CACAO_NETWORK_FEE, DEFAULT_RUNE_NETWORK_FEE
 
 
 def calc_network_fee(asset: Asset, inbound: InboundDetail,

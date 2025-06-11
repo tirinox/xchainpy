@@ -1,5 +1,6 @@
-from xchainpy2_utils import NetworkType, Asset
-from .tc_imports import THOR_BLOCK_TIME_SEC
+from decimal import Decimal
+
+from xchainpy2_utils import NetworkType, Asset, CryptoAmount, Amount, CACAO_DECIMAL, AssetCACAO, RUNE_DECIMAL, AssetRUNE
 
 DEFAULT_INTERFACE_ID = 'XChainPy2'
 """
@@ -97,14 +98,44 @@ USD_ASSETS = {
     Subject to change.
 """
 
+DEFAULT_REST_USER_AGENT = \
+    'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+"""
+Default User-Agent for REST requests.
+"""
+
+DEFAULT_CACAO_NETWORK_FEE = CryptoAmount(Amount.auto(Decimal("0.5"), CACAO_DECIMAL), AssetCACAO)
+"""
+    Default Cacao fee for transactions. Subject to change.
+    Please check the network constants for the actual network fee.
+"""
+
+DEFAULT_RUNE_NETWORK_FEE = CryptoAmount(Amount.auto(Decimal("0.02"), RUNE_DECIMAL), AssetRUNE)
+"""
+    Default network fee for RUNE transactions. 
+    This may be overridden by the network constants. 
+    Please check the network constants for the actual network fee.
+"""
+
+THOR_BLOCK_TIME_SEC = 6.0
+"""
+    Typical time in seconds for a block to be produced in THORChain.
+    Note! It is planned to be lowered to 2 seconds in the future, so it may change.
+"""
+
 THORNAME_BLOCKS_ONE_YEAR = 365 * 24 * 60 * 60 / THOR_BLOCK_TIME_SEC
 """
 Number of THORChain blocks in one year.
 """
 
-
-DEFAULT_REST_USER_AGENT = \
-    'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+THOR_BASIS_POINT_MAX = 10_000
 """
-Default User-Agent for REST requests.
+    Maximum basis point value for THORChain.
+    10,000 basis points = 100% of the value.
+    0 basis points = 0% of the value.
+"""
+
+THOR_AFFILIATE_BASIS_POINT_MAX = 1_000
+"""
+    Affiliate cannot receive more than 10% of the trade value.
 """

@@ -5,6 +5,7 @@ from decimal import Decimal
 from itertools import chain as chain_seq
 from typing import Dict, List, Optional, Set, Union
 
+# todo fixme
 from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMaya, NetworkApi as NetworkApiMaya, \
     TransactionsApi as TransactionsApiMaya, LiquidityProvidersApi as LiquidityProvidersApiMaya, \
     QueueApi as QueueApiMaya, QuoteApi as QuoteApiMaya, SaversApi as SaversApiMaya
@@ -15,7 +16,7 @@ from xchainpy2_thornode import PoolsApi, MimirApi, NetworkApi, InboundAddress, T
     SaversApi, QueueApi, QuoteApi, LastBlock, LiquidityProviderSummary
 from xchainpy2_utils import Asset, AssetRUNE, AssetCACAO, Chain, CryptoAmount, RUNE_DECIMAL, CACAO_DECIMAL, Amount, \
     NetworkType
-from .const import Mimir, TEN_MINUTES, SAME_ASSET_EXCHANGE_RATE, USD_ASSETS
+from .const import Mimir, TEN_MINUTES, SAME_ASSET_EXCHANGE_RATE, USD_ASSETS, THOR_BLOCK_TIME_SEC
 from .env import URLs
 from .midgard import MidgardAPIClient
 from .models import PoolCache, InboundDetailCache, NetworkValuesCache, LiquidityPool, InboundDetail, SwapOutput, \
@@ -23,7 +24,6 @@ from .models import PoolCache, InboundDetailCache, NetworkValuesCache, Liquidity
 from .patch_clients import request_api_with_backup_hosts
 from .swap import get_swap_fee, get_swap_output, get_single_swap, get_double_swap_output, \
     get_double_swap_slip
-from .tc_imports import THOR_BLOCK_TIME_SEC
 from .thornode import THORNodeAPIClient
 
 logger = logging.getLogger('THORChainCache')

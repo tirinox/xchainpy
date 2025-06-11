@@ -19,7 +19,7 @@ from cosmpy.protos.cosmos.tx.v1beta1.service_pb2 import BroadcastTxRequest, Broa
 from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx, \
     Fees, TxPage, FeeType, FeeOption
 from xchainpy2_client.fees import single_fee
-from xchainpy2_crypto import derive_private_key, create_address
+from xchainpy2_crypto import create_address
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, Amount, AssetATOM, \
     unique_by_key, batched, NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER, flatten
 from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_DERIVATION_PATHS, COSMOS_ADDR_PREFIX, \
