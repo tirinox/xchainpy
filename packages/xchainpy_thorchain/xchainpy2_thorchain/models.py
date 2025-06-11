@@ -11,22 +11,3 @@ class NodeURL(NamedTuple):
             f'{protocol}://{ip_address}:{thornode_port}',
             f'{protocol}://{ip_address}:{rpc_port}',
         )
-
-
-class RPCTxResultInner(NamedTuple):
-    code: int
-    data: str
-    log: str
-    info: str
-    gas_wanted: str
-    gas_used: str
-    events: list
-    codespace: str
-
-
-class RPCTxResult(NamedTuple):
-    hash: str
-    height: int
-    index: int
-    tx_results: RPCTxResultInner
-    tx: str

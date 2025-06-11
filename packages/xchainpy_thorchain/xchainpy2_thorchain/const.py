@@ -133,8 +133,6 @@ DENOM_TCY = 'tcy'
 DENOM_RUJIRA = 'x/rujira'
 """Denomination for Rujira on THORChain."""
 
-THOR_BLOCK_TIME_SEC = 6.0
-"""Typical time in seconds for a block to be produced in THORChain."""
 
 DEFAULT_RUNE_NETWORK_FEE = CryptoAmount(Amount.auto(Decimal("0.02"), RUNE_DECIMAL), AssetRUNE)
 """

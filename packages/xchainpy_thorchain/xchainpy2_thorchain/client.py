@@ -13,12 +13,13 @@ from xchainpy2_client.fees import single_fee
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
+from xchainpy2_thorchain_query import DEFAULT_RUNE_NETWORK_FEE
 from xchainpy2_thornode import NetworkApi, TradeAccountApi, TradeAccountResponse
 from xchainpy2_utils import Chain, NetworkType, AssetRUNE, RUNE_DECIMAL, CryptoAmount, Amount, remove_0x_prefix, \
     Asset, AssetKind, AssetTCY, AssetRUJI
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_RUNE_NATIVE, ROOT_DERIVATION_PATHS, \
     THOR_EXPLORERS, DEFAULT_GAS_LIMIT_VALUE, DEPOSIT_GAS_LIMIT_VALUE, FALLBACK_CLIENT_URLS, \
-    make_client_urls_from_ip_address, DENOM_TCY, DEFAULT_RUNE_NETWORK_FEE, DENOM_RUJIRA
+    make_client_urls_from_ip_address, DENOM_TCY, DENOM_RUJIRA
 from .utils import get_thor_address_prefix, build_deposit_tx_unsigned, build_transfer_tx_draft
 
 
