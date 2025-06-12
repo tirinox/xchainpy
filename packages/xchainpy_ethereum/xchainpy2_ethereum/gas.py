@@ -138,7 +138,15 @@ class GasEstimator:
     async def call_service(sync_method, *args):
         return await asyncio.get_event_loop().run_in_executor(None, sync_method, *args)
 
-    async def estimate(self):
+    async def estimate(self) -> Fees:
+        """
+        Estimate the gas fees based on the current network conditions.
+        This method fetches the fee history, base fee, and max priority fee,
+        and calculates the average, fast, and fastest fees based on the reward history.
+
+        :return: Fees object containing the estimated fees
+        """
+
         # RPC calls
         fee_history, base_fee, max_priority_fee_safe_low = await asyncio.gather(
             self.fee_history(),

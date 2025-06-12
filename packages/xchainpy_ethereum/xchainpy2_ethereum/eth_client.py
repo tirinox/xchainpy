@@ -136,12 +136,13 @@ class EthereumClient(XChainClient):
     def get_address(self) -> str:
         """
         Get the address for the given wallet index.
-        The address returned is checksummed.
+        The address returned is check-summed.
         :return: string address
         """
         account = self.get_account()
         if not account:
             raise LookupError("Failed to get the account")
+        # noinspection PyUnresolvedReferences
         return self.web3.to_checksum_address(account.address)
 
     async def get_balance(self, address: str = '', with_erc20=False) -> List[CryptoAmount]:
@@ -154,7 +155,7 @@ class EthereumClient(XChainClient):
         address = address or self.get_address()
         eth_balance = await self.call_service(self.web3.eth.get_balance, address)
         balances = [
-            self.gas_amount(int(eth_balance))
+            CryptoAmount.auto_base(eth_balance, self._gas_asset, self._decimal)
         ]
 
         if with_erc20:
@@ -210,7 +211,7 @@ class EthereumClient(XChainClient):
         """
         Get the public key for the current wallet.
         """
-        # noinspection PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences,PyProtectedMember
         return self.get_account()._key_obj.public_key
 
     def get_account(self) -> Account:
@@ -445,7 +446,7 @@ class EthereumClient(XChainClient):
             gas = await self.call_service(self.web3.eth.estimate_gas, tx_with_data)
         else:
             gas_limit_transfer = self._get_gas_limit().transfer_token_gas_limit
-            gas = gas_limit if gas_limit > 0 else gas_limit_transfer
+            gas = gas_limit if gas_limit and gas_limit > 0 else gas_limit_transfer
 
         tx_with_data['gas'] = gas
         return tx_with_data
