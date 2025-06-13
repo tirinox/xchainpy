@@ -13,7 +13,10 @@ from .models import XcTx, TxPage, \
     FeeBounds, RootDerivationPaths
 
 
-class KeyException(Exception):
+class SecretsException(Exception):
+    """
+    Exception raised for errors related to secret management: private keys, or phrases.
+    """
     ...
 
 
@@ -53,7 +56,7 @@ class XChainClient(abc.ABC):
         # NOTE: we don't call self.set_phrase() to void generating an address and paying the perf penalty
         if phrase:
             if not validate_mnemonic(phrase):
-                raise KeyException('Invalid phrase')
+                raise SecretsException('Invalid phrase')
             self.phrase = phrase
         else:
             self.phrase = None
@@ -61,7 +64,7 @@ class XChainClient(abc.ABC):
         self._private_key = private_key
 
         if private_key and phrase:
-            raise KeyException('Phrase and private key cannot be provided at the same time')
+            raise SecretsException('Phrase and private key cannot be provided at the same time')
 
         self._gas_asset: Optional[Asset] = None
         self._decimal = 8
@@ -116,7 +119,7 @@ class XChainClient(abc.ABC):
         if callable(self._private_key):
             pk = self._private_key()
             if not pk or not isinstance(pk, str):
-                raise KeyException('_private_key function must return a HEX string')
+                raise SecretsException('_private_key function must return a HEX string')
             return pk
         elif isinstance(self._private_key, str):
             return self._private_key
@@ -128,11 +131,11 @@ class XChainClient(abc.ABC):
                 self.get_full_derivation_path(self.wallet_index)
             ).hex()
         else:
-            raise KeyException('Phrase or private key must be provided to do this action')
+            raise SecretsException('Phrase or private key must be provided to do this action')
 
     def _throw_if_empty_phrase(self):
         if not self.phrase and not self._private_key:
-            raise KeyException('Phrase or private key must be provided to do this action')
+            raise SecretsException('Phrase or private key must be provided to do this action')
 
     def gas_amount(self, amount: Union[float, str, int, Decimal, Amount]) -> CryptoAmount:
         """
@@ -223,7 +226,7 @@ class XChainClient(abc.ABC):
         """
         if phrase:
             if not validate_mnemonic(phrase):
-                raise KeyException('Invalid phrase')
+                raise SecretsException('Invalid phrase')
             self.phrase = phrase
         else:
             self.purge_client()
