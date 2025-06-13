@@ -4,7 +4,7 @@ from xchainpy2_crypto import generate_mnemonic, validate_mnemonic, KeyStore, get
 
 
 def demo_generate_mnemonics():
-    PARAMS = [
+    params = [
         (12, Bip39Languages.ENGLISH),
         (12, Bip39Languages.FRENCH),
         (15, Bip39Languages.ENGLISH),
@@ -12,7 +12,7 @@ def demo_generate_mnemonics():
         (24, Bip39Languages.CHINESE_TRADITIONAL),
     ]
 
-    for n, lang in PARAMS:
+    for n, lang in params:
         mnemonic = generate_mnemonic(n, lang)
         valid = validate_mnemonic(mnemonic)
         print(f"{n = }, {lang = :<40}, {mnemonic!s}\n{valid = }")

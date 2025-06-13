@@ -25,7 +25,7 @@ async def main():
         balance1, balance2 = balance2, balance1
 
     max_transferable = await avax1.max_gas_amount()
-    print(f"max_trasferable: {max_transferable}")
+    print(f"max_transferable: {max_transferable}")
 
     gas = GasOptions.auto(FeeOption.FAST)
 

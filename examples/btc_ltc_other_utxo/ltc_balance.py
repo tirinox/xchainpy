@@ -12,7 +12,7 @@ async def main():
     provider_names = ['blockcypher']
 
     ltc = LitecoinClient(phrase=phrase, network=NetworkType.MAINNET, provider_names=provider_names)
-    ltc2 = LitecoinClient(phrase=phrase, network=NetworkType.MAINNET, wallet_index=1, provider_names=provider_names)
+    # ltc2 = LitecoinClient(phrase=phrase, network=NetworkType.MAINNET, wallet_index=1, provider_names=provider_names)
 
     # Get the balance of the LTC wallet
     balance = await ltc.get_balance()
