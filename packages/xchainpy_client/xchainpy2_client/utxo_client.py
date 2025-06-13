@@ -5,9 +5,9 @@ from typing import List, Optional
 
 from xchainpy2_utils import Chain, CryptoAmount, NetworkType, Asset
 from .base_client import XChainClient
+from .fees import FeeRates, FeeRate, FeeOption, Fees, Fee, FeeBounds
 from .fees import calc_fees_async, standard_fee_rates
-from .models import UTXOOnlineDataProviders, FeeRates, \
-    FeeRate, TxPage, XcTx, UTXO, FeesWithRates, FeeOption, Fees, Fee, FeeBounds, RootDerivationPaths
+from .models import UTXOOnlineDataProviders, TxPage, XcTx, UTXO, RootDerivationPaths
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +24,6 @@ class UTXOClient(XChainClient, abc.ABC):
     ):
         super().__init__(chain, network, phrase, fee_bound=fee_bound, root_derivation_paths=root_derivation_paths)
         self.data_providers = data_providers
-
-    @abc.abstractmethod
-    async def get_suggested_fee_rate(self) -> FeeRates:
-        pass
 
     @abc.abstractmethod
     async def calc_fee(self, fee_type: FeeOption, fee_rate: FeeRate, memo: str = '') -> Fee:
@@ -71,21 +67,25 @@ class UTXOClient(XChainClient, abc.ABC):
         """
         return await self._round_robin('get_balance', address)
 
-    async def get_fees_with_rates(self, memo='') -> FeesWithRates:
+    async def get_fees(self, memo='') -> Fees:
+        """
+        Get the fees for the given memo.
+
+        :param memo: Memo string for the transaction, used to calculate fees.
+        :return: Fees object containing the calculated fees for different options.
+        """
         rates = await self.get_fee_rates()
         fees = await calc_fees_async(
             rates,
             self.calc_fee,
             memo,
         )
-        return FeesWithRates(fees=fees, rates=rates)
+        return fees
 
-    async def get_fees(self, memo='') -> Fees:
-        return (await self.get_fees_with_rates(memo)).fees
-
-    async def get_fee_rates(self, cache=None) -> FeeRates:
+    async def get_fee_rates(self, cache=None) -> Optional[FeeRates]:
         """
         Get the fee rates. First from THORChain node. If it fails, get it from the suggested.
+
         :param cache: THORChainCache instance from the xchainpy2_thorchain_query packages
         :return: FeeRates
         """
@@ -98,9 +98,7 @@ class UTXOClient(XChainClient, abc.ABC):
                         fee_rate = float(details.gas_rate)
         except Exception as e:
             logger.error(f'Error getting inbound details: {e}')
-
-        if fee_rate is None:
-            fee_rate = await self.get_suggested_fee_rate()
+            return None
 
         return standard_fee_rates(fee_rate)
 

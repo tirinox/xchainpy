@@ -5,11 +5,12 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List, Union
 
-from xchainpy2_client.explorer import ExplorerProvider
-from xchainpy2_client.models import XcTx, Fees, TxPage, \
-    FeeBounds, RootDerivationPaths, FeeOption
 from xchainpy2_crypto import validate_mnemonic, derive_private_key
 from xchainpy2_utils import CryptoAmount, Chain, NetworkType, Asset, Amount
+from .explorer import ExplorerProvider
+from .fees import FeeOption, Fees
+from .models import XcTx, TxPage, \
+    FeeBounds, RootDerivationPaths
 
 
 class KeyException(Exception):
@@ -162,10 +163,13 @@ class XChainClient(abc.ABC):
         """
         return self.gas_base_amount(0)
 
-    async def max_gas_amount(self, balances: List[CryptoAmount] = None) -> CryptoAmount:
+    async def max_gas_amount(self, balances: List[CryptoAmount] = None,
+                             fee_option: FeeOption = FeeOption.FAST) -> CryptoAmount:
         """
         Calculate maximum amount of Gas asset that you can send to empty your wallet.
 
+        :param fee_option: Pick a fee option to calculate the maximum amount of gas you can send.
+        By default it is FeeOption.FAST.
         :param balances: (Optional) if you already have your balance, otherwise they will be loaded
         :return: CryptoAmount
         """
@@ -177,7 +181,8 @@ class XChainClient(abc.ABC):
             return self.zero_gas_amount  # no gas at all
 
         fees = await self.get_fees()
-        fee = fees.fees[FeeOption.FAST]
+        fee = fees.fees[fee_option]
+        # fixme: for EVM they are in GWEI!!
         # note: must be same decimals
         max_value = gas_balance.amount - fee
         if max_value.internal_amount < 0:

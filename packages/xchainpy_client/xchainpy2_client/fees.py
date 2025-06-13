@@ -1,7 +1,71 @@
 import asyncio
-from typing import Callable, Awaitable
+from decimal import Decimal
+from enum import Enum
+from typing import Callable, Dict, Union, NamedTuple
 
-from .models import FeeType, Fee, Fees, FeeOption, FeeBounds, FeeRate, FeeRates
+from xchainpy2_thornode import Amount
+
+
+class FeeOption(Enum):
+    AVERAGE = 'average'
+    FAST = 'fast'
+    FASTEST = 'fastest'
+
+    _ETH_PRIORITY_FEE = 'max'
+    _ETH_BASE_FEE = 'base'
+
+
+FeeRates = Dict[FeeOption, float]
+
+
+class FeeType(Enum):
+    FLAT_FEE = 'base'
+    PER_BYTE = 'byte'
+
+
+Fee = Union[Amount, int, float, Decimal]
+FeeRate = float  # satoshi per kilobyte in Bitcoin and other UTXO chains
+
+INF_FEE = 1_000_000_000_000_000_000
+
+
+class Fees(NamedTuple):
+    type: FeeType
+    fees: Dict[FeeOption, Fee]  # for EVM chains, the fee is in gwei
+
+    @property
+    def average(self):
+        return self.fees[FeeOption.AVERAGE]
+
+    @property
+    def fast(self):
+        return self.fees[FeeOption.FAST]
+
+    @property
+    def fastest(self):
+        return self.fees[FeeOption.FASTEST]
+
+
+class FeeBounds(NamedTuple):
+    lower: FeeRate  # satoshi per byte
+    upper: FeeRate  # satoshi per byte
+
+    def check_fee_bounds(self, fee_rate: FeeRate, per_kb: bool = False):
+        """
+        Check if the given fee rate is within the bounds
+        :param fee_rate: fee rate to check, in satoshi per byte
+        :param per_kb: if True, the fee rate is in satoshi per kilobyte. Otherwise, it is in satoshi per byte
+        """
+        if per_kb:
+            fee_rate /= 1000
+
+        if fee_rate < self.lower or fee_rate > self.upper:
+            raise ValueError(f"Fee outside of predetermined bounds: {fee_rate}")
+
+    @classmethod
+    def infinite(cls):
+        return FeeBounds(lower=0, upper=INF_FEE)
+
 
 
 def single_fee(fee_type: FeeType, amount: Fee) -> Fees:

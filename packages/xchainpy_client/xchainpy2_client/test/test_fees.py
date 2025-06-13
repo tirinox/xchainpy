@@ -8,14 +8,14 @@ from xchainpy2_utils import Amount
 def test_single_fee():
     fee = single_fee(FeeType.FLAT_FEE, Amount(10))
     assert fee.type == FeeType.FLAT_FEE
-    assert fee.fees and len(fee.fees) == 3
+    assert fee.fees and len(fee.fees) == 5
     assert fee.fees[FeeOption.FASTEST] == fee.fees[FeeOption.AVERAGE] == fee.fees[FeeOption.FASTEST] == Amount(10)
 
 
 def test_std_fee():
     fee = standard_fee(FeeType.PER_BYTE, Amount(10))
     assert fee.type == FeeType.PER_BYTE
-    assert fee.fees and len(fee.fees) == 3
+    assert fee.fees and len(fee.fees) == 5
     assert fee.fees[FeeOption.AVERAGE] == Amount(5)
     assert fee.fees[FeeOption.FAST] == Amount(10)
     assert fee.fees[FeeOption.FASTEST] == Amount(50)
