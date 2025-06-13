@@ -1,13 +1,14 @@
 import asyncio
 
 from xchainpy2_crypto import generate_mnemonic
-from xchainpy2_thorchain import THORChainClient, NodeURL, DEFAULT_CLIENT_URLS
-from xchainpy2_utils import NetworkType, XCHAINJS_IDENTIFIER
+from xchainpy2_thorchain import THORChainClient, DEFAULT_CLIENT_URLS
+from xchainpy2_utils import XCHAINJS_IDENTIFIER
 
 TC_RESERVE_ADDR = 'thor1dheycdevq39qlkxs2a6wuuzyn4aqxhve4qxtxt'
 
 # Standard public node (maybe protected by Cloudflare, so won't work from Python without additional headers)
 MY_CLIENT_URLS = DEFAULT_CLIENT_URLS
+
 
 # In case, you can use your own full node like
 # MY_CLIENT_URLS = {

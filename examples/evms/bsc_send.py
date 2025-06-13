@@ -4,7 +4,7 @@ from examples.common import get_phrase
 from xchainpy2_bsc import BinanceSmartChainClient
 from xchainpy2_client import FeeOption
 from xchainpy2_ethereum import GasOptions
-from xchainpy2_utils import NetworkType, CryptoAmount
+from xchainpy2_utils import NetworkType
 
 # all upper address will bypass the checksum validation
 BSC_USDT_CONTRACT = '0x55d398326f99059ff775485246999027b3197955'.upper()

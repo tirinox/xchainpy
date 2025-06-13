@@ -1,9 +1,9 @@
 import asyncio
 import os
 
-from xchainpy2_thorchain import THORChainClient, DEFAULT_RUNE_NETWORK_FEE
+from xchainpy2_thorchain import THORChainClient
 from xchainpy2_thorchain_query import THOR_BLOCK_TIME_SEC
-from xchainpy2_utils import CryptoAmount, Amount, NetworkType, RUNE_DECIMAL, AssetRUNE
+from xchainpy2_utils import CryptoAmount, NetworkType, AssetRUNE
 
 """
 This example requires a real wallet with some amount of Rune

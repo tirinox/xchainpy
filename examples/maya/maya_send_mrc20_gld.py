@@ -4,7 +4,7 @@ import sys
 
 from xchainpy2_mayachain import MayaChainClient, MAYA_BLOCK_TIME_SEC
 from xchainpy2_mayachain.mrc20.const import MRC20_DECIMALS, AssetGLD
-from xchainpy2_utils import Amount, NetworkType, CryptoAmount, AssetCACAO
+from xchainpy2_utils import Amount, NetworkType, CryptoAmount
 
 """
 This example requires a real wallet with some amount of Cacao for gas (1 Cacao will be enough)

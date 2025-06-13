@@ -17,7 +17,8 @@ pip install -r requirements.txt
 
 ### Configuration
 
-Copy `example.tcy_bot_config.yaml` to `tcy_bot_config.yaml` and fill in the required fields. The configuration file should look like this:
+Copy `example.tcy_bot_config.yaml` to `tcy_bot_config.yaml` and fill in the required fields. The configuration file
+should look like this:
 
 ```yaml
 # tcy_bot_config.yaml

@@ -15,7 +15,7 @@ async def display_trade_balances(amm: THORChainAMM):
     print('Loading your balances...')
     balances = await amm.wallet.get_all_balances()
     print(f"Balances: ")
-    for i, chain_bal in  enumerate(balances.balances.values(), start=1):
+    for i, chain_bal in enumerate(balances.balances.values(), start=1):
         print(f'  {i}. {chain_bal.address}:')
         for bal in chain_bal.balances:
             print(f'    * {bal}')

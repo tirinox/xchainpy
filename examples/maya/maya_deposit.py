@@ -13,6 +13,8 @@ Just don't forget to pass "PHRASE" environment variable that contains a mnemonic
 SYNTH_BTC = Asset.from_string('BTC/BTC')
 
 NETWORK = NetworkType.MAINNET
+
+
 # NETWORK = NetworkType.STAGENET
 
 async def swap_cacao_to_synth_btc(client, amount: float):

@@ -4,7 +4,7 @@ from examples.common import get_phrase
 from xchainpy2_base import BaseClient
 from xchainpy2_client import FeeOption
 from xchainpy2_ethereum import GasOptions
-from xchainpy2_utils import NetworkType, CryptoAmount
+from xchainpy2_utils import NetworkType
 
 # all upper address will bypass the checksum validation
 BASE_USDT_CONTRACT = '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2'.upper()

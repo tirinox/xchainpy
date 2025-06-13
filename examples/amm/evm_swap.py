@@ -30,6 +30,7 @@ async def main():
     my_address = bsc.get_address()
 
     gas = GasOptions.auto(FeeOption.FAST)
+
     # gas = GasOptions.legacy(gas_price=50, gas_limit=210000)
     # gas = GasOptions.eip1559_in_gwei(max_fee_per_gas=1, max_priority_fee_per_gas=1, gas_limit=210000)
 

@@ -12,8 +12,8 @@ async def main():
     avax1 = AvalancheClient(phrase=phrase, network=NetworkType.MAINNET, wallet_index=0)
     avax2 = AvalancheClient(phrase=phrase, network=NetworkType.MAINNET, wallet_index=1)
 
-    print("Avax 1 address: ", avax1.get_address())
-    print("Avax 2 address: ", avax2.get_address())
+    print(f"Avax 1 address: {avax1.get_explorer_address_url()}")
+    print(f"Avax 2 address: {avax2.get_explorer_address_url()}")
 
     balance1 = await avax1.get_gas_balance()
     balance2 = await avax2.get_gas_balance()
@@ -23,6 +23,9 @@ async def main():
     if balance2 > balance1:
         avax1, avax2 = avax2, avax1
         balance1, balance2 = balance2, balance1
+
+    max_transferable = await avax1.max_gas_amount()
+    print(f"max_trasferable: {max_transferable}")
 
     gas = GasOptions.auto(FeeOption.FAST)
 

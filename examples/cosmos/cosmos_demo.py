@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from pprint import pprint
 
 from xchainpy2_cosmos import CosmosGaiaClient

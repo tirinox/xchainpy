@@ -1,9 +1,8 @@
 import asyncio
 import os
 
-from xchainpy2_crypto import generate_mnemonic
 from xchainpy2_thorchain import THORChainClient, build_deposit_tx_unsigned
-from xchainpy2_utils import CryptoAmount, Amount, AssetRUNE
+from xchainpy2_utils import CryptoAmount, AssetRUNE
 
 
 async def main():
