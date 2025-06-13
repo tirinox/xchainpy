@@ -1,8 +1,8 @@
-from datetime import datetime
-from typing import NamedTuple, Optional, List, Dict
+from typing import NamedTuple, Optional
 
 from xchainpy2_client import FeeOption
-from xchainpy2_utils import Chain, CryptoAmount, Asset
+from xchainpy2_utils import CryptoAmount, Asset
+
 
 class ExecuteSwap(NamedTuple):
     input: CryptoAmount

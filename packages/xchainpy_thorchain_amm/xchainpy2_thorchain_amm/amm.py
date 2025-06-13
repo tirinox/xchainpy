@@ -5,6 +5,7 @@ from typing import Union, Optional
 from xchainpy2_client import FeeOption
 # todo fix this! move gas options to Client or Utils
 from xchainpy2_ethereum import EthereumClient, GasOptions
+from xchainpy2_thorchain import THORChainClient
 from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode, THORMemo
 from xchainpy2_thornode import Amount
 from xchainpy2_utils import CryptoAmount, Asset, Chain, AssetRUNE, remove_0x_prefix, AssetTCY
@@ -34,7 +35,7 @@ class THORChainAMM:
         :param fee_option: Default fee option to use for transactions, default is FeeOption.FAST
         """
 
-        self.query = query or wallet.query_api or THORChainQuery(wallet.network)
+        self.query = query or wallet.query_api or THORChainQuery(wallet.cache)
         self.wallet = wallet
         self.dry_run = dry_run
         self.check_balance = check_balance
