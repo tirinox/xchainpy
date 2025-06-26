@@ -12,7 +12,7 @@ ROOT_DERIVATION_PATHS = {
 
 MIN_TX_FEE = 1000
 
-LTC_DEFAULT_FEE_BOUNDS = FeeBounds(0.5, 500)
+LTC_DEFAULT_FEE_BOUNDS = FeeBounds(5, 500)
 
 LTC_BLOCKCHAIR_EXPLORER = ExplorerProvider(
     'https://blockchair.com/litecoin/',

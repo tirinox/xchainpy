@@ -119,7 +119,7 @@ class BitcoinClient(XChainClient):
         if isinstance(fee_rate, Amount):
             fee_rate = int(fee_rate)
 
-        self.fee_bound.check_fee_bounds(fee_rate, per_kb=True)
+        self.fee_bound.check_fee_bounds(fee_rate)
 
         utxo_prepare = UTXOPrepare(utxos, self._service_network,
                                    fee_per_byte=fee_rate / 1000,
@@ -228,7 +228,6 @@ class BitcoinClient(XChainClient):
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = BTC_DEFAULT_FEE_BOUNDS,
                  root_derivation_paths: Optional[RootDerivationPaths] = ROOT_DERIVATION_PATHS,
                  explorer_providers=BLOCKSTREAM_EXPLORERS,
                  wallet_index=0,
@@ -246,7 +245,6 @@ class BitcoinClient(XChainClient):
         :param network: Network type (default is MAINNET)
         :param phrase: your secret phrase
         :param private_key: or your private key
-        :param fee_bound: fee bounds (no bounds by default)
         :param root_derivation_paths: HD wallet derivation paths
         :param wallet_index: int index of wallet
         :param explorer_providers: explorer providers dictionary
@@ -255,7 +253,7 @@ class BitcoinClient(XChainClient):
         super().__init__(
             _chain,
             network, phrase,
-            private_key, fee_bound,
+            private_key,
             root_derivation_paths,
             wallet_index
         )

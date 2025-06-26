@@ -39,7 +39,6 @@ class EthereumClient(XChainClient):
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  explorer_providers=None,
                  wallet_index=0,
@@ -52,7 +51,6 @@ class EthereumClient(XChainClient):
         :param network: Network type. Default is `NetworkType.MAINNET`
         :param phrase: Mnemonic phrase (if you want to use a mnemonic phrase)
         :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
-        :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param explorer_providers: Dictionary of explorer providers for each network type.
         :param wallet_index: int (default 0)
@@ -63,7 +61,7 @@ class EthereumClient(XChainClient):
         root_derivation_paths = root_derivation_paths.copy() \
             if root_derivation_paths else ETH_ROOT_DERIVATION_PATHS.copy()
 
-        super().__init__(self._CHAIN, network, phrase, private_key, fee_bound, root_derivation_paths, wallet_index)
+        super().__init__(self._CHAIN, network, phrase, private_key, root_derivation_paths, wallet_index)
 
         self.explorers = explorer_providers or self._EXPLORERS
         self._gas_asset = self._GAS_ASSET

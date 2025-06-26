@@ -8,11 +8,11 @@ from bitcash.cashaddress import Address
 from bitcash.exceptions import InvalidAddress
 from bitcash.network import NetworkAPI
 
-from xchainpy2_client import FeeBounds, RootDerivationPaths, XChainClient, Fees, XcTx, TxPage, UTXO, TxType, \
+from xchainpy2_client import RootDerivationPaths, XChainClient, IFees, XcTx, TxPage, UTXO, TxType, \
     TokenTransfer
 from xchainpy2_utils import NetworkType, Asset, AssetBCH, Chain, CryptoAmount, Amount
 from .const import ROOT_DERIVATION_PATHS, BCH_DECIMAL, DEFAULT_PROVIDER_NAMES, DEFAULT_BCH_EXPLORERS, \
-    BCH_DEFAULT_FEE_BOUNDS, AssetTestBCH, DEFAULT_BCH_FEES
+    AssetTestBCH, DEFAULT_BCH_FEES
 
 
 class BitcoinCashClient(XChainClient):
@@ -20,7 +20,6 @@ class BitcoinCashClient(XChainClient):
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = BCH_DEFAULT_FEE_BOUNDS,
                  root_derivation_paths: Optional[RootDerivationPaths] = ROOT_DERIVATION_PATHS,
                  explorer_providers=DEFAULT_BCH_EXPLORERS,
                  wallet_index=0,
@@ -32,7 +31,6 @@ class BitcoinCashClient(XChainClient):
         :param network: The network type
         :param phrase: The seed phrase
         :param private_key: The private key
-        :param fee_bound: The fee bound
         :param root_derivation_paths: The root derivation paths
         :param explorer_providers: The explorer providers
         :param wallet_index: The wallet index (default is 0)
@@ -44,7 +42,6 @@ class BitcoinCashClient(XChainClient):
             network=network,
             phrase=phrase,
             private_key=private_key,
-            fee_bound=fee_bound,
             root_derivation_paths=root_derivation_paths,
             wallet_index=wallet_index,
             chain=Chain.BitcoinCash,
@@ -281,7 +278,6 @@ class BitcoinCashClient(XChainClient):
         """
         await self._call_service(self.api.broadcast_tx, tx_hex, self._underlying_network)
 
-        # todo: the method above does not return the tx hash!
         hash_object = hashlib.sha256(bytes.fromhex(tx_hex))
         tx_hash = hash_object.hexdigest()
         return tx_hash

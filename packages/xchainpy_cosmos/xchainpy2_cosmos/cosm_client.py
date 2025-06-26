@@ -37,7 +37,6 @@ class CosmosGaiaClient(XChainClient):
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  client_urls=DEFAULT_CLIENT_URLS,
                  chain_ids=COSMOS_CHAIN_IDS,
@@ -49,7 +48,6 @@ class CosmosGaiaClient(XChainClient):
         :param network: Network type. Default is `NetworkType.MAINNET`
         :param phrase: Mnemonic phrase
         :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
-        :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param client_urls: Dictionary of client urls for each network type.
         :param chain_ids: Dictionary of chain ids for each network type.
@@ -59,7 +57,7 @@ class CosmosGaiaClient(XChainClient):
         root_derivation_paths = root_derivation_paths.copy() \
             if root_derivation_paths else COSMOS_ROOT_DERIVATION_PATHS.copy()
         self._ready_to_make_wallet = False
-        super().__init__(Chain.Cosmos, network, phrase, private_key, fee_bound, root_derivation_paths, wallet_index)
+        super().__init__(Chain.Cosmos, network, phrase, private_key, root_derivation_paths, wallet_index)
         self._ready_to_make_wallet = True
 
         self.explorers = explorer_providers
@@ -579,7 +577,7 @@ class CosmosGaiaClient(XChainClient):
         if native_balance is None or native_balance.amount < fee:
             raise ValueError(f"Insufficient funds to pay fee: {fee} {self._gas_asset}")
 
-    def _make_wallet(self) -> LocalWallet:
+    def _make_wallet(self) -> Optional[LocalWallet]:
         if self._ready_to_make_wallet:
             if self.phrase or self._private_key:
                 pk = PrivateKey(bytes.fromhex(self.get_private_key()))
