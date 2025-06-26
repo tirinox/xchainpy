@@ -109,18 +109,8 @@ class UTXO(NamedTuple):
     script_pub_key: bytes = b''
 
 
-class UtxoOnlineDataProvider(OnlineDataProvider):
-    @abc.abstractmethod
-    async def get_confirmed_unspent_txs(self, address: str) -> List[UTXO]:
-        ...
-
-    @abc.abstractmethod
-    async def get_unspent_txs(self, address: str) -> List[UTXO]:
-        ...
-
-    @abc.abstractmethod
-    async def broadcast_tx(self, tx_hex: str) -> str:
-        ...
-
-
-UTXOOnlineDataProviders = Dict[NetworkType, UtxoOnlineDataProvider]
+class SecretsException(Exception):
+    """
+    Exception raised for errors related to secret management: private keys, or phrases.
+    """
+    ...

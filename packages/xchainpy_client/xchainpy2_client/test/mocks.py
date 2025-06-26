@@ -40,14 +40,13 @@ class MockChainClient(XChainClient):
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  client_urls=None,
                  chain_ids=None,
                  explorer_providers=None,
                  wallet_index=0,
                  ):
-        super().__init__(Chain.Cosmos, network, phrase, private_key, fee_bound, root_derivation_paths, wallet_index)
+        super().__init__(Chain.Cosmos, network, phrase, private_key, root_derivation_paths, wallet_index)
 
         self.explorers = explorer_providers
 
