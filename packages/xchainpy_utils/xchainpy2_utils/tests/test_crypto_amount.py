@@ -158,7 +158,6 @@ def test_arithmetic():
     assert amt - Decimal("1.0") == CryptoAmount.auto(4, AssetRUNE)
 
 
-
 def test_conv():
     amt = CryptoAmount(Amount(100, 8), AssetRUNE)
     assert int(amt) == 100
@@ -179,3 +178,56 @@ def test_bool():
 
     amt = CryptoAmount(Amount(-100, 8), AssetBTC)
     assert bool(amt) is True  # Negative amounts are still considered True
+
+
+def test_compare():
+    amt1 = CryptoAmount.auto(1, AssetRUNE)
+    amt2 = CryptoAmount.auto(1, AssetRUNE)
+    amt3 = CryptoAmount.auto(3, AssetRUNE)
+
+    assert amt1 == amt2
+    assert amt1 != amt3
+    assert amt1 < amt3
+    assert not (amt1 > amt3)
+    assert not (amt1 >= amt3)
+    assert amt1 <= amt2
+    assert not (amt1 < amt2)
+
+    assert amt1 > 0
+    assert CryptoAmount.zero(AssetRUNE) == 0
+    assert amt1 != 0
+    assert amt1 != 333
+    assert amt1 == "1"
+    assert amt1 == 1
+    assert amt1 == 1.0
+    assert amt1 == Decimal("1.0")
+
+    assert amt1 < 3
+    assert amt1 <= 3
+    assert amt1 <= 1
+    assert amt1 > 0.5
+    assert amt1 >= 0.5
+    assert amt1 >= 1
+    assert amt1 >= "1"
+
+
+# noinspection PyStatementEffect
+@pytest.mark.parametrize("amt2", [
+    "foo",
+    CryptoAmount.auto(3, AssetBTC),
+    None,
+])
+def test_compare_raise(amt2):
+    amt1 = CryptoAmount.auto(5, AssetRUNE)
+    with pytest.raises(Exception):
+        amt1 < amt2
+    with pytest.raises(Exception):
+        amt1 > amt2
+    with pytest.raises(Exception):
+        amt1 <= amt2
+    with pytest.raises(Exception):
+        amt1 >= amt2
+    with pytest.raises(Exception):
+        amt1 == amt2
+    with pytest.raises(Exception):
+        amt1 != amt2
