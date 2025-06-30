@@ -2,7 +2,8 @@ import datetime
 
 from web3.contract import Contract
 
-from xchainpy2_ethereum import EthereumClient, GasOptions, EVM_NULL_ADDRESS
+from xchainpy2_client import Gas
+from xchainpy2_ethereum import EthereumClient, EVM_NULL_ADDRESS
 from xchainpy2_ethereum.utils import get_router_abi
 from xchainpy2_thorchain_amm import AMMException, DEFAULT_EXPIRY
 from xchainpy2_thorchain_query import THORChainCache
@@ -24,7 +25,7 @@ class EVMHelper:
         self._router_abi = get_router_abi()
         self.deposit_gas_limit = DEFAULT_EVM_DEPOSIT_GAS_LIMIT
 
-    async def deposit(self, amount: CryptoAmount, memo: str, gas: GasOptions, expiration_sec: int = -1,
+    async def deposit(self, amount: CryptoAmount, memo: str, gas: Gas, expiration_sec: int = -1,
                       check_allowance: bool = True) -> str:
         """
         Send deposit to THORChain router
@@ -83,7 +84,7 @@ class EVMHelper:
 
         return await self.deposit_unsafe(asset, expiration_ts, gas, memo, raw_amount, router, value, vault)
 
-    async def deposit_unsafe(self, asset_contract, expiration_ts, gas: GasOptions, memo, raw_amount, router, value,
+    async def deposit_unsafe(self, asset_contract, expiration_ts, gas: Gas, memo, raw_amount, router, value,
                              vault, nonce=-1):
         """
         Deposit amount to THORChain router without any checks
@@ -100,8 +101,8 @@ class EVMHelper:
         """
         deposit_method = router.functions.depositWithExpiry(vault, asset_contract, raw_amount, memo, expiration_ts)
         gas_limit = self.deposit_gas_limit
-        tx_hash = await self.evm_client.make_contract_call(deposit_method, value, gas, gas_limit=gas_limit,
-                                                           nonce=nonce)
+        tx_hash = await self.evm_client.make_contract_call(
+            deposit_method, value, gas, gas_limit=gas_limit, nonce=nonce)
         return tx_hash
 
     async def is_tc_router_approved_to_spend(self, amount: CryptoAmount) -> bool:
@@ -133,7 +134,7 @@ class EVMHelper:
         approved = await self.evm_client.get_erc20_allowance(amount.asset, router, spend_from)
         return approved.amount >= amount.amount
 
-    async def approve_tc_router(self, amount: CryptoAmount, gas: GasOptions) -> str:
+    async def approve_tc_router(self, amount: CryptoAmount, gas: Gas) -> str:
         """
         Approve THORChain router to spend the asset
         :param amount: amount and asset you want to deposit
