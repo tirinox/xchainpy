@@ -153,7 +153,8 @@ class CosmosGaiaClient(XChainClient):
         self.chain_ids[self.network] = chain_id
         self._recreate_client()
 
-    def get_chain_id(self):
+    @property
+    def chain_id(self):
         return self.chain_ids[self.network]
 
     def set_network(self, network: NetworkType):

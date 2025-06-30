@@ -229,7 +229,7 @@ class THORChainClient(CosmosGaiaClient):
 
         tx.sign(
             self.get_private_key_cosmos(),
-            self.get_chain_id(),
+            self.chain_id,
             account_number=account_number
         )
 

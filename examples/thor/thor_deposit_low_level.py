@@ -30,7 +30,7 @@ async def main():
 
     tx.sign(
         client.get_private_key_cosmos(),
-        client.get_chain_id(),
+        client.chain_id,
         account_number=account.number
     )
     tx.complete()
