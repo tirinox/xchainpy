@@ -1,11 +1,14 @@
 from typing import Optional, Callable
 
-from xchainpy2_client import Fees, FeeType, FeeOption, ExplorerProvider
+from xchainpy2_client import ExplorerProvider
 from xchainpy2_utils import Amount, NetworkType
 
 # todo: add doc strings
 
 COSMOS_DECIMAL = 6
+"""
+Cosmos Atom decimal places.
+"""
 
 # Default gas limit
 # As same as definition in Cosmosstation's web wallet
@@ -34,18 +37,6 @@ COSMOS_ROOT_DERIVATION_PATHS = {
 
 # Prefix
 COSMOS_ADDR_PREFIX = 'cosmos'
-
-
-def get_default_fees() -> Fees:
-    return Fees(
-        type=FeeType.FLAT_FEE,
-        fees={
-            FeeOption.FAST: Amount.auto_base(750, COSMOS_DECIMAL),
-            FeeOption.FASTEST: Amount.auto_base(2500, COSMOS_DECIMAL),
-            FeeOption.AVERAGE: Amount.auto_base(0, COSMOS_DECIMAL),
-        }
-    )
-
 
 CLIENT_URL_KEPLR = 'https://lcd-cosmoshub.keplr.app'
 CLIENT_URL_COSMOSTATION = 'https://lcd-cosmos.cosmostation.io/'
