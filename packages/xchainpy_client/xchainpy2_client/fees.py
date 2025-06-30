@@ -66,10 +66,10 @@ class FeeBounds(NamedTuple):
         return FeeBounds(lower=0, upper=INF_FEE)
 
 
-class IGasExplicitOptions:
+class IGasExplicitSettings:
     """
-    Chain specific gas options for transaction invocation.
-    This is an interface that should be implemented by chain-specific gas options classes.
+    Chain specific gas settings for transaction invocation.
+    This is an interface that should be implemented by chain-specific gas settings classes.
     See the corresponding client package for specific implementations.
     """
     pass
@@ -108,9 +108,9 @@ class Gas(NamedTuple):
     The fee option to use if the gas options are automatic.
     """
 
-    explicit_options: Optional[IGasExplicitOptions] = None
+    settings: Optional[IGasExplicitSettings] = None
     """
-    Explicit gas options if the gas options are not automatic.
+    Explicit gas settings if the gas options are not automatic.
     """
 
     @classmethod
@@ -125,16 +125,16 @@ class Gas(NamedTuple):
         return cls(is_automatic=True, bounds=bounds or FeeBounds.infinite(), fee_option=fee_option)
 
     @classmethod
-    def explicit(cls, options: IGasExplicitOptions, bounds: Optional[FeeBounds] = None):
+    def explicit(cls, settings: IGasExplicitSettings, bounds: Optional[FeeBounds] = None):
         """
-        Create explicit gas options with specified options and optional bounds.
+        Create explicit gas settings and optional bounds.
         Chain specific options should be provided in the corresponding client package.
 
-        :param options: IGasExplicitOptions instance containing explicit gas options.
+        :param settings: IGasExplicitSettings instance containing explicit gas settings.
         :param bounds: Optional bounds for the fee rate. If not set, defaults to infinite bounds.
         :return:
         """
-        return cls(is_automatic=False, bounds=bounds or FeeBounds.infinite(), explicit_options=options)
+        return cls(is_automatic=False, bounds=bounds or FeeBounds.infinite(), settings=settings)
 
 
 class FlatFee(IFees):
