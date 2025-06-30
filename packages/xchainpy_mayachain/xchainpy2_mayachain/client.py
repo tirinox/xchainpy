@@ -6,14 +6,13 @@ from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.client import Coin
 from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.tx_helpers import SubmittedTx
-from xchainpy2_mayanode import MimirApi, ApiClient
 
-from xchainpy2_client import RootDerivationPaths
-from xchainpy2_client import XcTx, TxType, Fees, FeeType, TokenTransfer
-from xchainpy2_client.fees import single_fee
-from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
+from xchainpy2_client.fees import Gas
+from xchainpy2_client.models import XcTx, TxType, TokenTransfer, RootDerivationPaths
+from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException, FlatFee
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
+from xchainpy2_mayanode import MimirApi, ApiClient
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Amount, remove_0x_prefix, \
     Asset, SYNTH_DELIMITER, CACAO_DECIMAL, AssetCACAO
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_CACAO_NATIVE, ROOT_DERIVATION_PATHS, \
@@ -172,7 +171,7 @@ class MayaChainClient(CosmosGaiaClient):
 
         tx.sign(
             self.get_private_key_cosmos(),
-            self.get_chain_id(),
+            self.chain_id,
             account_number=account_number
         )
 
@@ -274,7 +273,7 @@ class MayaChainClient(CosmosGaiaClient):
         except TxLoadException:
             return await self.get_transaction_data_mayanode(tx_id)
 
-    async def get_fees(self) -> Fees:
+    async def get_fees(self) -> FlatFee:
         mimir_api = MimirApi(self.mayanode_api_client)
         mimir_params = await mimir_api.mimir()
 
@@ -286,7 +285,7 @@ class MayaChainClient(CosmosGaiaClient):
         except ValueError:
             raise ValueError(f"Invalid native TX fee in Mimir: {fee_param}")
 
-        return single_fee(FeeType.FLAT_FEE, Amount.auto_base(fee_param, self._decimal))
+        return FlatFee(self.chain, Amount.auto_base(fee_param, self._decimal))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         if SYNTH_DELIMITER in denom:
@@ -380,12 +379,16 @@ class MayaChainClient(CosmosGaiaClient):
         if self.maya_scan:
             await self.maya_scan.close()
 
-    async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None, check_balance: bool = True) -> str:
+    async def transfer(self, what: CryptoAmount,
+                       recipient: str,
+                       memo: Optional[str] = None,
+                       gas: Optional[Gas] = None,
+                       check_balance: bool = True,
+                       **kwargs) -> str:
         if is_mrc20(what.asset):
             return await self.transfer_mrc20(what, recipient)
         else:
-            return await super().transfer(what, recipient, memo, fee_rate, check_balance)
+            return await super().transfer(what, recipient, memo, gas, check_balance)
 
     transfer.__doc__ = CosmosGaiaClient.transfer.__doc__
 
