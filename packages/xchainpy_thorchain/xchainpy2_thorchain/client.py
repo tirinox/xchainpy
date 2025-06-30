@@ -6,7 +6,7 @@ from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
-from xchainpy2_client import XcTx, TxType, TokenTransfer, RootDerivationPaths, FlatFee
+from xchainpy2_client import XcTx, TxType, TokenTransfer, RootDerivationPaths, FlatFee, Gas
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
@@ -169,11 +169,10 @@ class THORChainClient(CosmosGaiaClient):
                       what: Union[CryptoAmount, Amount, int, float],
                       memo: str,
                       second_asset: Optional[CryptoAmount] = None,
-                      gas_limit: Optional[int] = None,
+                      gas: Optional[Gas] = None,
                       sequence: int = None,
                       account_number: int = None,
                       check_balance: bool = True,
-                      fee=None,
                       return_full_response=False) -> Union[SubmittedTx, str]:
         """
         Send a deposit transaction. MsgDeposit is a special kind of transaction to invoke THORChain protocol's action
@@ -182,12 +181,11 @@ class THORChainClient(CosmosGaiaClient):
         For more info see: https://dev.thorchain.org/concepts/sending-transactions.html?highlight=MsgDeposit#thorchain
 
         :param what: Amount and Asset
-        :param second_asset: optional second asset if needed
         :param memo: Memo string (usually a command to the AMM)
-        :param gas_limit: if not specified, we'll use the default value
+        :param gas: Gas options, if None, default gas limit will be used
+        :param second_asset: optional second asset if needed
         :param sequence: sequence number. If it is None, it will be fetched automatically
         :param check_balance: Flag to check the balance before sending Tx
-        :param fee: string like "0rune", default is 0
         :param account_number: Your account number. If it is none, we will fetch it
         :param return_full_response: when it is not enough to have just tx hash
 
@@ -206,7 +204,9 @@ class THORChainClient(CosmosGaiaClient):
             # fixme: implement THORChain version!
             await self.check_balance(address, what)
 
-        if gas_limit is None:
+        if gas and gas.gas_limit:
+            gas_limit = gas.gas_limit
+        else:
             gas_limit = self._deposit_gas_limit
 
         if sequence is None or account_number is None:
@@ -216,10 +216,12 @@ class THORChainClient(CosmosGaiaClient):
 
         public_key = self.get_public_key()
 
+        fee = self.get_amount_string(0)  # Default fee is 0, because THORChain has its own fees
+
         tx = build_deposit_tx_unsigned(
             what, memo,
             public_key,
-            fee=fee or self.get_amount_string(0),
+            fee=fee,
             prefix=self.prefix,
             sequence_num=sequence,
             gas_limit=gas_limit,
@@ -346,7 +348,7 @@ class THORChainClient(CosmosGaiaClient):
         if not fee or not isinstance(fee, str) or not fee.isdigit() or int(fee) < 0:
             raise Exception(f"Invalid fee: {fee}")
 
-        return FlatFee(self.chain, CryptoAmount.auto_base(fee, self._gas_asset, self._decimal))
+        return FlatFee(CryptoAmount.auto_base(fee, self._gas_asset, self._decimal))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         """
