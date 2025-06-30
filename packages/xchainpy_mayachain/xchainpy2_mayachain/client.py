@@ -131,12 +131,10 @@ class MayaChainClient(CosmosGaiaClient):
                       what: Union[CryptoAmount, Amount, int, float],
                       memo: str,
                       second_asset: Optional[CryptoAmount] = None,
-                      gas_limit: Optional[int] = None,
+                      gas: Optional[Gas] = None,
                       sequence: int = None,
                       account_number: int = None,
                       check_balance: bool = True,
-                      # todo: use Gas object instead of fee string
-                      fee=None,
                       return_full_response=False) -> Union[SubmittedTx, str]:
         """
         Send a deposit transaction. MsgDeposit is a special kind of transaction to invoke MayaChain protocol's action
@@ -147,10 +145,9 @@ class MayaChainClient(CosmosGaiaClient):
         :param what: Amount and Asset
         :param second_asset: optional second asset if needed
         :param memo: Memo string (usually a command to the AMM)
-        :param gas_limit: if not specified, we'll use the default value
+        :param gas: Gas options, if None, default gas limit will be used
         :param sequence: sequence number. If it is None, it will be fetched automatically
         :param check_balance: Flag to check the balance before sending Tx
-        :param fee: string like "0cacao", default is 0
         :param account_number: Your account number. If it is none, we will fetch it
         :param return_full_response: when it is not enough to have just tx hash
 
@@ -168,7 +165,9 @@ class MayaChainClient(CosmosGaiaClient):
         if check_balance:
             await self.check_balance(address, what)
 
-        if gas_limit is None:
+        if gas and gas.gas_limit:
+            gas_limit = gas.gas_limit
+        else:
             gas_limit = self._deposit_gas_limit
 
         if sequence is None or account_number is None:
@@ -178,10 +177,11 @@ class MayaChainClient(CosmosGaiaClient):
 
         public_key = self.get_public_key()
 
+        fee = self.get_amount_string(0)  # MayaChain charges its own fee, so we set it to 0.
         tx = build_deposit_tx_unsigned(
             what, memo,
             public_key,
-            fee=fee or self.get_amount_string(0),
+            fee=fee,
             prefix=self.prefix,
             sequence_num=sequence,
             gas_limit=gas_limit,
@@ -312,7 +312,7 @@ class MayaChainClient(CosmosGaiaClient):
         except ValueError:
             raise ValueError(f"Invalid native TX fee in Mimir: {fee_param}")
 
-        return FlatFee(self.chain, self.gas_base_amount(fee_param))
+        return FlatFee(self.gas_base_amount(fee_param))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         """
