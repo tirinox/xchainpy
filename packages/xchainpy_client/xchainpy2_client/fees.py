@@ -136,6 +136,16 @@ class Gas(NamedTuple):
         """
         return cls(is_automatic=False, bounds=bounds or FeeBounds.infinite(), settings=settings)
 
+    @property
+    def gas_limit(self) -> Optional[int]:
+        """
+        Get the gas limit from the settings if available.
+
+        :return: The gas limit if available, otherwise None.
+        """
+        if self.settings and hasattr(self.settings, "gas_limit"):
+            return self.settings.gas_limit
+
 
 class FlatFee(IFees):
     """
