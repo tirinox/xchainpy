@@ -312,7 +312,7 @@ class MayaChainClient(CosmosGaiaClient):
         except ValueError:
             raise ValueError(f"Invalid native TX fee in Mimir: {fee_param}")
 
-        return FlatFee(self.chain, Amount.auto_base(fee_param, self._decimal))
+        return FlatFee(self.chain, self.gas_base_amount(fee_param))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         """
