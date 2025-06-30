@@ -81,6 +81,7 @@ class IFees:
     """
     Interface for fees.
     This is an interface that should be implemented by chain-specific fees classes.
+    Instances of subclasses are returned by the `get_fees` method of the client.
     See the corresponding client package for specific implementations.
     """
 

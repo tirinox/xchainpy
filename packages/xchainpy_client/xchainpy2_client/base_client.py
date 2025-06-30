@@ -169,18 +169,17 @@ class XChainClient(abc.ABC):
 
         gas_balance = next((b for b in balances if b.asset == self._gas_asset), None)
         if not gas_balance:
+            # todo: are there any chains that do not require gas?
             return self.zero_gas_amount  # no gas at all
 
-        fees = await self.get_fees()
-        fee = fees.fees[fee_option]
-        # fixme: for EVM they are in GWEI!!
-        # note: must be same decimals
-        max_value = gas_balance.amount - fee
-        if max_value.internal_amount < 0:
+        fee = await self.estimate_gas_of_transfer(gas_balance.changed_amount_base(1), self.get_address(), gas=gas)
+
+        max_value = gas_balance - fee
+        if max_value < 0:
             # less than fee
             return self.zero_gas_amount
         else:
-            return CryptoAmount(max_value, self._gas_asset)
+            return CryptoAmount(max_value.amount, self._gas_asset)
 
     def set_network(self, network: NetworkType):
         if not network:
@@ -328,11 +327,13 @@ class XChainClient(abc.ABC):
     async def transfer(self, what: CryptoAmount,
                        recipient: str,
                        memo: Optional[str] = None,
-                       gas: Optional[Gas] = None, **kwargs) -> str:
+                       gas: Optional[Gas] = None,
+                       check_balance: bool = True,
+                       **kwargs) -> str:
         pass
 
     async def estimate_gas_of_transfer(self, what: CryptoAmount, recipient: str,
-                                       memo: Optional[str] = None, gas: Optional[Gas] = None) -> GasUnits:
+                                       memo: Optional[str] = None, gas: Optional[Gas] = None) -> CryptoAmount:
         """
         Estimate the gas required for a transfer operation.
 
