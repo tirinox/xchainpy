@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import NamedTuple, Optional, Dict
 
-from xchainpy2_utils import Chain, CryptoAmount
+from xchainpy2_utils import CryptoAmount
 
 
 class FeeOption(Enum):
@@ -72,9 +72,7 @@ class IGasExplicitOptions:
     This is an interface that should be implemented by chain-specific gas options classes.
     See the corresponding client package for specific implementations.
     """
-
-    def __init__(self, chain: Chain):
-        self.chain = chain
+    pass
 
 
 class IFees:
@@ -84,9 +82,7 @@ class IFees:
     Instances of subclasses are returned by the `get_fees` method of the client.
     See the corresponding client package for specific implementations.
     """
-
-    def __init__(self, chain: Chain):
-        self.chain = chain
+    pass
 
 
 class Gas(NamedTuple):
@@ -147,12 +143,12 @@ class FlatFee(IFees):
     This class is used to represent a flat fee structure for transactions.
     """
 
-    def __init__(self, chain: Chain, amount: CryptoAmount):
-        super().__init__(chain)
+    def __init__(self, amount: CryptoAmount):
+        super().__init__()
         self.amount = amount
 
     def __repr__(self):
-        return f"FlatFee(chain={self.chain}, amount={self.amount})"
+        return f"FlatFee(amount={self.amount})"
 
 
 class FeeWithOptions(IFees):
@@ -161,12 +157,11 @@ class FeeWithOptions(IFees):
     This class is used to represent a fee structure with options for different fee types.
     """
 
-    def __init__(self, chain: Chain, fees: Dict[FeeOption, CryptoAmount]):
-        super().__init__(chain)
+    def __init__(self, fees: Dict[FeeOption, CryptoAmount]):
         self.fees = fees
 
     def __repr__(self):
-        return f"FeeWithOptions(chain={self.chain}, fees={self.fees})"
+        return f"FeeWithOptions(fees={self.fees})"
 
     @property
     def average(self):
@@ -207,7 +202,6 @@ class FeeWithOptions(IFees):
         :return: FeeWithOptions instance with calculated fees based on the multipliers.
         """
         return cls(
-            flat_fee.chain,
             fees={
                 FeeOption.AVERAGE: flat_fee.amount * avg_mult,
                 FeeOption.FAST: flat_fee.amount * fast_mult,
@@ -221,5 +215,6 @@ class FeeProgressive(FeeWithOptions):
     FeeProgressive implementation.
     For some chains, the fee can be progressive, meaning that the fee increases with the size of the transaction.
     """
+
     def __repr__(self):
-        return f"FeeProgressive(chain={self.chain}, fees={self.fees})"
+        return f"FeeProgressive(fees={self.fees})"
