@@ -6,7 +6,7 @@ from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
-from xchainpy2_client import XcTx, TxType, TokenTransfer, RootDerivationPaths, IFees
+from xchainpy2_client import XcTx, TxType, TokenTransfer, RootDerivationPaths, FlatFee
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
@@ -203,6 +203,7 @@ class THORChainClient(CosmosGaiaClient):
         address = self.get_address()
 
         if check_balance:
+            # fixme: implement THORChain version!
             await self.check_balance(address, what)
 
         if gas_limit is None:
@@ -331,12 +332,13 @@ class THORChainClient(CosmosGaiaClient):
         except TxLoadException:
             return await self.get_transaction_data_thornode(tx_id)
 
-    async def get_fees(self) -> IFees:
+    async def get_fees(self) -> FlatFee:
         """
         Get THORChain interaction fees from THORNode API.
 
         :return: Fees object
         """
+        # todo: should we cache it?
         network_api = NetworkApi(self._thornode_api_client)
         network_params = await network_api.network()
 
@@ -344,7 +346,7 @@ class THORChainClient(CosmosGaiaClient):
         if not fee or not isinstance(fee, str) or not fee.isdigit() or int(fee) < 0:
             raise Exception(f"Invalid fee: {fee}")
 
-        return single_fee(FeeType.FLAT_FEE, Amount.auto_base(fee, self._decimal))
+        return FlatFee(self.chain, CryptoAmount.auto_base(fee, self._gas_asset, self._decimal))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         """
