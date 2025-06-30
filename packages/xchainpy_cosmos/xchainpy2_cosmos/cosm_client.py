@@ -460,7 +460,7 @@ class CosmosGaiaClient(XChainClient):
         return await self._get_json(url)
 
     async def get_fees(self) -> FlatFee:
-        return FlatFee(self.chain, self.standard_tx_fee)
+        return FlatFee(self.standard_tx_fee)
 
     async def transfer(self, what: CryptoAmount,
                        recipient: str,
@@ -567,17 +567,17 @@ class CosmosGaiaClient(XChainClient):
         return self._prefix
 
     async def check_balance(self, address, amount: CryptoAmount):
-        # todo: test it
+        # todo: check and test it!
         balances = await self.get_balance(address)
 
         asset_balance = None
-        native_balance = None
+        gas_balance = None
 
         for balance in balances:
             if balance.asset == amount.asset:
                 asset_balance = balance
             if balance.asset == self._gas_asset:
-                native_balance = balance
+                gas_balance = balance
 
         is_native = amount.asset == self._gas_asset
         if is_native:
@@ -586,11 +586,11 @@ class CosmosGaiaClient(XChainClient):
             fees = await self.get_fees()
             extra_fee = fees.amount
 
-        required = CryptoAmount(amount.amount + extra_fee, amount.asset)
+        required = CryptoAmount(amount + extra_fee, amount.asset)
         if asset_balance is None or asset_balance < required:
             raise ValueError(f"Insufficient funds: {required} is required. Balance is {asset_balance}")
 
-        if native_balance is None or native_balance.amount < extra_fee:
+        if gas_balance is None or gas_balance.amount < extra_fee:
             raise ValueError(f"Insufficient funds to pay fee: {extra_fee} {self._gas_asset}")
 
     def _make_wallet(self) -> Optional[LocalWallet]:
@@ -601,9 +601,23 @@ class CosmosGaiaClient(XChainClient):
                 return self._wallet
 
     def get_amount_string(self, amount):
+        """
+        Builds a string representation of the amount in the format required by Cosmos.
+        For instance, "123atom"
+
+        :param amount: Amount to convert, should be an instance of Amount or CryptoAmount, or just int
+        :return: str
+        """
         return f"{int(amount)}{self._denom}"
 
     def get_denom(self, asset: Asset) -> str:
+        """
+        Converts an Asset to its corresponding denomination string.
+        If the asset is AssetATOM, it returns the constant "uatom".
+
+        :param asset: Asset instance (e.g., AssetATOM or any other asset)
+        :return: str Denomination string for the asset
+        """
         if asset == AssetATOM:
             return COSMOS_DENOM
         else:
