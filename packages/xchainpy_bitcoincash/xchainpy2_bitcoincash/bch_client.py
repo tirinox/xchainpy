@@ -12,7 +12,7 @@ from xchainpy2_client import RootDerivationPaths, XChainClient, IFees, XcTx, TxP
     TokenTransfer
 from xchainpy2_utils import NetworkType, Asset, AssetBCH, Chain, CryptoAmount, Amount
 from .const import ROOT_DERIVATION_PATHS, BCH_DECIMAL, DEFAULT_PROVIDER_NAMES, DEFAULT_BCH_EXPLORERS, \
-    AssetTestBCH, DEFAULT_BCH_FEES
+    AssetTestBCH
 
 
 class BitcoinCashClient(XChainClient):
@@ -213,14 +213,14 @@ class BitcoinCashClient(XChainClient):
     def _underlying_network(self):
         return 'testnet' if self.network == NetworkType.TESTNET else 'mainnet'
 
-    async def get_fees(self) -> Fees:
+    async def get_fees(self) -> IFees:
         """
         Get default fees. No API call is performed.
 
         :return: The fee
         """
-        # fixme: probably we should query some API for the fees
-        return DEFAULT_BCH_FEES
+        # todo fixme: probably we should query some API for the fees
+        return None
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
                        fee_rate: Optional[int] = None, **kwargs) -> str:

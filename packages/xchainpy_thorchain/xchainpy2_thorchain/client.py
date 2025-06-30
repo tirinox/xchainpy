@@ -6,9 +6,7 @@ from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
-from xchainpy2_client import RootDerivationPaths
-from xchainpy2_client import XcTx, TxType, Fees, FeeType, TokenTransfer
-from xchainpy2_client.fees import single_fee
+from xchainpy2_client import XcTx, TxType, TokenTransfer, RootDerivationPaths, IFees
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
@@ -333,7 +331,7 @@ class THORChainClient(CosmosGaiaClient):
         except TxLoadException:
             return await self.get_transaction_data_thornode(tx_id)
 
-    async def get_fees(self) -> Fees:
+    async def get_fees(self) -> IFees:
         """
         Get THORChain interaction fees from THORNode API.
 

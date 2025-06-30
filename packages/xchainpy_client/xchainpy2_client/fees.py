@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Dict
 
-from xchainpy2_utils import Chain
+from xchainpy2_utils import Chain, CryptoAmount
 
 
 class FeeOption(Enum):
@@ -140,70 +140,86 @@ class Gas(NamedTuple):
         """
         return cls(is_automatic=False, bounds=bounds or FeeBounds.infinite(), explicit_options=options)
 
-# def single_fee(fee_type: FeeType, amount: Fee) -> Fees:
-#     return Fees(
-#         type=fee_type,
-#         fees={
-#             option: amount for option in FeeOption
-#         }
-#     )
-#
-#
-# AVERAGE_FEE_MULTIPLIER = 0.5
-# FASTEST_FEE_MULTIPLIER = 5
-#
-#
-# def standard_fee(fee_type: FeeType, amount: Fee) -> Fees:
-#     fees = single_fee(fee_type, amount)
-#     fees.fees[FeeOption.AVERAGE] = amount * AVERAGE_FEE_MULTIPLIER
-#     fees.fees[FeeOption.FASTEST] = amount * FASTEST_FEE_MULTIPLIER
-#     return fees
-#
-#
-# def standard_fee_rates(amount: FeeRate) -> FeeRates:
-#     return {
-#         FeeOption.AVERAGE: amount * AVERAGE_FEE_MULTIPLIER,
-#         FeeOption.FAST: amount,
-#         FeeOption.FASTEST: amount * FASTEST_FEE_MULTIPLIER,
-#     }
-#
-#
-# def calc_fees(fee_rates: FeeRates, calc_fee: Callable[..., Fee], *args) -> Fees:
-#     """
-#     Apply calc_fee function to fee_rates to get Fees
-#     :param fee_rates: Fee rates
-#     :param calc_fee: Function like "def calc_fee(k: FeeOption, v: Amount, *args): ..."
-#     :param args: Arbitrary arguments for calc_fee (optional)
-#     :return:
-#     """
-#     fees = {
-#         k: calc_fee(k, v, *args)
-#         for k, v in fee_rates.items()
-#     }
-#     return Fees(
-#         fees=fees,
-#         type=FeeType.PER_BYTE
-#     )
-#
-#
-# async def calc_fees_async(fee_rates: FeeRates, calc_fee: Callable, *args) -> Fees:
-#     """
-#     Apply async calc_fee function to fee_rates to get Fees
-#     :param fee_rates: Fee rates
-#     :param calc_fee: Function like "async def calc_fee(k: FeeOption, v: Amount, *args): ..."
-#     :param args: Arbitrary arguments for calc_fee (optional)
-#     :return:
-#     """
-#     all_fees = await asyncio.gather(
-#         *[calc_fee(k, v, *args) for k, v in fee_rates.items()]
-#     )
-#
-#     fees = {
-#         k: fee
-#         for k, fee in zip(fee_rates.keys(), all_fees)
-#     }
-#
-#     return Fees(
-#         fees=fees,
-#         type=FeeType.PER_BYTE
-#     )
+
+class FlatFee(IFees):
+    """
+    Flat fee implementation.
+    This class is used to represent a flat fee structure for transactions.
+    """
+
+    def __init__(self, chain: Chain, amount: CryptoAmount):
+        super().__init__(chain)
+        self.amount = amount
+
+    def __repr__(self):
+        return f"FlatFee(chain={self.chain}, amount={self.amount})"
+
+
+class FeeWithOptions(IFees):
+    """
+    Fee with options implementation.
+    This class is used to represent a fee structure with options for different fee types.
+    """
+
+    def __init__(self, chain: Chain, fees: Dict[FeeOption, CryptoAmount]):
+        super().__init__(chain)
+        self.fees = fees
+
+    def __repr__(self):
+        return f"FeeWithOptions(chain={self.chain}, fees={self.fees})"
+
+    @property
+    def average(self):
+        """
+        Get the average fee option.
+
+        :return: The average fee option.
+        """
+        return self.fees.get(FeeOption.AVERAGE)
+
+    @property
+    def fast(self):
+        """
+        Get the fast fee option.
+
+        :return: The fast fee option.
+        """
+        return self.fees.get(FeeOption.FAST)
+
+    @property
+    def fastest(self):
+        """
+        Get the fastest fee option.
+
+        :return: The fastest fee option.
+        """
+        return self.fees.get(FeeOption.FASTEST)
+
+    @classmethod
+    def from_flat_with_mult(cls, flat_fee: FlatFee, avg_mult=1.0, fast_mult=2.0, fastest_mult=5.0):
+        """
+        Construct FeeWithOptions from a FlatFee and multipliers for different fee options.
+
+        :param flat_fee: A FlatFee instance containing the base fee amount.
+        :param avg_mult: Multiplier for the average fee option (default is 1.0).
+        :param fast_mult: Multiplier for the fast fee option (default is 2.0).
+        :param fastest_mult: Multiplier for the fastest fee option (default is 5.0).
+        :return: FeeWithOptions instance with calculated fees based on the multipliers.
+        """
+        return cls(
+            flat_fee.chain,
+            fees={
+                FeeOption.AVERAGE: flat_fee.amount * avg_mult,
+                FeeOption.FAST: flat_fee.amount * fast_mult,
+                FeeOption.FASTEST: flat_fee.amount * fastest_mult,
+            }
+        )
+
+
+class FeeProgressive(FeeWithOptions):
+    """
+    FeeProgressive implementation.
+    For some chains, the fee can be progressive, meaning that the fee increases with the size of the transaction.
+    """
+    def __repr__(self):
+        return f"FeeProgressive(chain={self.chain}, fees={self.fees})"

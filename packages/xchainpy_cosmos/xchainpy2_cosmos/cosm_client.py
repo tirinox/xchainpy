@@ -16,7 +16,7 @@ from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PrivateKey, PublicKey
 from cosmpy.protos.cosmos.tx.v1beta1.service_pb2 import BroadcastTxRequest, BroadcastMode
 
-from xchainpy2_client import XChainClient, RootDerivationPaths, XcTx, TxPage, Gas
+from xchainpy2_client import XChainClient, RootDerivationPaths, XcTx, TxPage, Gas, FlatFee
 from xchainpy2_crypto import create_address
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, Amount, AssetATOM, \
     unique_by_key, batched, NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER, flatten
@@ -24,7 +24,7 @@ from .const import DEFAULT_CLIENT_URLS, DEFAULT_EXPLORER_PROVIDER, COSMOS_ROOT_D
     COSMOS_CHAIN_IDS, COSMOS_DECIMAL, TxFilterFunc, MAX_PAGES_PER_FUNCTION_CALL, MAX_TX_COUNT_PER_PAGE, \
     MAX_TX_COUNT_PER_FUNCTION_CALL, COSMOS_DENOM, DEFAULT_FEE, DEFAULT_GAS_LIMIT, DEFAULT_REST_USER_AGENT, \
     FEE_MINIMUM_GAS_PRICE
-from .models import TxHistoryResponse, TxLoadException, FlatFee
+from .models import TxHistoryResponse, TxLoadException
 from .utils import parse_tx_response_json
 
 logger = logging.getLogger(__name__)
@@ -154,7 +154,12 @@ class CosmosGaiaClient(XChainClient):
         self._recreate_client()
 
     @property
-    def chain_id(self):
+    def chain_id(self) -> str:
+        """
+        Get the current chain id for the Cosmos network.
+
+        :return: str Chain ID
+        """
         return self.chain_ids[self.network]
 
     def set_network(self, network: NetworkType):

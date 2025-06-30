@@ -1,9 +1,6 @@
 from collections import defaultdict
 from typing import NamedTuple, Optional, List
 
-from xchainpy2_client import IFees
-from xchainpy2_utils import Chain
-
 
 def load_logs(j_logs):
     return [TxLog.from_rpc_json(log) for log in j_logs]
@@ -139,16 +136,3 @@ class TxLoadException(Exception):
 class TxInternalException(Exception):
     pass
 
-
-class FlatFee(IFees):
-    """
-    Flat fee implementation for Cosmos transactions.
-    This class is used to represent a flat fee structure for transactions.
-    """
-
-    def __init__(self, chain: Chain, amount: str):
-        super().__init__(chain)
-        self.amount = amount
-
-    def __repr__(self):
-        return f"FlatFee(chain={self.chain}, amount={self.amount})"

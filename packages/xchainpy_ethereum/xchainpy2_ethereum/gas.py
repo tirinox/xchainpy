@@ -1,11 +1,12 @@
 import asyncio
 from functools import reduce
 from operator import itemgetter
-from typing import Optional, NamedTuple
+from typing import Optional, NamedTuple, Dict
 
 import web3
 
-from xchainpy2_client import FeeOption, Fees, FeeType
+from xchainpy2_client import FeeOption, FeeProgressive
+from xchainpy2_utils import Chain, CryptoAmount
 
 
 class GasOptions(NamedTuple):
@@ -101,11 +102,34 @@ def wei_to_gwei(wei):
     return web3.Web3.from_wei(wei, 'gwei')
 
 
+class FeesEVM(FeeProgressive):
+    def __init__(self, chain: Chain, fees: Dict[FeeOption, CryptoAmount],
+                 priority_fee: CryptoAmount,
+                 base_fee: CryptoAmount):
+        """
+        FeesEVM implementation for Ethereum-like chains.
+        In addition to the standard fees, it includes priority and base block fees.
+
+        :param chain: Chain instance representing the blockchain.
+        :type chain: Chain
+        :param fees: Fees dictionary mapping FeeOption to CryptoAmount.
+        :type fees: Dict[FeeOption, CryptoAmount]
+        :param priority_fee: Priority fee for the transaction, typically used in EIP-1559 transactions.
+        :type priority_fee: CryptoAmount
+        :param base_fee: Base fee for the transaction, typically used in EIP-1559 transactions.
+        :type base_fee: CryptoAmount
+        """
+        super().__init__(chain, fees)
+        self.priority_fee = priority_fee
+        self.base_fee = base_fee
+
+
 class GasEstimator:
-    def __init__(self, w3: web3.Web3, percentiles=(20, 50, 80), block_count=10,
+    def __init__(self, w3: web3.Web3, chain: Chain, percentiles=(20, 50, 80), block_count=10,
                  base_fee_multiplier=1.0):
         """
         :param w3: web3 instance
+        :param chain: Chain instance representing the blockchain.
         :param percentiles: A monotonically increasing list of percentile values to sample from each block's
         effective priority fees per gas in ascending order, weighted by gas used.
         :param block_count: The number of blocks to sample for the fee history.
@@ -113,6 +137,7 @@ class GasEstimator:
         Don't worry, the unused gas will be refunded to the user.
         """
         self.web3 = w3
+        self.chain = chain
         self.percentiles = percentiles
         self.block_count = block_count
         self.base_fee_multiplier = base_fee_multiplier
@@ -138,13 +163,13 @@ class GasEstimator:
     async def call_service(sync_method, *args):
         return await asyncio.get_event_loop().run_in_executor(None, sync_method, *args)
 
-    async def estimate(self) -> Fees:
+    async def estimate(self) -> FeesEVM:
         """
         Estimate the gas fees based on the current network conditions.
         This method fetches the fee history, base fee, and max priority fee,
         and calculates the average, fast, and fastest fees based on the reward history.
 
-        :return: Fees object containing the estimated fees
+        :return: FeesEVM object containing the estimated fees
         """
 
         # RPC calls
@@ -166,13 +191,13 @@ class GasEstimator:
         base_fee_with_margin = wei_to_gwei(base_fee)
         max_priority_fee = wei_to_gwei(max_priority_fee_safe_low)
 
-        return Fees(
-            FeeType.PER_BYTE,
+        return FeesEVM(
+            self.chain,
             fees={
-                FeeOption._ETH_PRIORITY_FEE: max_priority_fee,
-                FeeOption._ETH_BASE_FEE: base_fee_with_margin,
                 FeeOption.FASTEST: hi + base_fee_with_margin,
                 FeeOption.FAST: mi + base_fee_with_margin,
                 FeeOption.AVERAGE: lo + base_fee_with_margin
-            }
+            },
+            priority_fee=max_priority_fee,
+            base_fee=base_fee_with_margin
         )

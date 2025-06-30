@@ -458,6 +458,7 @@ class THORChainAMM:
                               input_amount: CryptoAmount,
                               to_address: str,
                               memo: Union[str, THORMemo],
+                              # todo: GasOptions -> Gas
                               gas_options: Optional[GasOptions] = None) -> str:
         """
         General deposit function to deposit assets to a specific inbound address with a memo.
@@ -507,6 +508,7 @@ class THORChainAMM:
         else:
             if chain.is_utxo:
                 fees = await client.get_fees()
+                # todo fixme!
                 fee_rate = int(fees.fees[self.fee_option])
             else:
                 fee_rate = None
@@ -526,6 +528,7 @@ class THORChainAMM:
             return f'Dry-run: EVM deposit {input_amount} with memo {memo!r}; expiration: {self.evm_expiration_sec}'
 
         # todo: add check_balance
+        # todo: use Gas instead of GasOptions
 
         # noinspection PyTypeChecker
         helper = self._get_evm_helper(input_amount.asset)

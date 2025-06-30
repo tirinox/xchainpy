@@ -11,8 +11,8 @@ from web3.exceptions import TransactionNotFound
 from web3.providers import BaseProvider
 from web3.types import TxParams
 
-from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees, XcTx, TxPage, FeeRate, TxType, \
-    TokenTransfer, FeeOption
+from xchainpy2_client import XChainClient, RootDerivationPaths, XcTx, TxPage, TxType, \
+    TokenTransfer, FeeOption, Gas, IFees
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset, Amount
 from .const import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMALS, DEFAULT_ETH_EXPLORER_PROVIDERS, \
     FREE_ETH_PROVIDERS, GAS_LIMITS, ETH_CHAIN_ID, ETH_TOKEN_LIST
@@ -100,7 +100,7 @@ class EthereumClient(XChainClient):
             self._ex_provider = None
 
     @property
-    def get_chain_id(self):
+    def chain_id(self):
         return self._chain_ids[self.network]
 
     @property
@@ -285,8 +285,9 @@ class EthereumClient(XChainClient):
             type=TxType.TRANSFER,
         )
 
-    async def get_fees(self, fee_multiplier=1.0) -> Fees:
+    async def get_fees(self, fee_multiplier=1.0) -> IFees:
         """
+        todo: fixme!
         Get EVM gas rates for the current network.
         Fees are estimated based on the last 20 blocks.
         All FeeRate are in Gwei!
@@ -294,13 +295,14 @@ class EthereumClient(XChainClient):
         :param fee_multiplier: Fee multiplier. Default is 1.0
         :return: Fees object
         """
-        estimator = GasEstimator(self.web3, self.fee_estimation_percentiles,
+        estimator = GasEstimator(self.web3, self.chain, self.fee_estimation_percentiles,
                                  self.fee_estimation_block_history,
                                  base_fee_multiplier=fee_multiplier)
         return await estimator.estimate()
 
-    async def get_last_fee(self) -> FeeRate:
+    async def get_last_fee(self) -> int:
         """
+        todo: fixme!
         Get the last Ethereum fee
         FeeRate is in Gwei
         """
@@ -309,14 +311,16 @@ class EthereumClient(XChainClient):
         return Web3.from_wei(fee, 'gwei')
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
-                       gas: Optional[GasOptions] = None, **kwargs) -> str:
+                       gas: Optional[Gas] = None, **kwargs) -> str:
         """
+        fixme!
         Transfer Ethereum or ERC20 token. Do not use it for swap or something like this.
         Use AMM's `deposit` method instead.
+
         :param what: Amount to transfer
         :param recipient: Recipient address or contract address to call
         :param memo: Memo (optional, not supported for ERC20 token transfer)
-        :param gas: Gas options. Default is `GasOptions.auto(FeeOption.FAST)`
+        :param gas: Gas object. todo!
 
         :return: Transaction hash
         """
@@ -335,7 +339,7 @@ class EthereumClient(XChainClient):
             'value': value,
             'nonce': nonce,
             'from': self.get_address(),
-            'chainId': self.get_chain_id,
+            'chainId': self.chain_id,
         }
         if data:
             params['data'] = data.encode('utf-8')
@@ -371,6 +375,7 @@ class EthereumClient(XChainClient):
             max_fee = float(max_fee)
 
         # noinspection PyProtectedMember
+        # fixme
         max_priority_fee = fees.fees[FeeOption._ETH_PRIORITY_FEE]
         if isinstance(max_priority_fee, Amount):
             max_priority_fee = float(max_priority_fee)

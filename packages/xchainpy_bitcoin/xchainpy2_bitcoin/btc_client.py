@@ -11,18 +11,17 @@ from bitcoinlib.services.bitcoind import BitcoindClient
 from bitcoinlib.services.services import Service
 from bitcoinlib.transactions import Transaction
 
-from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, TxType, TokenTransfer, FeeType, \
-    FeeOption, UTXO, Witness
-from xchainpy2_client import RootDerivationPaths, FeeBounds
+from xchainpy2_client import XChainClient, XcTx, TxPage, TxType, TokenTransfer, \
+    FeeOption, UTXO, Witness, RootDerivationPaths, IFees, FeeProgressive, Gas
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC, Amount
 from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS, MAX_MEMO_LENGTH, \
-    DEFAULT_PROVIDER_NAMES, AssetTestBTC, BTC_DEFAULT_FEE_BOUNDS
+    DEFAULT_PROVIDER_NAMES, AssetTestBTC
 from .tx_prepare import UTXOPrepare, try_get_memo_from_output
 from .utils import get_btc_address_prefix, UTXOException
 
 
 class BitcoinClient(XChainClient):
-    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+    async def get_balance(self, address: str = '', **kwargs) -> List[CryptoAmount]:
         """
         Get the BTC balance of the wallet.
 
@@ -77,8 +76,11 @@ class BitcoinClient(XChainClient):
         result = await self.call_service(self.service.gettransaction, tx_id)
         return self._convert_lib_tx_to_our_tx(result)
 
-    async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None, fee_option: Optional[FeeOption] = None,
+    async def transfer(self,
+                       what: CryptoAmount,
+                       recipient: str,
+                       memo: Optional[str] = None,
+                       gas: Optional[Gas] = None,
                        min_confirmations=1, **kwargs) -> str:
         """
         Transfer UTXO gas asset (BTC eg) to recipient.
@@ -86,9 +88,8 @@ class BitcoinClient(XChainClient):
 
         :param what: amount to transfer, must be gas asset (BTC.BTC)
         :param recipient: recipient address
+        :param gas: Gas options
         :param memo: optional memo
-        :param fee_rate: fee rate in satoshi per kilobyte
-        :param fee_option: fee option (average, fast, fastest) if fee_rate is not provided
         :param min_confirmations: minimum confirmations
         :return: transaction id (txid)
         """
@@ -105,6 +106,7 @@ class BitcoinClient(XChainClient):
 
         utxos = await self.get_utxos(sender)
 
+        # fixme: fees!!!
         if not fee_rate:
             fees = await self.get_fees()
             if not fees or not fees.fees:
@@ -166,32 +168,26 @@ class BitcoinClient(XChainClient):
         self._save_last_response(tx_id, results)
         return tx_id
 
-    async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> Fees:
+    async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> IFees:
         """
+        todo!
         Get the fee rates triplet (average, fast, fastest) in satoshi per byte.
 
         :param average_blocks: Number of blocks to confirm in average case
         :param fast_blocks: Number of blocks to confirm in fast case
-        :param fastest_blocks: Number of blocks to confirm in fastest case
+        :param fastest_blocks: Number of blocks to confirm in the fastest case
         :return: Fees object
         """
         average = await self.call_service(self.service.estimatefee, average_blocks)
         fast = await self.call_service(self.service.estimatefee, fast_blocks)
         fastest = await self.call_service(self.service.estimatefee, fastest_blocks)
 
-        # this approach causes SQL errors in bitcoinlib
-        # average, fast, fastest = await asyncio.gather(
-        #     self._call_service(self.service.estimatefee, average_blocks),
-        #     self._call_service(self.service.estimatefee, fast_blocks),
-        #     self._call_service(self.service.estimatefee, fastest_blocks),
-        # )
-
-        return Fees(
-            type=FeeType.PER_BYTE,
+        return FeeProgressive(
+            self.chain,
             fees={
-                FeeOption.AVERAGE: self.gas_base_amount(average).amount,
-                FeeOption.FAST: self.gas_base_amount(fast).amount,
-                FeeOption.FASTEST: self.gas_base_amount(fastest).amount,
+                FeeOption.AVERAGE: self.gas_base_amount(average),
+                FeeOption.FAST: self.gas_base_amount(fast),
+                FeeOption.FASTEST: self.gas_base_amount(fastest),
             }
         )
 

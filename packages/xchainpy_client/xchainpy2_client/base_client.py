@@ -8,7 +8,7 @@ from typing import Optional, List, Union
 from xchainpy2_crypto import validate_mnemonic, derive_private_key
 from xchainpy2_utils import CryptoAmount, Chain, NetworkType, Asset, Amount
 from .explorer import ExplorerProvider
-from .fees import Gas, GasUnits, IFees
+from .fees import Gas, IFees
 from .models import XcTx, TxPage, RootDerivationPaths, SecretsException
 
 

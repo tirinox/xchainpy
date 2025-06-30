@@ -7,9 +7,9 @@ from cosmpy.aerial.client import Coin
 from cosmpy.aerial.tx import Transaction
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
-from xchainpy2_client.fees import Gas
+from xchainpy2_client.fees import Gas, FlatFee
 from xchainpy2_client.models import XcTx, TxType, TokenTransfer, RootDerivationPaths
-from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException, FlatFee
+from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
 from xchainpy2_mayanode import MimirApi, ApiClient

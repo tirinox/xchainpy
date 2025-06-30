@@ -52,6 +52,8 @@ class THORChainCache:
                  network: NetworkType = NetworkType.MAINNET,
                  stable_coins: List[Asset] = None):
         """
+        todo: 10 minutes is too much!!
+
         Constructor for THORChainCache.
         If Midgard or THORNode clients are not provided, default clients will be used.
 
