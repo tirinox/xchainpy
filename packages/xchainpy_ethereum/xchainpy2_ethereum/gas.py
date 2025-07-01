@@ -5,35 +5,33 @@ from typing import Optional, NamedTuple, Dict
 
 import web3
 
-from xchainpy2_client import FeeOption, FeeProgressive
-from xchainpy2_utils import Chain, CryptoAmount
+from xchainpy2_client import FeeOption, FeeProgressive, IGasExplicitSettings
+from xchainpy2_utils import Chain, CryptoAmount, Asset
 
 
-class GasOptions(NamedTuple):
+class EVMGas(IGasExplicitSettings):
     """
-    Gas options for transaction invocation
+    Gas options for transaction invocation in Ethereum-like chains.
     """
-    fee_option: Optional[FeeOption] = None
-    gas_price: Optional[int] = None  # legacy, in Wei
-    max_fee_per_gas: Optional[int] = None  # EIP-1559, in Wei
-    max_priority_fee_per_gas: Optional[int] = None  # EIP-1559, in Wei
-    gas_limit: Optional[int] = None  # in Wei
 
-    @classmethod
-    def auto(cls, fee_option: FeeOption):
-        return cls(fee_option=fee_option)
+    def __init__(self,
+                 gas_price: Optional[int] = None,
+                 max_fee_per_gas: Optional[int] = None,
+                 max_priority_fee_per_gas: Optional[int] = None,
+                 gas_limit: Optional[int] = None):
+        """
+        Initialize EVMGas with the specified parameters.
 
-    @classmethod
-    def average(cls):
-        return cls.auto(FeeOption.AVERAGE)
-
-    @classmethod
-    def fast(cls):
-        return cls.auto(FeeOption.FAST)
-
-    @classmethod
-    def fastest(cls):
-        return cls.auto(FeeOption.FASTEST)
+        :param gas_price: Legacy gas price in Wei. If provided, it indicates a legacy transaction.
+        :param max_fee_per_gas: EIP-1559 max fee per gas in Wei.
+        :param max_priority_fee_per_gas:  EIP-1559 max priority fee per gas in Wei.
+        :param gas_limit: Gas limit for the transaction in Wei.
+        """
+        super().__init__()
+        self.gas_price = gas_price
+        self.max_fee_per_gas = max_fee_per_gas
+        self.max_priority_fee_per_gas = max_priority_fee_per_gas
+        self.gas_limit = gas_limit
 
     @classmethod
     def legacy(cls, gas_price: int, gas_limit: int):
@@ -47,6 +45,18 @@ class GasOptions(NamedTuple):
 
     @classmethod
     def eip1559(cls, max_fee_per_gas: int, max_priority_fee_per_gas: int, gas_limit: int):
+        """
+        max_priority_fee_per_gas is your “tip” (what goes to the miner).
+        base_fee_per_gas is the protocol-burned minimum fee for that block.
+        max_fee_per_gas is the total ceiling you’re willing to pay per gas; it must cover both the base fee and your tip.
+
+        In other words: maxFeePerGas ≥ baseFeePerGas + maxPriorityFeePerGas
+
+        :param max_fee_per_gas: Maximum fee per gas you are willing to pay for the transaction in Wei.
+        :param max_priority_fee_per_gas: Maximum priority fee per gas you are willing to pay for the transaction in Wei.
+        :param gas_limit: Gas limit for the transaction in Wei.
+        :return: EVMGas instance with EIP-1559 parameters.
+        """
         return cls(
             max_fee_per_gas=max_fee_per_gas,
             max_priority_fee_per_gas=max_priority_fee_per_gas,
@@ -61,22 +71,15 @@ class GasOptions(NamedTuple):
         return cls(
             max_fee_per_gas=int(max_fee_per_gas * 10 ** 9),
             max_priority_fee_per_gas=int(max_priority_fee_per_gas * 10 ** 9),
-            gas_limit=gas_limit
+            gas_limit=gas_limit,
         )
 
-    def validate(self):
-        assert self.fee_option or self.gas_price or (self.max_fee_per_gas and self.max_priority_fee_per_gas), \
-            "Either fee_option or gas_price or (max_fee_per_gas and max_priority_fee_per_gas) must be set"
 
-    def updates_gas_limit(self, gas_limit: int):
-        return GasOptions._replace(self, gas_limit=gas_limit)
+class EVMGasLimits(NamedTuple):
+    """
+    Sufficient gas limits for various transaction types in Ethereum-like chains.
+    """
 
-    @property
-    def is_auto(self):
-        return self.fee_option is not None
-
-
-class GasLimits(NamedTuple):
     approve_gas_limit: int
     transfer_gas_asset_gas_limit: int
     transfer_token_gas_limit: int
@@ -94,24 +97,24 @@ class GasLimits(NamedTuple):
         )
 
 
-def mean_fee(items):
-    return wei_to_gwei(round(reduce(lambda a, v: a + v, items) / len(items)))
-
-
 def wei_to_gwei(wei):
+    """
+    Convert Wei to Gwei.
+
+    :param wei: Amount in Wei to be converted to Gwei.
+    :return:
+    """
     return web3.Web3.from_wei(wei, 'gwei')
 
 
-class FeesEVM(FeeProgressive):
-    def __init__(self, chain: Chain, fees: Dict[FeeOption, CryptoAmount],
+class EVMFees(FeeProgressive):
+    def __init__(self, fees: Dict[FeeOption, CryptoAmount],
                  priority_fee: CryptoAmount,
                  base_fee: CryptoAmount):
         """
-        FeesEVM implementation for Ethereum-like chains.
+        Fees implementation for Ethereum-like chains.
         In addition to the standard fees, it includes priority and base block fees.
 
-        :param chain: Chain instance representing the blockchain.
-        :type chain: Chain
         :param fees: Fees dictionary mapping FeeOption to CryptoAmount.
         :type fees: Dict[FeeOption, CryptoAmount]
         :param priority_fee: Priority fee for the transaction, typically used in EIP-1559 transactions.
@@ -119,17 +122,43 @@ class FeesEVM(FeeProgressive):
         :param base_fee: Base fee for the transaction, typically used in EIP-1559 transactions.
         :type base_fee: CryptoAmount
         """
-        super().__init__(chain, fees)
+        super().__init__(fees)
         self.priority_fee = priority_fee
         self.base_fee = base_fee
 
+    def select(self, option: FeeOption, gas_limit: int = 0) -> EVMGas:
+        """
+        Selects the fee amount based on the provided FeeOption.
 
-class GasEstimator:
-    def __init__(self, w3: web3.Web3, chain: Chain, percentiles=(20, 50, 80), block_count=10,
+        :param option: The FeeOption to select.
+        :param gas_limit: Just to pass it through if needed, as EVMGas requires it.
+        :return: The corresponding CryptoAmount for the selected fee option.
+        """
+        total_amt = self.fees[option]
+        base_amt = self.base_fee
+        max_fee = total_amt.amount.internal_amount
+        max_priority_fee = (total_amt - base_amt).amount.internal_amount
+        return EVMGas(
+            max_fee_per_gas=max_fee,
+            max_priority_fee_per_gas=max_priority_fee,
+            gas_limit=gas_limit,
+        )
+
+    def __repr__(self):
+        return (f"EVMFees(fees={self.fees}, "
+                f"priority_fee={self.priority_fee}, "
+                f"base_fee={self.base_fee})")
+
+
+class EVMGasPriceEstimator:
+    def __init__(self, w3: web3.Web3, chain: Chain,
+                 gas_asset: Asset,
+                 percentiles=(20, 50, 80), block_count=10,
                  base_fee_multiplier=1.0):
         """
         :param w3: web3 instance
         :param chain: Chain instance representing the blockchain.
+        :param gas_asset: Asset instance representing the gas asset (e.g., ETH).
         :param percentiles: A monotonically increasing list of percentile values to sample from each block's
         effective priority fees per gas in ascending order, weighted by gas used.
         :param block_count: The number of blocks to sample for the fee history.
@@ -138,6 +167,7 @@ class GasEstimator:
         """
         self.web3 = w3
         self.chain = chain
+        self.gas_asset = gas_asset
         self.percentiles = percentiles
         self.block_count = block_count
         self.base_fee_multiplier = base_fee_multiplier
@@ -163,7 +193,14 @@ class GasEstimator:
     async def call_service(sync_method, *args):
         return await asyncio.get_event_loop().run_in_executor(None, sync_method, *args)
 
-    async def estimate(self) -> FeesEVM:
+    @staticmethod
+    def _mean_fee(items):
+        return round(reduce(lambda a, v: a + v, items) / len(items))
+
+    def _wei_to_gas_amount(self, wei: int) -> CryptoAmount:
+        return CryptoAmount.auto_base(wei, self.gas_asset)
+
+    async def estimate(self) -> EVMFees:
         """
         Estimate the gas fees based on the current network conditions.
         This method fetches the fee history, base fee, and max priority fee,
@@ -184,20 +221,17 @@ class GasEstimator:
         # historic mean reward (tips) over sampled blocks for each percentile
         # E.g. for 20% has less amount of tips than this number, and the rest (80%) has more ?
         lo, mi, hi = [
-            mean_fee(list(map(itemgetter(i), reward_history))) for i in range(3)
+            self._mean_fee(list(map(itemgetter(i), reward_history))) for i in range(3)
         ]
 
         base_fee = base_fee * self.base_fee_multiplier
-        base_fee_with_margin = wei_to_gwei(base_fee)
-        max_priority_fee = wei_to_gwei(max_priority_fee_safe_low)
 
-        return FeesEVM(
-            self.chain,
+        return EVMFees(
             fees={
-                FeeOption.FASTEST: hi + base_fee_with_margin,
-                FeeOption.FAST: mi + base_fee_with_margin,
-                FeeOption.AVERAGE: lo + base_fee_with_margin
+                FeeOption.FASTEST: self._wei_to_gas_amount(hi + base_fee),
+                FeeOption.FAST: self._wei_to_gas_amount(mi + base_fee),
+                FeeOption.AVERAGE: self._wei_to_gas_amount(lo + base_fee),
             },
-            priority_fee=max_priority_fee,
-            base_fee=base_fee_with_margin
+            priority_fee=self._wei_to_gas_amount(max_priority_fee_safe_low),
+            base_fee=self._wei_to_gas_amount(base_fee),
         )
