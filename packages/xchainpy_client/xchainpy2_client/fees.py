@@ -1,3 +1,4 @@
+from abc import abstractmethod, ABCMeta
 from enum import Enum
 from typing import NamedTuple, Optional, Dict
 
@@ -66,16 +67,24 @@ class FeeBounds(NamedTuple):
         return FeeBounds(lower=0, upper=INF_FEE)
 
 
-class IGasExplicitSettings:
+class IGasExplicitSettings(metaclass=ABCMeta):
     """
     Chain specific gas settings for transaction invocation.
     This is an interface that should be implemented by chain-specific gas settings classes.
     See the corresponding client package for specific implementations.
     """
-    pass
+
+    @property
+    @abstractmethod
+    def is_valid(self) -> bool:
+        """
+        Check if the gas settings are valid.
+        :return: True if the gas settings are valid, otherwise False.
+        """
+        pass
 
 
-class IFees:
+class IFees(metaclass=ABCMeta):
     """
     Interface for fees.
     This is an interface that should be implemented by chain-specific fees classes.
@@ -146,6 +155,15 @@ class Gas(NamedTuple):
         if self.settings and hasattr(self.settings, "gas_limit"):
             return self.settings.gas_limit
 
+    @property
+    def has_valid_explicit_settings(self) -> bool:
+        """
+        Check if the gas options have valid explicit settings.
+
+        :return: True if explicit settings are provided, otherwise False.
+        """
+        return self.settings is not None and isinstance(self.settings, IGasExplicitSettings) and self.settings.is_valid
+
 
 class FlatFee(IFees):
     """
@@ -159,6 +177,10 @@ class FlatFee(IFees):
 
     def __repr__(self):
         return f"FlatFee(amount={self.amount})"
+
+    @property
+    def is_valid(self) -> bool:
+        return self.amount >= 0
 
 
 class FeeWithOptions(IFees):
@@ -218,6 +240,21 @@ class FeeWithOptions(IFees):
                 FeeOption.FASTEST: flat_fee.amount * fastest_mult,
             }
         )
+
+    @property
+    def is_valid(self) -> bool:
+        """
+        Check if the fee options are valid.
+        A fee option is considered valid if it is not None and greater than or equal to zero.
+
+        :return: True if all fee options are valid, otherwise False.
+        """
+        # todo write tests for this method
+        if not self.fees:
+            return False
+        if self.average is None or self.fast is None or self.fastest is None:
+            return False
+        return all(fee >= 0 for fee in self.fees.values() if fee is not None)
 
 
 class FeeProgressive(FeeWithOptions):
