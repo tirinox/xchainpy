@@ -4,7 +4,7 @@ from examples.common import get_phrase
 from xchainpy2_avalanche import AVAX_DECIMALS
 from xchainpy2_bsc import BinanceSmartChainClient
 from xchainpy2_client import FeeOption
-from xchainpy2_ethereum import GasOptions
+from xchainpy2_ethereum import Gas, EVMGas
 from xchainpy2_thorchain_amm import THORChainAMM, Wallet, AMMException, NO_SWAP_LIMIT
 from xchainpy2_thorchain_query import THORChainQuery, TxDetails
 from xchainpy2_utils import CryptoAmount, Chain, Asset, BSC_DECIMALS
@@ -29,10 +29,10 @@ async def main():
 
     my_address = bsc.get_address()
 
-    gas = GasOptions.auto(FeeOption.FAST)
-
-    # gas = GasOptions.legacy(gas_price=50, gas_limit=210000)
-    # gas = GasOptions.eip1559_in_gwei(max_fee_per_gas=1, max_priority_fee_per_gas=1, gas_limit=210000)
+    gas = Gas.auto(FeeOption.FAST)
+    # Also, you can use explicit gas options:
+    # gas = Gas.explicit(EVMGas.legacy(gas_price=50, gas_limit=210000))
+    # gas = Gas.explicit(EVMGas.eip1559_in_gwei(max_fee_per_gas=1, max_priority_fee_per_gas=1, gas_limit=210000))
 
     async def swap_bnb_and_avax(from_avax_to_bnb: bool):
         if from_avax_to_bnb:

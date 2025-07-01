@@ -2,8 +2,6 @@ import asyncio
 
 from examples.common import get_phrase
 from xchainpy2_base import BaseClient
-from xchainpy2_client import FeeOption
-from xchainpy2_ethereum import GasOptions
 from xchainpy2_utils import NetworkType
 
 # all upper address will bypass the checksum validation
@@ -30,16 +28,11 @@ async def main():
     fees = await base1.get_fees()
     print(f'Base fees: {fees}')
 
-    gas = GasOptions.auto(FeeOption.FAST)
-
-    # gas = GasOptions.legacy(gas_price=50, gas_limit=210000)
-    # gas = GasOptions.eip1559_in_gwei(max_fee_per_gas=1, max_priority_fee_per_gas=1, gas_limit=210000)
-
     async def transfer_some_eth():
         input("Press Enter to send TX...")
         amount = balance1 * 0.1
         print(f"Transferring {amount} to {base2.get_address()}")
-        tx_hash = await base1.transfer(amount, base2.get_address(), gas=gas, memo="barfoo")
+        tx_hash = await base1.transfer(amount, base2.get_address(), memo="barfoo")
         print(f"Transfer tx hash {base2.get_explorer_tx_url(tx_hash)}")
         await base1.wait_for_transaction(tx_hash)
         print("Transaction mined")
@@ -76,7 +69,6 @@ async def main():
     #
     #     await base1.wait_for_transaction(tx_hash)
     #     print("Transaction mined")
-    #
 
 
 if __name__ == "__main__":

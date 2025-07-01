@@ -1,9 +1,8 @@
 import asyncio
 
 from examples.common import get_phrase
-from xchainpy2_bsc import BinanceSmartChainClient
+from xchainpy2_bsc import BinanceSmartChainClient, Gas
 from xchainpy2_client import FeeOption
-from xchainpy2_ethereum import GasOptions
 from xchainpy2_utils import NetworkType
 
 # all upper address will bypass the checksum validation
@@ -28,10 +27,7 @@ async def main():
         bsc1, bsc2 = bsc2, bsc1
         balance1, balance2 = balance2, balance1
 
-    gas = GasOptions.auto(FeeOption.FAST)
-
-    # gas = GasOptions.legacy(gas_price=50, gas_limit=210000)
-    # gas = GasOptions.eip1559_in_gwei(max_fee_per_gas=1, max_priority_fee_per_gas=1, gas_limit=210000)
+    gas = Gas.auto(FeeOption.FAST)
 
     async def transfer_some_bnb():
         input("Press Enter to send TX...")

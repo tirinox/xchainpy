@@ -1,7 +1,7 @@
 import asyncio
 
 from examples.common import get_phrase
-from xchainpy2_bsc import BinanceSmartChainClient, AssetBSC_USDT, GasOptions, FeeOption
+from xchainpy2_bsc import BinanceSmartChainClient, AssetBSC_USDT, Gas, FeeOption
 from xchainpy2_thorchain_amm import THORChainAMM, AMMException, NO_SWAP_LIMIT
 from xchainpy2_thorchain_query import THORChainQuery
 from xchainpy2_utils import CryptoAmount, Chain, Asset
@@ -39,9 +39,10 @@ async def main():
     my_address = source_client.get_address()
 
     # pick a gas option
-    gas = GasOptions.auto(FeeOption.FAST)
-    # gas = GasOptions.legacy(gas_price=50, gas_limit=210000)
-    # gas = GasOptions.eip1559_in_gwei(max_fee_per_gas=1, max_priority_fee_per_gas=1, gas_limit=210000)
+    gas = Gas.auto(FeeOption.FAST)
+    # Also, you can use explicit gas options:
+    # gas = Gas.explicit(EVMGas.legacy(gas_price=50, gas_limit=210000))
+    # gas = Gas.explicit(EVMGas.eip1559_in_gwei(max_fee_per_gas=1, max_priority_fee_per_gas=1, gas_limit=210000))
 
     from_amount = CryptoAmount.auto(5.0, AssetBSC_USDT)
 
