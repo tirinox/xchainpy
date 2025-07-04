@@ -155,8 +155,8 @@ class XChainClient(abc.ABC):
         """
         return self.gas_base_amount(0)
 
-    async def max_gas_amount(self, balances: List[CryptoAmount] = None,
-                             gas: Optional[Gas] = None) -> CryptoAmount:
+    async def max_transferable_gas_amount(self, balances: List[CryptoAmount] = None,
+                                          gas: Optional[Gas] = None) -> CryptoAmount:
         """
         Calculate maximum amount of Gas asset that you can send to empty your wallet.
 
@@ -427,6 +427,15 @@ class XChainClient(abc.ABC):
         but it can be overridden in subclasses to close connections or clean up resources.
         """
         ...
+
+    def is_gas_asset(self, asset: Asset) -> bool:
+        """
+        Check if the given asset is the gas asset for this client.
+
+        :param asset: Asset to check
+        :return: bool True if the asset is the gas asset, False otherwise
+        """
+        return self._gas_asset.upper() == asset.upper()
 
 
 class NoClient(XChainClient, abc.ABC):
