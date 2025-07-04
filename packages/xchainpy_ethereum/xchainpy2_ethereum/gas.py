@@ -74,6 +74,30 @@ class EVMGas(IGasExplicitSettings):
             gas_limit=gas_limit,
         )
 
+    @property
+    def is_valid(self) -> bool:
+        """
+            Validates the gas configuration:
+            - Either legacy (gas_price) or EIP-1559 (max_fee_per_gas + max_priority_fee_per_gas), not both.
+            - gas_limit must be set >= 0 or 0 for automatic estimation.
+            - For legacy: gas_price must be set, EIP-1559 fields must be None.
+            - For EIP-1559: both max_fee_per_gas and max_priority_fee_per_gas must be set, and gas_price must be None.
+            - max_fee_per_gas >= max_priority_fee_per_gas.
+        """
+        # gas_limit must be a positive integer
+        if not isinstance(self.gas_limit, int) or self.gas_limit <= 0:
+            return False
+
+        legacy = self.gas_price is not None
+        eip1559 = None not in (self.max_fee_per_gas, self.max_priority_fee_per_gas)
+
+        # must choose exactly one mode…
+        #  – legacy ^ eip1559 enforces exclusivity
+        # ...and in the EIP-1559 case we also need max_fee >= max_priority_fee
+        return (legacy ^ eip1559) and (
+                legacy or self.max_fee_per_gas >= self.max_priority_fee_per_gas
+        )
+
 
 class EVMGasLimits(NamedTuple):
     """
@@ -148,6 +172,11 @@ class EVMFees(FeeProgressive):
         return (f"EVMFees(fees={self.fees}, "
                 f"priority_fee={self.priority_fee}, "
                 f"base_fee={self.base_fee})")
+
+    def __str__(self):
+        return (f"EVMFees(fees={self.fees!s}, "
+                f"priority_fee={self.priority_fee!s}, "
+                f"base_fee={self.base_fee!s})")
 
 
 class EVMGasPriceEstimator:
