@@ -43,7 +43,7 @@ class EthereumClient(XChainClient):
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  explorer_providers=None,
                  wallet_index=0,
-                 provider: Optional[BaseProvider] = None,
+                 provider: Union[str, Optional[BaseProvider]] = None,
                  extra_data_provider: Optional[EVMDataProvider] = None,
                  **kwargs
                  ):
@@ -56,7 +56,7 @@ class EthereumClient(XChainClient):
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param explorer_providers: Dictionary of explorer providers for each network type.
         :param wallet_index: int (default 0)
-        :param provider: EVM Web3 RPC provider. Default is `None` (will use a random free provider)
+        :param provider: EVM Web3 RPC provider or its URL. Default is `None` (will use a random free provider)
         :param extra_data_provider: EVMDataProvider object for fetching extra data from the blockchain
             (owned ERC20 balance, TXs history, etc.)
         """
