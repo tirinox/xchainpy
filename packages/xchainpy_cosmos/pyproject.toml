@@ -31,10 +31,10 @@ classifiers = [
 dependencies = [
     "bip-utils>=2.7.0,<3.0.0",
     "pycryptodome>=3.17,<4.0",
-    "cosmpy>=0.9.1",
-    "aiohttp",
+    "cosmpy>=0.11.1",
+    "aiohttp>=3.8.1,<4.0",
     "xchainpy2_utils>=0.1.0",
-    "xchainpy2_crypto",
+    "xchainpy2_crypto>=0.1.0",
     "xchainpy2_client>=0.1.2",
 ]
 [project.optional-dependencies]
