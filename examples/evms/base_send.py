@@ -39,7 +39,6 @@ async def main():
 
     await transfer_some_eth()
 
-    #
     # async def approve_some_eth():
     #     usdt = await base1.get_erc20_token_info(base_USDT_CONTRACT)
     #
