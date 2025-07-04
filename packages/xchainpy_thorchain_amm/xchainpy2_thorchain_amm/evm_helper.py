@@ -100,9 +100,11 @@ class EVMHelper:
         :return:
         """
         deposit_method = router.functions.depositWithExpiry(vault, asset_contract, raw_amount, memo, expiration_ts)
-        gas_limit = self.deposit_gas_limit
-        tx_hash = await self.evm_client.make_contract_call(
-            deposit_method, value, gas, gas_limit=gas_limit, nonce=nonce)
+
+        if not gas.gas_limit:
+            gas.settings.gas_limit = self.deposit_gas_limit
+
+        tx_hash = await self.evm_client.make_contract_call(deposit_method, value, gas, nonce=nonce)
         return tx_hash
 
     async def is_tc_router_approved_to_spend(self, amount: CryptoAmount) -> bool:
