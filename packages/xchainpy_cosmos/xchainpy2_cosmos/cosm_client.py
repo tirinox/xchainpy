@@ -7,10 +7,10 @@ from typing import Optional, List, Union
 from urllib.parse import urlencode
 
 from aiohttp import ClientSession
-from cosmpy.aerial.client import LedgerClient, Account, create_bank_send_msg, prepare_and_broadcast_basic_transaction, \
-    Coin
+from cosmpy.aerial.client import LedgerClient, Account, create_bank_send_msg, Coin
+from cosmpy.aerial.client.utils import prepare_basic_transaction
 from cosmpy.aerial.config import NetworkConfig
-from cosmpy.aerial.tx import Transaction
+from cosmpy.aerial.tx import Transaction, TxFee
 from cosmpy.aerial.wallet import LocalWallet
 from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PrivateKey, PublicKey
@@ -72,7 +72,7 @@ class CosmosGaiaClient(XChainClient):
 
         self._denom = COSMOS_DENOM
         self._decimal = COSMOS_DECIMAL
-        self._gas_limit = DEFAULT_GAS_LIMIT
+        self.default_gas_limit = DEFAULT_GAS_LIMIT
 
         self._fee_minimum_gas_price = FEE_MINIMUM_GAS_PRICE
 
@@ -233,8 +233,7 @@ class CosmosGaiaClient(XChainClient):
 
         address = Address(address, prefix=self.prefix)
 
-        balances = await asyncio.get_event_loop().run_in_executor(
-            None,
+        balances = await self.call_service(
             self._client.query_bank_all_balances,
             address
         )
@@ -270,8 +269,7 @@ class CosmosGaiaClient(XChainClient):
         address = Address(address)
 
         try:
-            account = await asyncio.get_event_loop().run_in_executor(
-                None,
+            account = await self.call_service(
                 self._client.query_account,
                 address
             )
@@ -485,16 +483,21 @@ class CosmosGaiaClient(XChainClient):
 
         tx = self.build_transfer_tx(what, recipient)
 
-        # todo: use gas options if provided
-        response = await asyncio.get_event_loop().run_in_executor(
-            None,
-            prepare_and_broadcast_basic_transaction,
+        gas_limit = gas.gas_limit if gas and gas.gas_limit else self.default_gas_limit
+
+        prepared_tx = await self.call_service(
+            prepare_basic_transaction,
             self._client,
             tx,
             self._wallet,
             None,  # account
-            self._gas_limit,
+            TxFee(gas_limit=gas_limit),
             memo
+        )
+
+        response = await self.call_service(
+            self._client.broadcast_tx,
+            prepared_tx
         )
 
         self._save_last_response(response.tx_hash, response)
@@ -522,8 +525,7 @@ class CosmosGaiaClient(XChainClient):
         )
 
         # broadcast the transaction
-        resp = await asyncio.get_event_loop().run_in_executor(
-            None,
+        resp = await self.call_service(
             self._client.txs.BroadcastTx,
             broadcast_req)
         tx_digest = resp.tx_response.txhash
@@ -548,8 +550,7 @@ class CosmosGaiaClient(XChainClient):
 
     async def _get_json(self, url):
         logger.debug(f"GET {url}")
-        response = await asyncio.get_event_loop().run_in_executor(
-            None,
+        response = await self.call_service(
             self._client.txs.rest_client._session.get,
             url,
         )
@@ -586,7 +587,7 @@ class CosmosGaiaClient(XChainClient):
             fees = await self.get_fees()
             extra_fee = fees.amount
 
-        required = CryptoAmount(amount + extra_fee, amount.asset)
+        required = amount + CryptoAmount.auto(extra_fee, amount.asset)
         if asset_balance is None or asset_balance < required:
             raise ValueError(f"Insufficient funds: {required} is required. Balance is {asset_balance}")
 
@@ -622,3 +623,17 @@ class CosmosGaiaClient(XChainClient):
             return COSMOS_DENOM
         else:
             return str(asset).lower()
+
+    async def estimate_gas_of_transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
+                                       gas: Optional[Gas] = None) -> CryptoAmount:
+        """
+        Since "simulate_tx" is broken in cosmpy, we use the standard transaction fee as an estimate.
+        No simulation is performed.
+
+        :param what: CryptoAmount to transfer
+        :param recipient: Recipient address
+        :param memo: Optional memo for the transaction
+        :param gas: Optional Gas options. If not provided, the default gas limit will be used.
+        :return: CryptoAmount representing the estimated gas
+        """
+        return self.standard_tx_fee

@@ -1,6 +1,5 @@
 from typing import Optional, List, Tuple
 
-
 from cosmpy.crypto.address import Address
 
 from xchainpy2_client import XcTx, TxType, TokenTransfer
