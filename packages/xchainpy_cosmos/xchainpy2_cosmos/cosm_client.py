@@ -444,7 +444,9 @@ class CosmosGaiaClient(XChainClient):
     async def get_transaction_data(self, tx_id: str, our_address: str = '') -> Optional[XcTx]:
         """
         Get the transaction data for the given transaction id.
+
         :param tx_id:
+        :param our_address:
         :return:
         """
         j = await self.get_transaction_data_cosmos(tx_id)
