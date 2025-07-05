@@ -114,3 +114,10 @@ class SecretsException(Exception):
     Exception raised for errors related to secret management: private keys, or phrases.
     """
     ...
+
+
+class UTXOException(Exception):
+    """
+    Exception raised when there is an issue with UTXO Client operations.
+    """
+    ...
