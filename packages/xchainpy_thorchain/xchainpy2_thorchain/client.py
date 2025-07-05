@@ -201,8 +201,9 @@ class THORChainClient(CosmosGaiaClient):
         address = self.get_address()
 
         if check_balance:
-            # fixme: implement THORChain version!
             await self.check_balance(address, what)
+            if second_asset:
+                await self.check_balance(address, second_asset)
 
         if gas and gas.gas_limit:
             gas_limit = gas.gas_limit
@@ -244,15 +245,17 @@ class THORChainClient(CosmosGaiaClient):
 
         return result if return_full_response else result.tx_hash
 
-    async def check_balance(self, address, amount: CryptoAmount):
+    async def check_balance(self, address, amount: CryptoAmount, gas_fee: Optional[CryptoAmount] = None) -> bool:
         """
-        # todo
+        Check if the address has enough balance to cover the amount and gas fee to send the transaction.
 
-        :param address:
-        :param amount:
+        :param address: THORChain address to check balance for
+        :param amount: Amount to check
+        :param gas_fee: Ignored
         :return:
         """
-        return await super().check_balance(address, amount)
+        fees = await self.get_fees()
+        return await super().check_balance(address, amount, gas_fee=fees.amount)
 
     async def fetch_transaction_from_thornode_raw(self, tx_hash: str) -> Optional[dict]:
         """
