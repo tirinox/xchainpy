@@ -43,3 +43,8 @@ DEFAULT_PROVIDER_NAMES = []
 
 AssetTestBCH = Asset.from_string('BCH.TBCH')
 """Testnet BCH asset"""
+
+DEFAULT_BCH_FEE_RATE = 1
+"""
+Default fee rate for Bitcoin Cash in BCH satoshis per byte.
+"""

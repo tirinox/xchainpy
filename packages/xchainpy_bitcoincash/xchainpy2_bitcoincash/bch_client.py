@@ -8,11 +8,11 @@ from bitcash.cashaddress import Address
 from bitcash.exceptions import InvalidAddress
 from bitcash.network import NetworkAPI
 
-from xchainpy2_client import RootDerivationPaths, XChainClient, IFees, XcTx, TxPage, UTXO, TxType, \
-    TokenTransfer
+from xchainpy2_client import RootDerivationPaths, XChainClient, XcTx, TxPage, UTXO, TxType, \
+    TokenTransfer, Gas, FeeProgressive, FlatFee, GasFeePerByte, UTXOException
 from xchainpy2_utils import NetworkType, Asset, AssetBCH, Chain, CryptoAmount, Amount
 from .const import ROOT_DERIVATION_PATHS, BCH_DECIMAL, DEFAULT_PROVIDER_NAMES, DEFAULT_BCH_EXPLORERS, \
-    AssetTestBCH
+    AssetTestBCH, DEFAULT_BCH_FEE_RATE, MAX_MEMO_LENGTH
 
 
 class BitcoinCashClient(XChainClient):
@@ -102,7 +102,7 @@ class BitcoinCashClient(XChainClient):
         """
         return self.get_private_key_bitcash().address
 
-    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+    async def get_balance(self, address: str = '', **kwargs) -> List[CryptoAmount]:
         """
         Get the balance of the wallet. If the address is not provided, the balance of the current wallet is returned.
 
@@ -213,37 +213,53 @@ class BitcoinCashClient(XChainClient):
     def _underlying_network(self):
         return 'testnet' if self.network == NetworkType.TESTNET else 'mainnet'
 
-    async def get_fees(self) -> IFees:
+    async def get_fees(self) -> FeeProgressive:
         """
         Get default fees. No API call is performed.
 
-        :return: The fee
+        :return: FeeProgressive object with average, fast, and fastest fees
         """
-        # todo fixme: probably we should query some API for the fees
-        return None
+        fee_rate = self.gas_base_amount(DEFAULT_BCH_FEE_RATE)
+        return FeeProgressive.from_flat_with_mult(FlatFee(fee_rate), 1, 2, 3)
 
-    async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None, **kwargs) -> str:
+    async def transfer(self, what: CryptoAmount,
+                       recipient: str,
+                       memo: Optional[str] = None,
+                       gas: Optional[Gas] = None,
+                       check_balance: bool = True,
+                       **kwargs) -> str:
         """
         Transfer the asset to the recipient address.
 
         :param what: The amount to transfer
         :param recipient: The recipient address
         :param memo: The memo (optional)
-        :param fee_rate: The fee rate (optional, but recommended)
+        :param gas: The gas options
+        :param check_balance: Whether to check the balance before transferring
         :param kwargs: The additional parameters
         :return: The transaction hash
         """
-        if what.asset != self.gas_asset:
-            raise ValueError(f'Asset {what.asset} is not supported')
+        if self.is_gas_asset(what.asset):
+            raise UTXOException(f'Asset {what.asset} is not supported')
 
-        # todo: check balance
+        if memo and (memo_len := len(memo)) > MAX_MEMO_LENGTH:
+            raise UTXOException(f'Memo is too long ({memo_len} of {MAX_MEMO_LENGTH} max)')
 
-        if fee_rate is None:
-            fee_rates = await self.get_fees()
-            fee_rate = int(fee_rates.fast)
-        elif not isinstance(fee_rate, int):
-            raise ValueError('fee_rate must be an integer')
+        gas = gas.validate(gas)
+
+        if gas.is_automatic:
+            fees = await self.get_fees()
+            fee_rate = fees.select_as_int(gas.fee_option)
+        else:
+            # noinspection PyTypeChecker
+            gas_settings: GasFeePerByte = gas.settings
+            fee_rate = gas_settings.satoshi_per_byte
+
+        if check_balance:
+            gas_fee = await self.estimate_gas_of_transfer(what, self.get_address(), memo=memo, gas=gas)
+            await self.check_balance(self.get_address(), what, gas_fee)
+
+        # todo: check fee bounds
 
         return await self._call_service(self._transfer_sync, what, recipient, memo, fee_rate, kwargs)
 
