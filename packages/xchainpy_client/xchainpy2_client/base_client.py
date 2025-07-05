@@ -437,6 +437,41 @@ class XChainClient(abc.ABC):
         """
         return self._gas_asset.upper() == asset.upper()
 
+    async def check_balance(self, address, amount: CryptoAmount, gas_fee: CryptoAmount):
+        """
+        Check if the wallet has enough balance to send the given amount and pay the gas fee.
+        This method will raise a ValueError if the balance is insufficient.
+
+        :param address: Address to check the balance for.
+        :param amount: CryptoAmount The amount to spend.
+        :param gas_fee: CryptoAmount The gas fee required for the transaction.
+        :return:
+        """
+        balances = await self.get_balance(address)
+
+        asset_balance = None
+        gas_balance = None
+
+        for balance in balances:
+            if balance.asset == amount.asset:
+                asset_balance = balance
+            if self.is_gas_asset(balance.asset):
+                gas_balance = balance
+
+        if self.is_gas_asset(amount.asset):
+            # If the asset is the gas asset, we need to check if we have enough gas balance
+            extra_fee = gas_fee
+        else:
+            extra_fee = CryptoAmount.auto_base(0, amount.asset, amount.amount.decimals)
+
+        # Calculate the total required amount including the gas fee
+        required = amount + extra_fee
+        if asset_balance is None or asset_balance < required:
+            raise ValueError(f"Insufficient funds: {required} is required. Balance is {asset_balance}")
+
+        if gas_balance is None or gas_balance.amount < gas_fee.amount:
+            raise ValueError(f"Insufficient funds to pay fee: {gas_fee}")
+
 
 class NoClient(XChainClient, abc.ABC):
     """
