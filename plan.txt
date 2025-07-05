@@ -1,12 +1,11 @@
 Gas remake:
 
-FeeRates removed
-FeeOption._ETH_PRIORITY_FEE and _ETH_BASE_FEE removed
-FeeType removed
-Fees removed ?
-single_fee removed
-XChainClient __init__ fee_bounds agrument removed
-all clients get_fees -> IFees
+[v] FeeRates removed
+[v] FeeOption._ETH_PRIORITY_FEE and _ETH_BASE_FEE removed
+[v] FeeType removed
+[v] single_fee removed
+[v] XChainClient __init__ fee_bounds agrument removed
+[v] all clients get_fees -> IFees
 
 todo: test estimate_gas_of_transfer !!!
 note: tt
@@ -40,7 +39,7 @@ Test:
 [ ] cosm check_balance is valid?
 [ ] maya deposit: use gas object instead of "fee" str
 
-[ ] Query: get Gas or IFees from THORChain
+[ ] TODO! Query: get Gas or IFees from THORChain !!
 [v.] AMM: Gas options -> Gas
 [?] explicit or manual?
 [ ] EVM fee bounds check
@@ -50,3 +49,5 @@ Test:
 [ ] LTC check bounds
 [ ] BCH check bounds
 [ ] DOGE check bounds
+
+[ ] FIXME: BCH get_utxos returns incorrect type!
