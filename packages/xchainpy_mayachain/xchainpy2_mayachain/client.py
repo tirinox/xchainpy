@@ -4,7 +4,7 @@ from typing import Optional, Union, List
 
 from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.client import Coin
-from cosmpy.aerial.tx import Transaction
+from cosmpy.aerial.tx import Transaction, TxFee
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
 from xchainpy2_client.fees import Gas, FlatFee
@@ -165,11 +165,6 @@ class MayaChainClient(CosmosGaiaClient):
         if check_balance:
             await self.check_balance(address, what)
 
-        if gas and gas.gas_limit:
-            gas_limit = gas.gas_limit
-        else:
-            gas_limit = self._deposit_gas_limit
-
         if sequence is None or account_number is None:
             account = await self.get_account(address)
             sequence = account.sequence
@@ -177,14 +172,18 @@ class MayaChainClient(CosmosGaiaClient):
 
         public_key = self.get_public_key()
 
-        fee = self.get_amount_string(0)  # MayaChain charges its own fee, so we set it to 0.
+        if gas and gas.gas_limit:
+            gas_limit = gas.gas_limit
+        else:
+            gas_limit = self._deposit_gas_limit
+
+        fee = TxFee("0cacao", gas_limit=gas_limit)
         tx = build_deposit_tx_unsigned(
             what, memo,
             public_key,
             fee=fee,
             prefix=self.prefix,
             sequence_num=sequence,
-            gas_limit=gas_limit,
             second_asset=second_asset,
         )
 

@@ -6,7 +6,7 @@ from cosmpy.crypto.keypairs import PublicKey
 
 from xchainpy2_cosmos.utils import convert_address_for_msg
 from xchainpy2_utils import NetworkType, CryptoAmount, Amount, Asset, CACAO_DECIMAL, AssetCACAO
-from .const import DEPOSIT_GAS_LIMIT_VALUE, DENOM_CACAO_NATIVE
+from .const import DENOM_CACAO_NATIVE
 from .proto import THORCoin, THORAsset, MsgSend, MsgDeposit, CosmosCoin
 
 
@@ -54,7 +54,6 @@ def build_deposit_tx_unsigned(
         sequence_num: int,
         prefix: str = 'thor',
         fee=None,
-        gas_limit=DEPOSIT_GAS_LIMIT_VALUE,
         second_asset: Optional[CryptoAmount] = None) -> Transaction:
     coins = [
         crypto_amount_to_msg_coin(what)
@@ -70,7 +69,6 @@ def build_deposit_tx_unsigned(
     tx = tx.seal(
         SigningCfg.direct(signer_public_key, sequence_num),
         fee=fee,
-        gas_limit=int(gas_limit),
         memo=memo
     )
 
