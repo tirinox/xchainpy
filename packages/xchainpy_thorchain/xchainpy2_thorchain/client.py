@@ -3,7 +3,7 @@ import warnings
 from typing import Optional, Union, List
 
 from bip_utils import Bech32ChecksumError
-from cosmpy.aerial.tx import Transaction
+from cosmpy.aerial.tx import Transaction, TxFee
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
 from xchainpy2_client import XcTx, TxType, TokenTransfer, RootDerivationPaths, FlatFee, Gas
@@ -216,7 +216,8 @@ class THORChainClient(CosmosGaiaClient):
 
         public_key = self.get_public_key()
 
-        fee = self.get_amount_string(0)  # Default fee is 0, because THORChain has its own fees
+        # fee = self.get_amount_string(0)  # Default fee is 0, because THORChain has its own fees
+        fee = TxFee("0rune", gas_limit=gas_limit)
 
         tx = build_deposit_tx_unsigned(
             what, memo,
@@ -224,7 +225,6 @@ class THORChainClient(CosmosGaiaClient):
             fee=fee,
             prefix=self.prefix,
             sequence_num=sequence,
-            gas_limit=gas_limit,
             second_asset=second_asset,
         )
 
@@ -243,6 +243,16 @@ class THORChainClient(CosmosGaiaClient):
         )
 
         return result if return_full_response else result.tx_hash
+
+    async def check_balance(self, address, amount: CryptoAmount):
+        """
+        # todo
+
+        :param address:
+        :param amount:
+        :return:
+        """
+        return await super().check_balance(address, amount)
 
     async def fetch_transaction_from_thornode_raw(self, tx_hash: str) -> Optional[dict]:
         """
@@ -463,3 +473,19 @@ class THORChainClient(CosmosGaiaClient):
         """
         if self._thornode_api_client:
             await self._thornode_api_client.close()
+
+    async def estimate_gas_of_transfer(self, what: CryptoAmount, recipient: str,
+                                       memo: Optional[str] = None, gas: Optional[Gas] = None) -> CryptoAmount:
+        """
+        Estimate gas for a transfer transaction.
+
+        :param what: Amount and Asset to transfer
+        :param recipient: Recipient address
+        :param memo: Optional memo string for the transaction
+        :param gas: Optional Gas object to specify gas limit and price
+        :return:
+        """
+        # todo: shall we do something with it?
+        return await super().estimate_gas_of_transfer(
+            what, recipient, memo=memo, gas=gas
+        )
