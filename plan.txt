@@ -1,0 +1,52 @@
+Gas remake:
+
+FeeRates removed
+FeeOption._ETH_PRIORITY_FEE and _ETH_BASE_FEE removed
+FeeType removed
+Fees removed ?
+single_fee removed
+XChainClient __init__ fee_bounds agrument removed
+all clients get_fees -> IFees
+
+todo: test estimate_gas_of_transfer !!!
+note: tt
+attention: eff
+
+Test:
+
+[ ] query: get_deepest_usd_pool
+[ ] query: cache.convert
+[v] query: DEFAULT_CACAO_NETWORK_FEE and DEFAULT_RUNE_NETWORK_FEE
+[ ] query: calc_outbound_fee
+[ ] eth: decode logs 123 def _get_amount()
+[ ] eth: token_info amount_of
+[v] cosm_client: check_balance
+
+
+
+[v] tc client full
+[.] maya client full
+
+[v] query imports
+
+[ ] installation scenarios
+
+[ ] UTXO clients get_fees
+
+[ ] tc get_fees
+[ ] maya get_fees
+[ ] cosm get_fees
+[v] tc implement check_balance
+[ ] cosm check_balance is valid?
+[ ] maya deposit: use gas object instead of "fee" str
+
+[ ] Query: get Gas or IFees from THORChain
+[v.] AMM: Gas options -> Gas
+[?] explicit or manual?
+[ ] EVM fee bounds check
+[ ] estimate_gas_of_transfer for all chain clients
+[ ] fix cosmos get tx data
+[ ] BTC check bounds
+[ ] LTC check bounds
+[ ] BCH check bounds
+[ ] DOGE check bounds
