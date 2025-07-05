@@ -569,33 +569,6 @@ class CosmosGaiaClient(XChainClient):
     def prefix(self) -> str:
         return self._prefix
 
-    async def check_balance(self, address, amount: CryptoAmount):
-        # todo: check and test it!
-        balances = await self.get_balance(address)
-
-        asset_balance = None
-        gas_balance = None
-
-        for balance in balances:
-            if balance.asset == amount.asset:
-                asset_balance = balance
-            if balance.asset == self._gas_asset:
-                gas_balance = balance
-
-        is_native = amount.asset == self._gas_asset
-        if is_native:
-            extra_fee = Amount.zero(self._decimal)
-        else:
-            fees = await self.get_fees()
-            extra_fee = fees.amount
-
-        required = amount + CryptoAmount.auto(extra_fee, amount.asset)
-        if asset_balance is None or asset_balance < required:
-            raise ValueError(f"Insufficient funds: {required} is required. Balance is {asset_balance}")
-
-        if gas_balance is None or gas_balance.amount < extra_fee:
-            raise ValueError(f"Insufficient funds to pay fee: {extra_fee} {self._gas_asset}")
-
     def _make_wallet(self) -> Optional[LocalWallet]:
         if self._ready_to_make_wallet:
             if self.phrase or self._private_key:
