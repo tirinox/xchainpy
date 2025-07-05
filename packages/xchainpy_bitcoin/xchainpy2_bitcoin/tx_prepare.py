@@ -5,8 +5,7 @@ from typing import List, Optional
 from bitcoinlib.transactions import Output, Transaction
 
 from xchainpy2_bitcoin.accumulative import accumulative
-from xchainpy2_bitcoin.utils import UTXOException
-from xchainpy2_client import UTXO
+from xchainpy2_client import UTXO, UTXOException
 from xchainpy2_utils import Amount
 
 OP_RETURN = 106
