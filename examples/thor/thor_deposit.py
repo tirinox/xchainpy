@@ -37,7 +37,7 @@ async def swap_back_to_rune(client, amount: CryptoAmount):
     print(f"Swap TX submitted: {client.get_explorer_tx_url(tx_hash)}")
 
 
-async def check_for_trade_btc_balance(client):
+async def check_for_target_trade_balance(client):
     balance = await client.get_balance()
 
     for b in balance:
@@ -66,7 +66,7 @@ async def main():
     while True:
         print("Waiting until things settle down...")
         await asyncio.sleep(10.0)
-        satoshi = await check_for_trade_btc_balance(client)
+        satoshi = await check_for_target_trade_balance(client)
         if satoshi:
             break
 
