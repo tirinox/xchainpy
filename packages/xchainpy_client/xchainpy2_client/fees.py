@@ -37,6 +37,11 @@ INF_FEE = 10 ** 21
 Arbitrary large number for infinite fee bounds (in base units).
 """
 
+PEEK_REASONABLE_FEE_RATE = 10 ** 4
+"""
+A reasonable fee rate to peek at, used for checking if the fee rate is within bounds.
+"""
+
 
 class FeeBounds(NamedTuple):
     """
@@ -82,6 +87,20 @@ class IGasExplicitSettings(metaclass=ABCMeta):
         :return: True if the gas settings are valid, otherwise False.
         """
         pass
+
+
+class GasFeePerByte(IGasExplicitSettings):
+    def __init__(self, satoshi_per_byte: int):
+        """
+        Gas settings for transaction invocation with a specific fee per byte.
+
+        :param satoshi_per_byte: The fee in satoshi per byte.
+        """
+        self.satoshi_per_byte = satoshi_per_byte
+
+    @property
+    def is_valid(self) -> bool:
+        return PEEK_REASONABLE_FEE_RATE > self.satoshi_per_byte > 0
 
 
 class IFees(metaclass=ABCMeta):
@@ -163,6 +182,42 @@ class Gas(NamedTuple):
         :return: True if explicit settings are provided, otherwise False.
         """
         return self.settings is not None and isinstance(self.settings, IGasExplicitSettings) and self.settings.is_valid
+
+    @property
+    def is_valid(self) -> bool:
+        """
+        Check if the gas options are valid.
+        If the gas options are automatic, they are valid if no explicit settings are provided.
+        If the gas options are explicit, they are valid if the explicit settings are valid.
+
+        :return: bool
+        """
+        if self.is_automatic:
+            return self.settings is None
+        else:
+            return self.has_valid_explicit_settings
+
+    @classmethod
+    def validate(cls, gas: Optional['Gas'] = None, type_of_gas: Optional[type] = None) -> 'Gas':
+        """
+        Validate the gas options. If gas is None, it will use the default auto settings with FAST fee option.
+        If the gas options are not valid, it raises a ValueError.
+
+        :param gas: Optional gas options to validate.
+        :param type_of_gas: Optional type of explicit gas to validate against. If provided, it must match the type of gas.
+        :return: Gas instance if valid, otherwise raises ValueError.
+        """
+        if not gas:
+            gas = cls.auto(FeeOption.FAST)
+
+        if not gas.is_valid:
+            raise ValueError("Gas options are not valid. Please check the gas settings or fee option.")
+
+        if gas.has_valid_explicit_settings and type_of_gas and not isinstance(gas.settings, type_of_gas):
+            raise ValueError(
+                f"Gas settings must be of type {type_of_gas.__name__}, but got {type(gas.settings).__name__}.")
+
+        return gas
 
 
 class FlatFee(IFees):
@@ -255,6 +310,24 @@ class FeeWithOptions(IFees):
         if self.average is None or self.fast is None or self.fastest is None:
             return False
         return all(fee >= 0 for fee in self.fees.values() if fee is not None)
+
+    def select(self, option: FeeOption) -> CryptoAmount:
+        """
+        Select a fee option based on the provided FeeOption enum.
+
+        :param option: The FeeOption to select (average, fast, fastest).
+        :return: The selected fee amount or None if the option is not available.
+        """
+        return self.fees[option]
+
+    def select_as_int(self, option: FeeOption) -> Optional[int]:
+        """
+        Select a fee option as an integer base amount based on the provided FeeOption enum.
+
+        :param option: The FeeOption to select (average, fast, fastest).
+        :return: The selected fee amount as an integer or None if the option is not available.
+        """
+        return int(self.select(option))
 
 
 class FeeProgressive(FeeWithOptions):
