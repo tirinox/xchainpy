@@ -1,5 +1,6 @@
 import asyncio
 import json
+import math
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union, List
@@ -12,12 +13,12 @@ from bitcoinlib.services.services import Service
 from bitcoinlib.transactions import Transaction
 
 from xchainpy2_client import XChainClient, XcTx, TxPage, TxType, TokenTransfer, \
-    FeeOption, UTXO, Witness, RootDerivationPaths, IFees, FeeProgressive, Gas
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC, Amount
+    FeeOption, UTXO, Witness, RootDerivationPaths, FeeProgressive, Gas, GasFeePerByte, UTXOException
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC
 from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS, MAX_MEMO_LENGTH, \
     DEFAULT_PROVIDER_NAMES, AssetTestBTC
 from .tx_prepare import UTXOPrepare, try_get_memo_from_output
-from .utils import get_btc_address_prefix, UTXOException
+from .utils import get_btc_address_prefix
 
 
 class BitcoinClient(XChainClient):
@@ -81,6 +82,7 @@ class BitcoinClient(XChainClient):
                        recipient: str,
                        memo: Optional[str] = None,
                        gas: Optional[Gas] = None,
+                       check_balance: bool = True,
                        min_confirmations=1, **kwargs) -> str:
         """
         Transfer UTXO gas asset (BTC eg) to recipient.
@@ -90,6 +92,7 @@ class BitcoinClient(XChainClient):
         :param recipient: recipient address
         :param gas: Gas options
         :param memo: optional memo
+        :param check_balance: if True, checks the balance of the wallet before transfer
         :param min_confirmations: minimum confirmations
         :return: transaction id (txid)
         """
@@ -102,35 +105,37 @@ class BitcoinClient(XChainClient):
         if not self.validate_address(recipient):
             raise UTXOException('Invalid recipient address.')
 
+        if check_balance:
+            # todo!
+            # attention: check balance is not accurate, because it does not take into account the fee
+            gas_fee = self.gas_base_amount(0)
+            await self.check_balance(str(self.get_address()), what, gas_fee=gas_fee)
+
         sender = self.get_address()
 
         utxos = await self.get_utxos(sender)
 
-        # fixme: fees!!!
-        if not fee_rate:
+        gas = Gas.validate(gas, GasFeePerByte)
+        if gas.is_automatic:
             fees = await self.get_fees()
-            if not fees or not fees.fees:
-                raise UTXOException('Failed to get fees')
-            fee_rate = fees.fees.get(FeeOption.AVERAGE)
-            if not fee_rate:
-                raise UTXOException('Failed to get average fee rate')
+            fee_rate = fees.select_as_int(gas.fee_option)
+        else:
+            # noinspection PyTypeChecker
+            gas_settings: GasFeePerByte = gas.settings
+            fee_rate = gas_settings.satoshi_per_byte
 
-        if not fee_rate:
-            raise UTXOException('Failed to get fee rate')
+        # todo: proper check fee bounds
+        # self.fee_bound.check_fee_bounds(fee_rate)
 
-        if isinstance(fee_rate, Amount):
-            fee_rate = int(fee_rate)
-
-        self.fee_bound.check_fee_bounds(fee_rate)
-
-        utxo_prepare = UTXOPrepare(utxos, self._service_network,
-                                   fee_per_byte=fee_rate / 1000,
-                                   min_confirmations=min_confirmations)
+        utxo_prepare = UTXOPrepare(
+            utxos, self._service_network,
+            fee_per_byte=fee_rate,
+            min_confirmations=min_confirmations)
 
         tx = utxo_prepare.build(sender, recipient, what.amount, memo)
 
         tx.estimate_size()
-        tx.fee_per_kb = fee_rate
+        tx.fee_per_kb = fee_rate * 1000
         tx.calc_weight_units()
         tx.calculate_fee()
 
@@ -168,22 +173,24 @@ class BitcoinClient(XChainClient):
         self._save_last_response(tx_id, results)
         return tx_id
 
-    async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> IFees:
+    async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> FeeProgressive:
         """
-        todo!
         Get the fee rates triplet (average, fast, fastest) in satoshi per byte.
 
         :param average_blocks: Number of blocks to confirm in average case
         :param fast_blocks: Number of blocks to confirm in fast case
         :param fastest_blocks: Number of blocks to confirm in the fastest case
-        :return: Fees object
+        :return: FeeProgressive object
         """
         average = await self.call_service(self.service.estimatefee, average_blocks)
         fast = await self.call_service(self.service.estimatefee, fast_blocks)
         fastest = await self.call_service(self.service.estimatefee, fastest_blocks)
 
+        average = math.ceil(average / 1000)  # convert to satoshi per byte
+        fast = math.ceil(fast / 1000)
+        fastest = math.ceil(fastest / 1000)
+
         return FeeProgressive(
-            self.chain,
             fees={
                 FeeOption.AVERAGE: self.gas_base_amount(average),
                 FeeOption.FAST: self.gas_base_amount(fast),

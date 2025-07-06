@@ -16,6 +16,9 @@ async def main():
     doge = create_doge_client(phrase)
     doge2 = create_doge_client(phrase, wallet_index=1)
 
+    fees = await doge.get_fees()
+    print(f"Current Doge fees: {fees}")
+
     providers = doge.get_available_provider_names()
     print(f"Available providers: {providers}")
 

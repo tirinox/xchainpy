@@ -51,3 +51,6 @@ Test:
 [ ] DOGE check bounds
 
 [ ] FIXME: BCH get_utxos returns incorrect type!
+
+[ ] Doge get fees is too high...
+[ ] Doge transfer example
