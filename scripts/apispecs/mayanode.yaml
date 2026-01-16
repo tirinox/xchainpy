@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Mayanode API
-  version: 1.120.0
+  version: 1.126.0
   contact:
     email: devs@mayachain.org
   description: Mayanode REST API.
@@ -214,6 +214,38 @@ paths:
     get:
       description: Returns the signers for a provided inbound or outbound hash.
       operationId: txSigners
+      tags:
+      - Transactions
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TxDetailsResponse'
+  /mayachain/tx/in/{hash}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/hash'
+    get:
+      description: Returns the inbound transaction voter for a provided hash.
+      operationId: txInVoter
+      tags:
+      - Transactions
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TxDetailsResponse'
+  /mayachain/tx/out/{hash}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/hash'
+    get:
+      description: Returns the outbound transaction voter for a provided hash.
+      operationId: txOutVoter
       tags:
       - Transactions
       responses:
@@ -458,6 +490,8 @@ paths:
                       description: Defines the minimum transaction size for the chain
                         in base units (sats, wei, uatom). Transactions with asset
                         amounts lower than the dust_threshold are ignored.
+                    shielded_memo_config:
+                      $ref: '#/components/schemas/ShieldedMemoConfig'
   /mayachain/lastblock:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -588,6 +622,38 @@ paths:
                 type: array
                 items: &id010
                   $ref: '#/components/schemas/StreamingSwap'
+  /mayachain/clout/swap/{address}:
+    get:
+      description: Returns the clout score of an address
+      operationId: swapper_clout
+      parameters:
+      - description: optional block height, defaults to current tip
+        explode: true
+        in: query
+        name: height
+        required: false
+        schema:
+          format: int64
+          minimum: 0
+          type: integer
+        style: form
+      - explode: false
+        in: path
+        name: address
+        required: true
+        schema:
+          example: maya1zupk5lmc84r2dh738a9g3zscavannjy3nzplwt
+          type: string
+        style: simple
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapperCloutResponse'
+          description: OK
+      tags:
+      - Clout
   /mayachain/queue:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -654,6 +720,79 @@ paths:
                 type: array
                 items: &id013
                   $ref: '#/components/schemas/TxOutItem'
+  /mayachain/trade/unit/{asset}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/asset'
+    get:
+      description: Returns the total units and depth of a trade asset
+      operationId: trade_unit
+      tags:
+      - TradeUnit
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeUnitResponse'
+  /mayachain/trade/units:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns the total units and depth for each trade asset
+      operationId: trade_units
+      tags:
+      - TradeUnits
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: &id017
+                  $ref: '#/components/schemas/TradeUnitResponse'
+  /mayachain/trade/account/{address}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/address'
+    get:
+      description: Returns the units and depth of a trade account
+      operationId: trade_account
+      tags:
+      - TradeAccount
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeAccountResponse'
+  /mayachain/trade/accounts/{asset}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - name: asset
+      in: path
+      required: true
+      schema:
+        type: string
+      example: BTC~BTC
+      description: Trade asset (tilde-separated, e.g., BTC~BTC)
+    get:
+      description: Returns all trade accounts for an asset
+      operationId: trade_accounts
+      tags:
+      - TradeAccounts
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: &id018
+                  $ref: '#/components/schemas/TradeAccountResponse'
   /mayachain/keysign/{height}:
     parameters:
     - $ref: '#/components/parameters/pathHeight'
@@ -1452,6 +1591,8 @@ components:
           format: int64
         pub_key:
           type: string
+        pub_key_eddsa:
+          type: string
         coins:
           type: array
           items:
@@ -1593,6 +1734,9 @@ components:
         pub_key:
           type: string
           example: mayapub1addwnpepq068dr0x7ue973drmq4eqmzhcq3650n7nx5fhgn9gl207luxp6vaklu52tc
+        pub_key_eddsa:
+          type: string
+          example: mayapub1addwnpepq068dr0x7ue973drmq4eqmzhcq3650n7nx5fhgn9gl207luxp6vaklu52tc
         routers:
           type: array
           items:
@@ -1723,6 +1867,9 @@ components:
         observed_pub_key:
           type: string
           example: mayapub1addwnpepq27ck6u44zl8qqdnmzjjc8rg72amrxrsp42p9vd7kt6marhy6ww76z8shwe
+        observed_pub_key_eddsa:
+          type: string
+          example: mayapub1addwnpepq27ck6u44zl8qqdnmzjjc8rg72amrxrsp42p9vd7kt6marhy6ww76z8shwe
         external_observed_height:
           type: integer
           format: int64
@@ -1851,6 +1998,9 @@ components:
         vault_pub_key:
           type: string
           example: mayapub1addwnpepqt45wmsxj29xpgdrdsvg2h3dx68qeapgykw3hlyj6vuds2r0pnkwx5gt9m4
+        vault_pub_key_eddsa:
+          type: string
+          example: mayapub1addwnpepqt45wmsxj29xpgdrdsvg2h3dx68qeapgykw3hlyj6vuds2r0pnkwx5gt9m4
         coin:
           $ref: '#/components/schemas/Coin'
         memo:
@@ -1884,6 +2034,10 @@ components:
           type: integer
           format: int64
           example: 1234
+        clout_spent:
+          description: clout spent in CACAO for the outbound
+          example: '1234'
+          type: string
     TssMetric:
       type: object
       properties:
@@ -2425,6 +2579,22 @@ components:
           format: int64
           example: 1234
           description: the mayachain height for which the outbound was scheduled
+        refund_height:
+          type: integer
+          format: int64
+          example: 7581334
+          description: the mayachain height at which a refund was scheduled/emitted
+        refunded_amount:
+          type: string
+          example: '123456789'
+          description: the amount refunded to the inbound source
+        partial_refund:
+          type: boolean
+          example: false
+        refund_reason:
+          type: string
+          description: the reason for the failure of the most recent streaming swap
+            attempt, which resulted in a refund
     TxSignersResponse: *id008
     TxStagesResponse:
       type: object
@@ -2738,6 +2908,23 @@ components:
     LastBlockResponse:
       type: array
       items: *id002
+    ShieldedMemoConfig:
+      type: object
+      required:
+      - enabled
+      properties:
+        unified_address:
+          type: string
+          example: u1fcwchlpy2u0t9hdl8wcku8dmvrhwz6lk0jwj2z56ylxhacpn9jnx5sgftx8kv7s97ay37gclcm495panxkz0pyq5479s7vnr90a03sdppp4mupw6vmesh7sf2ym99f4gjl9utaw4eyup53vn7hthu7shms0ct79876xtjk7r8qg4p582
+          description: Zcash Unified Address for receiving shielded memos
+        uivk:
+          type: string
+          example: uivk14t7zl2cjk305csrpkw9j529f9ka55uprav27maykhmmypmx76ek4pgfklw3ydzg9lcp7u73uwpwdmarrp089c3xte90yks0z5q79psu53zcfzdqgg5erpxl4q4gtne4c6t3puzwt9kegexu79t6yvg9dmnk08293upzm963l70sag5nnr2waftt2ssdpmvxumeqew085lpzfv463m5j3jtfk838ppux67vpd679jrhl2y293ut2
+          description: Unified Incoming Viewing Key (UIVK) containing both Sapling
+            and Orchard components
+        enabled:
+          type: boolean
+          description: Whether shielded memo support is enabled
     VersionResponse:
       type: object
       required:
@@ -2800,6 +2987,7 @@ components:
       - outbound
       - internal
       - scheduled_outbound_value
+      - scheduled_outbound_clout
       properties:
         swap:
           type: integer
@@ -2817,6 +3005,9 @@ components:
         scheduled_outbound_value:
           type: string
           description: scheduled outbound value in CACAO
+        scheduled_outbound_clout:
+          description: scheduled outbound clout in CACAO
+          type: string
     SwapQueueResponse:
       type: array
       items: *id012
@@ -2901,9 +3092,92 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/TssMetric'
+    SwapperCloutResponse:
+      example:
+        score: score
+        address: bc1....
+        reclaimed: reclaimed
+        spent: spent
+        last_spent_height: 0
+        last_reclaim_height: 6
+      properties:
+        address:
+          description: address associated with this clout account
+          example: bc1....
+          type: string
+        score:
+          description: clout score, which is the amount of cacao spent on swap fees
+          type: string
+        reclaimed:
+          description: amount of clout that has been reclaimed in total over time
+            (observed clout spent)
+          type: string
+        spent:
+          description: amount of clout that has been spent in total over time
+          type: string
+        last_spent_height:
+          description: last block height that clout was spent
+          format: int64
+          type: integer
+        last_reclaim_height:
+          description: last block height that clout was reclaimed
+          format: int64
+          type: integer
+      required:
+      - address
+      type: object
     MayanameResponse:
       type: array
       items: *id016
+    TradeUnitResponse:
+      type: object
+      required:
+      - asset
+      - units
+      - depth
+      properties:
+        asset:
+          type: string
+          example: BTC~BTC
+          description: trade account asset with "~" separator
+        units:
+          type: string
+          description: total units of trade asset
+        depth:
+          type: string
+          description: total depth of trade asset
+    TradeUnitsResponse:
+      type: array
+      items: *id017
+    TradeAccountResponse:
+      type: object
+      required:
+      - asset
+      - units
+      - owner
+      properties:
+        asset:
+          type: string
+          example: BTC~BTC
+          description: trade account asset with "~" separator
+        units:
+          type: string
+          description: units of trade asset belonging to this owner
+        owner:
+          type: string
+          description: maya address of trade account owner
+        last_add_height:
+          type: integer
+          format: int64
+          description: last mayachain height trade assets were added to trade account
+        last_withdraw_height:
+          type: integer
+          format: int64
+          description: last mayachain height trade assets were withdrawn from trade
+            account
+    TradeAccountsResponse:
+      type: array
+      items: *id018
     MimirResponse:
       type: object
       additionalProperties:
@@ -3096,67 +3370,67 @@ components:
             $ref: '#/components/schemas/BlockTx'
     baseQuoteResponse:
       properties:
-        inbound_address: &id017
+        inbound_address: &id019
           type: string
           description: the inbound address for the transaction on the source chain
           example: bc1qjk3xzu5slu7mtmc8jc9yed3zqvkhkttm700g9a
-        inbound_confirmation_blocks: &id018
+        inbound_confirmation_blocks: &id020
           type: integer
           format: int64
           description: the approximate number of source chain blocks required before
             processing
-        inbound_confirmation_seconds: &id019
+        inbound_confirmation_seconds: &id021
           type: integer
           format: int64
           description: the approximate seconds for block confirmations required before
             processing
-        outbound_delay_blocks: &id020
+        outbound_delay_blocks: &id022
           type: integer
           format: int64
           description: the number of mayachain blocks the outbound will be delayed
-        outbound_delay_seconds: &id021
+        outbound_delay_seconds: &id023
           type: integer
           format: int64
           description: the approximate seconds for the outbound delay before it will
             be sent
-        fees: &id022
+        fees: &id024
           $ref: '#/components/schemas/QuoteFees'
-        router: &id023
+        router: &id025
           type: string
           description: the EVM chain router contract address
           example: '0x3624525075b88B24ecc29CE226b0CEc1fFcB6976'
-        expiry: &id024
+        expiry: &id026
           type: integer
           format: int64
           description: expiration timestamp in unix seconds
           example: 1671660285
-        warning: &id025
+        warning: &id027
           type: string
           description: static warning message
           example: Do not cache this response. Do not send funds after the expiry.
-        notes: &id026
+        notes: &id028
           type: string
           description: chain specific quote notes
           example: Transfer the inbound_address the asset with the memo. Do not use
             multi-in, multi-out transactions.
-        dust_threshold: &id027
+        dust_threshold: &id029
           type: string
           example: '10000'
           description: Defines the minimum transaction size for the chain in base
             units (sats, wei, uatom). Transactions with asset amounts lower than the
             dust_threshold are ignored.
-        recommended_min_amount_in: &id028
+        recommended_min_amount_in: &id030
           type: string
           description: The recommended minimum inbound amount for this transaction
             type & inbound asset. Sending less than this amount could result in failed
             refunds.
           example: '15000'
-        recommended_gas_rate: &id029
+        recommended_gas_rate: &id031
           type: string
           example: '10'
           description: the recommended gas rate to use for the inbound to ensure timely
             confirmation
-        gas_rate_units: &id030
+        gas_rate_units: &id032
           type: string
           example: gwei
           description: the units of the recommended gas rate
@@ -3171,20 +3445,20 @@ components:
       - notes
       - expiry
       properties:
-        inbound_address: *id017
-        inbound_confirmation_blocks: *id018
-        inbound_confirmation_seconds: *id019
-        outbound_delay_blocks: *id020
-        outbound_delay_seconds: *id021
-        fees: *id022
-        router: *id023
-        expiry: *id024
-        warning: *id025
-        notes: *id026
-        dust_threshold: *id027
-        recommended_min_amount_in: *id028
-        recommended_gas_rate: *id029
-        gas_rate_units: *id030
+        inbound_address: *id019
+        inbound_confirmation_blocks: *id020
+        inbound_confirmation_seconds: *id021
+        outbound_delay_blocks: *id022
+        outbound_delay_seconds: *id023
+        fees: *id024
+        router: *id025
+        expiry: *id026
+        warning: *id027
+        notes: *id028
+        dust_threshold: *id029
+        recommended_min_amount_in: *id030
+        recommended_gas_rate: *id031
+        gas_rate_units: *id032
         memo:
           type: string
           description: generated memo for the swap
@@ -3231,20 +3505,20 @@ components:
       - recommended_gas_rate
       - gas_rate_units
       properties:
-        inbound_address: *id017
-        inbound_confirmation_blocks: *id018
-        inbound_confirmation_seconds: *id019
-        outbound_delay_blocks: *id020
-        outbound_delay_seconds: *id021
-        fees: *id022
-        router: *id023
-        expiry: *id024
-        warning: *id025
-        notes: *id026
-        dust_threshold: *id027
-        recommended_min_amount_in: *id028
-        recommended_gas_rate: *id029
-        gas_rate_units: *id030
+        inbound_address: *id019
+        inbound_confirmation_blocks: *id020
+        inbound_confirmation_seconds: *id021
+        outbound_delay_blocks: *id022
+        outbound_delay_seconds: *id023
+        fees: *id024
+        router: *id025
+        expiry: *id026
+        warning: *id027
+        notes: *id028
+        dust_threshold: *id029
+        recommended_min_amount_in: *id030
+        recommended_gas_rate: *id031
+        gas_rate_units: *id032
         memo:
           type: string
           description: generated memo for the deposit
@@ -3276,20 +3550,20 @@ components:
       - recommended_gas_rate
       - gas_rate_units
       properties:
-        inbound_address: *id017
-        inbound_confirmation_blocks: *id018
-        inbound_confirmation_seconds: *id019
-        outbound_delay_blocks: *id020
-        outbound_delay_seconds: *id021
-        fees: *id022
-        router: *id023
-        expiry: *id024
-        warning: *id025
-        notes: *id026
-        dust_threshold: *id027
-        recommended_min_amount_in: *id028
-        recommended_gas_rate: *id029
-        gas_rate_units: *id030
+        inbound_address: *id019
+        inbound_confirmation_blocks: *id020
+        inbound_confirmation_seconds: *id021
+        outbound_delay_blocks: *id022
+        outbound_delay_seconds: *id023
+        fees: *id024
+        router: *id025
+        expiry: *id026
+        warning: *id027
+        notes: *id028
+        dust_threshold: *id029
+        recommended_min_amount_in: *id030
+        recommended_gas_rate: *id031
+        gas_rate_units: *id032
         memo:
           type: string
           description: generated memo for the withdraw, the client can use this OR
