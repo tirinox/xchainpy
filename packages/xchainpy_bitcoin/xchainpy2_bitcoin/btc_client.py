@@ -105,16 +105,7 @@ class BitcoinClient(XChainClient):
         if not self.validate_address(recipient):
             raise UTXOException('Invalid recipient address.')
 
-        if check_balance:
-            # todo!
-            # attention: check balance is not accurate, because it does not take into account the fee
-            gas_fee = self.gas_base_amount(0)
-            await self.check_balance(str(self.get_address()), what, gas_fee=gas_fee)
-
-        sender = self.get_address()
-
-        utxos = await self.get_utxos(sender)
-
+        # Get fee rate
         gas = Gas.validate(gas, GasFeePerByte)
         if gas.is_automatic:
             fees = await self.get_fees()
@@ -124,8 +115,9 @@ class BitcoinClient(XChainClient):
             gas_settings: GasFeePerByte = gas.settings
             fee_rate = gas_settings.satoshi_per_byte
 
-        # todo: proper check fee bounds
-        # self.fee_bound.check_fee_bounds(fee_rate)
+        # fetch UTXOs
+        sender = self.get_address()
+        utxos = await self.get_utxos(sender)
 
         utxo_prepare = UTXOPrepare(
             utxos, self._service_network,
@@ -133,12 +125,21 @@ class BitcoinClient(XChainClient):
             min_confirmations=min_confirmations)
 
         tx = utxo_prepare.build(sender, recipient, what.amount, memo)
-
         tx.estimate_size()
         tx.fee_per_kb = fee_rate * 1000
         tx.calc_weight_units()
-        tx.calculate_fee()
 
+        # Calculate fee and check bounds
+        fee = tx.calculate_fee()
+        if gas.bounds:
+            gas.bounds.check_fee_bounds(fee)
+
+        # Check balance if required
+        if check_balance:
+            fee_amt = self.gas_base_amount(fee)
+            await self.check_balance(str(self.get_address()), what, gas_fee=fee_amt)
+
+        # Sign the transaction
         tx.sign(self.get_private_key())
         tx_hex = tx.raw_hex()
 

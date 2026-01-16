@@ -30,7 +30,7 @@ Test:
 
 [ ] installation scenarios
 
-[ ] UTXO clients get_fees
+[v] UTXO clients get_fees
 
 [ ] tc get_fees
 [ ] maya get_fees

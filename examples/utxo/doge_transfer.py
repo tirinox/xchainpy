@@ -4,6 +4,8 @@ from examples.common import get_phrase
 from xchainpy2_dogecoin import DogecoinClient
 from xchainpy2_utils import NetworkType
 
+DRY_RUN = True
+
 
 def create_doge_client(phrase: str, network: NetworkType = NetworkType.MAINNET, wallet_index: int = 0):
     return DogecoinClient(phrase=phrase, network=network, wallet_index=wallet_index)
@@ -25,7 +27,7 @@ async def main():
     doge.recreate_service_with_providers(providers)
     doge2.recreate_service_with_providers(providers)
 
-    # Get the balance of the LTC wallet
+    # Get the balance of the Doge wallet
     show_balance = True
     if show_balance:
         balance1 = await doge.get_balance()
@@ -38,7 +40,7 @@ async def main():
             print('Swapping addresses')
             doge, doge2 = doge2, doge
 
-    tx = await doge.transfer(doge.gas_amount('0.0002'), doge2.get_address(), memo='test')
+    tx = await doge.transfer(doge.gas_amount('0.02'), doge2.get_address(), memo='test', dry_run=DRY_RUN)
     print(f"TX 1: {tx}; {doge2.get_explorer_tx_url(tx)}")
 
 
