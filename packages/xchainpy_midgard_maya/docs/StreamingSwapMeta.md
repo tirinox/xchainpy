@@ -11,6 +11,7 @@ Name | Type | Description | Notes
 **interval** | **str** | Int64, Number of blocks between swpas. (Blocks/Swap) E.g. 1 means every block. | 
 **last_height** | **str** | Int64, The last blockheight the final swap happend (not outbound). This field will be missing until the final swap happens.  | 
 **out_coin** | [**Coin**](Coin.md) |  | 
+**out_estimation** | **str** | Int64, The estimated output based on the first swap block * quantity. This is the current method quote calculate the estimation.  | 
 **quantity** | **str** | Int64,  Number of swaps which thorchain is planning to execute. Total count at the end might be less.  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

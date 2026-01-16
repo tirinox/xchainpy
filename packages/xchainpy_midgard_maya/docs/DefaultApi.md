@@ -5,6 +5,7 @@ All URIs are relative to */*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**get_actions**](DefaultApi.md#get_actions) | **GET** /v2/actions | Actions List
+[**get_affiliate_history**](DefaultApi.md#get_affiliate_history) | **GET** /v2/history/affiliate | Affiliate History
 [**get_balance**](DefaultApi.md#get_balance) | **GET** /v2/balance/{address} | Current balance for an address
 [**get_borrower_detail**](DefaultApi.md#get_borrower_detail) | **GET** /v2/borrower/{address} | Borrower Details
 [**get_borrowers_addresses**](DefaultApi.md#get_borrowers_addresses) | **GET** /v2/borrowers | Borrowers List
@@ -15,6 +16,7 @@ Method | HTTP request | Description
 [**get_depth_history**](DefaultApi.md#get_depth_history) | **GET** /v2/history/depths/{pool} | Depth and Price History
 [**get_earnings_history**](DefaultApi.md#get_earnings_history) | **GET** /v2/history/earnings | Earnings History
 [**get_health**](DefaultApi.md#get_health) | **GET** /v2/health | Health Info
+[**get_holders**](DefaultApi.md#get_holders) | **GET** /v2/holders | Current top holders for an asset
 [**get_known_pools**](DefaultApi.md#get_known_pools) | **GET** /v2/knownpools | Known Pools List
 [**get_liquidity_history**](DefaultApi.md#get_liquidity_history) | **GET** /v2/history/liquidity_changes | Liquidity Changes History
 [**get_member_detail**](DefaultApi.md#get_member_detail) | **GET** /v2/member/{address} | Member Details
@@ -24,6 +26,7 @@ Method | HTTP request | Description
 [**get_pool**](DefaultApi.md#get_pool) | **GET** /v2/pool/{asset} | Details of a Pool
 [**get_pool_stats**](DefaultApi.md#get_pool_stats) | **GET** /v2/pool/{asset}/stats | Pool Statistics
 [**get_pools**](DefaultApi.md#get_pools) | **GET** /v2/pools | Pools List
+[**get_reserve_history**](DefaultApi.md#get_reserve_history) | **GET** /v2/history/reserve | Reserve income and expenses over bucketed history
 [**get_saver_detail**](DefaultApi.md#get_saver_detail) | **GET** /v2/saver/{address} | Saver Details
 [**get_savers_history**](DefaultApi.md#get_savers_history) | **GET** /v2/history/savers/{pool} | Savers Units and Depth History
 [**get_stats**](DefaultApi.md#get_stats) | **GET** /v2/stats | Global Stats
@@ -32,6 +35,7 @@ Method | HTTP request | Description
 [**get_thor_names_by_address**](DefaultApi.md#get_thor_names_by_address) | **GET** /v2/mayaname/rlookup/{address} | Gives a list of THORNames by reverse lookup
 [**get_thor_names_owner_by_address**](DefaultApi.md#get_thor_names_owner_by_address) | **GET** /v2/mayaname/owner/{address} | THORName owner
 [**get_tvl_history**](DefaultApi.md#get_tvl_history) | **GET** /v2/history/tvl | Total Value Locked History
+[**get_votes**](DefaultApi.md#get_votes) | **GET** /v2/votes | Current Protocol Voting
 
 # **get_actions**
 > InlineResponse200 get_actions(address=address, txid=txid, asset=asset, type=type, affiliate=affiliate, limit=limit, offset=offset, next_page_token=next_page_token, timestamp=timestamp, height=height, prev_page_token=prev_page_token, from_timestamp=from_timestamp, from_height=from_height)
@@ -93,6 +97,62 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**InlineResponse200**](InlineResponse200.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_affiliate_history**
+> AffiliateHistory get_affiliate_history(mayaname=mayaname, interval=interval, count=count, to=to, _from=_from)
+
+Affiliate History
+
+Returns affiliate count, volume in specified interval. If thorname is not specified returns all thornames  History endpoint has two modes: * With Interval parameter it returns a series of time buckets. From and To dates will   be rounded to the Interval boundaries. * Without Interval parameter a single From..To search is performed with exact timestamps.   * Interval: possible values: 5min, hour, day, week, month, quarter, year. * count: [1..400]. Defines number of intervals. Don't provide if Interval is missing. * from/to: optional int, unix second.  Possible usages with interval. * last 10 days: `?interval=day&count=10` * last 10 days before to: `?interval=day&count=10&to=1608825600` * next 10 days after from: `?interval=day&count=10&from=1606780800` * Days between from and to. From defaults to start of chain, to defaults to now.   Only the first 400 intervals are returned:   `interval=day&from=1606780800&to=1608825600`  Pagination is possible with from&count and then using the returned meta.endTime as the From parameter of the next query.  Possible configurations without interval: * exact search for one time frame: `?from=1606780899&to=1608825600` * one time frame until now: `?from=1606780899` * from chain start until now: no query parameters 
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard_maya
+from xchainpy2_midgard_maya.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard_maya.DefaultApi()
+mayaname = 'mayaname_example' # str | Return history given mayaname. Returns sum of all mayanames if missing. (optional)
+interval = 'interval_example' # str | Interval of calculations (optional)
+count = 56 # int | Number of intervals to return. Should be between [1..400]. (optional)
+to = 789 # int | End time of the query as unix timestamp. If only count is given, defaults to now.  (optional)
+_from = 789 # int | Start time of the query as unix timestamp (optional)
+
+try:
+    # Affiliate History
+    api_response = api_instance.get_affiliate_history(mayaname=mayaname, interval=interval, count=count, to=to, _from=_from)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_affiliate_history: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **mayaname** | **str**| Return history given mayaname. Returns sum of all mayanames if missing. | [optional] 
+ **interval** | **str**| Interval of calculations | [optional] 
+ **count** | **int**| Number of intervals to return. Should be between [1..400]. | [optional] 
+ **to** | **int**| End time of the query as unix timestamp. If only count is given, defaults to now.  | [optional] 
+ **_from** | **int**| Start time of the query as unix timestamp | [optional] 
+
+### Return type
+
+[**AffiliateHistory**](AffiliateHistory.md)
 
 ### Authorization
 
@@ -607,6 +667,56 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **get_holders**
+> list[Holder] get_holders(asset=asset, limit=limit)
+
+Current top holders for an asset
+
+Returns all coin amounts of the given asset ordered by their amounts in descending order.  This endpoint is enabled only if the midgard startup config allows it. 
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard_maya
+from xchainpy2_midgard_maya.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard_maya.DefaultApi()
+asset = 'asset_example' # str | Asset to get the top holders for. (optional)
+limit = 789 # int | Number of top holders to return, default is 100, maximum is 1000. (optional)
+
+try:
+    # Current top holders for an asset
+    api_response = api_instance.get_holders(asset=asset, limit=limit)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_holders: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **asset** | **str**| Asset to get the top holders for. | [optional] 
+ **limit** | **int**| Number of top holders to return, default is 100, maximum is 1000. | [optional] 
+
+### Return type
+
+[**list[Holder]**](Holder.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **get_known_pools**
 > KnownPools get_known_pools()
 
@@ -1043,6 +1153,60 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **get_reserve_history**
+> ReserveHistory get_reserve_history(interval=interval, count=count, to=to, _from=_from)
+
+Reserve income and expenses over bucketed history
+
+Returns reserve module network fee, outbound fee, and gas reimbursement flow in bucketed history 
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard_maya
+from xchainpy2_midgard_maya.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard_maya.DefaultApi()
+interval = 'interval_example' # str | Interval of calculations (optional)
+count = 56 # int | Number of intervals to return. Should be between [1..400]. (optional)
+to = 789 # int | End time of the query as unix timestamp. If only count is given, defaults to now.  (optional)
+_from = 789 # int | Start time of the query as unix timestamp (optional)
+
+try:
+    # Reserve income and expenses over bucketed history
+    api_response = api_instance.get_reserve_history(interval=interval, count=count, to=to, _from=_from)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_reserve_history: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **interval** | **str**| Interval of calculations | [optional] 
+ **count** | **int**| Number of intervals to return. Should be between [1..400]. | [optional] 
+ **to** | **int**| End time of the query as unix timestamp. If only count is given, defaults to now.  | [optional] 
+ **_from** | **int**| Start time of the query as unix timestamp | [optional] 
+
+### Return type
+
+[**ReserveHistory**](ReserveHistory.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **get_saver_detail**
 > SaverDetails get_saver_detail(address)
 
@@ -1433,6 +1597,54 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**TVLHistory**](TVLHistory.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_votes**
+> list[VoteValue] get_votes(period=period)
+
+Current Protocol Voting
+
+Returns timestamp, key, value for each active node member.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard_maya
+from xchainpy2_midgard_maya.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard_maya.DefaultApi()
+period = 'period_example' # str | Specifies the base interval from which votes will be shown. Default is 90d.  (optional)
+
+try:
+    # Current Protocol Voting
+    api_response = api_instance.get_votes(period=period)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_votes: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **period** | **str**| Specifies the base interval from which votes will be shown. Default is 90d.  | [optional] 
+
+### Return type
+
+[**list[VoteValue]**](VoteValue.md)
 
 ### Authorization
 
