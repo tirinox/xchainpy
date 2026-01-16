@@ -5,6 +5,7 @@ from __future__ import absolute_import
 # import apis into api package
 from xchainpy2_mayanode.api.block_api import BlockApi
 from xchainpy2_mayanode.api.cacao_pool_api import CACAOPoolApi
+from xchainpy2_mayanode.api.clout_api import CloutApi
 from xchainpy2_mayanode.api.health_api import HealthApi
 from xchainpy2_mayanode.api.invariants_api import InvariantsApi
 from xchainpy2_mayanode.api.liquidity_providers_api import LiquidityProvidersApi
@@ -19,5 +20,9 @@ from xchainpy2_mayanode.api.quote_api import QuoteApi
 from xchainpy2_mayanode.api.savers_api import SaversApi
 from xchainpy2_mayanode.api.streaming_swap_api import StreamingSwapApi
 from xchainpy2_mayanode.api.tss_api import TSSApi
+from xchainpy2_mayanode.api.trade_account_api import TradeAccountApi
+from xchainpy2_mayanode.api.trade_accounts_api import TradeAccountsApi
+from xchainpy2_mayanode.api.trade_unit_api import TradeUnitApi
+from xchainpy2_mayanode.api.trade_units_api import TradeUnitsApi
 from xchainpy2_mayanode.api.transactions_api import TransactionsApi
 from xchainpy2_mayanode.api.vaults_api import VaultsApi

@@ -6,6 +6,7 @@ Name | Type | Description | Notes
 **chain** | **str** |  | 
 **to_address** | **str** |  | 
 **vault_pub_key** | **str** |  | [optional] 
+**vault_pub_key_eddsa** | **str** |  | [optional] 
 **coin** | [**Coin**](Coin.md) |  | 
 **memo** | **str** |  | [optional] 
 **max_gas** | [**list[Coin]**](Coin.md) |  | 
@@ -16,6 +17,7 @@ Name | Type | Description | Notes
 **aggregator_target_asset** | **str** | the desired output asset of the aggregator SwapOut | [optional] 
 **aggregator_target_limit** | **str** | the minimum amount of SwapOut asset to receive (else cancelling the SwapOut and receiving mayachain&#x27;s output) | [optional] 
 **height** | **int** |  | [optional] 
+**clout_spent** | **str** | clout spent in CACAO for the outbound | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
