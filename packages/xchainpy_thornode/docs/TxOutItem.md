@@ -4,11 +4,12 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **height** | **int** |  | [optional] 
-**vault_pub_key** | **str** |  | [optional] 
 **in_hash** | **str** |  | [optional] 
 **out_hash** | **str** |  | [optional] 
 **chain** | **str** |  | 
 **to_address** | **str** |  | 
+**vault_pub_key** | **str** |  | [optional] 
+**vault_pub_key_eddsa** | **str** |  | [optional] 
 **coin** | [**Coin**](Coin.md) |  | 
 **max_gas** | [**list[Coin]**](Coin.md) |  | 
 **gas_rate** | **int** |  | [optional] 

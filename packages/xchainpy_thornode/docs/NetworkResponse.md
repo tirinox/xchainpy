@@ -19,6 +19,7 @@ Name | Type | Description | Notes
 **tns_fee_per_block_rune** | **str** | the thorname fee per block in rune, converted from the TNSFeePerBlockUSD mimir (after USD fees are enabled) | 
 **rune_price_in_tor** | **str** | the rune price in tor | 
 **tor_price_in_rune** | **str** | the tor price in rune | 
+**tor_price_halted** | **bool** | indicates if all anchor chains are halted (true), or at least one anchor chain is available (false) | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

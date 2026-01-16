@@ -23,6 +23,8 @@ Name | Type | Description | Notes
 **jail** | [**NodeJail**](NodeJail.md) |  | 
 **current_award** | **str** |  | 
 **observe_chains** | [**list[ChainHeight]**](ChainHeight.md) | the last observed heights for all chain by the node | 
+**maintenance** | **bool** | indicates whether the node is in maintenance mode | 
+**missing_blocks** | **int** | the number of recent blocks the node has missed signing | 
 **preflight_status** | [**NodePreflightStatus**](NodePreflightStatus.md) |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

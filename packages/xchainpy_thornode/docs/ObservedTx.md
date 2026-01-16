@@ -5,6 +5,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **tx** | [**Tx**](Tx.md) |  | 
 **observed_pub_key** | **str** |  | [optional] 
+**observed_pub_key_eddsa** | **str** |  | [optional] 
 **external_observed_height** | **int** | the block height on the external source chain when the transaction was observed, not provided if chain is THOR | [optional] 
 **external_confirmation_delay_height** | **int** | the block height on the external source chain when confirmation counting will be complete, not provided if chain is THOR | [optional] 
 **aggregator** | **str** | the outbound aggregator to use, will also match a suffix | [optional] 

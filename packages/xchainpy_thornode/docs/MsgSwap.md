@@ -16,6 +16,10 @@ Name | Type | Description | Notes
 **swap_type** | **str** | market if immediately completed or refunded, limit if held until fulfillable | [optional] 
 **stream_quantity** | **int** | number of swaps to execute in a streaming swap | [optional] 
 **stream_interval** | **int** | the interval (in blocks) to execute the streaming swap | [optional] 
+**initial_block_height** | **int** | the initial block height when the streaming swap was first queued | [optional] 
+**state** | [**SwapState**](SwapState.md) |  | [optional] 
+**version** | **str** | the version of the swap (v1 or v2) | [optional] 
+**index** | **int** | the index of the swap in the batch | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

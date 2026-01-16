@@ -1,18 +1,18 @@
-# xchainpy2_thornode.BorrowersApi
+# xchainpy2_thornode.OracleApi
 
 All URIs are relative to */*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**borrower**](BorrowersApi.md#borrower) | **GET** /thorchain/pool/{asset}/borrower/{address} | 
-[**borrowers**](BorrowersApi.md#borrowers) | **GET** /thorchain/pool/{asset}/borrowers | 
+[**oracle_price**](OracleApi.md#oracle_price) | **GET** /thorchain/oracle/price/{symbol} | 
+[**oracle_prices**](OracleApi.md#oracle_prices) | **GET** /thorchain/oracle/prices | 
 
-# **borrower**
-> Borrower borrower(asset, address, height=height)
+# **oracle_price**
+> OraclePriceResponse oracle_price(symbol, height=height)
 
 
 
-Returns the borrower position given the pool and address.
+Returns oracle price for a symbol.
 
 ### Example
 ```python
@@ -23,29 +23,27 @@ from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = xchainpy2_thornode.BorrowersApi()
-asset = 'asset_example' # str | 
-address = 'address_example' # str | 
+api_instance = xchainpy2_thornode.OracleApi()
+symbol = 'symbol_example' # str | 
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
-    api_response = api_instance.borrower(asset, address, height=height)
+    api_response = api_instance.oracle_price(symbol, height=height)
     pprint(api_response)
 except ApiException as e:
-    print("Exception when calling BorrowersApi->borrower: %s\n" % e)
+    print("Exception when calling OracleApi->oracle_price: %s\n" % e)
 ```
 
 ### Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **asset** | **str**|  | 
- **address** | **str**|  | 
+ **symbol** | **str**|  | 
  **height** | **int**| optional block height, defaults to current tip | [optional] 
 
 ### Return type
 
-[**Borrower**](Borrower.md)
+[**OraclePriceResponse**](OraclePriceResponse.md)
 
 ### Authorization
 
@@ -58,12 +56,12 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **borrowers**
-> list[Borrower] borrowers(asset, height=height)
+# **oracle_prices**
+> OraclePricesResponse oracle_prices(height=height)
 
 
 
-Returns all borrowers for the given pool.
+Returns all available oracle prices.
 
 ### Example
 ```python
@@ -74,27 +72,25 @@ from xchainpy2_thornode.rest import ApiException
 from pprint import pprint
 
 # create an instance of the API class
-api_instance = xchainpy2_thornode.BorrowersApi()
-asset = 'asset_example' # str | 
+api_instance = xchainpy2_thornode.OracleApi()
 height = 789 # int | optional block height, defaults to current tip (optional)
 
 try:
-    api_response = api_instance.borrowers(asset, height=height)
+    api_response = api_instance.oracle_prices(height=height)
     pprint(api_response)
 except ApiException as e:
-    print("Exception when calling BorrowersApi->borrowers: %s\n" % e)
+    print("Exception when calling OracleApi->oracle_prices: %s\n" % e)
 ```
 
 ### Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **asset** | **str**|  | 
  **height** | **int**| optional block height, defaults to current tip | [optional] 
 
 ### Return type
 
-[**list[Borrower]**](Borrower.md)
+[**OraclePricesResponse**](OraclePricesResponse.md)
 
 ### Authorization
 

@@ -5,6 +5,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | [**BlockResponseId**](BlockResponseId.md) |  | 
 **header** | [**BlockResponseHeader**](BlockResponseHeader.md) |  | 
+**finalize_block_events** | **list[dict(str, str)]** |  | 
 **begin_block_events** | **list[dict(str, str)]** |  | 
 **end_block_events** | **list[dict(str, str)]** |  | 
 **txs** | [**list[BlockTx]**](BlockTx.md) |  | 

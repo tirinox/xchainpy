@@ -9,6 +9,8 @@ Name | Type | Description | Notes
 **approved** | **bool** | whether the upgrade has been approved by the active validators | [optional] 
 **approved_percent** | **str** | the percentage of active validators that have approved the upgrade | [optional] 
 **validators_to_quorum** | **int** | the amount of additional active validators required to reach quorum for the upgrade | [optional] 
+**approvers** | **list[str]** | the list of node addresses that have approved the upgrade | [optional] 
+**rejecters** | **list[str]** | the list of node addresses that have rejected the upgrade | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

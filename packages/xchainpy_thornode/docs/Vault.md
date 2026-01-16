@@ -5,6 +5,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **block_height** | **int** |  | [optional] 
 **pub_key** | **str** |  | [optional] 
+**pub_key_eddsa** | **str** |  | [optional] 
 **coins** | [**list[Coin]**](Coin.md) |  | 
 **type** | **str** |  | [optional] 
 **status** | **str** |  | 
