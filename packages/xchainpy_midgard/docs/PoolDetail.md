@@ -8,6 +8,8 @@ Name | Type | Description | Notes
 **asset_depth** | **str** | Int64(e8), the amount of Asset in the pool. | 
 **asset_price** | **str** | Float, price of asset in rune. I.e. rune amount / asset amount. | 
 **asset_price_usd** | **str** | Float, the price of asset in USD (based on the deepest USD pool). | 
+**depth_minus2_percent** | **str** | Int64(e8), liquidity depth at -2% price movement calculated using Uniswap V2 constant product formula with fee from L1SLIPMINBPS mimir value. Represents the maximum RUNE value that can be traded before the pool price decreases by 2%.  | [optional] 
+**depth_plus2_percent** | **str** | Int64(e8), liquidity depth at +2% price movement calculated using Uniswap V2 constant product formula with fee from L1SLIPMINBPS mimir value. Represents the maximum RUNE value that can be traded before the pool price increases by 2%.  | [optional] 
 **earnings** | **str** | Int64(e8), The earning that has been recorded from the pool asset&#x27;s Liquidity Fees and Rewards in RUNE. The earnings shown are from the period parameter default being 14 days  (configurable by the period parameter).  | 
 **earnings_annual_as_percent_of_depth** | **str** | Float, The estimation of earnings during the time interval expanded through a year  compared to the current pool depth. E.g. 0.1 means the pool based on this interval earnings can earn 10% of its pool during a year.  | 
 **liquidity_units** | **str** | Int64, Liquidity Units in the pool. | 

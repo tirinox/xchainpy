@@ -5,7 +5,9 @@ All URIs are relative to */*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**get_actions**](DefaultApi.md#get_actions) | **GET** /v2/actions | Actions List
-[**get_affiliate_history**](DefaultApi.md#get_affiliate_history) | **GET** /v2/history/affiliate | Affiliate History
+[**get_affiliate_earning**](DefaultApi.md#get_affiliate_earning) | **GET** /v2/history/affiliate/earnings | Affiliate Earnings History
+[**get_affiliate_history**](DefaultApi.md#get_affiliate_history) | **GET** /v2/history/affiliate | Affiliate earnings History
+[**get_affiliate_stats**](DefaultApi.md#get_affiliate_stats) | **GET** /v2/history/affiliate/stats | Affiliate Volume Stats
 [**get_balance**](DefaultApi.md#get_balance) | **GET** /v2/balance/{address} | Current balance for an address
 [**get_bonders_details**](DefaultApi.md#get_bonders_details) | **GET** /v2/bonds/{address} | Bonder Details
 [**get_borrower_detail**](DefaultApi.md#get_borrower_detail) | **GET** /v2/borrower/{address} | Borrower Details
@@ -14,6 +16,7 @@ Method | HTTP request | Description
 [**get_depth_history**](DefaultApi.md#get_depth_history) | **GET** /v2/history/depths/{pool} | Depth and Price History
 [**get_earnings_history**](DefaultApi.md#get_earnings_history) | **GET** /v2/history/earnings | Earnings History
 [**get_health**](DefaultApi.md#get_health) | **GET** /v2/health | Health Info
+[**get_holders**](DefaultApi.md#get_holders) | **GET** /v2/holders | Current top holders for an asset
 [**get_known_pools**](DefaultApi.md#get_known_pools) | **GET** /v2/knownpools | Known Pools List
 [**get_liquidity_history**](DefaultApi.md#get_liquidity_history) | **GET** /v2/history/liquidity_changes | Liquidity Changes History
 [**get_member_detail**](DefaultApi.md#get_member_detail) | **GET** /v2/member/{address} | Member Details
@@ -112,12 +115,68 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **get_affiliate_earning**
+> list[AffiliateEarningInterval] get_affiliate_earning(thorname=thorname, interval=interval, count=count, to=to, _from=_from)
+
+Affiliate Earnings History
+
+Returns affiliate earnings (liquidity fees) in USD and RUNE in specified interval. If thorname is not specified returns all affiliates.  History endpoint has two modes: * With Interval parameter it returns a series of time buckets. From and To dates will   be rounded to the Interval boundaries. * Without Interval parameter a single From..To search is performed with exact timestamps.   * Interval: possible values: 5min, hour, day, week, month, quarter, year. * count: [1..400]. Defines number of intervals. Don't provide if Interval is missing. * from/to: optional int, unix second.  Possible usages with interval. * last 10 days: `?interval=day&count=10` * last 10 days before to: `?interval=day&count=10&to=1608825600` * next 10 days after from: `?interval=day&count=10&from=1606780800` * Days between from and to. From defaults to start of chain, to defaults to now.   Only the first 400 intervals are returned:   `interval=day&from=1606780800&to=1608825600`  Pagination is possible with from&count and then using the returned endTime as the From parameter of the next query.  Possible configurations without interval: * exact search for one time frame: `?from=1606780899&to=1608825600` * one time frame until now: `?from=1606780899` * from chain start until now: no query parameters 
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard.DefaultApi()
+thorname = 'thorname_example' # str | Return earnings for given thorname. Returns all affiliates if missing. (optional)
+interval = 'interval_example' # str | Interval of calculations (optional)
+count = 56 # int | Number of intervals to return. Should be between [1..400]. (optional)
+to = 789 # int | End time of the query as unix timestamp. If only count is given, defaults to now.  (optional)
+_from = 789 # int | Start time of the query as unix timestamp (optional)
+
+try:
+    # Affiliate Earnings History
+    api_response = api_instance.get_affiliate_earning(thorname=thorname, interval=interval, count=count, to=to, _from=_from)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_affiliate_earning: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **thorname** | **str**| Return earnings for given thorname. Returns all affiliates if missing. | [optional] 
+ **interval** | **str**| Interval of calculations | [optional] 
+ **count** | **int**| Number of intervals to return. Should be between [1..400]. | [optional] 
+ **to** | **int**| End time of the query as unix timestamp. If only count is given, defaults to now.  | [optional] 
+ **_from** | **int**| Start time of the query as unix timestamp | [optional] 
+
+### Return type
+
+[**list[AffiliateEarningInterval]**](AffiliateEarningInterval.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **get_affiliate_history**
 > AffiliateHistory get_affiliate_history(thorname=thorname, interval=interval, count=count, to=to, _from=_from)
 
-Affiliate History
+Affiliate earnings History
 
-Returns affiliate count, volume in specified interval. If thorname is not specified returns all thornames  History endpoint has two modes: * With Interval parameter it returns a series of time buckets. From and To dates will   be rounded to the Interval boundaries. * Without Interval parameter a single From..To search is performed with exact timestamps.   * Interval: possible values: 5min, hour, day, week, month, quarter, year. * count: [1..400]. Defines number of intervals. Don't provide if Interval is missing. * from/to: optional int, unix second.  Possible usages with interval. * last 10 days: `?interval=day&count=10` * last 10 days before to: `?interval=day&count=10&to=1608825600` * next 10 days after from: `?interval=day&count=10&from=1606780800` * Days between from and to. From defaults to start of chain, to defaults to now.   Only the first 400 intervals are returned:   `interval=day&from=1606780800&to=1608825600`  Pagination is possible with from&count and then using the returned meta.endTime as the From parameter of the next query.  Possible configurations without interval: * exact search for one time frame: `?from=1606780899&to=1608825600` * one time frame until now: `?from=1606780899` * from chain start until now: no query parameters 
+Returns affiliate count, earnings in USD in specified interval. If thorname is not specified returns all thornames  History endpoint has two modes: * With Interval parameter it returns a series of time buckets. From and To dates will   be rounded to the Interval boundaries. * Without Interval parameter a single From..To search is performed with exact timestamps.   * Interval: possible values: 5min, hour, day, week, month, quarter, year. * count: [1..400]. Defines number of intervals. Don't provide if Interval is missing. * from/to: optional int, unix second.  Possible usages with interval. * last 10 days: `?interval=day&count=10` * last 10 days before to: `?interval=day&count=10&to=1608825600` * next 10 days after from: `?interval=day&count=10&from=1606780800` * Days between from and to. From defaults to start of chain, to defaults to now.   Only the first 400 intervals are returned:   `interval=day&from=1606780800&to=1608825600`  Pagination is possible with from&count and then using the returned meta.endTime as the From parameter of the next query.  Possible configurations without interval: * exact search for one time frame: `?from=1606780899&to=1608825600` * one time frame until now: `?from=1606780899` * from chain start until now: no query parameters 
 
 ### Example
 ```python
@@ -136,7 +195,7 @@ to = 789 # int | End time of the query as unix timestamp. If only count is given
 _from = 789 # int | Start time of the query as unix timestamp (optional)
 
 try:
-    # Affiliate History
+    # Affiliate earnings History
     api_response = api_instance.get_affiliate_history(thorname=thorname, interval=interval, count=count, to=to, _from=_from)
     pprint(api_response)
 except ApiException as e:
@@ -156,6 +215,62 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**AffiliateHistory**](AffiliateHistory.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_affiliate_stats**
+> list[AffiliateStatsItem] get_affiliate_stats(thorname=thorname, interval=interval, count=count, to=to, _from=_from)
+
+Affiliate Volume Stats
+
+Returns affiliate count, swap volume in USD in specified interval. If thorname is not specified returns all thornames  History endpoint has two modes: * With Interval parameter it returns a series of time buckets. From and To dates will   be rounded to the Interval boundaries. * Without Interval parameter a single From..To search is performed with exact timestamps.   * Interval: possible values: 5min, hour, day, week, month, quarter, year. * count: [1..400]. Defines number of intervals. Don't provide if Interval is missing. * from/to: optional int, unix second.  Possible usages with interval. * last 10 days: `?interval=day&count=10` * last 10 days before to: `?interval=day&count=10&to=1608825600` * next 10 days after from: `?interval=day&count=10&from=1606780800` * Days between from and to. From defaults to start of chain, to defaults to now.   Only the first 400 intervals are returned:   `interval=day&from=1606780800&to=1608825600`  Pagination is possible with from&count and then using the returned meta.endTime as the From parameter of the next query.  Possible configurations without interval: * exact search for one time frame: `?from=1606780899&to=1608825600` * one time frame until now: `?from=1606780899` * from chain start until now: no query parameters 
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard.DefaultApi()
+thorname = 'thorname_example' # str | Return history given thorname. Returns sum of all thornames if missing. (optional)
+interval = 'interval_example' # str | Interval of calculations (optional)
+count = 56 # int | Number of intervals to return. Should be between [1..400]. (optional)
+to = 789 # int | End time of the query as unix timestamp. If only count is given, defaults to now.  (optional)
+_from = 789 # int | Start time of the query as unix timestamp (optional)
+
+try:
+    # Affiliate Volume Stats
+    api_response = api_instance.get_affiliate_stats(thorname=thorname, interval=interval, count=count, to=to, _from=_from)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_affiliate_stats: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **thorname** | **str**| Return history given thorname. Returns sum of all thornames if missing. | [optional] 
+ **interval** | **str**| Interval of calculations | [optional] 
+ **count** | **int**| Number of intervals to return. Should be between [1..400]. | [optional] 
+ **to** | **int**| End time of the query as unix timestamp. If only count is given, defaults to now.  | [optional] 
+ **_from** | **int**| Start time of the query as unix timestamp | [optional] 
+
+### Return type
+
+[**list[AffiliateStatsItem]**](AffiliateStatsItem.md)
 
 ### Authorization
 
@@ -550,6 +665,56 @@ This endpoint does not need any parameter.
 ### Return type
 
 [**Health**](Health.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_holders**
+> list[Holder] get_holders(asset=asset, limit=limit)
+
+Current top holders for an asset
+
+Returns all coin amounts of the given asset ordered by their amounts in descending order.  This endpoint is enabled only if the midgard startup config allows it. 
+
+### Example
+```python
+from __future__ import print_function
+import time
+import xchainpy2_midgard
+from xchainpy2_midgard.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = xchainpy2_midgard.DefaultApi()
+asset = 'asset_example' # str | Asset to get the top holders for. (optional)
+limit = 789 # int | Number of top holders to return, default is 100, maximum is 1000. (optional)
+
+try:
+    # Current top holders for an asset
+    api_response = api_instance.get_holders(asset=asset, limit=limit)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_holders: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **asset** | **str**| Asset to get the top holders for. | [optional] 
+ **limit** | **int**| Number of top holders to return, default is 100, maximum is 1000. | [optional] 
+
+### Return type
+
+[**list[Holder]**](Holder.md)
 
 ### Authorization
 
@@ -1413,7 +1578,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_tcy_distribution**
-> TCYDistribution get_tcy_distribution(address)
+> TCYDistribution get_tcy_distribution(address, period=period)
 
 Tcy Distribution
 
@@ -1430,10 +1595,11 @@ from pprint import pprint
 # create an instance of the API class
 api_instance = xchainpy2_midgard.DefaultApi()
 address = 'address_example' # str | Address which is assigned to TCY Holder.
+period = 'period_example' # str | Specifies the base interval from which APR will be calculated. Default is 30d.  (optional)
 
 try:
     # Tcy Distribution
-    api_response = api_instance.get_tcy_distribution(address)
+    api_response = api_instance.get_tcy_distribution(address, period=period)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_tcy_distribution: %s\n" % e)
@@ -1444,6 +1610,7 @@ except ApiException as e:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **address** | **str**| Address which is assigned to TCY Holder. | 
+ **period** | **str**| Specifies the base interval from which APR will be calculated. Default is 30d.  | [optional] 
 
 ### Return type
 
