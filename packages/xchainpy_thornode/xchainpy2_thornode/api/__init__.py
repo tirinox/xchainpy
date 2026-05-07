@@ -26,7 +26,9 @@ from xchainpy2_thornode.api.reference_memos_api import ReferenceMemosApi
 from xchainpy2_thornode.api.savers_api import SaversApi
 from xchainpy2_thornode.api.secured_asset_api import SecuredAssetApi
 from xchainpy2_thornode.api.secured_assets_api import SecuredAssetsApi
+from xchainpy2_thornode.api.smart_contracts_api import SmartContractsApi
 from xchainpy2_thornode.api.streaming_swap_api import StreamingSwapApi
+from xchainpy2_thornode.api.supply_api import SupplyApi
 from xchainpy2_thornode.api.swap_api import SwapApi
 from xchainpy2_thornode.api.tcy_claimers_api import TCYClaimersApi
 from xchainpy2_thornode.api.tcy_stakers_api import TCYStakersApi

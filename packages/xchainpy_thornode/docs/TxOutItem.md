@@ -14,6 +14,7 @@ Name | Type | Description | Notes
 **max_gas** | [**list[Coin]**](Coin.md) |  | 
 **gas_rate** | **int** |  | [optional] 
 **memo** | **str** |  | [optional] 
+**original_memo** | **str** |  | [optional] 
 **aggregator** | **str** | whitelisted DEX Aggregator contract address | [optional] 
 **aggregator_target_asset** | **str** | target asset for the aggregator contract to attempt a swap to | [optional] 
 **aggregator_target_limit** | **str** | the minimum number of tokens the swapper wants to receive of the output asset | [optional] 

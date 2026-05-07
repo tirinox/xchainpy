@@ -1,7 +1,9 @@
 openapi: 3.0.0
+servers:
+- url: https://gateway.liquify.com/chain/thorchain_api
 info:
   title: Thornode API
-  version: 3.14.1
+  version: 3.17.0
   contact:
     email: devs@thorchain.org
   description: Thornode REST API.
@@ -606,6 +608,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VaultPubkeysResponse'
+  /thorchain/vaults/solvency:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns aggregate vault solvency showing over-solvent or under-solvent
+        amounts per asset.
+      operationId: vaultSolvency
+      tags:
+      - Vaults
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VaultSolvencyResponse'
   /thorchain/network:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -1619,6 +1637,89 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExportResponse'
+  /thorchain/supply:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns the RUNE supply breakdown.
+      operationId: supply
+      tags:
+      - Supply
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplyResponse'
+  /thorchain/supply/cmc:
+    parameters:
+    - name: asset
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+        - rune
+        - tcy
+      description: The asset to query supply for (default rune).
+    - name: type
+      in: query
+      required: true
+      schema:
+        type: string
+        enum:
+        - circulating
+        - total
+        - locked
+        - staked
+      description: The type of supply value to return.
+    get:
+      description: Returns a single supply value as plain text for CoinMarketCap integration.
+      operationId: supply_cmc
+      tags:
+      - Supply
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: integer
+                example: 30000000000
+  /thorchain/contracts:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/contract'
+    - $ref: '#/components/parameters/version'
+    get:
+      description: Returns type and version for all contracts with stored `contract_info`
+      operationId: contractInfos
+      tags:
+      - Smart Contracts
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractInfosResponse'
+  /thorchain/contract/{address}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/address'
+    get:
+      description: Returns type and version from `contract_info` for requested address
+      operationId: contractInfo
+      tags:
+      - Smart Contracts
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractInfoResponse'
 components:
   parameters:
     queryHeight:
@@ -1694,6 +1795,22 @@ components:
       schema:
         type: string
         example: BTC
+    contract:
+      name: contract
+      in: query
+      required: false
+      description: optional contract type prefix to filter results
+      schema:
+        type: string
+        example: rujira-fin
+    version:
+      name: version
+      in: query
+      required: false
+      description: optional contract version prefix to filter results
+      schema:
+        type: string
+        example: 2.0.0
   schemas:
     Pool:
       type: object
@@ -2749,6 +2866,9 @@ components:
         memo:
           type: string
           example: OUT:208BF0ACD78C89A0534B0457BA0867B101961A2319C1E49DD28676526904BBEA
+        original_memo:
+          type: string
+          example: =:BTC.BTC:bc1q0lwf0ycw4gkh8v6y8g9yqwxvqnvm24kvdezgpg
         aggregator:
           type: string
           description: whitelisted DEX Aggregator contract address
@@ -3205,6 +3325,22 @@ components:
           type: string
         amount:
           type: string
+    ContractInfo:
+      type: object
+      required:
+      - address
+      - contract
+      - version
+      properties:
+        address:
+          type: string
+          example: thor17cawwg2lsnvcne69fek6nsqkf8snma6gc5ccceshul86rl0u3q4s5l5d0a
+        contract:
+          type: string
+          example: rujira-fin
+        version:
+          type: string
+          example: 2.0.0
     AccountResponse:
       type: object
       properties:
@@ -3639,6 +3775,30 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/VaultInfo'
+    VaultSolvencyResponse:
+      type: object
+      required:
+      - assets
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/VaultSolvencyAsset'
+    VaultSolvencyAsset:
+      type: object
+      required:
+      - asset
+      - amount
+      properties:
+        asset:
+          type: string
+          example: BTC.BTC
+          description: Asset identifier
+        amount:
+          type: string
+          example: '1000000000'
+          description: Solvency amount for the asset. Positive values indicate over-solvency,
+            negative values indicate under-solvency.
     NetworkResponse:
       type: object
       required:
@@ -4624,6 +4784,7 @@ components:
       - height
       - registration_hash
       - registered_by
+      - used_by_txs
       properties:
         asset:
           type: string
@@ -4649,6 +4810,14 @@ components:
           type: string
           description: the address that registered this reference memo
           example: thor1zupk5lmc84r2dh738a9g3zscavannjy3nzplwt
+        used_by_txs:
+          type: array
+          description: list of transaction hashes that have used this reference memo
+          items:
+            type: string
+          example:
+          - AF524818D42B63D25BBA0CCC4909F127CAA645C0F9CD07324F2824CC151A64C8
+          - BF524818D42B63D25BBA0CCC4909F127CAA645C0F9CD07324F2824CC151A64C9
     ReferenceMemoPreflightResponse:
       type: object
       required:
@@ -4689,4 +4858,46 @@ components:
           description: the maximum number of times this reference can be used (0 =
             unlimited)
           example: '0'
+    LockedSupply:
+      type: object
+      properties:
+        reserve:
+          type: integer
+          format: int64
+          description: RUNE locked in the reserve module
+          example: 10000000000
+    SupplyResponse:
+      type: object
+      required:
+      - circulating
+      - total
+      properties:
+        circulating:
+          type: integer
+          format: int64
+          description: circulating RUNE supply
+          example: 30000000000
+        locked:
+          $ref: '#/components/schemas/LockedSupply'
+        total:
+          type: integer
+          format: int64
+          description: total RUNE supply
+          example: 50000000000
+    ContractInfoResponse:
+      type: object
+      required:
+      - info
+      properties:
+        info:
+          $ref: '#/components/schemas/ContractInfo'
+    ContractInfosResponse:
+      type: object
+      required:
+      - infos
+      properties:
+        infos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractInfo'
 x-readme-file: README.md

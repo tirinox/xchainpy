@@ -1,6 +1,6 @@
 # xchainpy2_thornode.AuthApi
 
-All URIs are relative to */*
+All URIs are relative to *https://gateway.liquify.com/chain/thorchain_api*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
