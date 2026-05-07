@@ -27,7 +27,7 @@ function publish() {
 
   echo "---------------"
   echo "Publishing $1"
-  python -m twine upload --repository pypi "$1"/dist/*
+  python -m twine upload --verbose --repository pypi "$1"/dist/*
 }
 
 # Check if the script has at least two arguments

@@ -1,6 +1,6 @@
 # xchainpy2_midgard.SpecificationApi
 
-All URIs are relative to *https://gateway.liquify.com/chain/thorchain_midgard*
+All URIs are relative to */*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
