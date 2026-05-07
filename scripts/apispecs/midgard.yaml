@@ -28,24 +28,12 @@ components:
             - meta
             type: object
       description: Returns an array of actions for the given filters.
-    AffiliateEarningResponse:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AffiliateEarning'
-      description: Affiliate earnings (liquidity fees) history
     AffiliateHistoryResponse:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/AffiliateHistory'
-      description: Affiliate fee count and earnings history
-    AffiliateStatsResponse:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AffiliateStats'
-      description: Affiliate count and volume stats history
+      description: Affiliate count and volume history
     BalanceResponse:
       content:
         application/json:
@@ -340,78 +328,6 @@ components:
       - affiliateAddress
       - affiliateFee
       type: object
-    AffiliateEarning:
-      items: &id003
-        $ref: '#/components/schemas/AffiliateEarningInterval'
-      type: array
-    AffiliateEarningInterval:
-      properties:
-        affiliates:
-          description: List of affiliate earnings for the time interval
-          items:
-            $ref: '#/components/schemas/AffiliateEarningItem'
-          type: array
-        count:
-          description: 'Int64, The total count of affiliate transactions during the
-            time interval
-
-            '
-          type: string
-        endTime:
-          description: Int64, The end time of bucket in unix timestamp
-          type: string
-        startTime:
-          description: Int64, The beginning time of bucket in unix timestamp
-          type: string
-        totalEarningsRune:
-          description: 'Int64(e8), The total earnings (liquidity fees) of all affiliates
-            in RUNE during the time interval
-
-            '
-          type: string
-        totalEarningsUSD:
-          description: 'Int64(e8), The total earnings (liquidity fees) of all affiliates
-            in USD during the time interval
-
-            '
-          type: string
-      required:
-      - startTime
-      - endTime
-      - totalEarningsRune
-      - totalEarningsUSD
-      - count
-      - affiliates
-      type: object
-    AffiliateEarningItem:
-      properties:
-        affiliate:
-          description: Affiliate address or THORName
-          type: string
-        count:
-          description: 'Int64, The count of transactions for this affiliate during
-            the time interval
-
-            '
-          type: string
-        earningsRUNE:
-          description: 'Int64(e8), The earnings (liquidity fees) for this affiliate
-            in RUNE during the time interval
-
-            '
-          type: string
-        earningsUSD:
-          description: 'Int64(e8), The earnings (liquidity fees) for this affiliate
-            in USD during the time interval
-
-            '
-          type: string
-      required:
-      - affiliate
-      - earningsUSD
-      - earningsRUNE
-      - count
-      type: object
     AffiliateHistory:
       properties:
         intervals:
@@ -444,15 +360,15 @@ components:
             $ref: '#/components/schemas/ItemThorname'
           type: array
         volume:
-          description: 'Int64(e8), The total earnings of the affiliates detonated
-            in RUNE
+          description: 'Int64(e8), The total volume of the affiliates detonated in
+            RUNE
 
             '
           type: string
         volumeUSD:
-          description: 'Int64(e2), The total earnings of the affiliates
+          description: 'Int64(e2), The total volume of the affiliates
 
-            denoted in USD price
+            denoted in USD price of the rune in each swap
 
             '
           type: string
@@ -478,15 +394,15 @@ components:
           description: Int64, The beginning time of bucket in unix timestamp
           type: string
         volume:
-          description: 'Int64(e8), The total earnings of the affiliates detonated
-            in RUNE
+          description: 'Int64(e8), The total volume of the affiliates detonated in
+            RUNE
 
             '
           type: string
         volumeUSD:
-          description: 'Int64(e2), The total earnings of the affiliates
+          description: 'Int64(e2), The total volume of the affiliates
 
-            denoted in USD price
+            denoted in USD price of the rune in each swap
 
             '
           type: string
@@ -496,64 +412,6 @@ components:
       - count
       - volume
       - volumeUSD
-      type: object
-    AffiliateStatItem:
-      properties:
-        affiliate:
-          description: affiliate address
-          type: string
-        count:
-          description: 'Int64, The count of swaps for the affiliate during the stats
-            interval
-
-            '
-          type: string
-        volumeUSD:
-          description: 'Int64(e2), The volume of swaps for the affiliate
-
-            denoted in USD price of the rune in each swap
-
-            '
-          type: string
-      required:
-      - affiliate
-      - count
-      - volumeUSD
-      type: object
-    AffiliateStats:
-      items: &id004
-        $ref: '#/components/schemas/AffiliateStatsItem'
-      type: array
-    AffiliateStatsItem:
-      properties:
-        affiliates:
-          items:
-            $ref: '#/components/schemas/AffiliateStatItem'
-          type: array
-        count:
-          description: 'Int64, The count of unique swaps during the stats interval
-
-            '
-          type: string
-        endTime:
-          description: Int64, The end time of the stats interval in unix timestamp
-          type: string
-        startTime:
-          description: Int64, The beginning time of the stats interval in unix timestamp
-          type: string
-        totalVolumeUSD:
-          description: 'Int64(e2), The total volume of the affiliates
-
-            denoted in USD price
-
-            '
-          type: string
-      required:
-      - startTime
-      - endTime
-      - totalVolumeUSD
-      - count
-      - affiliates
       type: object
     Balance:
       properties:
@@ -831,21 +689,11 @@ components:
           description: Float, the price of asset in USD (based on the deepest USD
             pool).
           type: string
-        closePriceUSD:
-          description: Float, the closing price of asset in USD at the end of the
-            interval.
-          type: string
         endTime:
           description: Int64, The end time of bucket in unix timestamp
           type: string
-        highPriceUSD:
-          description: Float, the highest price of asset in USD during the interval.
-          type: string
         liquidityUnits:
           description: Int64, Liquidity Units in the pool at the end of the interval
-          type: string
-        lowPriceUSD:
-          description: Float, the lowest price of asset in USD during the interval.
           type: string
         luvi:
           description: 'Float, The liquidity unit value index. Sqrt(assetDepth * runeDepth)/liquidity
@@ -856,10 +704,6 @@ components:
         membersCount:
           description: Int64, Number of liquidity members in the pool at the end of
             the interval
-          type: string
-        openPriceUSD:
-          description: Float, the opening price of asset in USD at the beginning of
-            the interval.
           type: string
         runeDepth:
           description: Int64(e8), the amount of Rune in the pool at the end of the
@@ -1203,7 +1047,7 @@ components:
       - coins
       type: object
     Holders:
-      items: &id005
+      items: &id003
         $ref: '#/components/schemas/Holder'
       type: array
     ItemThorname:
@@ -1241,14 +1085,6 @@ components:
         type: string
       example:
         BTC.BTC: available
-      type: object
-    LimitSwapMetadata:
-      properties:
-        memo:
-          description: Transaction memo of bond event
-          type: string
-      required:
-      - memo
       type: object
     LiquidityHistory:
       properties:
@@ -1430,7 +1266,7 @@ components:
       - dateLastAdded
       type: object
     Members:
-      items: &id006
+      items: &id004
         description: Member address
         example: tbnb1fj2lqj8dvr5pumfchc7ntlfqd2v6zdxqwjewf5
         type: string
@@ -1445,10 +1281,6 @@ components:
           $ref: '#/components/schemas/ContractMetadata'
         failed:
           $ref: '#/components/schemas/FailedMetadata'
-        limitSwap:
-          $ref: '#/components/schemas/LimitSwapMetadata'
-        rebond:
-          $ref: '#/components/schemas/RebondMetadata'
         refund:
           $ref: '#/components/schemas/RefundMetadata'
         runePoolDeposit:
@@ -1590,7 +1422,7 @@ components:
       - ed25519
       type: object
     Nodes:
-      items: &id007
+      items: &id005
         $ref: '#/components/schemas/Node'
       type: array
     PoolDetail:
@@ -1615,28 +1447,6 @@ components:
         assetPriceUSD:
           description: Float, the price of asset in USD (based on the deepest USD
             pool).
-          type: string
-        depthMinus2Percent:
-          description: 'Int64(e8), liquidity depth at -2% price movement calculated
-            using Uniswap V2 constant product
-
-            formula with fee from L1SLIPMINBPS mimir value. Represents the maximum
-            RUNE value that can be traded before the pool
-
-            price decreases by 2%.
-
-            '
-          type: string
-        depthPlus2Percent:
-          description: 'Int64(e8), liquidity depth at +2% price movement calculated
-            using Uniswap V2 constant product
-
-            formula with fee from L1SLIPMINBPS mimir value. Represents the maximum
-            RUNE value that can be traded before the pool
-
-            price increases by 2%.
-
-            '
           type: string
         earnings:
           description: "Int64(e8), The earning that has been recorded from the pool\
@@ -1755,7 +1565,7 @@ components:
       - lpLuvi
       type: object
     PoolDetails:
-      items: &id008
+      items: &id006
         $ref: '#/components/schemas/PoolDetail'
       type: array
     PoolStatsDetail:
@@ -1939,7 +1749,7 @@ components:
       type: object
     RUNEPoolDetails:
       description: List details of all the RUNEPools identified with the given addresses
-      items: &id009
+      items: &id007
         $ref: '#/components/schemas/RUNEPoolProvider'
       type: array
     RUNEPoolHistory:
@@ -2053,22 +1863,6 @@ components:
       - dateFirstAdded
       - dateLastAdded
       type: object
-    RebondMetadata:
-      properties:
-        memo:
-          description: Transaction memo of bond event
-          type: string
-        newBondAddress:
-          description: new bond address
-          type: string
-        nodeAddress:
-          description: node address
-          type: string
-      required:
-      - memo
-      - nodeAddress
-      - newBondAddress
-      type: object
     RefundMetadata:
       properties:
         affiliateAddress:
@@ -2174,7 +1968,7 @@ components:
       - networkFee
       type: object
     ReverseTHORNames:
-      items: &id010
+      items: &id008
         description: THORName name
         example: myname
         type: string
@@ -3210,7 +3004,7 @@ components:
       - votes
       type: object
     Votes:
-      items: &id011
+      items: &id009
         $ref: '#/components/schemas/VoteValue'
       type: array
     WithdrawMetadata:
@@ -3264,8 +3058,10 @@ info:
     \ does not hold critical information. To interact with THORChain protocol, users\
     \ should query THORNode directly."
   title: Midgard Public API
-  version: 2.34.0
+  version: 2.32.9
 openapi: 3.0.0
+servers:
+- url: https://gateway.liquify.com/chain/thorchain_midgard
 paths:
   /v2/actions:
     get:
@@ -3591,11 +3387,11 @@ paths:
       summary: Health Info
   /v2/history/affiliate:
     get:
-      description: "Returns affiliate count, earnings in USD in specified interval.\n\
-        If thorname is not specified returns all thornames\n\nHistory endpoint has\
-        \ two modes:\n* With Interval parameter it returns a series of time buckets.\
-        \ From and To dates will\n  be rounded to the Interval boundaries.\n* Without\
-        \ Interval parameter a single From..To search is performed with exact timestamps.\n\
+      description: "Returns affiliate count, volume in specified interval.\nIf thorname\
+        \ is not specified returns all thornames\n\nHistory endpoint has two modes:\n\
+        * With Interval parameter it returns a series of time buckets. From and To\
+        \ dates will\n  be rounded to the Interval boundaries.\n* Without Interval\
+        \ parameter a single From..To search is performed with exact timestamps.\n\
         \n\n* Interval: possible values: 5min, hour, day, week, month, quarter, year.\n\
         * count: [1..400]. Defines number of intervals. Don't provide if Interval\
         \ is missing.\n* from/to: optional int, unix second.\n\nPossible usages with\
@@ -3659,152 +3455,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AffiliateHistory'
-      summary: Affiliate earnings History
-  /v2/history/affiliate/earnings:
-    get:
-      description: "Returns affiliate earnings (liquidity fees) in USD and RUNE in\
-        \ specified interval.\nIf thorname is not specified returns all affiliates.\n\
-        \nHistory endpoint has two modes:\n* With Interval parameter it returns a\
-        \ series of time buckets. From and To dates will\n  be rounded to the Interval\
-        \ boundaries.\n* Without Interval parameter a single From..To search is performed\
-        \ with exact timestamps.\n\n\n* Interval: possible values: 5min, hour, day,\
-        \ week, month, quarter, year.\n* count: [1..400]. Defines number of intervals.\
-        \ Don't provide if Interval is missing.\n* from/to: optional int, unix second.\n\
-        \nPossible usages with interval.\n* last 10 days: `?interval=day&count=10`\n\
-        * last 10 days before to: `?interval=day&count=10&to=1608825600`\n* next 10\
-        \ days after from: `?interval=day&count=10&from=1606780800`\n* Days between\
-        \ from and to. From defaults to start of chain, to defaults to now.\n  Only\
-        \ the first 400 intervals are returned:\n  `interval=day&from=1606780800&to=1608825600`\n\
-        \nPagination is possible with from&count and then using the returned endTime\
-        \ as the\nFrom parameter of the next query.\n\nPossible configurations without\
-        \ interval:\n* exact search for one time frame: `?from=1606780899&to=1608825600`\n\
-        * one time frame until now: `?from=1606780899`\n* from chain start until now:\
-        \ no query parameters\n"
-      operationId: GetAffiliateEarning
-      parameters:
-      - description: Return earnings for given thorname. Returns all affiliates if
-          missing.
-        in: query
-        name: thorname
-        schema:
-          type: string
-      - description: Interval of calculations
-        example: day
-        in: query
-        name: interval
-        schema:
-          enum:
-          - 5min
-          - hour
-          - day
-          - week
-          - month
-          - quarter
-          - year
-          type: string
-      - description: Number of intervals to return. Should be between [1..400].
-        example: 30
-        in: query
-        name: count
-        schema:
-          type: integer
-      - description: 'End time of the query as unix timestamp. If only count is given,
-          defaults to now.
-
-          '
-        example: 1608825600
-        in: query
-        name: to
-        schema:
-          format: int64
-          type: integer
-      - description: Start time of the query as unix timestamp
-        example: 1606780800
-        in: query
-        name: from
-        schema:
-          format: int64
-          type: integer
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items: *id003
-                type: array
-      summary: Affiliate Earnings History
-  /v2/history/affiliate/stats:
-    get:
-      description: "Returns affiliate count, swap volume in USD in specified interval.\n\
-        If thorname is not specified returns all thornames\n\nHistory endpoint has\
-        \ two modes:\n* With Interval parameter it returns a series of time buckets.\
-        \ From and To dates will\n  be rounded to the Interval boundaries.\n* Without\
-        \ Interval parameter a single From..To search is performed with exact timestamps.\n\
-        \n\n* Interval: possible values: 5min, hour, day, week, month, quarter, year.\n\
-        * count: [1..400]. Defines number of intervals. Don't provide if Interval\
-        \ is missing.\n* from/to: optional int, unix second.\n\nPossible usages with\
-        \ interval.\n* last 10 days: `?interval=day&count=10`\n* last 10 days before\
-        \ to: `?interval=day&count=10&to=1608825600`\n* next 10 days after from: `?interval=day&count=10&from=1606780800`\n\
-        * Days between from and to. From defaults to start of chain, to defaults to\
-        \ now.\n  Only the first 400 intervals are returned:\n  `interval=day&from=1606780800&to=1608825600`\n\
-        \nPagination is possible with from&count and then using the returned meta.endTime\
-        \ as the\nFrom parameter of the next query.\n\nPossible configurations without\
-        \ interval:\n* exact search for one time frame: `?from=1606780899&to=1608825600`\n\
-        * one time frame until now: `?from=1606780899`\n* from chain start until now:\
-        \ no query parameters\n"
-      operationId: GetAffiliateStats
-      parameters:
-      - description: Return history given thorname. Returns sum of all thornames if
-          missing.
-        in: query
-        name: thorname
-        schema:
-          type: string
-      - description: Interval of calculations
-        example: day
-        in: query
-        name: interval
-        schema:
-          enum:
-          - 5min
-          - hour
-          - day
-          - week
-          - month
-          - quarter
-          - year
-          type: string
-      - description: Number of intervals to return. Should be between [1..400].
-        example: 30
-        in: query
-        name: count
-        schema:
-          type: integer
-      - description: 'End time of the query as unix timestamp. If only count is given,
-          defaults to now.
-
-          '
-        example: 1608825600
-        in: query
-        name: to
-        schema:
-          format: int64
-          type: integer
-      - description: Start time of the query as unix timestamp
-        example: 1606780800
-        in: query
-        name: from
-        schema:
-          format: int64
-          type: integer
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                items: *id004
-                type: array
-      summary: Affiliate Volume Stats
+      summary: Affiliate History
   /v2/history/depths/{pool}:
     get:
       description: "Returns the asset and rune depths and price.\nThe values report\
@@ -4417,7 +4068,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id005
+                items: *id003
                 type: array
       summary: Current top holders for an asset
   /v2/knownpools:
@@ -4492,7 +4143,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id006
+                items: *id004
                 type: array
       summary: Members List
   /v2/network:
@@ -4515,7 +4166,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id007
+                items: *id005
                 type: array
       summary: Nodes List
   /v2/pool/{asset}:
@@ -4644,7 +4295,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id008
+                items: *id006
                 type: array
       summary: Pools List
   /v2/runepool/{address}:
@@ -4676,7 +4327,7 @@ paths:
               schema:
                 description: List details of all the RUNEPools identified with the
                   given addresses
-                items: *id009
+                items: *id007
                 type: array
       summary: RUNEPool Details
   /v2/saver/{address}:
@@ -4813,7 +4464,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id010
+                items: *id008
                 type: array
       summary: THORName owner
   /v2/thorname/rlookup/{address}:
@@ -4833,7 +4484,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id010
+                items: *id008
                 type: array
       summary: Gives a list of THORNames by reverse lookup
   /v2/votes:
@@ -4867,7 +4518,7 @@ paths:
           content:
             application/json:
               schema:
-                items: *id011
+                items: *id009
                 type: array
       summary: Current Protocol Voting
 x-readme-file: README.md
