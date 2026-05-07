@@ -11,6 +11,7 @@ Name | Type | Description | Notes
 **global_trading_paused** | **bool** | Returns true if trading is paused globally | [optional] 
 **chain_trading_paused** | **bool** | Returns true if trading is paused for this chain | [optional] 
 **chain_lp_actions_paused** | **bool** | Returns true if LP actions are paused for this chain | [optional] 
+**observed_fee_rate** | **str** | The chain&#x27;s observed fee rate in gas_rate_units (see gas_rate_units), before the 1.5x that makes an outbound more likely to have a sufficient gas rate.  Used by validators to check whether they need to report a fee change. | [optional] 
 **gas_rate** | **str** | The minimum fee rate used by vaults to send outbound TXs. The actual fee rate may be higher. For EVM chains this is returned in gwei (1e9). | [optional] 
 **gas_rate_units** | **str** | Units of the gas_rate. | [optional] 
 **outbound_tx_size** | **str** | Avg size of outbound TXs on each chain. For UTXO chains it may be larger than average, as it takes into account vault consolidation txs, which can have many vouts | [optional] 

@@ -1,4 +1,4 @@
-# SaversResponse
+# OutboundFeesResponse
 
 ## Properties
 Name | Type | Description | Notes

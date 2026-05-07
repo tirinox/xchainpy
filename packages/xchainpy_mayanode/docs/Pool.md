@@ -14,8 +14,6 @@ Name | Type | Description | Notes
 **synth_supply** | **str** | the total supply of synths for the asset | 
 **pending_inbound_cacao** | **str** |  | 
 **pending_inbound_asset** | **str** |  | 
-**savers_depth** | **object** | the balance of L1 asset deposited into the Savers Vault | 
-**savers_units** | **str** | the number of units owned by Savers | 
 **synth_mint_paused** | **bool** | whether additional synths cannot be minted | 
 **bondable** | **bool** | whether LPs can bond liquidity in the pool to a node | 
 

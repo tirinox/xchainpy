@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Mayanode API
-  version: 1.126.0
+  version: 1.129.2
   contact:
     email: devs@mayachain.org
   description: Mayanode REST API.
@@ -54,7 +54,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id004
+                items: &id005
                   $ref: '#/components/schemas/Pool'
   /mayachain/pool/{asset}/liquidity_provider/{address}:
     parameters:
@@ -89,7 +89,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id006
+                items: &id007
                   $ref: '#/components/schemas/LiquidityProviderSummary'
   /mayachain/cacaopool:
     parameters:
@@ -137,43 +137,8 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id005
+                items: &id006
                   $ref: '#/components/schemas/CACAOProvider'
-  /mayachain/pool/{asset}/saver/{address}:
-    parameters:
-    - $ref: '#/components/parameters/queryHeight'
-    - $ref: '#/components/parameters/asset'
-    - $ref: '#/components/parameters/address'
-    get:
-      description: Returns the saver position given then savers pool and address.
-      operationId: saver
-      tags:
-      - Savers
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Saver'
-  /mayachain/pool/{asset}/savers:
-    parameters:
-    - $ref: '#/components/parameters/queryHeight'
-    - $ref: '#/components/parameters/asset'
-    get:
-      description: Returns all savers for the savers pool.
-      operationId: savers
-      tags:
-      - Savers
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items: &id007
-                  $ref: '#/components/schemas/Saver'
   /mayachain/tx/{hash}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -399,6 +364,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NetworkResponse'
+  /mayachain/outbound_fees:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    get:
+      description: Returns the last block information for all chains.
+      operationId: outboundFees
+      tags:
+      - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: &id002
+                  $ref: '#/components/schemas/OutboundFee'
+  /mayachain/outbound_fee/{asset}:
+    parameters:
+    - $ref: '#/components/parameters/queryHeight'
+    - $ref: '#/components/parameters/asset'
+    get:
+      description: Returns the outbound fee information for the provided asset.
+      operationId: outboundFeeAsset
+      tags:
+      - Network
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: *id002
   /mayachain/pol:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -463,6 +462,13 @@ paths:
                       example: false
                       description: Returns true if LP actions are paused for this
                         chain
+                    observed_fee_rate:
+                      type: string
+                      example: '114'
+                      description: The chain's observed fee rate in gas_rate_units
+                        (see gas_rate_units), before the 1.5x that makes an outbound
+                        more likely to have a sufficient gas rate.  Used by validators
+                        to check whether they need to report a fee change.
                     gas_rate:
                       type: string
                       example: '214'
@@ -507,7 +513,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: &id002
+                items: &id003
                   $ref: '#/components/schemas/LastBlock'
   /mayachain/lastblock/{chain}:
     parameters:
@@ -525,7 +531,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: *id002
+                items: *id003
   /mayachain/version:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -803,7 +809,7 @@ paths:
       operationId: keysign
       tags:
       - TSS
-      responses: &id003
+      responses: &id004
         200:
           description: OK
           content:
@@ -821,7 +827,7 @@ paths:
       operationId: keysignPubkey
       tags:
       - TSS
-      responses: *id003
+      responses: *id004
   /mayachain/keygen/{height}/{pubkey}:
     parameters:
     - $ref: '#/components/parameters/pathHeight'
@@ -1084,68 +1090,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QuoteSwapResponse'
-  /mayachain/quote/saver/deposit:
-    parameters:
-    - $ref: '#/components/parameters/queryHeight'
-    - name: asset
-      in: query
-      description: the asset to deposit
-      schema:
-        type: string
-        example: BTC.BTC
-    - name: amount
-      in: query
-      description: the source asset amount in 1e8 decimals
-      schema:
-        type: integer
-        format: int64
-        example: 1000000
-    get:
-      description: Provide a quote estimate for the provided saver deposit.
-      operationId: quotesaverdeposit
-      tags:
-      - Quote
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QuoteSaverDepositResponse'
-  /mayachain/quote/saver/withdraw:
-    parameters:
-    - $ref: '#/components/parameters/queryHeight'
-    - name: asset
-      in: query
-      description: the asset to withdraw
-      schema:
-        type: string
-        example: BTC.BTC
-    - name: address
-      in: query
-      description: the address for the position
-      schema:
-        type: string
-        example: bc1qd45uzetakjvdy5ynjjyp4nlnj89am88e4e5jeq
-    - name: withdraw_bps
-      in: query
-      description: the basis points of the existing position to withdraw
-      schema:
-        type: integer
-        format: int64
-        example: 100
-    get:
-      description: Provide a quote estimate for the provided saver withdraw.
-      operationId: quotesaverwithdraw
-      tags:
-      - Quote
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QuoteSaverWithdrawResponse'
   /mayachain/invariant/{invariant}:
     parameters:
     - $ref: '#/components/parameters/queryHeight'
@@ -1267,8 +1211,6 @@ components:
       - synth_supply
       - pending_inbound_cacao
       - pending_inbound_asset
-      - savers_depth
-      - savers_units
       - synth_mint_paused
       - bondable
       properties:
@@ -1310,13 +1252,6 @@ components:
         pending_inbound_asset:
           type: string
           example: '101713319'
-        savers_depth:
-          example: '199998'
-          description: the balance of L1 asset deposited into the Savers Vault
-        savers_units:
-          type: string
-          example: '199998'
-          description: the number of units owned by Savers
         synth_mint_paused:
           type: boolean
           example: true
@@ -1392,6 +1327,10 @@ components:
           type: integer
           format: int64
           example: 82745
+        bonded_nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/LPBondedNode'
     LiquidityProviderSummary:
       type: object
       required:
@@ -1526,42 +1465,6 @@ components:
         units:
           type: string
           example: '1000000000'
-    Saver:
-      type: object
-      required:
-      - asset
-      - asset_address
-      - units
-      - asset_deposit_value
-      - asset_redeem_value
-      - growth_pct
-      properties:
-        asset:
-          type: string
-          example: BNB.BNB
-        asset_address:
-          type: string
-          example: bnb1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-        last_add_height:
-          type: integer
-          format: int64
-          example: 82745
-        last_withdraw_height:
-          type: integer
-          format: int64
-          example: 82745
-        units:
-          type: string
-          example: '0'
-        asset_deposit_value:
-          type: string
-          example: '0'
-        asset_redeem_value:
-          type: string
-          example: '0'
-        growth_pct:
-          type: string
-          example: '0.02'
     Coin:
       type: object
       required:
@@ -1926,6 +1829,40 @@ components:
           example: 7581334
           description: the finalised height of the observed transaction on the source
             chain, not provided if chain is MAYA
+    OutboundFee:
+      type: object
+      required:
+      - asset
+      - outbound_fee
+      properties:
+        asset:
+          type: string
+          example: ETH.ETH
+          description: the asset to display the outbound fee for
+        outbound_fee:
+          type: string
+          example: '300000'
+          description: the asset's outbound fee, in (1e8-format) units of the asset
+        fee_withheld_cacao:
+          type: string
+          example: '30000000000000'
+          description: Total CACAO the network has withheld as fees to later cover
+            gas costs for this asset's outbounds
+        fee_spent_cacao:
+          type: string
+          example: '20000000000000'
+          description: Total CACAO the network has spent to reimburse gas costs for
+            this asset's outbounds
+        surplus_cacao:
+          type: string
+          example: '10000000000000'
+          description: amount of CACAO by which the fee_withheld_cacao exceeds the
+            fee_spent_cacao
+        dynamic_multiplier_basis_points:
+          type: string
+          example: '15000'
+          description: dynamic multiplier basis points, based on the surplus_cacao,
+            affecting the size of the outbound_fee
     MsgSwap:
       type: object
       required:
@@ -2235,6 +2172,7 @@ components:
       required:
       - bond_address
       - bonded
+      - bond
       - reward
       - pools
       title: NodeBondProvider
@@ -2243,11 +2181,17 @@ components:
           type: string
         bonded:
           type: boolean
+          deprecated: true
+        bond:
+          type: string
+          description: Total amount of bond provided by the provider in cacao
+          example: '1000000000'
         reward:
           type: string
         pools:
           type: object
-          description: Pools the Bond Provider is bonded from to that Node Address
+          description: Pools and the respective units bonded by the provider to this
+            node
           additionalProperties:
             type: string
           example:
@@ -2423,7 +2367,7 @@ components:
       $ref: '#/components/schemas/Pool'
     PoolsResponse:
       type: array
-      items: *id004
+      items: *id005
     CACAOPoolResponse:
       type: object
       required:
@@ -2444,6 +2388,10 @@ components:
           - cacao_deposited
           - cacao_withdrawn
           - current_deposit
+          - total_units
+          - pool_value
+          - member_deposit
+          - real_pnl
           properties:
             units:
               type: string
@@ -2470,6 +2418,24 @@ components:
               type: string
               example: '123456'
               description: the current CACAO deposited by providers
+            total_units:
+              type: string
+              example: '123456'
+              description: total units in the CACAOPool (PoolUnits + ReserveUnits)
+            pool_value:
+              type: string
+              example: '123456'
+              description: total CACAO held by the CACAOPool module
+            member_deposit:
+              type: string
+              example: '123456'
+              description: aggregate net deposits by providers (sum of deposit_amount
+                - withdraw_amount per member)
+            real_pnl:
+              type: string
+              example: '123456'
+              description: aggregate PnL computed from individual members (sum of
+                value - deposit_amount + withdraw_amount per member)
         reserve:
           type: object
           required:
@@ -2500,17 +2466,12 @@ components:
       $ref: '#/components/schemas/CACAOProvider'
     CACAOProvidersResponse:
       type: array
-      items: *id005
+      items: *id006
     LiquidityProvidersResponse:
       type: array
-      items: *id006
+      items: *id007
     LiquidityProviderResponse:
       $ref: '#/components/schemas/LiquidityProvider'
-    SaverResponse:
-      $ref: '#/components/schemas/Saver'
-    SaversResponse:
-      type: array
-      items: *id007
     TxResponse:
       type: object
       properties:
@@ -2842,6 +2803,7 @@ components:
       - total_bond_units
       - total_reserve
       - total_asgard
+      - vaults_migrating
       - gas_spent_cacao
       - gas_withheld_cacao
       properties:
@@ -2861,6 +2823,11 @@ components:
           type: string
           example: '21999180112172346'
           description: total asgard cacao
+        vaults_migrating:
+          type: boolean
+          example: false
+          description: Returns true if there exist RetiringVaults which have not finished
+            migrating funds to new ActiveVaults
         gas_spent_cacao:
           type: string
           example: '1000000000'
@@ -2873,6 +2840,9 @@ components:
           type: string
           example: '15000'
           description: Current outbound fee multiplier, in basis points
+    OutboundFeesResponse:
+      type: array
+      items: *id002
     POLResponse:
       type: object
       required:
@@ -2907,7 +2877,7 @@ components:
       items: *id011
     LastBlockResponse:
       type: array
-      items: *id002
+      items: *id003
     ShieldedMemoConfig:
       type: object
       required:
@@ -3491,92 +3461,4 @@ components:
           description: total number of seconds a swap is expected to take (inbound
             conf + streaming swap + outbound delay)
           example: 600
-    QuoteSaverDepositResponse:
-      type: object
-      required:
-      - memo
-      - inbound_address
-      - expected_amount_deposit
-      - fees
-      - slippage_bps
-      - warning
-      - notes
-      - expiry
-      - recommended_gas_rate
-      - gas_rate_units
-      properties:
-        inbound_address: *id019
-        inbound_confirmation_blocks: *id020
-        inbound_confirmation_seconds: *id021
-        outbound_delay_blocks: *id022
-        outbound_delay_seconds: *id023
-        fees: *id024
-        router: *id025
-        expiry: *id026
-        warning: *id027
-        notes: *id028
-        dust_threshold: *id029
-        recommended_min_amount_in: *id030
-        recommended_gas_rate: *id031
-        gas_rate_units: *id032
-        memo:
-          type: string
-          description: generated memo for the deposit
-          example: +:ETH/ETH::maya17gw75axcnr8747pkanye45pnrwk7p9c3chd5xu:100
-        expected_amount_out:
-          type: string
-          description: same as expected_amount_deposit, to be deprecated in favour
-            of expected_amount_deposit
-          example: '10000'
-        expected_amount_deposit:
-          type: string
-          description: the amount of the target asset the user can expect to deposit
-            after fees
-          example: '10000'
-    QuoteSaverWithdrawResponse:
-      type: object
-      required:
-      - inbound_address
-      - expected_amount_out
-      - dust_amount
-      - memo
-      - outbound_delay_blocks
-      - outbound_delay_seconds
-      - fees
-      - slippage_bps
-      - warning
-      - notes
-      - expiry
-      - recommended_gas_rate
-      - gas_rate_units
-      properties:
-        inbound_address: *id019
-        inbound_confirmation_blocks: *id020
-        inbound_confirmation_seconds: *id021
-        outbound_delay_blocks: *id022
-        outbound_delay_seconds: *id023
-        fees: *id024
-        router: *id025
-        expiry: *id026
-        warning: *id027
-        notes: *id028
-        dust_threshold: *id029
-        recommended_min_amount_in: *id030
-        recommended_gas_rate: *id031
-        gas_rate_units: *id032
-        memo:
-          type: string
-          description: generated memo for the withdraw, the client can use this OR
-            send the dust amount
-          example: -:ETH.ETH:0x1c7b17362c84287bd1184447e6dfeaf920c31bbe:1440450000:maya17gw75axcnr8747pkanye45pnrwk7p9c3cqncsv:100
-        dust_amount:
-          type: string
-          description: the dust amount of the target asset the user should send to
-            initialize the withdraw, the client can send this OR provide the memo
-          example: '10000'
-        expected_amount_out:
-          type: string
-          description: the amount of the target asset the user can expect to withdraw
-            after fees in 1e8 decimals
-          example: '10000'
 x-readme-file: README.md
