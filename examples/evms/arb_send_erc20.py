@@ -2,8 +2,7 @@ import asyncio
 
 from examples.common import get_phrase, sep
 from xchainpy2_arbitrum import ArbitrumClient
-from xchainpy2_client import FeeOption
-from xchainpy2_ethereum import GasOptions
+from xchainpy2_client import FeeOption, Gas
 from xchainpy2_utils import NetworkType, Asset, CryptoAmount
 
 Asset_USDC_ARB = Asset.from_string("ARB.USDC-0XAF88D065E77C8CC2239327C5EDB3A432268E5831").upper()
@@ -27,15 +26,8 @@ async def main():
 
     print(f"Arbitrum 1 USDC balance: {usdc1}")
 
-    ## manual
-    # gas = GasOptions.legacy(161224000, 200000)
-    ## set from block
-    # gas_price = arb1.web3.eth.gas_price
-    # print("Gas price: ", gas_price)
-    # gas = GasOptions.legacy(gas_price, 100000)
-
     ## automatic fee
-    gas = GasOptions.auto(FeeOption.FAST)
+    gas = Gas.auto(FeeOption.FAST)
 
     amount = CryptoAmount.auto(0.01, Asset_USDC_ARB, 6)
     print(f"Transferring {amount} to {arb1.get_address()}")

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, Union, List
 
-from xchainpy2_client import XChainClient, FeeBounds, RootDerivationPaths, Fees, XcTx, TxPage
+from xchainpy2_client import XChainClient, RootDerivationPaths, IFees, XcTx, TxPage
 from xchainpy2_utils import NetworkType, Chain, AssetRUNE, CryptoAmount, Asset
 
 
@@ -15,7 +15,7 @@ class MockChainClient(XChainClient):
     def get_public_key(self):
         pass
 
-    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+    async def get_balance(self, address: str = '', **kwargs) -> List[CryptoAmount]:
         pass
 
     async def get_transactions(self, address: str = '', offset: int = 0, limit: int = 0,
@@ -26,7 +26,7 @@ class MockChainClient(XChainClient):
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
         pass
 
-    async def get_fees(self) -> Fees:
+    async def get_fees(self) -> IFees:
         pass
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
@@ -40,19 +40,19 @@ class MockChainClient(XChainClient):
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  client_urls=None,
                  chain_ids=None,
                  explorer_providers=None,
                  wallet_index=0,
                  ):
-        super().__init__(Chain.Cosmos, network, phrase, private_key, fee_bound, root_derivation_paths, wallet_index)
+        super().__init__(Chain.Cosmos, network, phrase, private_key, root_derivation_paths, wallet_index)
 
         self.explorers = explorer_providers
 
         if isinstance(client_urls, str):
             client_urls = {NetworkType.MAINNET: client_urls}
+        self.client_urls = client_urls
 
         self._gas_asset = AssetRUNE
         self._prefix = 'mock'

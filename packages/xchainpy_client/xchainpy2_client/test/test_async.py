@@ -4,7 +4,7 @@ from typing import Optional, List
 
 import pytest
 
-from xchainpy2_client import XChainClient, Fees, XcTx, TxPage
+from xchainpy2_client import XChainClient, IFees, XcTx, TxPage
 from xchainpy2_utils import CryptoAmount, Asset, Chain
 
 
@@ -18,7 +18,7 @@ class MyClient(XChainClient):
     def get_public_key(self):
         pass
 
-    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+    async def get_balance(self, address: str = '', **kwargs) -> List[CryptoAmount]:
         pass
 
     async def get_transactions(self, address: str = '', offset: int = 0, limit: int = 0,
@@ -29,7 +29,7 @@ class MyClient(XChainClient):
     async def get_transaction_data(self, tx_id: str) -> Optional[XcTx]:
         pass
 
-    async def get_fees(self) -> Fees:
+    async def get_fees(self) -> IFees:
         pass
 
     async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,

@@ -548,59 +548,76 @@ class CryptoAmount(NamedTuple):
             asset = self.asset
         return CryptoAmount(self.amount // divisor, asset)
 
-    def __eq__(self, other: 'CryptoAmount'):
+    def _normalize_other_amount(self, other) -> Amount:
         """
-        Check if two CryptoAmount instances are equal.
+        Normalize the `other` operand to an `Amount` for comparison.
+        Raises if the asset does not match when `other` is a CryptoAmount.
+        """
+        if isinstance(other, CryptoAmount):
+            self._guard_asset(other)
+            return other.amount
+        elif isinstance(other, Amount):
+            return other
+        else:
+            return Amount.auto(other, decimals=self.amount.decimals)
+
+    def __eq__(self, other: CryptoAmountLike):
+        """
+        Check if CryptoAmount and another CryptoAmount or any other amount-like are equal.
         Two CryptoAmounts are considered equal if they have the same asset and the same amount.
 
-        :param other: another CryptoAmount instance
+        :param other: CryptoAmount instance or Amount-like (Amount, int, float, Decimal, str)
         :return: bool
         """
-        return self.asset == other.asset and self.amount == other.amount
+        return self.amount == self._normalize_other_amount(other)
 
-    def __lt__(self, other: 'CryptoAmount'):
+    def __ne__(self, other: CryptoAmountLike):
+        """
+        Check if this CryptoAmount is not equal to another CryptoAmount or any other amount-like.
+        :param other: CryptoAmount instance or Amount-like (Amount, int, float, Decimal, str)
+        :return: bool
+        """
+        return not self.__eq__(other)
+
+    def __lt__(self, other: CryptoAmountLike):
         """
         Check if this CryptoAmount is less than another CryptoAmount.
         You can only compare CryptoAmounts with the same asset.
 
-        :param other: Another CryptoAmount instance
+        :param other: CryptoAmount instance or Amount-like (Amount, int, float, Decimal, str)
         :return: bool
         """
-        self._guard_asset(other)
-        return self.amount < other.amount
+        return self.amount < self._normalize_other_amount(other)
 
-    def __le__(self, other: 'CryptoAmount'):
+    def __le__(self, other: CryptoAmountLike):
         """
         Check if this CryptoAmount is less than or equal to another CryptoAmount.
         You can only compare CryptoAmounts with the same asset.
 
-        :param other: Another CryptoAmount instance
+        :param other: CryptoAmount instance or Amount-like (Amount, int, float, Decimal, str)
         :return: bool
         """
-        self._guard_asset(other)
-        return self.amount <= other.amount
+        return self.amount <= self._normalize_other_amount(other)
 
-    def __gt__(self, other: 'CryptoAmount'):
+    def __gt__(self, other: CryptoAmountLike):
         """
         Check if this CryptoAmount is greater than another CryptoAmount.
         You can only compare CryptoAmounts with the same asset.
 
-        :param other: Another CryptoAmount instance
+        :param other: CryptoAmount instance or Amount-like (Amount, int, float, Decimal, str)
         :return: bool
         """
-        self._guard_asset(other)
-        return self.amount > other.amount
+        return self.amount > self._normalize_other_amount(other)
 
-    def __ge__(self, other: 'CryptoAmount'):
+    def __ge__(self, other: CryptoAmountLike):
         """
         Check if this CryptoAmount is greater than or equal to another CryptoAmount.
         You can only compare CryptoAmounts with the same asset.
 
-        :param other: Another CryptoAmount instance
+        :param other: CryptoAmount instance or Amount-like (Amount, int, float, Decimal, str)
         :return: bool
         """
-        self._guard_asset(other)
-        return self.amount >= other.amount
+        return self.amount >= self._normalize_other_amount(other)
 
     def __str__(self):
         """

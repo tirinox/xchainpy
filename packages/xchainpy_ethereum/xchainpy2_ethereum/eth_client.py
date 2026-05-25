@@ -1,5 +1,6 @@
 import logging
 import os
+from copy import deepcopy
 from datetime import datetime
 from typing import Optional, List, Union
 
@@ -11,16 +12,16 @@ from web3.exceptions import TransactionNotFound
 from web3.providers import BaseProvider
 from web3.types import TxParams
 
-from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, Fees, XcTx, TxPage, FeeRate, TxType, \
-    TokenTransfer, FeeOption
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset, Amount
+from xchainpy2_client import XChainClient, RootDerivationPaths, XcTx, TxPage, TxType, \
+    TokenTransfer, FeeOption, Gas
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, AssetETH, Asset
 from .const import ETH_ROOT_DERIVATION_PATHS, ETH_DECIMALS, DEFAULT_ETH_EXPLORER_PROVIDERS, \
     FREE_ETH_PROVIDERS, GAS_LIMITS, ETH_CHAIN_ID, ETH_TOKEN_LIST
 from .decode_logs import Web3LogDecoder
 from .extra.base import EVMDataProvider
 from .extra.etherscan import EtherscanDataProvider
 from .extra.moralis_provider import MoralisDataProvider
-from .gas import GasOptions, GasEstimator
+from .gas import EVMGasPriceEstimator, EVMFees, EVMGas
 from .token_info import TokenInfoList, TokenInfo
 from .utils import is_valid_eth_address, select_random_free_provider, validated_checksum_address
 
@@ -39,31 +40,30 @@ class EthereumClient(XChainClient):
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  explorer_providers=None,
                  wallet_index=0,
-                 provider: Optional[BaseProvider] = None,
+                 provider: Union[str, Optional[BaseProvider]] = None,
                  extra_data_provider: Optional[EVMDataProvider] = None,
                  **kwargs
                  ):
         """
-        Initialize Ethereum client
+        Initialize Ethereum client.
+
         :param network: Network type. Default is `NetworkType.MAINNET`
         :param phrase: Mnemonic phrase (if you want to use a mnemonic phrase)
         :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
-        :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param explorer_providers: Dictionary of explorer providers for each network type.
         :param wallet_index: int (default 0)
-        :param provider: EVM Web3 RPC provider. Default is `None` (will use a random free provider)
+        :param provider: EVM Web3 RPC provider or its URL. Default is `None` (will use a random free provider)
         :param extra_data_provider: EVMDataProvider object for fetching extra data from the blockchain
             (owned ERC20 balance, TXs history, etc.)
         """
         root_derivation_paths = root_derivation_paths.copy() \
             if root_derivation_paths else ETH_ROOT_DERIVATION_PATHS.copy()
 
-        super().__init__(self._CHAIN, network, phrase, private_key, fee_bound, root_derivation_paths, wallet_index)
+        super().__init__(self._CHAIN, network, phrase, private_key, root_derivation_paths, wallet_index)
 
         self.explorers = explorer_providers or self._EXPLORERS
         self._gas_asset = self._GAS_ASSET
@@ -91,6 +91,12 @@ class EthereumClient(XChainClient):
         Otherwise, it will use the default gas limit for the transaction.
         """
 
+        self.gas_transfer_margin = 0.05
+        """
+        Gas transfer margin is a percentage of the gas limit that is added to the gas limit to prevent
+        gas underestimation.
+        """
+
     def _init_extra_data_provider(self, extra_data_provider):
         if extra_data_provider:
             self._ex_provider = extra_data_provider
@@ -102,20 +108,35 @@ class EthereumClient(XChainClient):
             self._ex_provider = None
 
     @property
-    def get_chain_id(self):
+    def chain_id(self) -> int:
+        """
+        Get the chain ID for the current network. 1 for Ethereum mainnet and so on.
+
+        :return: int chain ID
+        """
         return self._chain_ids[self.network]
 
     @property
     def provider(self):
+        """
+        Get the current Web3 provider.
+
+        :return: BaseProvider
+        """
         return self.web3.provider
 
     @provider.setter
     def provider(self, provider: BaseProvider):
         self._remake_provider(provider)
 
-    def _remake_provider(self, provider: BaseProvider):
+    def _remake_provider(self, provider: Union[BaseProvider, str]):
         if not provider:
             provider = self._get_default_provider()
+
+        if isinstance(provider, str):
+            # If provider is a string, it is assumed to be a URL
+            provider = Web3.HTTPProvider(provider)
+
         # todo: support multiple providers and round robin algorithm
         self.web3 = Web3(provider)
         self._log_decoder = Web3LogDecoder(self.web3, self.gas_asset)
@@ -128,6 +149,7 @@ class EthereumClient(XChainClient):
     def validate_address(self, address: str) -> bool:
         """
         Validates an Ethereum address.
+
         :param address: Address string
         :return: True if valid, False otherwise.
         """
@@ -137,6 +159,7 @@ class EthereumClient(XChainClient):
         """
         Get the address for the given wallet index.
         The address returned is check-summed.
+
         :return: string address
         """
         account = self.get_account()
@@ -148,6 +171,7 @@ class EthereumClient(XChainClient):
     async def get_balance(self, address: str = '', with_erc20=False) -> List[CryptoAmount]:
         """
         Get the balance of a given address.
+
         :param address: By default, it will return the balance of the current wallet. (optional)
         :param with_erc20: If True, it will return the balance of all ERC20 tokens as well. (optional). Experimental!
         :return:
@@ -167,6 +191,7 @@ class EthereumClient(XChainClient):
     def get_erc20_as_contract(self, contract_address: Union[str, Asset, Contract]):
         """
         Get the ERC20 contract object for a given contract address.
+
         :param contract_address: Contract address, or Asset object, or Contract object
         :return: Contract object
         """
@@ -185,6 +210,7 @@ class EthereumClient(XChainClient):
         """
         Returns zero balance and token symbol for a given contract address.
         The balance is zero because we are only interested in the token symbol and decimals.
+
         :param contract: Contract object or contract address or Asset object
         """
         if isinstance(contract, Asset):
@@ -196,6 +222,7 @@ class EthereumClient(XChainClient):
                                   spender: str, address: str = '') -> CryptoAmount:
         """
         Get the allowance of a given address.
+
         :param contract_address: ERC20 Contract address. Can be an Asset object or a string.
         :param spender: Spender address
         :param address: By default, it will return the allowance of the current wallet. (optional)
@@ -226,6 +253,7 @@ class EthereumClient(XChainClient):
         """
         Get transactions of a given address.
         Works only if you have provided an extra data provider. Etherscan Pro and Moralis are supported.
+
         :param address: Address of wallet to inspect its history
         :param offset: (not supported)
         :param limit: Maximum number of transactions to return
@@ -240,7 +268,8 @@ class EthereumClient(XChainClient):
 
     async def get_transaction_data(self, tx_id: str, with_timestamp=False) -> Optional[XcTx]:
         """
-        Get transaction details by transaction ID (hash)
+        Get transaction details by transaction ID (hash).
+
         :param tx_id: Transaction ID (hash)
         :param with_timestamp: If True, it will return the timestamp of the block. Extra API call!
         :return: Optional[XcTx]
@@ -287,57 +316,112 @@ class EthereumClient(XChainClient):
             type=TxType.TRANSFER,
         )
 
-    async def get_fees(self, fee_multiplier=1.0) -> Fees:
-        """
-        Get EVM gas rates for the current network.
-        Fees are estimated based on the last 20 blocks.
-        All FeeRate are in Gwei!
-
-        :param fee_multiplier: Fee multiplier. Default is 1.0
-        :return: Fees object
-        """
-        estimator = GasEstimator(self.web3, self.fee_estimation_percentiles,
-                                 self.fee_estimation_block_history,
-                                 base_fee_multiplier=fee_multiplier)
-        return await estimator.estimate()
-
-    async def get_last_fee(self) -> FeeRate:
-        """
-        Get the last Ethereum fee
-        FeeRate is in Gwei
-        """
-        # noinspection PyProtectedMember
-        fee = await self.call_service(self.web3.eth._gas_price)
-        return Web3.from_wei(fee, 'gwei')
-
-    async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
-                       gas: Optional[GasOptions] = None, **kwargs) -> str:
+    async def transfer(self,
+                       what: CryptoAmount,
+                       recipient: str,
+                       memo: Optional[str] = None,
+                       gas: Optional[Gas] = None, **kwargs) -> str:
         """
         Transfer Ethereum or ERC20 token. Do not use it for swap or something like this.
         Use AMM's `deposit` method instead.
+
         :param what: Amount to transfer
         :param recipient: Recipient address or contract address to call
         :param memo: Memo (optional, not supported for ERC20 token transfer)
-        :param gas: Gas options. Default is `GasOptions.auto(FeeOption.FAST)`
+        :param gas: Gas object is optional. If not provided, it will use `Gas.auto(FeeOption.FAST)`.
 
         :return: Transaction hash
         """
-        if not gas:
-            gas = GasOptions.auto(FeeOption.FAST)
-
-        if what.asset.upper() == self.gas_asset.upper():
+        if self.is_gas_asset(what.asset):
             # transfer ETH
             return await self._transfer_eth(what, recipient, gas, memo)
         else:
             # transfer ERC20 token
             return await self._transfer_erc20_token(what, recipient, gas, memo)
 
-    def _prepare_tx_params(self, to: str, value: int, nonce: int, gas: GasOptions, data: Optional[str] = None):
+    async def _transfer_eth(self, what: CryptoAmount, recipient: str, gas: Gas,
+                            memo: Optional[str] = None) -> str:
+        nonce = await self.get_nonce()
+
+        gas = await self._deduct_gas_price(gas)
+
+        # noinspection PyTypeChecker
+        tx_params = self._prepare_tx_params(recipient, what.amount.internal_amount, nonce, gas.settings, memo)
+        tx_params = await self._calc_gas_limit(tx_params, gas.gas_limit)
+        tx = TxParams(**tx_params)
+        acc = self.get_account()
+        signed_tx = acc.sign_transaction(tx)
+        tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
+        tx_hash = self._normalize_tx_id(tx_hash)
+        return tx_hash
+
+    async def _transfer_erc20_token(self, what: CryptoAmount, recipient: str, gas: Gas,
+                                    memo: Optional[str] = None) -> str:
+        if not what.asset.contract:
+            raise ValueError("Contract address is required for ERC20 token transfer")
+
+        if memo:
+            raise ValueError("Memo is not supported for ERC20 token transfer")
+
+        if not gas.settings or not isinstance(gas.settings, EVMGas):
+            raise ValueError("EVMGas is not set in Gas.settings.")
+
+        gas = await self._deduct_gas_price(gas)
+
+        # If gas limit is not set, use the default gas limit for token transfer.
+        if not gas.gas_limit:
+            new_gas_limit = self._get_gas_limit().transfer_token_gas_limit
+            evm_gas: EVMGas = gas.settings
+            evm_gas.gas_limit = new_gas_limit
+
+        contract_address = self.validated_checksum_address(what.asset.contract)
+        contract = self.get_erc20_as_contract(contract_address)
+
+        call = contract.functions.transfer(recipient, what.amount.internal_amount)
+        return await self.make_contract_call(call, 0, gas)
+
+    async def make_contract_call(self, method_pointer, value, gas: Gas, nonce: Optional[int] = None) -> str:
+        """
+        Make a contract call.
+
+        :param method_pointer: Contract method pointer
+        :param value: Value to send
+        :param gas: Gas options
+        :param nonce: Nonce (optional) if not provided, it will fetch the nonce from the blockchain
+        :return: Transaction hash
+        """
+        gas = await self._deduct_gas_price(gas)
+
+        # fixme: bsc nonce may be mistakenly high
+        nonce = nonce if nonce is not None else await self.get_nonce()
+
+        # noinspection PyTypeChecker
+        tx_params = self._prepare_tx_params('', value, nonce, gas.settings)
+
+        tx_with_data = method_pointer.build_transaction(tx_params)
+        tx_with_data = await self._calc_gas_limit(tx_with_data, gas.gas_limit)
+        signed_tx = self.get_account().sign_transaction(tx_with_data)
+        tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
+        # convert bytes to hex
+        tx_hash = self._normalize_tx_id(tx_hash)
+        return tx_hash
+
+    def _prepare_tx_params(self, to: str, value: int, nonce: int, gas: EVMGas, data: Optional[str] = None):
+        """
+        Builds transaction parameters as dict for the transaction.
+
+        :param to: address to send the transaction to
+        :param value: Amount of ETH to send in wei
+        :param nonce: Nonce of the transaction. It is the number of transactions sent from the address.
+        :param gas: EVMGas object containing gas settings.
+        :param data: Optional data to include in the transaction (e.g., for contract calls).
+        :return: dict
+        """
         params = {
             'value': value,
             'nonce': nonce,
             'from': self.get_address(),
-            'chainId': self.get_chain_id,
+            'chainId': self.chain_id,
         }
         if data:
             params['data'] = data.encode('utf-8')
@@ -347,6 +431,8 @@ class EthereumClient(XChainClient):
 
         # Gas limit for the transaction
         params['gas'] = gas.gas_limit
+
+        # set EIP-1559 gas parameters if available or legacy gas price
         if gas.max_fee_per_gas and gas.max_priority_fee_per_gas is not None:
             # Maximum amount you’re willing to pay
             params['maxFeePerGas'] = gas.max_fee_per_gas
@@ -357,104 +443,11 @@ class EthereumClient(XChainClient):
 
         return params
 
-    def _get_gas_limit(self):
-        return self.gas_limits[self.network]
-
-    # noinspection PyTypeChecker
-    async def _deduct_gas_price(self, fee_option: FeeOption, gas_limit=23000) -> GasOptions:
-        """
-        Deduct gas amount from hi-level fee options
-        """
-        fees = await self.get_fees()
-
-        # Select the fee option
-        max_fee = fees.fees[fee_option]
-        if isinstance(max_fee, Amount):
-            max_fee = float(max_fee)
-
-        # noinspection PyProtectedMember
-        max_priority_fee = fees.fees[FeeOption._ETH_PRIORITY_FEE]
-        if isinstance(max_priority_fee, Amount):
-            max_priority_fee = float(max_priority_fee)
-
-        return GasOptions.eip1559_in_gwei(max_fee, max_priority_fee, gas_limit)
-
-    async def _transfer_eth(self, what: CryptoAmount, recipient: str, gas: GasOptions,
-                            memo: Optional[str] = None) -> str:
-        nonce = await self.get_nonce()
-
-        if gas.is_auto:
-            gas = await self._deduct_gas_price(gas.fee_option, gas.gas_limit)
-
-        tx_params = self._prepare_tx_params(recipient, what.amount.internal_amount, nonce, gas, memo)
-        tx_params = await self._calc_gas_limit(tx_params, gas.gas_limit)
-        tx = TxParams(**tx_params)
-        acc = self.get_account()
-        signed_tx = acc.sign_transaction(tx)
-        tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
-        tx_hash = self._normalize_tx_id(tx_hash)
-        return tx_hash
-
-    async def _transfer_erc20_token(self, what: CryptoAmount, recipient: str, gas: GasOptions,
-                                    memo: Optional[str] = None) -> str:
-        if not what.asset.contract:
-            raise ValueError("Contract address is required for ERC20 token transfer")
-
-        if memo:
-            raise ValueError("Memo is not supported for ERC20 token transfer")
-
-        gas = gas.updates_gas_limit(self._get_gas_limit().transfer_token_gas_limit)
-        if gas.is_auto:
-            gas = await self._deduct_gas_price(gas.fee_option, gas.gas_limit)
-
-        contract_address = self.validated_checksum_address(what.asset.contract)
-        contract = self.get_erc20_as_contract(contract_address)
-
-        call = contract.functions.transfer(recipient, what.amount.internal_amount)
-        gas_limit = self._get_gas_limit().transfer_token_gas_limit
-        return await self.make_contract_call(call, 0, gas, gas_limit=gas_limit)
-
-    async def make_contract_call(self, method_pointer, value, gas: GasOptions, gas_limit=-1, nonce=-1) -> str:
-        """
-        Make a contract call
-        :param method_pointer: Contract method pointer
-        :param value: Value to send
-        :param gas: Gas options
-        :param gas_limit: Gas limit
-        :param nonce: Nonce (optional) if not provided, it will fetch the nonce from the blockchain
-        :return: Transaction hash
-        """
-        if gas.is_auto:
-            gas = await self._deduct_gas_price(gas.fee_option, gas.gas_limit)
-
-        if nonce < 0:
-            nonce = await self.get_nonce()  # todo: bsc nonce is mistakenly high
-
-        tx_params = self._prepare_tx_params('', value, nonce, gas)
-
-        tx_with_data = method_pointer.build_transaction(tx_params)
-        tx_with_data = await self._calc_gas_limit(tx_with_data, gas_limit)
-        signed_tx = self.get_account().sign_transaction(tx_with_data)
-        tx_hash = await self.broadcast_tx(signed_tx.rawTransaction.hex())
-        # convert bytes to hex
-        tx_hash = self._normalize_tx_id(tx_hash)
-        return tx_hash
-
-    async def _calc_gas_limit(self, tx_with_data, gas_limit=-1):
-        if self.gas_limit_estimation:
-            tx_with_data['gas'] = 0
-            gas = await self.call_service(self.web3.eth.estimate_gas, tx_with_data)
-        else:
-            gas_limit_transfer = self._get_gas_limit().transfer_token_gas_limit
-            gas = gas_limit if gas_limit and gas_limit > 0 else gas_limit_transfer
-
-        tx_with_data['gas'] = gas
-        return tx_with_data
-
     async def get_block_timestamp(self, block_number: int) -> int:
         """
-        Get the timestamp of a given block number
-        :param block_number: Block number
+        Get the timestamp of a given block number.
+
+        :param block_number: int
         :return: Timestamp
         """
         block = await self.call_service(self.web3.eth.get_block, block_number)
@@ -488,13 +481,13 @@ class EthereumClient(XChainClient):
 
         return await self._convert_tx_data(receipt, tx_data, timestamp)
 
-    async def approve_erc20_token(self, spender: str, amount: CryptoAmount,
-                                  gas: GasOptions) -> str:
+    async def approve_erc20_token(self, spender: str, amount: CryptoAmount, gas: Gas) -> str:
         """
-        Approve ERC20 token for a spender
+        Approve ERC20 token for a spender.
+
         :param spender: Spender address
         :param amount: Amount to approve
-        :param gas: Gas options. Default is `GasOptions.auto(FeeOption.FAST)`
+        :param gas: Gas options. Default is Gas.auto(FeeOption.FAST)
         :return: Transaction hash
         """
         spender = self.validated_checksum_address(spender)
@@ -504,15 +497,18 @@ class EthereumClient(XChainClient):
 
         call = contract.functions.approve(spender, raw_amount)
 
-        gas_limit = self._get_gas_limit().approve_gas_limit
-        return await self.make_contract_call(call, 0, gas, gas_limit=gas_limit)
+        if not gas.gas_limit:
+            gas.settings.gas_limit = self._get_gas_limit().approve_gas_limit
 
-    async def revoke_erc20_token_allowance(self, spender: str, token: Union[str, Asset], gas: GasOptions) -> str:
+        return await self.make_contract_call(call, 0, gas)
+
+    async def revoke_erc20_token_allowance(self, spender: str, token: Union[str, Asset], gas: Gas) -> str:
         """
-        Revoke ERC20 token allowance for a spender
+        Revoke ERC20 token allowance for a spender.
+
         :param spender: Spender address
         :param token: Token symbol or Asset object
-        :param gas: Gas options. Default is `GasOptions.auto(FeeOption.FAST)`
+        :param gas: Gas options. Default is `Gas.auto(FeeOption.FAST)`
         """
         if isinstance(token, str):
             asset = self.erc20_asset_from_contract(token, "dummy")
@@ -522,7 +518,8 @@ class EthereumClient(XChainClient):
 
     def erc20_asset_from_contract(self, contract: Union[Contract, str], symbol: str):
         """
-        Create an Asset object from a contract address
+        Create an Asset object from a contract address.
+
         :param contract: Contract address or Contract object
         :param symbol: Symbol of the token
         :return: Asset object
@@ -534,6 +531,7 @@ class EthereumClient(XChainClient):
     async def broadcast_tx(self, tx_hex: str) -> str:
         """
         Broadcast a signed transaction to the network.
+
         :param tx_hex: Signed transaction in hex format
         :return: Transaction ID that is broadcast to the network
         """
@@ -543,6 +541,7 @@ class EthereumClient(XChainClient):
         """
         Get the nonce for a given address. Otherwise, it will return the nonce of the current wallet.
         Nonce is the number of transactions sent from an address.
+
         :param address: Address of a wallet (optional)
         :type address: str
         :return: Nonce
@@ -554,6 +553,13 @@ class EthereumClient(XChainClient):
 
     @staticmethod
     def _normalize_tx_id(tx_id: Union[str, HexBytes, bytes]) -> str:
+        """
+        Normalize transaction ID to a hex string with '0x' prefix.
+        This method ensures that the transaction ID is in the correct format for Ethereum transactions.
+
+        :param tx_id: Transaction ID (can be str, HexBytes, or bytes)
+        :return: str Normalized transaction ID
+        """
         if isinstance(tx_id, HexBytes):
             tx_id = tx_id.hex()
         elif isinstance(tx_id, bytes):
@@ -576,8 +582,9 @@ class EthereumClient(XChainClient):
     def validated_checksum_address(self, address: str) -> str:
         """
         Validate and checksum an Ethereum address if it's not checksummed.
-        :param address:
-        :return:
+
+        :param address: str Address to validate
+        :return: bool True if valid, False otherwise.
         """
         return validated_checksum_address(self.web3, address)
 
@@ -589,3 +596,86 @@ class EthereumClient(XChainClient):
         w3.middleware_onion.add(middleware.time_based_cache_middleware)
         w3.middleware_onion.add(middleware.latest_block_based_cache_middleware)
         w3.middleware_onion.add(middleware.simple_cache_middleware)
+
+    # ------- FEES AND GAS ESTIMATION METHODS -------
+
+    async def get_fees(self, fee_multiplier=1.0) -> EVMFees:
+        """
+        Get EVM gas rates for the current network.
+        Fees are estimated based on the last 20 blocks.
+        All FeeRate are in Gwei!
+
+        :param fee_multiplier: Fee multiplier. Default is 1.0
+        :return: Fees object
+        """
+        estimator = EVMGasPriceEstimator(self.web3, self.chain, self.gas_asset,
+                                         self.fee_estimation_percentiles,
+                                         self.fee_estimation_block_history,
+                                         base_fee_multiplier=fee_multiplier)
+        return await estimator.estimate()
+
+    async def get_last_fee(self) -> CryptoAmount:
+        """
+        Get the last Ethereum fee from Web3 provider.
+
+        :return: CryptoAmount
+        """
+        # noinspection PyProtectedMember
+        fee = await self.call_service(self.web3.eth._gas_price)
+        return self.gas_base_amount(fee)
+
+    async def estimate_gas_of_transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
+                                       gas: Optional[Gas] = None, nonce: Optional[int] = None) -> CryptoAmount:
+        """
+        Estimate gas for a transfer transaction.
+
+        :param what: Amount to transfer
+        :param recipient: Recipient address or contract address to call
+        :param memo: Optional memo (not supported for ERC20 token transfer)
+        :param gas: Optional Gas object. If not provided, it will use `Gas.auto(FeeOption.FAST)`.
+        :param nonce: Optional nonce. If not provided, it will fetch the nonce from the blockchain.
+        :return:
+        """
+        if not self.is_gas_asset(what.asset):
+            raise ValueError("This method is only for ETH transfer, not for ERC20 token transfer.")
+
+        nonce = nonce if nonce is not None else await self.get_nonce()
+        gas = await self._deduct_gas_price(gas)
+        # noinspection PyTypeChecker
+        tx_params = self._prepare_tx_params(recipient, what.amount.internal_amount, nonce, gas.settings, memo)
+        gas_spend = await self.estimate_gas_limit(tx_params)
+        gas_with_margin = int(gas_spend * (1 + self.gas_transfer_margin))
+        return self.gas_base_amount(gas_with_margin)
+
+    def _get_gas_limit(self):
+        return self.gas_limits[self.network]
+
+    # noinspection PyTypeChecker
+    async def _deduct_gas_price(self, gas: Gas) -> Gas:
+        """
+        Deduct gas amount from hi-level fee options.
+        """
+        if not gas:
+            gas = Gas.auto(FeeOption.FAST)
+
+        if gas.is_automatic:
+            fees = await self.get_fees()
+            return Gas.explicit(fees.select(gas.fee_option))
+        else:
+            if not gas.has_valid_explicit_settings:
+                raise ValueError("Gas settings are not set!")
+            return gas
+
+    async def estimate_gas_limit(self, tx_with_data: dict) -> int:
+        tx_with_data = deepcopy(tx_with_data)
+        tx_with_data['gas'] = 0
+        return await self.call_service(self.web3.eth.estimate_gas, tx_with_data)
+
+    async def _calc_gas_limit(self, tx_with_data, gas_limit=-1):
+        if self.gas_limit_estimation:
+            gas = await self.estimate_gas_limit(tx_with_data)
+        else:
+            gas_limit_transfer = self._get_gas_limit().transfer_token_gas_limit
+            gas = gas_limit if gas_limit and gas_limit > 0 else gas_limit_transfer
+        tx_with_data['gas'] = gas
+        return tx_with_data

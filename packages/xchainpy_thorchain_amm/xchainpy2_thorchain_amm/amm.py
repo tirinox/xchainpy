@@ -2,9 +2,8 @@ import datetime
 from contextlib import suppress
 from typing import Union, Optional
 
-from xchainpy2_client import FeeOption
-# todo fix this! move gas options to Client or Utils
-from xchainpy2_ethereum import EthereumClient, GasOptions
+from xchainpy2_client import FeeOption, Gas
+from xchainpy2_ethereum import EthereumClient
 from xchainpy2_thorchain import THORChainClient
 from xchainpy2_thorchain_query import THORChainQuery, TransactionTracker, WithdrawMode, THORMemo
 from xchainpy2_thornode import Amount
@@ -21,8 +20,7 @@ class THORChainAMM:
     def __init__(self, wallet: Wallet, query: Optional[THORChainQuery] = None,
                  dry_run: bool = False,
                  check_balance: bool = True,
-                 check_allowance: bool = True,
-                 fee_option: FeeOption = FeeOption.FAST):
+                 check_allowance: bool = True):
         """
         THORChain Automated Market Maker (AMM) interface.
         The AMM interface provides a set of functions to interact with the THORChain protocol.
@@ -32,7 +30,6 @@ class THORChainAMM:
         :param dry_run: If True, the transaction will not be submitted to the network, default is False
         :param check_balance: This flag is used to check the balance before submitting a transaction, default is True
         :param check_allowance: This flag is used to check the allowance before submitting a ERC20 transaction, default is True
-        :param fee_option: Default fee option to use for transactions, default is FeeOption.FAST
         """
 
         self.query = query or wallet.query_api or THORChainQuery(wallet.cache)
@@ -40,7 +37,6 @@ class THORChainAMM:
         self.dry_run = dry_run
         self.check_balance = check_balance
         self.check_allowance = check_allowance
-        self.fee_option = fee_option
         self.swap_tracker_url = THOR_SWAP_TRACKER_URL
         self.evm_expiration_sec = DEFAULT_EXPIRY
 
@@ -72,9 +68,10 @@ class THORChainAMM:
                    affiliate_address: str = '',
                    streaming_interval=0,
                    streaming_quantity=0,
-                   gas_options: Optional[GasOptions] = None,
+                   gas_options: Optional[Gas] = None,
                    allowance_check=True) -> str:
         # todo: add an ability to override swap limit
+        # todo: allowance check
         """
         Do a swap using the THORChain protocol AMM.
         In case of EVM ERC20-like tokens, it will approve the token and then do the swap.
@@ -134,7 +131,7 @@ class THORChainAMM:
     # ---------------------------- LIQUIDITY ----------------------------
 
     async def donate(self, amount: CryptoAmount, pool: Union[Asset, str] = '',
-                     gas_options: Optional[GasOptions] = None) -> str:
+                     gas_options: Optional[Gas] = None) -> str:
         """
         Donate some crypto to the pool. You can donate Rune or non-Rune assets.
         Caution! After donating, you will not be able to withdraw the donation! This is irreversible.
@@ -171,7 +168,7 @@ class THORChainAMM:
                                       paired_address: str,
                                       affiliate_address: str = '',
                                       affiliate_bps: int = 0,
-                                      gas_options: Optional[GasOptions] = None) -> str:
+                                      gas_options: Optional[Gas] = None) -> str:
         """
         Add liquidity to a pool on the Rune side.
         Attention: you must also add liquidity to the paired asset side (add_liquidity_asset_side)
@@ -206,7 +203,7 @@ class THORChainAMM:
                                        paired_rune_address: str,
                                        affiliate_address: str = '',
                                        affiliate_bps: int = 0,
-                                       gas_options: Optional[GasOptions] = None) -> str:
+                                       gas_options: Optional[Gas] = None) -> str:
         """
         Add liquidity to a pool on the asset side.
         Attention: you must also add liquidity to the Rune side (add_liquidity_rune_side); if you don't,
@@ -237,7 +234,7 @@ class THORChainAMM:
                                       pool: Union[Asset, str],
                                       affiliate_address: str = '',
                                       affiliate_bps: int = 0,
-                                      gas_options: Optional[GasOptions] = None) -> str:
+                                      gas_options: Optional[Gas] = None) -> str:
         """
         Add liquidity to a pool on the Rune side only.
 
@@ -258,7 +255,7 @@ class THORChainAMM:
                                        amount: CryptoAmount,
                                        affiliate_address: str = '',
                                        affiliate_bps: int = 0,
-                                       gas_options: Optional[GasOptions] = None) -> str:
+                                       gas_options: Optional[Gas] = None) -> str:
         """
         Add liquidity to a pool on the asset side only.
 
@@ -278,7 +275,7 @@ class THORChainAMM:
                                       rune_amount: CryptoAmount,
                                       affiliate_address: str = '',
                                       affiliate_bps: int = 0,
-                                      gas_options: Optional[GasOptions] = None) -> (str, str):
+                                      gas_options: Optional[Gas] = None) -> (str, str):
         """
         Add liquidity to a pool on both sides (Rune and asset) at the same time.
         This is 2-step operation: first, Rune side, then asset side.
@@ -314,7 +311,7 @@ class THORChainAMM:
     async def withdraw_liquidity(self,
                                  asset: Union[Asset, str],
                                  mode: WithdrawMode, withdraw_bps: int = THOR_BASIS_POINT_MAX,
-                                 gas_options: Optional[GasOptions] = None) -> str:
+                                 gas_options: Optional[Gas] = None) -> str:
         """
         Withdraw liquidity from a pool
 
@@ -353,7 +350,7 @@ class THORChainAMM:
 
     async def deposit_to_trade_account(self, what: CryptoAmount,
                                        target_thor_address: str = None,
-                                       gas_options: Optional[GasOptions] = None) -> str:
+                                       gas_options: Optional[Gas] = None) -> str:
         """
         Deposit assets to the trade account.
         Trade Accounts provide professional traders (mostly arbitrage bots) a method to execute instant trades on
@@ -386,7 +383,7 @@ class THORChainAMM:
 
     async def withdraw_from_trade_account(self, what: CryptoAmount,
                                           target_l1_address: str = None,
-                                          gas_options: Optional[GasOptions] = None) -> str:
+                                          gas_options: Optional[Gas] = None) -> str:
         """
         Withdraw assets from the trade account.
         See: https://dev.thorchain.org/concepts/trade-accounts.html
@@ -458,7 +455,7 @@ class THORChainAMM:
                               input_amount: CryptoAmount,
                               to_address: str,
                               memo: Union[str, THORMemo],
-                              gas_options: Optional[GasOptions] = None) -> str:
+                              gas_options: Optional[Gas] = None) -> str:
         """
         General deposit function to deposit assets to a specific inbound address with a memo.
         In case of Rune, it will invoke a MsgDeposit in the THORChain.
@@ -481,6 +478,9 @@ class THORChainAMM:
             if not to_address:
                 # determine the inbound address if not provided
                 to_address = await self._get_inbound_address(input_amount.asset)
+
+        if not gas_options:
+            gas_options = Gas.auto(FeeOption.FAST)
 
         if is_thor:
             # this is synth or trade asset, so we manage it with THORChain client
@@ -505,23 +505,19 @@ class THORChainAMM:
         elif chain.is_evm:
             return await self._deposit_evm(input_amount, memo, gas_options)
         else:
-            if chain.is_utxo:
-                fees = await client.get_fees()
-                fee_rate = int(fees.fees[self.fee_option])
-            else:
-                fee_rate = None
-
             if self.dry_run:
                 chain_tag = 'UTXO' if chain.is_utxo else 'Other'
                 return (f'Dry-run: transfer (chain: {chain_tag}) '
-                        f'{input_amount} to {to_address!r} with memo {memo!r};'
-                        f'fee_rate: {fee_rate}')
+                        f'{input_amount} to {to_address!r} with memo {memo!r}')
 
-            return await client.transfer(input_amount, to_address,
-                                         memo=memo, fee_rate=fee_rate,
-                                         check_balance=self.check_balance)
+            return await client.transfer(
+                input_amount, to_address,
+                memo=memo,
+                check_balance=self.check_balance,
+                gas=gas_options
+            )
 
-    async def _deposit_evm(self, input_amount: CryptoAmount, memo: str, gas_options: Optional[GasOptions] = None):
+    async def _deposit_evm(self, input_amount: CryptoAmount, memo: str, gas_options: Gas):
         if self.dry_run:
             return f'Dry-run: EVM deposit {input_amount} with memo {memo!r}; expiration: {self.evm_expiration_sec}'
 
@@ -531,7 +527,7 @@ class THORChainAMM:
         helper = self._get_evm_helper(input_amount.asset)
         if not helper:
             raise AMMException(f'Cannot find EVM helper for {input_amount.asset}. Did you enable the client?')
-        gas_options = gas_options or GasOptions.auto(self.fee_option)
+
         tx_hash = await helper.deposit(input_amount, memo, gas_options, self.evm_expiration_sec,
                                        check_allowance=self.check_allowance)
         return tx_hash
@@ -684,7 +680,7 @@ class THORChainAMM:
         helper = self._get_evm_helper(amount.asset)
         return await helper.is_tc_router_approved_to_spend(amount)
 
-    async def approve_tc_router_to_spend(self, amount: CryptoAmount, gas_options: Optional[GasOptions] = None):
+    async def approve_tc_router_to_spend(self, amount: CryptoAmount, gas_options: Optional[Gas] = None):
         """
         Approve the TC Router to spend the amount of the asset.
 
@@ -703,7 +699,7 @@ class THORChainAMM:
 
     # ------------------------------ TCY ------------------------------
 
-    async def tcy_claim(self, thor_address: str = '', gas_options: Optional[GasOptions] = None) -> str:
+    async def tcy_claim(self, thor_address: str = '', gas_options: Optional[Gas] = None) -> str:
         """
         Claim TCY tokens. Call this from your L1 address.
         TCY live in the THORChain blockchain so you will need thor_address to claim them.

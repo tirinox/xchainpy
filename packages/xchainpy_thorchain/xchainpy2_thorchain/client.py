@@ -3,12 +3,10 @@ import warnings
 from typing import Optional, Union, List
 
 from bip_utils import Bech32ChecksumError
-from cosmpy.aerial.tx import Transaction
+from cosmpy.aerial.tx import Transaction, TxFee
 from cosmpy.aerial.tx_helpers import SubmittedTx
 
-from xchainpy2_client import RootDerivationPaths, FeeBounds
-from xchainpy2_client import XcTx, TxType, Fees, FeeType, TokenTransfer
-from xchainpy2_client.fees import single_fee
+from xchainpy2_client import XcTx, TxType, TokenTransfer, RootDerivationPaths, FlatFee, Gas
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
@@ -37,7 +35,6 @@ class THORChainClient(CosmosGaiaClient):
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  client_urls=DEFAULT_CLIENT_URLS,
                  fallback_client_urls=FALLBACK_CLIENT_URLS,
@@ -52,7 +49,6 @@ class THORChainClient(CosmosGaiaClient):
         :param network: Network type. Default is `NetworkType.MAINNET`
         :param phrase: Mnemonic phrase
         :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
-        :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param client_urls: Dictionary of client urls for each network type. See: DEFAULT_CLIENT_URLS
         :param chain_ids: Dictionary of chain ids for each network type. See: DEFAULT_CHAIN_IDS
@@ -74,7 +70,7 @@ class THORChainClient(CosmosGaiaClient):
 
         root_derivation_paths = root_derivation_paths.copy() if root_derivation_paths else ROOT_DERIVATION_PATHS.copy()
         super().__init__(
-            network, phrase, private_key, fee_bound, root_derivation_paths,
+            network, phrase, private_key, root_derivation_paths,
             self._client_urls, self.chain_ids, self.explorers,
             wallet_index
         )
@@ -173,11 +169,10 @@ class THORChainClient(CosmosGaiaClient):
                       what: Union[CryptoAmount, Amount, int, float],
                       memo: str,
                       second_asset: Optional[CryptoAmount] = None,
-                      gas_limit: Optional[int] = None,
+                      gas: Optional[Gas] = None,
                       sequence: int = None,
                       account_number: int = None,
                       check_balance: bool = True,
-                      fee=None,
                       return_full_response=False) -> Union[SubmittedTx, str]:
         """
         Send a deposit transaction. MsgDeposit is a special kind of transaction to invoke THORChain protocol's action
@@ -186,12 +181,11 @@ class THORChainClient(CosmosGaiaClient):
         For more info see: https://dev.thorchain.org/concepts/sending-transactions.html?highlight=MsgDeposit#thorchain
 
         :param what: Amount and Asset
-        :param second_asset: optional second asset if needed
         :param memo: Memo string (usually a command to the AMM)
-        :param gas_limit: if not specified, we'll use the default value
+        :param gas: Gas options, if None, default gas limit will be used
+        :param second_asset: optional second asset if needed
         :param sequence: sequence number. If it is None, it will be fetched automatically
         :param check_balance: Flag to check the balance before sending Tx
-        :param fee: string like "0rune", default is 0
         :param account_number: Your account number. If it is none, we will fetch it
         :param return_full_response: when it is not enough to have just tx hash
 
@@ -208,8 +202,12 @@ class THORChainClient(CosmosGaiaClient):
 
         if check_balance:
             await self.check_balance(address, what)
+            if second_asset:
+                await self.check_balance(address, second_asset)
 
-        if gas_limit is None:
+        if gas and gas.gas_limit:
+            gas_limit = gas.gas_limit
+        else:
             gas_limit = self._deposit_gas_limit
 
         if sequence is None or account_number is None:
@@ -219,19 +217,21 @@ class THORChainClient(CosmosGaiaClient):
 
         public_key = self.get_public_key()
 
+        # fee = self.get_amount_string(0)  # Default fee is 0, because THORChain has its own fees
+        fee = TxFee("0rune", gas_limit=gas_limit)
+
         tx = build_deposit_tx_unsigned(
             what, memo,
             public_key,
-            fee=fee or self.get_amount_string(0),
+            fee=fee,
             prefix=self.prefix,
             sequence_num=sequence,
-            gas_limit=gas_limit,
             second_asset=second_asset,
         )
 
         tx.sign(
             self.get_private_key_cosmos(),
-            self.get_chain_id(),
+            self.chain_id,
             account_number=account_number
         )
 
@@ -244,6 +244,18 @@ class THORChainClient(CosmosGaiaClient):
         )
 
         return result if return_full_response else result.tx_hash
+
+    async def check_balance(self, address, amount: CryptoAmount, gas_fee: Optional[CryptoAmount] = None) -> bool:
+        """
+        Check if the address has enough balance to cover the amount and gas fee to send the transaction.
+
+        :param address: THORChain address to check balance for
+        :param amount: Amount to check
+        :param gas_fee: Ignored
+        :return:
+        """
+        fees = await self.get_fees()
+        return await super().check_balance(address, amount, gas_fee=fees.amount)
 
     async def fetch_transaction_from_thornode_raw(self, tx_hash: str) -> Optional[dict]:
         """
@@ -335,12 +347,13 @@ class THORChainClient(CosmosGaiaClient):
         except TxLoadException:
             return await self.get_transaction_data_thornode(tx_id)
 
-    async def get_fees(self) -> Fees:
+    async def get_fees(self) -> FlatFee:
         """
         Get THORChain interaction fees from THORNode API.
 
         :return: Fees object
         """
+        # todo: should we cache it?
         network_api = NetworkApi(self._thornode_api_client)
         network_params = await network_api.network()
 
@@ -348,7 +361,7 @@ class THORChainClient(CosmosGaiaClient):
         if not fee or not isinstance(fee, str) or not fee.isdigit() or int(fee) < 0:
             raise Exception(f"Invalid fee: {fee}")
 
-        return single_fee(FeeType.FLAT_FEE, Amount.auto_base(fee, self._decimal))
+        return FlatFee(CryptoAmount.auto_base(fee, self._gas_asset, self._decimal))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
         """
@@ -463,3 +476,19 @@ class THORChainClient(CosmosGaiaClient):
         """
         if self._thornode_api_client:
             await self._thornode_api_client.close()
+
+    async def estimate_gas_of_transfer(self, what: CryptoAmount, recipient: str,
+                                       memo: Optional[str] = None, gas: Optional[Gas] = None) -> CryptoAmount:
+        """
+        Estimate gas for a transfer transaction.
+
+        :param what: Amount and Asset to transfer
+        :param recipient: Recipient address
+        :param memo: Optional memo string for the transaction
+        :param gas: Optional Gas object to specify gas limit and price
+        :return:
+        """
+        # todo: shall we do something with it?
+        return await super().estimate_gas_of_transfer(
+            what, recipient, memo=memo, gas=gas
+        )

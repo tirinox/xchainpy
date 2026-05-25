@@ -1,6 +1,8 @@
 import asyncio
 import os
 
+from cosmpy.aerial.tx import TxFee
+
 from xchainpy2_thorchain import THORChainClient, build_deposit_tx_unsigned
 from xchainpy2_utils import CryptoAmount, AssetRUNE
 
@@ -19,18 +21,19 @@ async def main():
     if not account:
         raise Exception('Account not found')
 
+    fee = TxFee("0rune", gas_limit=200_000)
     tx = build_deposit_tx_unsigned(
         CryptoAmount.auto(0.1, AssetRUNE),
         '=:BSC~BNB',
         public_key,
-        fee=client.get_amount_string(0),
+        fee=fee,
         prefix=client.prefix,
         sequence_num=account.sequence,
     )
 
     tx.sign(
         client.get_private_key_cosmos(),
-        client.get_chain_id(),
+        client.chain_id,
         account_number=account.number
     )
     tx.complete()

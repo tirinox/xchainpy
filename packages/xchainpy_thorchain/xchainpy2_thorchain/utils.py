@@ -55,7 +55,6 @@ def build_deposit_tx_unsigned(
         sequence_num: int,
         prefix: str = 'thor',
         fee=None,
-        gas_limit=DEPOSIT_GAS_LIMIT_VALUE,
         second_asset: Optional[CryptoAmount] = None) -> Transaction:
     coins = [
         crypto_amount_to_msg_coin(what)
@@ -71,7 +70,6 @@ def build_deposit_tx_unsigned(
     tx = tx.seal(
         SigningCfg.direct(signer_public_key, sequence_num),
         fee=fee,
-        gas_limit=int(gas_limit),
         memo=memo
     )
 

@@ -1,7 +1,4 @@
 import asyncio
-import os
-
-from web3 import Web3
 
 from xchainpy2_ethereum import EthereumClient
 
@@ -11,15 +8,7 @@ EXAMPLE_SPENDER = '0x8103ab477AFB5321cCa0C068DCA439E232B6BB78'
 
 
 async def main():
-    # Connect to the Ethereum network using the provider
-    # You can obtain an Infura URL by creating a project at https://infura.io/
-    url = '' or os.environ.get('INFURA_URL')
-    if not url:
-        raise ValueError('Please provide an ETH RPC URL')
-
-    provider = Web3.HTTPProvider(url)
-
-    cli = EthereumClient(provider=provider)
+    cli = EthereumClient()
 
     balances = await cli.get_balance(EXAMPLE_ADDRESS)
     # balances = await cli.get_balance(EXAMPLE_ADDRESS, with_erc20=True)  # requires PRO API key

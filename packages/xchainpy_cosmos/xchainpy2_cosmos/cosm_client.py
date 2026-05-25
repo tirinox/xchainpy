@@ -7,18 +7,16 @@ from typing import Optional, List, Union
 from urllib.parse import urlencode
 
 from aiohttp import ClientSession
-from cosmpy.aerial.client import LedgerClient, Account, create_bank_send_msg, prepare_and_broadcast_basic_transaction, \
-    Coin
+from cosmpy.aerial.client import LedgerClient, Account, create_bank_send_msg, Coin
+from cosmpy.aerial.client.utils import prepare_basic_transaction
 from cosmpy.aerial.config import NetworkConfig
-from cosmpy.aerial.tx import Transaction
+from cosmpy.aerial.tx import Transaction, TxFee
 from cosmpy.aerial.wallet import LocalWallet
 from cosmpy.crypto.address import Address
 from cosmpy.crypto.keypairs import PrivateKey, PublicKey
 from cosmpy.protos.cosmos.tx.v1beta1.service_pb2 import BroadcastTxRequest, BroadcastMode
 
-from xchainpy2_client import XChainClient, RootDerivationPaths, FeeBounds, XcTx, \
-    Fees, TxPage, FeeType, FeeOption
-from xchainpy2_client.fees import single_fee
+from xchainpy2_client import XChainClient, RootDerivationPaths, XcTx, TxPage, Gas, FlatFee
 from xchainpy2_crypto import create_address
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, Amount, AssetATOM, \
     unique_by_key, batched, NINE_REALMS_CLIENT_HEADER, XCHAINPY_IDENTIFIER, flatten
@@ -37,7 +35,6 @@ class CosmosGaiaClient(XChainClient):
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  client_urls=DEFAULT_CLIENT_URLS,
                  chain_ids=COSMOS_CHAIN_IDS,
@@ -45,11 +42,11 @@ class CosmosGaiaClient(XChainClient):
                  wallet_index=0,
                  ):
         """
-        Initialize CosmosClient
+        Initialize CosmosClient.
+
         :param network: Network type. Default is `NetworkType.MAINNET`
         :param phrase: Mnemonic phrase
         :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
-        :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param client_urls: Dictionary of client urls for each network type.
         :param chain_ids: Dictionary of chain ids for each network type.
@@ -59,7 +56,7 @@ class CosmosGaiaClient(XChainClient):
         root_derivation_paths = root_derivation_paths.copy() \
             if root_derivation_paths else COSMOS_ROOT_DERIVATION_PATHS.copy()
         self._ready_to_make_wallet = False
-        super().__init__(Chain.Cosmos, network, phrase, private_key, fee_bound, root_derivation_paths, wallet_index)
+        super().__init__(Chain.Cosmos, network, phrase, private_key, root_derivation_paths, wallet_index)
         self._ready_to_make_wallet = True
 
         self.explorers = explorer_providers
@@ -75,7 +72,7 @@ class CosmosGaiaClient(XChainClient):
 
         self._denom = COSMOS_DENOM
         self._decimal = COSMOS_DECIMAL
-        self._gas_limit = DEFAULT_GAS_LIMIT
+        self.default_gas_limit = DEFAULT_GAS_LIMIT
 
         self._fee_minimum_gas_price = FEE_MINIMUM_GAS_PRICE
 
@@ -93,7 +90,7 @@ class CosmosGaiaClient(XChainClient):
         self.cache_fee_period = 600  # sec = 10 min
 
     @property
-    def get_client_urls(self):
+    def client_urls(self):
         return self._client_urls
 
     def get_client(self) -> LedgerClient:
@@ -120,6 +117,12 @@ class CosmosGaiaClient(XChainClient):
         return self._client.auth._rest_api._session
 
     def patch_client(self, user_agent=DEFAULT_REST_USER_AGENT, identifier9r=XCHAINPY_IDENTIFIER):
+        """
+        Patch the REST client with custom user agent and client id header (x-client-id).
+
+        :param user_agent: User agent string to set in the headers.
+        :param identifier9r: Client identifier for Nine Realms servers (x-client-id).
+        """
         headers = self.rest_session.headers
         headers['User-Agent'] = user_agent
         headers[NINE_REALMS_CLIENT_HEADER] = identifier9r
@@ -150,7 +153,13 @@ class CosmosGaiaClient(XChainClient):
         self.chain_ids[self.network] = chain_id
         self._recreate_client()
 
-    def get_chain_id(self):
+    @property
+    def chain_id(self) -> str:
+        """
+        Get the current chain id for the Cosmos network.
+
+        :return: str Chain ID
+        """
         return self.chain_ids[self.network]
 
     def set_network(self, network: NetworkType):
@@ -212,9 +221,10 @@ class CosmosGaiaClient(XChainClient):
         pk = self.get_private_key()
         return PrivateKey(bytes.fromhex(pk))
 
-    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+    async def get_balance(self, address: str = '', **kwargs) -> List[CryptoAmount]:
         """
-        Get the balance of a given address.
+        Get the balances of a given address.
+
         :param address: By default, it will return the balance of the current wallet. (optional)
         :return:
         """
@@ -223,8 +233,7 @@ class CosmosGaiaClient(XChainClient):
 
         address = Address(address, prefix=self.prefix)
 
-        balances = await asyncio.get_event_loop().run_in_executor(
-            None,
+        balances = await self.call_service(
             self._client.query_bank_all_balances,
             address
         )
@@ -260,8 +269,7 @@ class CosmosGaiaClient(XChainClient):
         address = Address(address)
 
         try:
-            account = await asyncio.get_event_loop().run_in_executor(
-                None,
+            account = await self.call_service(
                 self._client.query_account,
                 address
             )
@@ -436,7 +444,9 @@ class CosmosGaiaClient(XChainClient):
     async def get_transaction_data(self, tx_id: str, our_address: str = '') -> Optional[XcTx]:
         """
         Get the transaction data for the given transaction id.
+
         :param tx_id:
+        :param our_address:
         :return:
         """
         j = await self.get_transaction_data_cosmos(tx_id)
@@ -449,21 +459,23 @@ class CosmosGaiaClient(XChainClient):
         url = self.url_to_fetch_tx_data(tx_id)
         return await self._get_json(url)
 
-    async def get_fees(self) -> Fees:
-        return single_fee(FeeType.FLAT_FEE, self.standard_tx_fee)
+    async def get_fees(self) -> FlatFee:
+        return FlatFee(self.standard_tx_fee)
 
     async def transfer(self, what: CryptoAmount,
                        recipient: str,
                        memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None,
-                       check_balance: bool = True) -> str:
+                       gas: Optional[Gas] = None,
+                       check_balance: bool = True,
+                       **kwargs) -> str:
         """
-        Transfer coins.
-        :param check_balance: Check balance before transfer. Default is True.
+        Transfer coins to another address with an optional memo.
+
         :param what: CryptoAmount (amount and asset to transfer)
         :param recipient: str recipient address
         :param memo: str
-        :param fee_rate: int
+        :param gas: Gas options. If not provided, the default gas limit will be used.
+        :param check_balance: Check balance before transfer. Default is True.
         :return: str tx hash
         """
         self._throw_if_empty_phrase()
@@ -473,15 +485,21 @@ class CosmosGaiaClient(XChainClient):
 
         tx = self.build_transfer_tx(what, recipient)
 
-        response = await asyncio.get_event_loop().run_in_executor(
-            None,
-            prepare_and_broadcast_basic_transaction,
+        gas_limit = gas.gas_limit if gas and gas.gas_limit else self.default_gas_limit
+
+        prepared_tx = await self.call_service(
+            prepare_basic_transaction,
             self._client,
             tx,
             self._wallet,
             None,  # account
-            self._gas_limit,
+            TxFee(gas_limit=gas_limit),
             memo
+        )
+
+        response = await self.call_service(
+            self._client.broadcast_tx,
+            prepared_tx
         )
 
         self._save_last_response(response.tx_hash, response)
@@ -509,8 +527,7 @@ class CosmosGaiaClient(XChainClient):
         )
 
         # broadcast the transaction
-        resp = await asyncio.get_event_loop().run_in_executor(
-            None,
+        resp = await self.call_service(
             self._client.txs.BroadcastTx,
             broadcast_req)
         tx_digest = resp.tx_response.txhash
@@ -535,8 +552,7 @@ class CosmosGaiaClient(XChainClient):
 
     async def _get_json(self, url):
         logger.debug(f"GET {url}")
-        response = await asyncio.get_event_loop().run_in_executor(
-            None,
+        response = await self.call_service(
             self._client.txs.rest_client._session.get,
             url,
         )
@@ -553,33 +569,7 @@ class CosmosGaiaClient(XChainClient):
     def prefix(self) -> str:
         return self._prefix
 
-    async def check_balance(self, address, amount: CryptoAmount):
-        fees = await self.get_fees()
-        fee = fees.fees[FeeOption.AVERAGE]
-
-        balances = await self.get_balance(address)
-
-        asset_balance = None
-        native_balance = None
-
-        for balance in balances:
-            if balance.asset == amount.asset:
-                asset_balance = balance
-            if balance.asset == self._gas_asset:
-                native_balance = balance
-
-        is_native = amount.asset == self._gas_asset
-        extra_fee = fee if is_native else Amount.auto_base(0, self._decimal)
-
-        # Insufficient funds: 730350.0 (D:8) is required. Balance is 0.0073035 BSC~BNB
-        required = CryptoAmount(amount.amount + extra_fee, amount.asset)
-        if asset_balance is None or asset_balance < required:
-            raise ValueError(f"Insufficient funds: {required} is required. Balance is {asset_balance}")
-
-        if native_balance is None or native_balance.amount < fee:
-            raise ValueError(f"Insufficient funds to pay fee: {fee} {self._gas_asset}")
-
-    def _make_wallet(self) -> LocalWallet:
+    def _make_wallet(self) -> Optional[LocalWallet]:
         if self._ready_to_make_wallet:
             if self.phrase or self._private_key:
                 pk = PrivateKey(bytes.fromhex(self.get_private_key()))
@@ -587,10 +577,38 @@ class CosmosGaiaClient(XChainClient):
                 return self._wallet
 
     def get_amount_string(self, amount):
+        """
+        Builds a string representation of the amount in the format required by Cosmos.
+        For instance, "123atom"
+
+        :param amount: Amount to convert, should be an instance of Amount or CryptoAmount, or just int
+        :return: str
+        """
         return f"{int(amount)}{self._denom}"
 
     def get_denom(self, asset: Asset) -> str:
+        """
+        Converts an Asset to its corresponding denomination string.
+        If the asset is AssetATOM, it returns the constant "uatom".
+
+        :param asset: Asset instance (e.g., AssetATOM or any other asset)
+        :return: str Denomination string for the asset
+        """
         if asset == AssetATOM:
             return COSMOS_DENOM
         else:
             return str(asset).lower()
+
+    async def estimate_gas_of_transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
+                                       gas: Optional[Gas] = None) -> CryptoAmount:
+        """
+        Since "simulate_tx" is broken in cosmpy, we use the standard transaction fee as an estimate.
+        No simulation is performed.
+
+        :param what: CryptoAmount to transfer
+        :param recipient: Recipient address
+        :param memo: Optional memo for the transaction
+        :param gas: Optional Gas options. If not provided, the default gas limit will be used.
+        :return: CryptoAmount representing the estimated gas
+        """
+        return self.standard_tx_fee

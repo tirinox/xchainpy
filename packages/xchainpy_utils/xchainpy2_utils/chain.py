@@ -50,7 +50,39 @@ class Chain(Enum):
         """
         return self in COSMOS_CHAINS
 
+    @property
+    def currency_symbol(self):
+        """
+        Returns the currency symbol for the chain.
+        :return: The currency symbol for the chain.
+        """
+        return CURRENCY_SYMBOLS.get(self, '')
+
 
 UTXO_CHAINS = {Chain.Bitcoin, Chain.Litecoin, Chain.BitcoinCash, Chain.Doge, Chain.Dash}
+"""
+UTXO_CHAINS is a set of chains that use the UTXO model.
+"""
+
 EVM_CHAINS = {Chain.Ethereum, Chain.BinanceSmartChain, Chain.Avalanche, Chain.Base}
+"""
+EVM_CHAINS is a set of chains that are based on the Ethereum Virtual Machine (EVM).
+"""
+
 COSMOS_CHAINS = {Chain.Cosmos, Chain.THORChain, Chain.Maya}
+"""
+COSMOS_CHAINS is a set of chains that are based on the Cosmos SDK.
+"""
+
+CURRENCY_SYMBOLS = {
+    Chain.Bitcoin: "₿",
+    Chain.Litecoin: "Ł",
+    Chain.BitcoinCash: "₿",
+    Chain.Doge: "Ð",
+    Chain.Ethereum: "Ξ",
+    Chain.Maya: "𐌂",
+    Chain.THORChain: "ᚱ",
+}
+"""
+CURRENCY_SYMBOLS is a dictionary that maps each chain to its currency symbol.
+"""

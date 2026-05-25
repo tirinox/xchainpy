@@ -1,4 +1,4 @@
-from xchainpy2_client import ExplorerProvider, FeeBounds, Fees, FeeOption, FeeType
+from xchainpy2_client import ExplorerProvider, FeeBounds
 from xchainpy2_utils import NetworkType, Asset, Amount
 
 BCH_DECIMAL = 8
@@ -44,12 +44,7 @@ DEFAULT_PROVIDER_NAMES = []
 AssetTestBCH = Asset.from_string('BCH.TBCH')
 """Testnet BCH asset"""
 
-DEFAULT_BCH_FEES = Fees(
-    FeeType.PER_BYTE,
-    fees={
-        FeeOption.AVERAGE: Amount.auto(1, BCH_DECIMAL),
-        FeeOption.FAST: Amount.auto(3, BCH_DECIMAL),
-        FeeOption.FASTEST: Amount.auto(6, BCH_DECIMAL),
-    }
-)
-"""Typical fees for Bitcoin Cash"""
+DEFAULT_BCH_FEE_RATE = 1
+"""
+Default fee rate for Bitcoin Cash in BCH satoshis per byte.
+"""

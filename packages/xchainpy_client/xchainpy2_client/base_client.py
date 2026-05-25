@@ -8,16 +8,8 @@ from typing import Optional, List, Union
 from xchainpy2_crypto import validate_mnemonic, derive_private_key
 from xchainpy2_utils import CryptoAmount, Chain, NetworkType, Asset, Amount
 from .explorer import ExplorerProvider
-from .fees import FeeOption, Fees
-from .models import XcTx, TxPage, \
-    FeeBounds, RootDerivationPaths
-
-
-class SecretsException(Exception):
-    """
-    Exception raised for errors related to secret management: private keys, or phrases.
-    """
-    ...
+from .fees import Gas, IFees
+from .models import XcTx, TxPage, RootDerivationPaths, SecretsException
 
 
 class XChainClient(abc.ABC):
@@ -26,7 +18,6 @@ class XChainClient(abc.ABC):
                  network: Optional[NetworkType] = None,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  wallet_index=0,
                  ):
@@ -38,14 +29,12 @@ class XChainClient(abc.ABC):
         :param network: Network type (see utils/network_type.py)
         :param phrase: Mnemonic phrase (12-24 words)
         :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
-        :param fee_bound: Fee bounds
         :param root_derivation_paths: Root derivation paths for private key for each Network type
         :param wallet_index: int (wallet index, default 0) We can derive any number of addresses from a single seed
         """
         self.wallet_index = wallet_index
         self.chain = chain
 
-        self.fee_bound = fee_bound or FeeBounds.infinite()
         self.root_derivation_paths = root_derivation_paths
 
         self.network = network
@@ -166,14 +155,13 @@ class XChainClient(abc.ABC):
         """
         return self.gas_base_amount(0)
 
-    async def max_gas_amount(self, balances: List[CryptoAmount] = None,
-                             fee_option: FeeOption = FeeOption.FAST) -> CryptoAmount:
+    async def max_transferable_gas_amount(self, balances: List[CryptoAmount] = None,
+                                          gas: Optional[Gas] = None) -> CryptoAmount:
         """
         Calculate maximum amount of Gas asset that you can send to empty your wallet.
 
-        :param fee_option: Pick a fee option to calculate the maximum amount of gas you can send.
-        By default it is FeeOption.FAST.
-        :param balances: (Optional) if you already have your balance, otherwise they will be loaded
+        :param balances: List of CryptoAmount representing the balances of the wallet.
+        :param gas: Gas options for the transfer (optional, if not provided, gas will be estimated based on the current fees).
         :return: CryptoAmount
         """
         if balances is None:
@@ -181,18 +169,17 @@ class XChainClient(abc.ABC):
 
         gas_balance = next((b for b in balances if b.asset == self._gas_asset), None)
         if not gas_balance:
+            # todo: are there any chains that do not require gas?
             return self.zero_gas_amount  # no gas at all
 
-        fees = await self.get_fees()
-        fee = fees.fees[fee_option]
-        # fixme: for EVM they are in GWEI!!
-        # note: must be same decimals
-        max_value = gas_balance.amount - fee
-        if max_value.internal_amount < 0:
+        fee = await self.estimate_gas_of_transfer(gas_balance.changed_amount_base(1), self.get_address(), gas=gas)
+
+        max_value = gas_balance - fee
+        if max_value < 0:
             # less than fee
             return self.zero_gas_amount
         else:
-            return CryptoAmount(max_value, self._gas_asset)
+            return CryptoAmount(max_value.amount, self._gas_asset)
 
     def set_network(self, network: NetworkType):
         if not network:
@@ -271,7 +258,7 @@ class XChainClient(abc.ABC):
         return self.explorers[self.network].get_tx_url(tx_id)
 
     @abc.abstractmethod
-    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+    async def get_balance(self, address: str = '', **kwargs) -> List[CryptoAmount]:
         """
         Get the balance of the wallet.
 
@@ -333,15 +320,32 @@ class XChainClient(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_fees(self) -> Fees:
+    async def get_fees(self) -> IFees:
         pass
 
     @abc.abstractmethod
     async def transfer(self, what: CryptoAmount,
                        recipient: str,
                        memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None, **kwargs) -> str:
+                       gas: Optional[Gas] = None,
+                       check_balance: bool = True,
+                       **kwargs) -> str:
         pass
+
+    async def estimate_gas_of_transfer(self, what: CryptoAmount, recipient: str,
+                                       memo: Optional[str] = None, gas: Optional[Gas] = None) -> CryptoAmount:
+        """
+        Estimate the gas required for a transfer operation.
+
+        :param gas: Gas options for the transfer.
+        :param what: CryptoAmount to transfer
+        :param recipient: Recipient address
+        :param memo: Optional memo for the transfer
+        :param gas: Gas options for the transfer
+        :return: Estimated gas amount as an GasUnits integer.
+        """
+        # This method should be implemented in subclasses to provide the actual estimation logic.
+        raise NotImplementedError("This method should be implemented in subclasses")
 
     async def wait_for_transaction(self, tx_id: str, timeout=1200, poll_period=5):
         """
@@ -423,6 +427,50 @@ class XChainClient(abc.ABC):
         but it can be overridden in subclasses to close connections or clean up resources.
         """
         ...
+
+    def is_gas_asset(self, asset: Asset) -> bool:
+        """
+        Check if the given asset is the gas asset for this client.
+
+        :param asset: Asset to check
+        :return: bool True if the asset is the gas asset, False otherwise
+        """
+        return self._gas_asset.upper() == asset.upper()
+
+    async def check_balance(self, address, amount: CryptoAmount, gas_fee: CryptoAmount):
+        """
+        Check if the wallet has enough balance to send the given amount and pay the gas fee.
+        This method will raise a ValueError if the balance is insufficient.
+
+        :param address: Address to check the balance for.
+        :param amount: CryptoAmount The amount to spend.
+        :param gas_fee: CryptoAmount The gas fee required for the transaction.
+        :return:
+        """
+        balances = await self.get_balance(address)
+
+        asset_balance = None
+        gas_balance = None
+
+        for balance in balances:
+            if balance.asset == amount.asset:
+                asset_balance = balance
+            if self.is_gas_asset(balance.asset):
+                gas_balance = balance
+
+        if self.is_gas_asset(amount.asset):
+            # If the asset is the gas asset, we need to check if we have enough gas balance
+            extra_fee = gas_fee
+        else:
+            extra_fee = CryptoAmount.auto_base(0, amount.asset, amount.amount.decimals)
+
+        # Calculate the total required amount including the gas fee
+        required = amount + extra_fee
+        if asset_balance is None or asset_balance < required:
+            raise ValueError(f"Insufficient funds: {required} is required. Balance is {asset_balance}")
+
+        if gas_balance is None or gas_balance.amount < gas_fee.amount:
+            raise ValueError(f"Insufficient funds to pay fee: {gas_fee}")
 
 
 class NoClient(XChainClient, abc.ABC):

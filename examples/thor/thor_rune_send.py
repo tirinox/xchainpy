@@ -23,7 +23,7 @@ async def main():
     client_b = THORChainClient(phrase=phrase, network=NETWORK, wallet_index=1)
 
     fees = await client_a.get_fees()
-    print(f"THORChain TX fee is {fees.average}")
+    print(f"THORChain TX fee is {fees.amount}")
 
     balance = await client_a.get_balance()
     print(f"{client_a.get_address()}'s balance is {balance}")
@@ -44,7 +44,7 @@ async def main():
             print(f"Balance updated: {rune_balance} Rune! Let's transfer it back")
             break
 
-    rune_balance -= fees.average
+    rune_balance -= fees.amount
     r = await client_b.transfer(rune_balance, client_a.get_address())
     print(f"Transfer submitted: {client_b.get_explorer_tx_url(r)}")
 

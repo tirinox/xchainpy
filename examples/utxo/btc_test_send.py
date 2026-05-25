@@ -2,6 +2,7 @@ import asyncio
 
 from examples.common import get_phrase
 from xchainpy2_bitcoin import BitcoinClient
+from xchainpy2_client import FeeOption, Gas
 from xchainpy2_utils import NetworkType
 
 FEE_RATE = 2
@@ -38,7 +39,7 @@ async def send_btc():
         btc, btc2 = btc2, btc
 
     tx_hash = await btc.transfer(btc2.gas_amount(0.00001234), dest_address, memo='test',
-                                 # fee_rate=FEE_RATE,
+                                 gas=Gas.auto(FeeOption.AVERAGE),
                                  dry_run=DRY_RUN)
     print(f"Transfer hash: {tx_hash} ({btc2.get_explorer_tx_url(tx_hash)})")
 

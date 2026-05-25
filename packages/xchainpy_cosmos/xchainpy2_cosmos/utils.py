@@ -1,6 +1,5 @@
 from typing import Optional, List, Tuple
 
-
 from cosmpy.crypto.address import Address
 
 from xchainpy2_client import XcTx, TxType, TokenTransfer
@@ -112,35 +111,35 @@ def parse_tx_response_json(j: dict, tx_id: str, address: str, decimals: int,
                            native_denom: str, native_asset: Asset) -> XcTx:
     response = j.get('tx_response')
     if not response:
-        raise TxLoadException(f'Failed to get transaction logs (tx-hash: ${tx_id}): no tx_response')
+        raise TxLoadException(f'Failed to get transaction logs (tx-hash: {tx_id}): no tx_response')
 
     code = response.get('code')
     is_successful = code == 0
     if not is_successful:
-        raise TxLoadException(f'Code is not 0 ({code}) for tx-hash: ${tx_id}')
+        raise TxLoadException(f'Code is not 0 ({code}) for tx-hash: {tx_id}')
 
     messages = j['tx']['body']['messages']
 
     if len(messages) > 1:
-        raise TxLoadException(f'Multiple messages are not supported yet (tx-hash: ${tx_id})')
+        raise TxLoadException(f'Multiple messages are not supported yet (tx-hash: {tx_id})')
     elif not messages:
-        raise TxLoadException(f'No messages found (tx-hash: ${tx_id})')
+        raise TxLoadException(f'No messages found (tx-hash: {tx_id})')
 
     address = address or messages[0].get('signer') or messages[0].get('from_address')
 
     logs = load_logs(response.get('logs'))
     if not logs:
-        raise TxLoadException(f'Failed to get transaction logs (tx-hash: ${tx_id})')
+        raise TxLoadException(f'Failed to get transaction logs (tx-hash: {tx_id})')
 
     if len(logs) > 1:
-        raise TxLoadException(f'Multiple logs are not supported yet (tx-hash: ${tx_id})')
+        raise TxLoadException(f'Multiple logs are not supported yet (tx-hash: {tx_id})')
 
     log = logs[0]
 
     transfers_events = log.find_events('transfer')
     message_event = log.find_event('message')
     if not transfers_events and not message_event:
-        raise TxLoadException(f'Invalid transaction data, no transfer/no message (tx-hash: ${tx_id})')
+        raise TxLoadException(f'Invalid transaction data, no transfer/no message (tx-hash: {tx_id})')
 
     memo = ''
     if (tx_j := j.get('tx')) and (body := tx_j.get('body')):

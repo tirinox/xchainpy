@@ -30,9 +30,9 @@ classifiers = [
 ]
 dependencies = [
     "xchainpy2_utils>=0.1.0",
-    "xchainpy2_crypto",
+    "xchainpy2_crypto>=0.1.0",
     "xchainpy2_client>=0.1.2",
-    "bitcash",
+    "bitcash~=1.0.2",
 ]
 [project.optional-dependencies]
 test = ["pytest"]

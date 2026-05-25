@@ -1,7 +1,7 @@
 import os
 
 from xchainpy2_client import ExplorerProvider
-from xchainpy2_ethereum.gas import GasLimits
+from xchainpy2_ethereum.gas import EVMGasLimits
 from xchainpy2_utils import NetworkType
 
 SELF_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -80,9 +80,9 @@ FREE_ETH_PROVIDERS = {
 FREE_ETH_PROVIDERS[NetworkType.STAGENET] = FREE_ETH_PROVIDERS[NetworkType.MAINNET]
 
 GAS_LIMITS = {
-    NetworkType.MAINNET: GasLimits.default(),
-    NetworkType.TESTNET: GasLimits.default(),
-    NetworkType.STAGENET: GasLimits.default(),
+    NetworkType.MAINNET: EVMGasLimits.default(),
+    NetworkType.TESTNET: EVMGasLimits.default(),
+    NetworkType.STAGENET: EVMGasLimits.default(),
 }
 """
     Ethereum default gas limits

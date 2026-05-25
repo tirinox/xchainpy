@@ -4,16 +4,15 @@ from typing import Optional, Union, List
 
 from bip_utils import Bech32ChecksumError
 from cosmpy.aerial.client import Coin
-from cosmpy.aerial.tx import Transaction
+from cosmpy.aerial.tx import Transaction, TxFee
 from cosmpy.aerial.tx_helpers import SubmittedTx
-from xchainpy2_mayanode import MimirApi, ApiClient
 
-from xchainpy2_client import RootDerivationPaths, FeeBounds
-from xchainpy2_client import XcTx, TxType, Fees, FeeType, TokenTransfer
-from xchainpy2_client.fees import single_fee
+from xchainpy2_client.fees import Gas, FlatFee
+from xchainpy2_client.models import XcTx, TxType, TokenTransfer, RootDerivationPaths
 from xchainpy2_cosmos import CosmosGaiaClient, TxLoadException, TxInternalException
 from xchainpy2_cosmos.utils import parse_tx_response_json
 from xchainpy2_crypto import decode_address
+from xchainpy2_mayanode import MimirApi, ApiClient
 from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Amount, remove_0x_prefix, \
     Asset, SYNTH_DELIMITER, CACAO_DECIMAL, AssetCACAO
 from .const import NodeURL, DEFAULT_CHAIN_IDS, DEFAULT_CLIENT_URLS, DENOM_CACAO_NATIVE, ROOT_DERIVATION_PATHS, \
@@ -31,6 +30,7 @@ class MayaChainClient(CosmosGaiaClient):
     def from_node_ip(cls, ip: str):
         """
         Initialize MayaChainClient from node IP address.
+
         :param ip: IP address of the node
         :return: MayaChainClient
         """
@@ -40,7 +40,6 @@ class MayaChainClient(CosmosGaiaClient):
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = None,
                  root_derivation_paths: Optional[RootDerivationPaths] = None,
                  client_urls=DEFAULT_CLIENT_URLS,
                  fallback_client_urls=FALLBACK_CLIENT_URLS,
@@ -50,10 +49,10 @@ class MayaChainClient(CosmosGaiaClient):
                  ):
         """
         Initialize MayaChainClient.
+
         :param network: Network type. Default is `NetworkType.MAINNET`
         :param phrase: Mnemonic phrase
         :param private_key: Private key (if you want to use a private key instead of a mnemonic phrase)
-        :param fee_bound: Fee bound structure. See: FeeBounds
         :param root_derivation_paths: Dictionary of derivation paths for each network type. See: ROOT_DERIVATION_PATHS
         :param client_urls: Dictionary of client urls for each network type. See: DEFAULT_CLIENT_URLS
         :param chain_ids: Dictionary of chain ids for each network type. See: DEFAULT_CHAIN_IDS
@@ -74,7 +73,7 @@ class MayaChainClient(CosmosGaiaClient):
 
         root_derivation_paths = root_derivation_paths.copy() if root_derivation_paths else ROOT_DERIVATION_PATHS.copy()
         super().__init__(
-            network, phrase, private_key, fee_bound, root_derivation_paths,
+            network, phrase, private_key, root_derivation_paths,
             self._client_urls, self.chain_ids, self.explorers, wallet_index
         )
         self._fee_minimum_gas_price = 0
@@ -97,13 +96,29 @@ class MayaChainClient(CosmosGaiaClient):
 
     @property
     def server_url(self) -> str:
+        """
+        Get the server URL for the MayaChain client.
+
+        :return: str
+        """
         return self._client_urls[self.network].node
 
     @property
     def rpc_url(self) -> str:
+        """
+        Get the RPC URL for the MayaChain client.
+
+        :return: str
+        """
         return self._client_urls[self.network].rpc
 
     def validate_address(self, address: str) -> bool:
+        """
+        Validate the address for MayaChain.
+
+        :param address: str (MayaChain address)
+        :return: bool (True if valid, False otherwise)
+        """
         if not super().validate_address(address):
             return False
         try:
@@ -116,11 +131,10 @@ class MayaChainClient(CosmosGaiaClient):
                       what: Union[CryptoAmount, Amount, int, float],
                       memo: str,
                       second_asset: Optional[CryptoAmount] = None,
-                      gas_limit: Optional[int] = None,
+                      gas: Optional[Gas] = None,
                       sequence: int = None,
                       account_number: int = None,
                       check_balance: bool = True,
-                      fee=None,
                       return_full_response=False) -> Union[SubmittedTx, str]:
         """
         Send a deposit transaction. MsgDeposit is a special kind of transaction to invoke MayaChain protocol's action
@@ -131,10 +145,9 @@ class MayaChainClient(CosmosGaiaClient):
         :param what: Amount and Asset
         :param second_asset: optional second asset if needed
         :param memo: Memo string (usually a command to the AMM)
-        :param gas_limit: if not specified, we'll use the default value
+        :param gas: Gas options, if None, default gas limit will be used
         :param sequence: sequence number. If it is None, it will be fetched automatically
         :param check_balance: Flag to check the balance before sending Tx
-        :param fee: string like "0cacao", default is 0
         :param account_number: Your account number. If it is none, we will fetch it
         :param return_full_response: when it is not enough to have just tx hash
 
@@ -152,9 +165,6 @@ class MayaChainClient(CosmosGaiaClient):
         if check_balance:
             await self.check_balance(address, what)
 
-        if gas_limit is None:
-            gas_limit = self._deposit_gas_limit
-
         if sequence is None or account_number is None:
             account = await self.get_account(address)
             sequence = account.sequence
@@ -162,19 +172,24 @@ class MayaChainClient(CosmosGaiaClient):
 
         public_key = self.get_public_key()
 
+        if gas and gas.gas_limit:
+            gas_limit = gas.gas_limit
+        else:
+            gas_limit = self._deposit_gas_limit
+
+        fee = TxFee("0cacao", gas_limit=gas_limit)
         tx = build_deposit_tx_unsigned(
             what, memo,
             public_key,
-            fee=fee or self.get_amount_string(0),
+            fee=fee,
             prefix=self.prefix,
             sequence_num=sequence,
-            gas_limit=gas_limit,
             second_asset=second_asset,
         )
 
         tx.sign(
             self.get_private_key_cosmos(),
-            self.get_chain_id(),
+            self.chain_id,
             account_number=account_number
         )
 
@@ -192,6 +207,7 @@ class MayaChainClient(CosmosGaiaClient):
         """
         Fetch transaction from MayaNode, try to use fallback client if main client is not available
         Url: https://node/mayachain/tx/{tx_hash}
+
         :param tx_hash: Tx Hash
         :return: Transaction data (raw, unparsed)
         """
@@ -218,6 +234,7 @@ class MayaChainClient(CosmosGaiaClient):
         It is called "getTransactionDataThornode" in xchainjs
         Parsing "observed_tx" object.
         Url: https://node/mayachain/tx/{tx_hash}
+
         :param tx_id: Tx Hash
         :return: XcTx result
         """
@@ -266,8 +283,9 @@ class MayaChainClient(CosmosGaiaClient):
     async def get_transaction_data(self, tx_id: str, address: str = '') -> XcTx:
         """
         Get transaction details by Tx Hash.
-        :param tx_id:
-        :param address:
+
+        :param tx_id: Transaction ID (Tx Hash)
+        :param address: Address of the sender or receiver (optional, used for parsing)
         :return: XcTx
         """
         try:
@@ -276,7 +294,12 @@ class MayaChainClient(CosmosGaiaClient):
         except TxLoadException:
             return await self.get_transaction_data_mayanode(tx_id)
 
-    async def get_fees(self) -> Fees:
+    async def get_fees(self) -> FlatFee:
+        """
+        Get the current transaction fees from Maya Mimir API.
+
+        :return: FlatFee object with the current transaction fee
+        """
         mimir_api = MimirApi(self.mayanode_api_client)
         mimir_params = await mimir_api.mimir()
 
@@ -288,9 +311,15 @@ class MayaChainClient(CosmosGaiaClient):
         except ValueError:
             raise ValueError(f"Invalid native TX fee in Mimir: {fee_param}")
 
-        return single_fee(FeeType.FLAT_FEE, Amount.auto_base(fee_param, self._decimal))
+        return FlatFee(self.gas_base_amount(fee_param))
 
     def parse_denom_to_asset(self, denom: str) -> Asset:
+        """
+        Parse Maya denomination string to Asset object.
+
+        :param denom: str (denomination)
+        :return: Asset object corresponding to the denomination
+        """
         if SYNTH_DELIMITER in denom:
             # special case for synths
             return Asset.from_string(denom.upper())
@@ -303,6 +332,13 @@ class MayaChainClient(CosmosGaiaClient):
             return Asset("MAYA", denom.upper())
 
     def convert_coin_to_amount(self, c: Coin) -> CryptoAmount:
+        """
+        Convert a Coin object to CryptoAmount.
+        This method auto-detects the denomination and applies the correct decimal.
+
+        :param c: Coin object
+        :return: CryptoAmount object
+        """
         if c.denom == DENOM_MAYA:
             decimal = MAYA_DECIMAL
         elif c.denom == DENOM_CACAO_NATIVE:
@@ -316,6 +352,12 @@ class MayaChainClient(CosmosGaiaClient):
         )
 
     def get_denom(self, asset: Asset) -> str:
+        """
+        Convert Asset to denomination string.
+
+        :param asset: Asset object
+        :return: str (denomination)
+        """
         if asset == AssetCACAO:
             return DENOM_CACAO_NATIVE
         elif asset == AssetMAYA:
@@ -340,6 +382,7 @@ class MayaChainClient(CosmosGaiaClient):
         """
         Transfer MRC20 token
         Example: await maya.transfer_mrc20(CryptoAmount.auto(100, 'MRC20.GLD'), 'maya1f4f2a4b24')
+
         :param what: CryptoAmount
         :param recipient: maya1Address
         :return: TX hash string
@@ -356,8 +399,9 @@ class MayaChainClient(CosmosGaiaClient):
 
     async def transfer_mnft(self, symbol: str, ident: int, recipient: str):
         """
-        Transfer MNFT token
-        Example: await maya.transfer_mnft('PEPE', 25, 'maya1f4f2a4b24')
+        Transfer MNFT token.
+        Example: await maya.transfer_mnft('PEPE', 25, 'maya1f4f2a4b24').
+
         :param symbol: MNFT ticker
         :param ident: MNFT token ID
         :param recipient: maya1Address
@@ -374,24 +418,36 @@ class MayaChainClient(CosmosGaiaClient):
             check_balance=False,
         )
 
-    @staticmethod
-    def amount_of_mrc20(amount, asset_name: str):
-        return CryptoAmount.auto(amount, make_mrc20_asset(asset_name))
-
     async def close(self):
+        """
+        Close the MayaChainClient and release resources.
+        """
         if self.maya_scan:
             await self.maya_scan.close()
+        await super().close()
 
-    async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None, check_balance: bool = True) -> str:
+    async def transfer(self, what: CryptoAmount,
+                       recipient: str,
+                       memo: Optional[str] = None,
+                       gas: Optional[Gas] = None,
+                       check_balance: bool = True,
+                       **kwargs) -> str:
         if is_mrc20(what.asset):
             return await self.transfer_mrc20(what, recipient)
         else:
-            return await super().transfer(what, recipient, memo, fee_rate, check_balance)
+            return await super().transfer(what, recipient, memo, gas, check_balance)
 
     transfer.__doc__ = CosmosGaiaClient.transfer.__doc__
 
     async def get_balance(self, address: str = '', include_mrc20=True) -> List[CryptoAmount]:
+        """
+        Get the on-chain balances of the Maya address. Supports MRC20 balances if `include_mrc20` is True.
+
+        :param address: Maya address (if not specified, will use the client's address)
+        :param include_mrc20: bool (if True, will include MRC20 balances)
+        :return: List of CryptoAmount objects representing the balances
+        """
+
         if not address:
             address = self.get_address()
 
@@ -424,7 +480,8 @@ class MayaChainClient(CosmosGaiaClient):
 
     async def mrc20_cancel_order(self, ticker: Union[str, Asset], tx_hash: str):
         """
-        Cancel MRC20 sell order
+        Cancel MRC20 sell order.
+
         :param ticker: ticker of MRC20 token (e.g. GLD)
         :param tx_hash: exact hash of the transaction that created the order
         :return: txid of the cancel transaction
@@ -435,7 +492,8 @@ class MayaChainClient(CosmosGaiaClient):
     async def mrc20_sell(self, ticker: Union[str, Asset], amount: Union[CryptoAmount, Amount, int, float],
                          price: float):
         """
-        Post an order to sell MRC20 token
+        Post an order to sell MRC20 token.
+
         :param ticker: ticker of MRC20 token (e.g. GLD)
         :param amount: amount of MRC20 token to sell
         :param price: price of MRC20 token in CACAO
@@ -452,7 +510,8 @@ class MayaChainClient(CosmosGaiaClient):
                         seller_address: str,
                         tx_hash: str):
         """
-        Buy MRC20 token from the seller
+        Buy MRC20 token from the seller.
+
         :param ticker: ticker of MRC20 token (e.g. GLD)
         :param amount: amount of MRC20 token to buy
         :param seller_address: seller address

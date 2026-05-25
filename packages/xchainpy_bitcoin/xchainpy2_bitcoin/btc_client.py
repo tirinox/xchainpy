@@ -1,5 +1,6 @@
 import asyncio
 import json
+import math
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union, List
@@ -11,18 +12,17 @@ from bitcoinlib.services.bitcoind import BitcoindClient
 from bitcoinlib.services.services import Service
 from bitcoinlib.transactions import Transaction
 
-from xchainpy2_client import Fees, XChainClient, XcTx, TxPage, TxType, TokenTransfer, FeeType, \
-    FeeOption, UTXO, Witness
-from xchainpy2_client import RootDerivationPaths, FeeBounds
-from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC, Amount
+from xchainpy2_client import XChainClient, XcTx, TxPage, TxType, TokenTransfer, \
+    FeeOption, UTXO, Witness, RootDerivationPaths, FeeProgressive, Gas, GasFeePerByte, UTXOException
+from xchainpy2_utils import Chain, NetworkType, CryptoAmount, Asset, AssetBTC
 from .const import BTC_DECIMAL, BLOCKSTREAM_EXPLORERS, ROOT_DERIVATION_PATHS, MAX_MEMO_LENGTH, \
-    DEFAULT_PROVIDER_NAMES, AssetTestBTC, BTC_DEFAULT_FEE_BOUNDS
+    DEFAULT_PROVIDER_NAMES, AssetTestBTC
 from .tx_prepare import UTXOPrepare, try_get_memo_from_output
-from .utils import get_btc_address_prefix, UTXOException
+from .utils import get_btc_address_prefix
 
 
 class BitcoinClient(XChainClient):
-    async def get_balance(self, address: str = '') -> List[CryptoAmount]:
+    async def get_balance(self, address: str = '', **kwargs) -> List[CryptoAmount]:
         """
         Get the BTC balance of the wallet.
 
@@ -77,8 +77,12 @@ class BitcoinClient(XChainClient):
         result = await self.call_service(self.service.gettransaction, tx_id)
         return self._convert_lib_tx_to_our_tx(result)
 
-    async def transfer(self, what: CryptoAmount, recipient: str, memo: Optional[str] = None,
-                       fee_rate: Optional[int] = None, fee_option: Optional[FeeOption] = None,
+    async def transfer(self,
+                       what: CryptoAmount,
+                       recipient: str,
+                       memo: Optional[str] = None,
+                       gas: Optional[Gas] = None,
+                       check_balance: bool = True,
                        min_confirmations=1, **kwargs) -> str:
         """
         Transfer UTXO gas asset (BTC eg) to recipient.
@@ -86,9 +90,9 @@ class BitcoinClient(XChainClient):
 
         :param what: amount to transfer, must be gas asset (BTC.BTC)
         :param recipient: recipient address
+        :param gas: Gas options
         :param memo: optional memo
-        :param fee_rate: fee rate in satoshi per kilobyte
-        :param fee_option: fee option (average, fast, fastest) if fee_rate is not provided
+        :param check_balance: if True, checks the balance of the wallet before transfer
         :param min_confirmations: minimum confirmations
         :return: transaction id (txid)
         """
@@ -101,37 +105,41 @@ class BitcoinClient(XChainClient):
         if not self.validate_address(recipient):
             raise UTXOException('Invalid recipient address.')
 
-        sender = self.get_address()
+        # Get fee rate
+        gas = Gas.validate(gas, GasFeePerByte)
+        if gas.is_automatic:
+            fees = await self.get_fees()
+            fee_rate = fees.select_as_int(gas.fee_option)
+        else:
+            # noinspection PyTypeChecker
+            gas_settings: GasFeePerByte = gas.settings
+            fee_rate = gas_settings.satoshi_per_byte
 
+        # fetch UTXOs
+        sender = self.get_address()
         utxos = await self.get_utxos(sender)
 
-        if not fee_rate:
-            fees = await self.get_fees()
-            if not fees or not fees.fees:
-                raise UTXOException('Failed to get fees')
-            fee_rate = fees.fees.get(FeeOption.AVERAGE)
-            if not fee_rate:
-                raise UTXOException('Failed to get average fee rate')
-
-        if not fee_rate:
-            raise UTXOException('Failed to get fee rate')
-
-        if isinstance(fee_rate, Amount):
-            fee_rate = int(fee_rate)
-
-        self.fee_bound.check_fee_bounds(fee_rate, per_kb=True)
-
-        utxo_prepare = UTXOPrepare(utxos, self._service_network,
-                                   fee_per_byte=fee_rate / 1000,
-                                   min_confirmations=min_confirmations)
+        utxo_prepare = UTXOPrepare(
+            utxos, self._service_network,
+            fee_per_byte=fee_rate,
+            min_confirmations=min_confirmations)
 
         tx = utxo_prepare.build(sender, recipient, what.amount, memo)
-
         tx.estimate_size()
-        tx.fee_per_kb = fee_rate
+        tx.fee_per_kb = fee_rate * 1000
         tx.calc_weight_units()
-        tx.calculate_fee()
 
+        # Calculate fee and check bounds
+        fee = tx.calculate_fee()
+        if gas.bounds:
+            gas.bounds.check_fee_bounds(fee)
+
+        # Check balance if required
+        if check_balance:
+            fee_amt = self.gas_base_amount(fee)
+            await self.check_balance(str(self.get_address()), what, gas_fee=fee_amt)
+
+        # Sign the transaction
         tx.sign(self.get_private_key())
         tx_hex = tx.raw_hex()
 
@@ -166,32 +174,28 @@ class BitcoinClient(XChainClient):
         self._save_last_response(tx_id, results)
         return tx_id
 
-    async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> Fees:
+    async def get_fees(self, average_blocks=10, fast_blocks=3, fastest_blocks=1) -> FeeProgressive:
         """
         Get the fee rates triplet (average, fast, fastest) in satoshi per byte.
 
         :param average_blocks: Number of blocks to confirm in average case
         :param fast_blocks: Number of blocks to confirm in fast case
-        :param fastest_blocks: Number of blocks to confirm in fastest case
-        :return: Fees object
+        :param fastest_blocks: Number of blocks to confirm in the fastest case
+        :return: FeeProgressive object
         """
         average = await self.call_service(self.service.estimatefee, average_blocks)
         fast = await self.call_service(self.service.estimatefee, fast_blocks)
         fastest = await self.call_service(self.service.estimatefee, fastest_blocks)
 
-        # this approach causes SQL errors in bitcoinlib
-        # average, fast, fastest = await asyncio.gather(
-        #     self._call_service(self.service.estimatefee, average_blocks),
-        #     self._call_service(self.service.estimatefee, fast_blocks),
-        #     self._call_service(self.service.estimatefee, fastest_blocks),
-        # )
+        average = math.ceil(average / 1000)  # convert to satoshi per byte
+        fast = math.ceil(fast / 1000)
+        fastest = math.ceil(fastest / 1000)
 
-        return Fees(
-            type=FeeType.PER_BYTE,
+        return FeeProgressive(
             fees={
-                FeeOption.AVERAGE: self.gas_base_amount(average).amount,
-                FeeOption.FAST: self.gas_base_amount(fast).amount,
-                FeeOption.FASTEST: self.gas_base_amount(fastest).amount,
+                FeeOption.AVERAGE: self.gas_base_amount(average),
+                FeeOption.FAST: self.gas_base_amount(fast),
+                FeeOption.FASTEST: self.gas_base_amount(fastest),
             }
         )
 
@@ -228,7 +232,6 @@ class BitcoinClient(XChainClient):
                  network=NetworkType.MAINNET,
                  phrase: Optional[str] = None,
                  private_key: Union[str, bytes, callable, None] = None,
-                 fee_bound: Optional[FeeBounds] = BTC_DEFAULT_FEE_BOUNDS,
                  root_derivation_paths: Optional[RootDerivationPaths] = ROOT_DERIVATION_PATHS,
                  explorer_providers=BLOCKSTREAM_EXPLORERS,
                  wallet_index=0,
@@ -246,7 +249,6 @@ class BitcoinClient(XChainClient):
         :param network: Network type (default is MAINNET)
         :param phrase: your secret phrase
         :param private_key: or your private key
-        :param fee_bound: fee bounds (no bounds by default)
         :param root_derivation_paths: HD wallet derivation paths
         :param wallet_index: int index of wallet
         :param explorer_providers: explorer providers dictionary
@@ -255,7 +257,7 @@ class BitcoinClient(XChainClient):
         super().__init__(
             _chain,
             network, phrase,
-            private_key, fee_bound,
+            private_key,
             root_derivation_paths,
             wallet_index
         )

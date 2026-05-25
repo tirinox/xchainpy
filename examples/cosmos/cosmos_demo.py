@@ -16,7 +16,7 @@ async def demo_read_txs():
     balance = await client.get_balance(demo_addy)
     pprint(balance)
 
-    tx_id = '72EF6969FACFAD016385BF1E0A0223D6522859E65AC767C27A5D1B6CB61A24A9'
+    tx_id = 'AA3E2DCF40914416F83D16B16A9E85207E92369F9208CC6864A95F7710576947'
     tx_data = await client.get_transaction_data(tx_id=tx_id)
 
     print(tx_data)
