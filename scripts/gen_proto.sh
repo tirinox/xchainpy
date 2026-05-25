@@ -5,17 +5,31 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 source common.sh
 
-LAST_THOR_VERSION="release-3.18.1"
+LAST_THOR_VERSION="v3.18.1"
 LAST_MAYA_VERSION="v1.129.3"
 COSMOS_SDK_VERSION="v0.53.0"
+COSMOS_PROTO_VERSION="v1.0.0-beta.5"
 
 THOR_GIT="https://gitlab.com/thorchain/thornode.git"
 MAYA_GIT="https://gitlab.com/mayachain/mayanode.git"
 COSMOS_GIT="https://github.com/cosmos/cosmos-sdk.git"
+COSMOS_PROTO_GIT="https://github.com/cosmos/cosmos-proto.git"
+GOGOPROTO_GIT="https://github.com/cosmos/gogoproto.git"
 
 TEMP="../temp"
+
+checkout_ref() {
+  local repo_path="$1"
+  local ref="$2"
+
+  git -C "$repo_path" fetch --tags --force --quiet origin
+  git -C "$repo_path" checkout --force --quiet "$ref"
+}
 
 echo "I will help you to generate Python code from THORNode/Maya protobuf files"
 
@@ -52,17 +66,32 @@ esac
 
 NODE_CODE="$TEMP/node_code_$PROTOCOL"
 COSMOS_CODE="$TEMP/cosmos"
+COSMOS_PROTO_CODE="$TEMP/cosmos-proto"
+GOGOPROTO_CODE="$TEMP/gogoproto"
+
+mkdir -p "$TEMP"
 
 if [ ! -d "$NODE_CODE" ]; then
-  git clone $GIT_URL $NODE_CODE
-  cd $NODE_CODE && git checkout $LAST_VERSION && cd ..
+  git clone "$GIT_URL" "$NODE_CODE"
   echo "Source code downloaded"
 fi
+checkout_ref "$NODE_CODE" "$LAST_VERSION"
 
 if [ ! -d "$COSMOS_CODE" ]; then
-  git clone $COSMOS_GIT $COSMOS_CODE
-  cd $COSMOS_CODE && git checkout $COSMOS_SDK_VERSION && cd ..
+  git clone "$COSMOS_GIT" "$COSMOS_CODE"
   echo "Cosmos source code downloaded"
+fi
+checkout_ref "$COSMOS_CODE" "$COSMOS_SDK_VERSION"
+
+if [ ! -d "$COSMOS_PROTO_CODE" ]; then
+  git clone "$COSMOS_PROTO_GIT" "$COSMOS_PROTO_CODE"
+  echo "Cosmos Proto source code downloaded"
+fi
+checkout_ref "$COSMOS_PROTO_CODE" "$COSMOS_PROTO_VERSION"
+
+if [ ! -d "$GOGOPROTO_CODE" ]; then
+  git clone "$GOGOPROTO_GIT" "$GOGOPROTO_CODE"
+  echo "Gogoproto source code downloaded"
 fi
 
 # -----------------------
@@ -78,24 +107,27 @@ case $yn in
   # print working directory
   pwd
 
-  mkdir -p $PROTO_OUT_PATH
+  mkdir -p "$PROTO_OUT_PATH"
 
-  ls $TEMP
+  ls "$TEMP"
 
-  $TEMP/venv/bin/python3 -m grpc_tools.protoc --proto_path="${NODE_CODE}/proto" \
-    --proto_path="${NODE_CODE}/third_party/proto" \
+  "$TEMP/venv/bin/python3" -m grpc_tools.protoc --proto_path="${NODE_CODE}/proto" \
+    --proto_path="${NODE_CODE}/proto/${PROTOCOL}/v1" \
+    --proto_path="${GOGOPROTO_CODE}" \
+    --proto_path="${COSMOS_PROTO_CODE}/proto" \
     --proto_path="${COSMOS_CODE}/proto" \
     --python_out="${PROTO_OUT_PATH}" --grpc_python_out="${PROTO_OUT_PATH}" --pyi_out="${PROTO_OUT_PATH}" \
-    "$PROTOCOL/v1/x/$PROTOCOL/types/msg_deposit.proto" \
-    "$PROTOCOL/v1/x/$PROTOCOL/types/msg_send.proto" \
-    "$PROTOCOL/v1/common/common.proto" "gogoproto/gogo.proto" "cosmos/base/v1beta1/coin.proto"
+    "common/common.proto" "gogoproto/gogo.proto" "amino/amino.proto" "cosmos_proto/cosmos.proto" "cosmos/base/v1beta1/coin.proto" \
+    "$PROTOCOL/v1/types/msg_deposit.proto" \
+    "$PROTOCOL/v1/types/msg_send.proto"
 
 
-  touch_inits $PROTO_OUT_PATH
+  touch_inits "$PROTO_OUT_PATH"
   # restore root __init__.py as it contains code to have the proto files module available
   git restore "$PROTO_OUT_PATH/__init__.py"
   ;;
 *)
+  echo "Aborting"
   exit 1
   ;;
 esac
