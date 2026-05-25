@@ -7,9 +7,9 @@ set -e
 
 source common.sh
 
-LAST_THOR_VERSION="release-1.134.0"
-LAST_MAYA_VERSION="v1.110.0"
-COSMOS_SDK_VERSION="v0.45.1"
+LAST_THOR_VERSION="release-3.18.1"
+LAST_MAYA_VERSION="v1.129.3"
+COSMOS_SDK_VERSION="v0.53.0"
 
 THOR_GIT="https://gitlab.com/thorchain/thornode.git"
 MAYA_GIT="https://gitlab.com/mayachain/mayanode.git"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SWAGGER_LOCAL="./swagger-codegen-cli.jar"
-SWAGGER_VERSION=3.0.52
+SWAGGER_VERSION=3.0.81
 SWAGGER_CODEGEN="https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/${SWAGGER_VERSION}/swagger-codegen-cli-${SWAGGER_VERSION}.jar"
 
 ask_yes_no() {
@@ -62,9 +62,8 @@ function codegen_client() {
 
 function install_develop() {
   if ask_yes_no "Do you want to install the package for development?" "no"; then
-    # python3 -m pip install --editable "${OUTPUT_DIR}"
-    cd ${OUTPUT_DIR} || exit 3
-    python3 setup.py develop
+    UV=${UV:-uv}
+    (cd .. && ${UV} venv --allow-existing && ${UV} pip install --editable "scripts/${OUTPUT_DIR}")
   fi
 }
 

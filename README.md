@@ -109,17 +109,20 @@ Installation guide can be found in [here](https://xchainpy2.readthedocs.io/en/la
 
 After cloning the repository, you can run the code samples in the `./examples` folder.
 
-First, install the XChainPy2 packages. For example, for running THORChain examples, run the following commands.
+First, install `uv` if it is not already available, then sync the workspace packages and development tools:
 
-```
-python3 -m pip install --editable packages/xchainpy_crypto
-python3 -m pip install --editable packages/xchainpy_utils
-python3 -m pip install --editable packages/xchainpy_client
-python3 -m pip install --editable packages/xchainpy_cosmos
-python3 -m pip install --editable packages/xchainpy_thorchain
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv sync --all-packages --group dev
 ```
 
-Or just `make tc_env` which does the same thing.
+Or just run `make tc_env`, which does the same thing through `uv`.
+
+Run examples through the managed environment, for example:
+
+```bash
+uv run python examples/thor/thor_balance.py
+```
 
 ### 2. In order to leverage the library in your project
 
@@ -163,11 +166,22 @@ And so on.
 
 First install the dependencies:
 
-`make dev_tools`
+```bash
+make dev_tools
+```
 
 Then run the tests:
 
-`make test`
+```bash
+make test
+```
+
+Equivalent direct `uv` commands are:
+
+```bash
+uv sync --all-packages --group dev
+uv run pytest
+```
 
 ## To Do list
 

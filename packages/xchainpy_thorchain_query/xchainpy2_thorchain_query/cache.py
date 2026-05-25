@@ -8,7 +8,11 @@ from typing import Dict, List, Optional, Set, Union
 # todo fixme
 from xchainpy2_mayanode import PoolsApi as PoolsApiMaya, MimirApi as MimirApiMaya, NetworkApi as NetworkApiMaya, \
     TransactionsApi as TransactionsApiMaya, LiquidityProvidersApi as LiquidityProvidersApiMaya, \
-    QueueApi as QueueApiMaya, QuoteApi as QuoteApiMaya, SaversApi as SaversApiMaya
+    QueueApi as QueueApiMaya, QuoteApi as QuoteApiMaya
+try:
+    from xchainpy2_mayanode import SaversApi as SaversApiMaya
+except ImportError:
+    SaversApiMaya = None
 from xchainpy2_midgard import PoolDetail, THORNameDetails
 from xchainpy2_midgard.api import DefaultApi as MidgardAPI
 from xchainpy2_midgard.rest import ApiException
@@ -120,7 +124,7 @@ class THORChainCache:
             self.tx_api = TransactionsApiMaya(thornode_client)
             self.lp_api = LiquidityProvidersApiMaya(thornode_client)
             self.queue_api = QueueApiMaya(thornode_client)
-            self.saver_api = SaversApiMaya(thornode_client)
+            self.saver_api = SaversApiMaya(thornode_client) if SaversApiMaya else None
             self.quote_api = QuoteApiMaya(thornode_client)
             self.chain = Chain.Maya
             self.native_decimals = CACAO_DECIMAL

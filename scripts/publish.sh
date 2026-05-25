@@ -3,22 +3,24 @@ set -e
 
 source common.sh
 
+UV=${UV:-uv}
+
 function build() {
   echo "---------------"
   echo "Building $1"
-  python3 -m build "$1"
+  ${UV} build "$1" --out-dir "$1/dist"
 }
 
 function publish_test() {
   build $1
   echo "---------------"
   echo "Publishing $1"
-  python -m twine upload --repository testpypi "$1"/dist/*
+  ${UV} publish --publish-url https://test.pypi.org/legacy/ "$1"/dist/*
 }
 
 function clean_dist() {
-  rm $1/dist/*.tar.gz
-  rm $1/dist/*.whl
+  rm -f $1/dist/*.tar.gz
+  rm -f $1/dist/*.whl
 }
 
 function publish() {
@@ -27,13 +29,13 @@ function publish() {
 
   echo "---------------"
   echo "Publishing $1"
-  python -m twine upload --verbose --repository pypi "$1"/dist/*
+  ${UV} publish "$1"/dist/*
 }
 
 # Check if the script has at least two arguments
 if [ "$#" -ge 2 ]; then
   # Use the second positional argument as the value for PACKS
-  PACKS="../packages/$2"
+  SELECTED_PACKAGE="../packages/$2"
 else
   ask_for_package
 fi

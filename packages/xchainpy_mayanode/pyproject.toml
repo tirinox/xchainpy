@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xchainpy2-mayanode"
+version = "1.129.2"
+description = "Mayanode API"
+readme = "README.md"
+requires-python = ">=3.7"
+authors = [
+    { email = "devs@mayachain.org" },
+]
+keywords = ["Swagger", "Mayanode API"]
+dependencies = [
+    "aiohttp",
+    "certifi",
+    "python-dateutil",
+    "six>=1.10",
+    "urllib3>=1.15",
+]
+
+[project.optional-dependencies]
+test = [
+    "pluggy>=0.3.1",
+    "py>=1.4.31",
+    "pytest>=3.3.1",
+    "pytest-cov>=2.5.1",
+    "randomize>=0.13",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["xchainpy2_mayanode*"]

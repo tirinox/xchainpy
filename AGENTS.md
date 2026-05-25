@@ -19,8 +19,8 @@
 - Avoid manual edits inside generated model/api files unless absolutely necessary; prefer fixing generator inputs/scripts (`scripts/fix_swagger_spec.py`, `scripts/modify_setup.py`).
 
 ## Developer workflows (project-specific)
-- Install dev tools: `make dev_tools`.
-- Install editable local packages for multi-package runs/tests: `make tc_env` (installs a curated package set in dependency order).
+- Install dev tools: `make dev_tools` (runs `uv sync --group dev`).
+- Install editable local packages for multi-package runs/tests: `make tc_env` (runs `uv sync --all-packages --group dev`).
 - Run tests: `make test` (targets selected packages explicitly, not whole-repo discovery).
 - Cross-Python matrix: `tox` (configured for `py39, py310, py311`, command delegates to `make test`).
 - Build docs: `make doc`; docs import package modules via `docs/conf.py` `packages = [...]`, so missing local package dirs break docs build.

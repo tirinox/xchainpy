@@ -1,0 +1,83 @@
+[project]
+name = "xchainpy2-workspace"
+version = "0.0.0"
+description = "Development workspace for XChainPy2 packages"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "xchainpy2_arbitrum",
+    "xchainpy2_avalanche",
+    "xchainpy2_base",
+    "xchainpy2_bitcoin",
+    "xchainpy2_bitcoincash",
+    "xchainpy2_bsc",
+    "xchainpy2_client",
+    "xchainpy2_cosmos",
+    "xchainpy2_crypto",
+    "xchainpy2_dogecoin",
+    "xchainpy2_ethereum",
+    "xchainpy2_litecoin",
+    "xchainpy2_mayachain",
+    "xchainpy2_mayanode",
+    "xchainpy2_midgard",
+    "xchainpy2_midgard_maya",
+    "xchainpy2_thorchain",
+    "xchainpy2_thorchain_amm",
+    "xchainpy2_thorchain_query",
+    "xchainpy2_thornode",
+    "xchainpy2_utils",
+    "xchainpy2_wallet",
+]
+
+[dependency-groups]
+dev = [
+    "aiofiles>=0.7.0",
+    "aiohttp>=3.10.2",
+    "aioresponses==0.7.6",
+    "build",
+    "myst-parser",
+    "packaging",
+    "pydantic>=2.4.2",
+    "pytest~=8.3.4",
+    "pytest-aiohttp",
+    "pytest-asyncio",
+    "pyyaml~=6.0.0",
+    "requests-mock==1.11.0",
+    "setuptools",
+    "sphinx",
+    "sphinx-copybutton",
+    "sphinx-rtd-theme",
+    "toml",
+    "tox",
+    "twine",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/xchainpy_*"]
+
+[tool.uv.sources]
+xchainpy2_arbitrum = { workspace = true }
+xchainpy2_avalanche = { workspace = true }
+xchainpy2_base = { workspace = true }
+xchainpy2_bitcoin = { workspace = true }
+xchainpy2_bitcoincash = { workspace = true }
+xchainpy2_bsc = { workspace = true }
+xchainpy2_client = { workspace = true }
+xchainpy2_cosmos = { workspace = true }
+xchainpy2_crypto = { workspace = true }
+xchainpy2_dogecoin = { workspace = true }
+xchainpy2_ethereum = { workspace = true }
+xchainpy2_litecoin = { workspace = true }
+xchainpy2_mayachain = { workspace = true }
+xchainpy2_mayanode = { workspace = true }
+xchainpy2_midgard = { workspace = true }
+xchainpy2_midgard_maya = { workspace = true }
+xchainpy2_thorchain = { workspace = true }
+xchainpy2_thorchain_amm = { workspace = true }
+xchainpy2_thorchain_query = { workspace = true }
+xchainpy2_thornode = { workspace = true }
+xchainpy2_utils = { workspace = true }
+xchainpy2_wallet = { workspace = true }

@@ -2,4 +2,7 @@
 set -e
 source common.sh
 ask_for_package
-python3 -m pip install --editable $SELECTED_PACKAGE
+UV=${UV:-uv}
+cd ..
+${UV} venv --allow-existing
+${UV} pip install --editable "scripts/${SELECTED_PACKAGE}"
