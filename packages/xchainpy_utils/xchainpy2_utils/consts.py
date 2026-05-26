@@ -46,62 +46,67 @@ class ChainAttributes(NamedTuple):
 AMOUNT_10K_SAT = Amount.auto(Decimal("0.0001"), DEFAULT_ASSET_DECIMAL)
 """AMOUNT_10K_SAT is an Amount object that represents 10,000 satoshis."""
 
+
+def _dust(asset: Asset, amount: Amount) -> DustAmount:
+    """Build a DustAmount entry with the chain asset value populated as a CryptoAmount."""
+    return DustAmount(CryptoAmount(amount, asset))
+
 """
 DEFAULT_CHAIN_ATTRS is a dictionary that contains the default attributes for each chain supported by THORChain.
 """
 DEFAULT_CHAIN_ATTRS = {
     Chain.Bitcoin: ChainAttributes(
         6.25, 600,
-        DustAmount(AMOUNT_10K_SAT, AssetBTC)
+        _dust(AssetBTC, AMOUNT_10K_SAT)
     ),
     Chain.Litecoin: ChainAttributes(
         12.5, 150,
-        DustAmount(AMOUNT_10K_SAT, AssetLTC)
+        _dust(AssetLTC, AMOUNT_10K_SAT)
     ),
     Chain.BitcoinCash: ChainAttributes(
         6.25, 600,
-        DustAmount(AMOUNT_10K_SAT, AssetBCH)
+        _dust(AssetBCH, AMOUNT_10K_SAT)
     ),
     Chain.Doge: ChainAttributes(
         10000, 60,
-        DustAmount(Amount.auto(Decimal("0.01")), AssetDOGE)  # 1 million sat
+        _dust(AssetDOGE, Amount.auto(Decimal("0.01")))  # 1 million sat
     ),
 
     Chain.Ethereum: ChainAttributes(
         2, 13,
-        DustAmount(Amount.zero(decimals=ETH_DECIMALS), AssetETH)
+        _dust(AssetETH, Amount.zero(decimals=ETH_DECIMALS))
     ),
     Chain.Avalanche: ChainAttributes(
         2, 3,
-        DustAmount(Amount.zero(decimals=AVAX_DECIMALS), AssetAVAX)
+        _dust(AssetAVAX, Amount.zero(decimals=AVAX_DECIMALS))
     ),
     Chain.BinanceSmartChain: ChainAttributes(
         0, 3,
-        DustAmount(Amount.zero(decimals=BSC_DECIMALS), AssetBSC),
+        _dust(AssetBSC, Amount.zero(decimals=BSC_DECIMALS)),
     ),
 
     Chain.Cosmos: ChainAttributes(
         0, 6,
-        DustAmount(Amount.zero(decimals=ATOM_DECIMALS), AssetATOM)
+        _dust(AssetATOM, Amount.zero(decimals=ATOM_DECIMALS))
     ),
     Chain.THORChain: ChainAttributes(
         0, 6,
-        DustAmount(Amount.zero(decimals=RUNE_DECIMAL), AssetRUNE)
+        _dust(AssetRUNE, Amount.zero(decimals=RUNE_DECIMAL))
     ),
     Chain.Maya: ChainAttributes(
         0, 6,
-        DustAmount(Amount.zero(decimals=CACAO_DECIMAL), AssetCACAO),
+        _dust(AssetCACAO, Amount.zero(decimals=CACAO_DECIMAL)),
     ),
 
     # todo: verify this
     Chain.Solana: ChainAttributes(
         0, 0.4,
-        DustAmount(Amount.zero(decimals=SOLANA_DECIMALS), AssetSOL),
+        _dust(AssetSOL, Amount.zero(decimals=SOLANA_DECIMALS)),
     ),
     # todo: verify this
     Chain.Ripple: ChainAttributes(
         0, 3.5,
-        DustAmount(Amount.zero(decimals=RIPPLE_DECIMALS), AssetXRP),
+        _dust(AssetXRP, Amount.zero(decimals=RIPPLE_DECIMALS)),
     )
 }
 

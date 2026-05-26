@@ -1,4 +1,4 @@
-from decimal import Decimal, Context
+from decimal import Decimal, Context, InvalidOperation
 from typing import NamedTuple, Union, List
 
 from .asset import Asset
@@ -124,8 +124,11 @@ class Amount(NamedTuple):
         :param other: Another Amount or a number (int, float, Decimal)
         :return: Amount
         """
-        if isinstance(other, (int, float, Decimal)):
-            return Amount(int(self.internal_amount * other), self.decimals)
+        if isinstance(other, (int, float, Decimal, str)):
+            try:
+                return Amount(int(Decimal(self.internal_amount) * Decimal(other)), self.decimals)
+            except InvalidOperation as exc:
+                raise TypeError(f'Cannot multiply {self} with {type(other)}') from exc
         elif isinstance(other, Amount):
             return Amount.auto(self.as_decimal * other.as_decimal, self.decimals)
         else:
@@ -139,8 +142,11 @@ class Amount(NamedTuple):
         :param other: Another Amount or a number (int, float, Decimal)
         :return: Decimal or Amount
         """
-        if isinstance(other, (int, float, Decimal)):
-            return Amount(int(self.internal_amount / other), self.decimals)
+        if isinstance(other, (int, float, Decimal, str)):
+            try:
+                return Amount(int(Decimal(self.internal_amount) / Decimal(other)), self.decimals)
+            except InvalidOperation as exc:
+                raise TypeError(f'Cannot divide {self} with {type(other)}') from exc
         elif isinstance(other, Amount):
             # Useful for price calculation, returns a dimensionless quantity of type Decimal
             ratio = self.as_decimal / other.as_decimal
@@ -157,8 +163,11 @@ class Amount(NamedTuple):
         :param other: Another Amount or a number (int, float, Decimal)
         :return: Amount
         """
-        if isinstance(other, (int, float, Decimal)):
-            return Amount(int(self.internal_amount // Decimal(other)), self.decimals)
+        if isinstance(other, (int, float, Decimal, str)):
+            try:
+                return Amount(int(Decimal(self.internal_amount) // Decimal(other)), self.decimals)
+            except InvalidOperation as exc:
+                raise TypeError(f'Cannot floor divide {self} with {type(other)}') from exc
         elif isinstance(other, Amount):
             # Returns a floored ratio with the dividend's decimals
             ratio = self.as_decimal // other.as_decimal

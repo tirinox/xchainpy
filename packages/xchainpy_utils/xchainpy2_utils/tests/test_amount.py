@@ -241,6 +241,14 @@ def test_multiply():
     assert Amount(100500, 6) * 2 == Amount(201000, 6)
 
 
+def test_amount_math_supports_numeric_strings():
+    a = Amount(155, 2)
+
+    assert a * "2" == Amount(310, 2)
+    assert a / "2" == Amount(77, 2)
+    assert a // "2" == Amount(77, 2)
+
+
 def test_divide():
     a = Amount(100, 8)
     b = a / 2

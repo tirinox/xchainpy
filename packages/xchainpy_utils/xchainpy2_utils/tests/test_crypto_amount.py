@@ -96,6 +96,14 @@ def test_multiply():
     assert amt * Decimal(0.5) == CryptoAmount(Amount(50, 8), AssetRUNE)
 
 
+def test_arithmetic_with_numeric_strings():
+    amt = CryptoAmount(Amount(155, 8), AssetRUNE)
+
+    assert amt * "2" == CryptoAmount(Amount(310, 8), AssetRUNE)
+    assert amt / "2" == CryptoAmount(Amount(77, 8), AssetRUNE)
+    assert amt // "2" == CryptoAmount(Amount(77, 8), AssetRUNE)
+
+
 @pytest.mark.parametrize('right', [
     "foo",
     Amount(2, 8),

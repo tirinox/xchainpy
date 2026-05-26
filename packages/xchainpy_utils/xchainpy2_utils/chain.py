@@ -64,7 +64,7 @@ UTXO_CHAINS = {Chain.Bitcoin, Chain.Litecoin, Chain.BitcoinCash, Chain.Doge, Cha
 UTXO_CHAINS is a set of chains that use the UTXO model.
 """
 
-EVM_CHAINS = {Chain.Ethereum, Chain.BinanceSmartChain, Chain.Avalanche, Chain.Base}
+EVM_CHAINS = {Chain.Ethereum, Chain.BinanceSmartChain, Chain.Avalanche, Chain.Arbitrum, Chain.Base}
 """
 EVM_CHAINS is a set of chains that are based on the Ethereum Virtual Machine (EVM).
 """
