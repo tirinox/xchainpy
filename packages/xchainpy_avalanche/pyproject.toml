@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "xchainpy2_avalanche"
 version = "0.1.1"
 authors = [
-    { name = "Tirinox", email = "developer@tirinox.ru" },
+    { name = "Tirinox", email = "tirinox@gmail.com" },
 ]
 description = "XChainPy2 Avalanche Client"
 readme = "README.md"
