@@ -29,8 +29,8 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
 ]
 dependencies = [
-    "bip-utils>=2.7.0,<3.0.0",
-    "pycryptodome>=3.17,<4.0",
+    "bip-utils>=2.12.1.0,<3.0.0",
+    "pycryptodome>=3.23,<4.0",
 ]
 [project.optional-dependencies]
 test = ["pytest"]
