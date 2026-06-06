@@ -488,6 +488,30 @@ AssetXRP = Asset.from_string('XRP.XRP')
 AssetSOL = Asset.from_string('SOL.SOL')
 """Solana asset on the Solana network."""
 
+AssetADA = Asset.from_string('ADA.ADA')
+"""Cardano asset on the Cardano network."""
+
+AssetDOT = Asset.from_string('DOT.DOT')
+"""Polkadot asset on the Polkadot network."""
+
+AssetXMR = Asset.from_string('XMR.XMR')
+"""Monero asset on the Monero network."""
+
+AssetPOL = Asset.from_string('POL.POL')
+"""Polygon asset on the Polygon network."""
+
+AssetTAO = Asset.from_string('TAO.TAO')
+"""Bittensor asset on the Bittensor network."""
+
+AssetTRX = Asset.from_string('TRON.TRX')
+"""TRON asset on the TRON network."""
+
+AssetSUI = Asset.from_string('SUI.SUI')
+"""Sui asset on the Sui network."""
+
+AssetZEC = Asset.from_string('ZEC.ZEC')
+"""Zcash asset on the Zcash network."""
+
 
 def get_chain_gas_asset(chain: Union[Chain, str]) -> Asset:
     """
@@ -599,18 +623,51 @@ class CommonAssets:
     SOL = AssetSOL
     """Solana asset"""
 
+    ADA = AssetADA
+    """Cardano asset"""
+
+    DOT = AssetDOT
+    """Polkadot asset"""
+
+    XMR = AssetXMR
+    """Monero asset"""
+
+    POL = AssetPOL
+    """Polygon asset"""
+
+    TAO = AssetTAO
+    """Bittensor asset"""
+
+    TRX = AssetTRX
+    """TRON asset"""
+
+    SUI = AssetSUI
+    """Sui asset"""
+
+    ZEC = AssetZEC
+    """Zcash asset"""
+
     SHORT_CODES = {
         'a': AssetAVAX,
+        'ad': AssetADA,
         'b': AssetBTC,
         'c': AssetBCH,
         'd': AssetDOGE,
+        'do': AssetDOT,
         'e': AssetETH,
+        'f': AssetBaseETH,
         'g': AssetATOM,
         'l': AssetLTC,
-        's': AssetBSC,
+        'm': AssetXMR,
+        'o': AssetSOL,
+        'p': AssetPOL,
         'r': AssetRUNE,
-        'f': AssetBaseETH,
+        's': AssetBSC,
+        'ta': AssetTAO,
+        'tr': AssetTRX,
+        'u': AssetSUI,
         'x': AssetXRP,
+        'z': AssetZEC,
     }
     """
     THORChain short codes for common assets.
