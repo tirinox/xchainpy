@@ -105,6 +105,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.publish
+.env.publish.local
 .venv
 env/
 venv/
