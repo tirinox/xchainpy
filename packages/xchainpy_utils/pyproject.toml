@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xchainpy2_utils"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
     { name = "Tirinox", email = "tirinox@gmail.com" },
 ]
